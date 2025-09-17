@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Layout, Text, Button } from '@ui-kitten/components';
-import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../stores/auth';
 import { USER_ROLE_LABELS } from '@trakr/shared';
 
@@ -11,10 +11,12 @@ interface DashboardHeaderProps {
 
 export default function DashboardHeader({ title }: DashboardHeaderProps) {
   const { user, signOut } = useAuthStore();
+  const navigation = useNavigation();
 
   const handleSignOut = () => {
     signOut();
-    router.replace('/login');
+    // @ts-ignore - navigation type is inferred at runtime
+    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 
   return (

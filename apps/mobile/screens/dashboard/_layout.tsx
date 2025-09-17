@@ -1,11 +1,7 @@
-import { Stack } from 'expo-router';
+import React from 'react';
+import { View } from 'react-native';
 
+// Placeholder file: React Navigation is configured in App.js
 export default function DashboardLayout() {
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="auditor" />
-      <Stack.Screen name="branch-manager" />
-      <Stack.Screen name="admin" />
-    </Stack>
-  );
+  return <View />;
 }

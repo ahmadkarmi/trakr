@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { UserRole, USER_ROLE_LABELS } from '@trakr/shared';
 import { useAuthStore } from '../src/stores/auth';
 
@@ -9,27 +9,30 @@ export default function LoginScreen() {
   console.log('Login Screen - Rendering...');
   
   const { signIn, isLoading } = useAuthStore();
+  const navigation = useNavigation();
 
   const handleRoleLogin = async (role: UserRole) => {
     console.log('Login - Selected role:', role);
     
-    // Simple redirect without auth store for testing
-    let dashboardRoute = '/dashboard/auditor';
+    // Map roles to stack screen names
+    let screenName: string = 'DashboardAuditor';
     switch (role) {
       case UserRole.AUDITOR:
-        dashboardRoute = '/dashboard/auditor';
+        screenName = 'DashboardAuditor';
         break;
       case UserRole.BRANCH_MANAGER:
-        dashboardRoute = '/dashboard/branch-manager';
+        screenName = 'DashboardBranchManager';
         break;
       case UserRole.ADMIN:
       case UserRole.SUPER_ADMIN:
-        dashboardRoute = '/dashboard/admin';
+        screenName = 'DashboardAdmin';
         break;
     }
     
     await signIn(role);
-    router.replace(dashboardRoute);
+    // Replace history so back does not return to Login
+    // @ts-ignore - navigation type is inferred at runtime
+    navigation.reset({ index: 0, routes: [{ name: screenName }] });
   };
 
   const roleButtons = [
