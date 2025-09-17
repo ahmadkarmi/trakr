@@ -1,0 +1,18 @@
+[
+  {"id":"u1","name":"Sam Super","role":"super_admin","orgId":"org1"},
+  {"id":"u2","name":"Anita Admin","role":"admin","orgId":"org1"},
+  {"id":"u3","name":"Alex Auditor","role":"auditor","orgId":"org1","branchId":"b1"},
+  {"id":"u4","name":"Basma Branch","role":"branch_manager","orgId":"org1","branchId":"b1"},
+  {"id":"u5","name":"Omar Auditor","role":"auditor","orgId":"org1","branchId":"b2"},
+  {"id":"u6","name":"Layla Manager","role":"branch_manager","orgId":"org1","branchId":"b2"},
+  {"id":"u7","name":"Ahmed Auditor","role":"auditor","orgId":"org2","branchId":"b4"},
+  {"id":"u8","name":"Sarah Admin","role":"admin","orgId":"org2"},
+  {"id":"u9","name":"Khalid Manager","role":"branch_manager","orgId":"org2","branchId":"b4"},
+  {"id":"u10","name":"Fatima Auditor","role":"auditor","orgId":"org2","branchId":"b5"},
+  {"id":"u11","name":"Hassan Manager","role":"branch_manager","orgId":"org2","branchId":"b5"},
+  {"id":"u12","name":"Noor Admin","role":"admin","orgId":"org3"},
+  {"id":"u13","name":"Youssef Auditor","role":"auditor","orgId":"org3","branchId":"b6"},
+  {"id":"u14","name":"Maha Manager","role":"branch_manager","orgId":"org3","branchId":"b6"},
+  {"id":"u15","name":"Tariq Auditor","role":"auditor","orgId":"org3","branchId":"b7"},
+  {"id":"u16","name":"Rania Manager","role":"branch_manager","orgId":"org3","branchId":"b7"}
+]

@@ -1,0 +1,109 @@
+[
+  {
+    "id":"s1",
+    "name":"ESG Quarterly",
+    "version":1,
+    "sections":[
+      {
+        "id":"safety",
+        "name":"Safety & Security",
+        "description":"Fire safety, emergency procedures, and security measures",
+        "order":0,
+        "questions":[
+          {"id":"q1","text":"Fire extinguishers present and inspected","weight":2},
+          {"id":"q2","text":"Emergency exits accessible","weight":1},
+          {"id":"q4","text":"Security cameras operational","weight":1},
+          {"id":"q5","text":"First aid kits stocked and accessible","weight":1}
+        ]
+      },
+      {
+        "id":"environment",
+        "name":"Environmental Compliance",
+        "description":"Waste management, energy efficiency, and environmental practices",
+        "order":1,
+        "questions":[
+          {"id":"q3","text":"Waste sorting in place","weight":1},
+          {"id":"q6","text":"Energy-efficient lighting installed","weight":1},
+          {"id":"q7","text":"Water conservation measures implemented","weight":1},
+          {"id":"q8","text":"Recycling program active","weight":1}
+        ]
+      },
+      {
+        "id":"governance",
+        "name":"Governance & Documentation",
+        "description":"Policy compliance, documentation, and reporting procedures",
+        "order":2,
+        "questions":[
+          {"id":"q9","text":"Employee handbook up to date","weight":1},
+          {"id":"q10","text":"Incident reporting system in place","weight":2},
+          {"id":"q11","text":"Regular training sessions conducted","weight":1},
+          {"id":"q12","text":"Compliance certificates current","weight":2}
+        ]
+      }
+    ],
+    "questions":[
+      {"id":"q1","text":"Fire extinguishers present and inspected","weight":2},
+      {"id":"q2","text":"Emergency exits accessible","weight":1},
+      {"id":"q3","text":"Waste sorting in place","weight":1},
+      {"id":"q4","text":"Security cameras operational","weight":1},
+      {"id":"q5","text":"First aid kits stocked and accessible","weight":1},
+      {"id":"q6","text":"Energy-efficient lighting installed","weight":1},
+      {"id":"q7","text":"Water conservation measures implemented","weight":1},
+      {"id":"q8","text":"Recycling program active","weight":1},
+      {"id":"q9","text":"Employee handbook up to date","weight":1},
+      {"id":"q10","text":"Incident reporting system in place","weight":2},
+      {"id":"q11","text":"Regular training sessions conducted","weight":1},
+      {"id":"q12","text":"Compliance certificates current","weight":2}
+    ]
+  },
+  {
+    "id":"s2",
+    "name":"Monthly Safety Check",
+    "version":1,
+    "sections":[],
+    "questions":[
+      {"id":"q20","text":"Fire safety equipment inspected","weight":2.0},
+      {"id":"q21","text":"Emergency procedures posted","weight":1.5},
+      {"id":"q22","text":"Safety training completed","weight":2.0},
+      {"id":"q23","text":"Incident reports filed","weight":1.0},
+      {"id":"q24","text":"First aid supplies stocked","weight":1.0}
+    ]
+  },
+  {
+    "id":"s3",
+    "name":"Customer Service Audit",
+    "version":1,
+    "sections":[
+      {
+        "id":"customer_experience",
+        "name":"Customer Experience",
+        "description":"Customer interaction and satisfaction measures",
+        "order":0,
+        "questions":[
+          {"id":"q30","text":"Staff greeting customers promptly","weight":1.5},
+          {"id":"q31","text":"Service quality meets standards","weight":2.0},
+          {"id":"q32","text":"Customer complaints handled properly","weight":2.0}
+        ]
+      },
+      {
+        "id":"facility_standards",
+        "name":"Facility Standards",
+        "description":"Physical environment and cleanliness",
+        "order":1,
+        "questions":[
+          {"id":"q33","text":"Premises clean and organized","weight":1.0},
+          {"id":"q34","text":"Signage clear and visible","weight":1.0},
+          {"id":"q35","text":"Waiting areas comfortable","weight":0.5}
+        ]
+      }
+    ],
+    "questions":[
+      {"id":"q30","text":"Staff greeting customers promptly","weight":1.5},
+      {"id":"q31","text":"Service quality meets standards","weight":2.0},
+      {"id":"q32","text":"Customer complaints handled properly","weight":2.0},
+      {"id":"q33","text":"Premises clean and organized","weight":1.0},
+      {"id":"q34","text":"Signage clear and visible","weight":1.0},
+      {"id":"q35","text":"Waiting areas comfortable","weight":0.5}
+    ]
+  }
+]

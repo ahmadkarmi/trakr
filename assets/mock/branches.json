@@ -1,0 +1,9 @@
+[
+  {"id":"b1","orgId":"org1","name":"Kuwait City Branch"},
+  {"id":"b2","orgId":"org1","name":"Hawalli Branch"},
+  {"id":"b3","orgId":"org1","name":"Salmiya Branch"},
+  {"id":"b4","orgId":"org2","name":"Dubai Main Office"},
+  {"id":"b5","orgId":"org2","name":"Abu Dhabi Branch"},
+  {"id":"b6","orgId":"org3","name":"Riyadh HQ"},
+  {"id":"b7","orgId":"org3","name":"Jeddah Branch"}
+]

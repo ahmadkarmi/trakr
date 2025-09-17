@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Trakr Mobile",
+    "slug": "trakr-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#3b82f6"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.trakr.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#3b82f6"
+      },
+      "package": "com.trakr.mobile"
+    },
+    "web": {
+      "bundler": "webpack"
+    },
+    "scheme": "trakr",
+    "platforms": ["web"],
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
