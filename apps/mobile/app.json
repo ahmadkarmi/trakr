@@ -22,13 +22,7 @@
       },
       "package": "com.trakr.mobile"
     },
-    "web": {
-      "bundler": "webpack"
-    },
     "scheme": "trakr",
-    "platforms": ["web"],
-    "plugins": [
-      "expo-router"
-    ]
+    "platforms": ["ios", "android"]
   }
 }

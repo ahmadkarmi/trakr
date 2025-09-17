@@ -2,7 +2,7 @@
   "name": "@trakr/mobile",
   "version": "1.0.0",
   "description": "Trakr Mobile Application",
-  "main": "expo-router/entry",
+  "main": "App.js",
   "scripts": {
     "dev": "expo start",
     "android": "expo run:android",
@@ -25,7 +25,6 @@
     "expo-document-picker": "~11.10.0",
     "expo-file-system": "~16.0.0",
     "expo-image-picker": "~14.7.0",
-    "expo-router": "~3.4.0",
     "expo-sharing": "~11.10.0",
     "expo-status-bar": "~1.11.0",
     "react": "18.2.0",

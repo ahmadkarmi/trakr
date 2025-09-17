@@ -48,9 +48,18 @@ node_modules
 # Expo / React Native caches
 .expo/
 .expo-shared/
+**/.expo/
+**/.expo-shared/
 **/.cache/
 
 # Build outputs
 **/dist/
 **/build/
 web-build/
+
+# Node modules (all workspaces)
+**/node_modules/
+
+# Managed native projects (do not commit in Expo managed workflow)
+apps/mobile/android/
+apps/mobile/ios/
