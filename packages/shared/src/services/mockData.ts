@@ -252,4 +252,37 @@ export const mockApi = {
       ? mockActivityLogs.filter(log => log.entityId === entityId)
       : mockActivityLogs;
   },
+
+  // Mutations (in-memory)
+  saveAuditProgress: async (
+    auditId: string,
+    updates: {
+      responses?: Record<string, string>;
+      naReasons?: Record<string, string>;
+    }
+  ): Promise<Audit> => {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const idx = mockAudits.findIndex(a => a.id === auditId);
+    if (idx === -1) throw new Error(`Audit not found: ${auditId}`);
+    const current = mockAudits[idx];
+    const next: Audit = {
+      ...current,
+      responses: { ...current.responses, ...(updates.responses || {}) },
+      naReasons: { ...current.naReasons, ...(updates.naReasons || {}) },
+      status: current.status === AuditStatus.DRAFT ? AuditStatus.IN_PROGRESS : current.status,
+      updatedAt: new Date(),
+    };
+    mockAudits[idx] = next;
+    return next;
+  },
+
+  setAuditStatus: async (auditId: string, status: AuditStatus): Promise<Audit> => {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const idx = mockAudits.findIndex(a => a.id === auditId);
+    if (idx === -1) throw new Error(`Audit not found: ${auditId}`);
+    const current = mockAudits[idx];
+    const next: Audit = { ...current, status, updatedAt: new Date() };
+    mockAudits[idx] = next;
+    return next;
+  },
 };

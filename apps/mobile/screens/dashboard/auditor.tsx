@@ -18,7 +18,7 @@ export default function AuditorDashboard() {
     enabled: !!user?.id,
   });
 
-  const pending = audits.filter(a => a.status === AuditStatus.PENDING).length;
+  const pending = audits.filter(a => a.status === AuditStatus.DRAFT).length;
   const inProgress = audits.filter(a => a.status === AuditStatus.IN_PROGRESS).length;
   const completed = audits.filter(a => a.status === AuditStatus.COMPLETED).length;
 

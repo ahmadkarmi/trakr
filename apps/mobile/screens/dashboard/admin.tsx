@@ -2,17 +2,41 @@ import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Layout, Text, Card, Button } from '@ui-kitten/components';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/stores/auth';
 import DashboardHeader from '../../src/components/DashboardHeader';
+import { mockApi } from '@trakr/shared';
 
 export default function AdminDashboard() {
   const { user } = useAuthStore();
 
+  const { data: orgs = [], isLoading: loadingOrgs } = useQuery({
+    queryKey: ['organizations'],
+    queryFn: mockApi.getOrganizations,
+  });
+  const { data: branches = [], isLoading: loadingBranches } = useQuery({
+    queryKey: ['branches', orgs[0]?.id],
+    queryFn: () => mockApi.getBranches(orgs[0]?.id),
+    enabled: orgs.length > 0,
+  });
+  const { data: users = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: mockApi.getUsers,
+  });
+  const { data: surveys = [], isLoading: loadingSurveys } = useQuery({
+    queryKey: ['surveys'],
+    queryFn: mockApi.getSurveys,
+  });
+  const { data: audits = [], isLoading: loadingAudits } = useQuery({
+    queryKey: ['audits', 'admin'],
+    queryFn: () => mockApi.getAudits(),
+  });
+
   const stats = [
-    { title: 'Total Users', value: '156', color: '#3b82f6', subtitle: 'Active users' },
-    { title: 'Audit Templates', value: '12', color: '#3b82f6', subtitle: 'Active templates' },
-    { title: 'Branches', value: '8', color: '#3b82f6', subtitle: 'Across organization' },
-    { title: 'System Health', value: '98%', color: '#10b981', subtitle: 'Uptime' },
+    { title: 'Organizations', value: String(orgs.length), color: '#3b82f6', subtitle: 'Managed orgs' },
+    { title: 'Branches', value: String(branches.length), color: '#3b82f6', subtitle: 'Across orgs' },
+    { title: 'Users', value: String(users.length), color: '#3b82f6', subtitle: 'Active users' },
+    { title: 'Audit Templates', value: String(surveys.length), color: '#3b82f6', subtitle: 'Available templates' },
   ];
 
   const quickActions = [
@@ -71,9 +95,13 @@ export default function AdminDashboard() {
         <View style={styles.section}>
           <Text category="h6" style={styles.sectionTitle}>Recent Activity</Text>
           <Card style={styles.card}>
-            <Text category="p2" appearance="hint" style={styles.placeholderText}>
-              Activity feed will be implemented here
-            </Text>
+            {loadingAudits ? (
+              <Text appearance="hint">Loading recent activity…</Text>
+            ) : audits.length === 0 ? (
+              <Text appearance="hint">No recent audits.</Text>
+            ) : (
+              <Text appearance="hint">Total audits: {audits.length}</Text>
+            )}
           </Card>
         </View>
       </ScrollView>

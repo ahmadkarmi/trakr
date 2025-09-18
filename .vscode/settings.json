@@ -1,1 +1,29 @@
-{}
+{
+  "files.exclude": {
+    "android/**": true,
+    "**/android/**": true
+  },
+  "search.exclude": {
+    "android/**": true,
+    "**/android/**": true,
+    "**/build/**": true
+  },
+  "files.watcherExclude": {
+    "android/**": true,
+    "**/android/**": true,
+    "**/build/**": true,
+    "**/.expo/**": true,
+    "**/.expo-shared/**": true
+  },
+  "dart.analysisExcludedFolders": [
+    "${workspaceFolder}/android",
+    "${workspaceFolder}/apps/mobile/android",
+    "${workspaceFolder}/build",
+    "${workspaceFolder}/.expo",
+    "${workspaceFolder}/.expo-shared"
+  ],
+  "typescript.tsserver.exclude": [
+    "**/android/**",
+    "**/build/**"
+  ]
+}
