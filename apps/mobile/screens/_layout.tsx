@@ -1,29 +1,7 @@
-import { Stack } from 'expo-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StatusBar } from 'expo-status-bar';
-// import { ApplicationProvider } from '@ui-kitten/components';
-// import * as eva from '@eva-design/eva';
-// import theme from '../src/theme/custom-theme.json';
+import React from 'react';
+import { View } from 'react-native';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-});
-
+// Placeholder: React Navigation is configured in App.js
 export default function RootLayout() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="dashboard" />
-        <Stack.Screen name="audit" />
-      </Stack>
-      <StatusBar style="auto" />
-    </QueryClientProvider>
-  );
+  return <View />;
 }

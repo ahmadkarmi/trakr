@@ -2,17 +2,29 @@ import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Layout, Text, Card } from '@ui-kitten/components';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/stores/auth';
 import DashboardHeader from '../../src/components/DashboardHeader';
+import { mockApi, AuditStatus } from '@trakr/shared';
 
 export default function BranchManagerDashboard() {
   const { user } = useAuthStore();
 
+  const { data: audits = [], isLoading: isLoadingAudits } = useQuery({
+    queryKey: ['audits', 'branch-manager', user?.branchId],
+    queryFn: () => mockApi.getAudits(), // In a real app, fetch by branch/org
+  });
+
+  const total = audits.length;
+  const inProgress = audits.filter(a => a.status === AuditStatus.IN_PROGRESS).length;
+  const completed = audits.filter(a => a.status === AuditStatus.COMPLETED).length;
+  const complianceRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
   const stats = [
-    { title: 'Total Audits', value: '24', color: '#3b82f6', subtitle: 'This month' },
-    { title: 'Pending Review', value: '8', color: '#f59e0b', subtitle: 'Awaiting approval' },
-    { title: 'Approved', value: '15', color: '#10b981', subtitle: 'This month' },
-    { title: 'Compliance Rate', value: '87%', color: '#10b981', subtitle: 'Average score' },
+    { title: 'Total Audits', value: String(total), color: '#3b82f6', subtitle: 'All time' },
+    { title: 'In Progress', value: String(inProgress), color: '#f59e0b', subtitle: 'Currently running' },
+    { title: 'Completed', value: String(completed), color: '#10b981', subtitle: 'All time' },
+    { title: 'Compliance Rate', value: `${complianceRate}%`, color: '#10b981', subtitle: 'Completed / Total' },
   ];
 
   return (
@@ -48,9 +60,11 @@ export default function BranchManagerDashboard() {
         <View style={styles.section}>
           <Text category="h6" style={styles.sectionTitle}>Branch Audit Overview</Text>
           <Card style={styles.card}>
-            <Text category="p2" appearance="hint" style={styles.placeholderText}>
-              Branch audit management interface will be implemented here
-            </Text>
+            {isLoadingAudits ? (
+              <Text appearance="hint">Loading audits...</Text>
+            ) : (
+              <Text appearance="hint">Total: {total} • In Progress: {inProgress} • Completed: {completed}</Text>
+            )}
           </Card>
         </View>
       </ScrollView>

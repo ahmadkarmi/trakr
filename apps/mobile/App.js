@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './src/stores/auth';
 import { ApplicationProvider } from '@ui-kitten/components';
 import * as eva from '@eva-design/eva';
@@ -16,6 +17,14 @@ import AuditSummary from './screens/audit/summary';
 import { UserRole } from '@trakr/shared';
 
 const Stack = createNativeStackNavigator();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
+    },
+  },
+});
 
 export default function App() {
   const { isLoading, isAuthenticated, user, initialize } = useAuthStore();
@@ -51,19 +60,21 @@ export default function App() {
   const initialRouteName = isAuthenticated ? getHomeScreenName(user?.role) : 'Login';
 
   return (
-    <ApplicationProvider {...eva} theme={{ ...eva.light, ...theme }}>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName={initialRouteName} screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="DashboardAuditor" component={DashboardAuditor} />
-          <Stack.Screen name="DashboardBranchManager" component={DashboardBranchManager} />
-          <Stack.Screen name="DashboardAdmin" component={DashboardAdmin} />
-          <Stack.Screen name="AuditWizard" component={AuditWizard} />
-          <Stack.Screen name="AuditDetail" component={AuditDetail} />
-          <Stack.Screen name="AuditSummary" component={AuditSummary} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ApplicationProvider>
+    <QueryClientProvider client={queryClient}>
+      <ApplicationProvider {...eva} theme={{ ...eva.light, ...theme }}>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName={initialRouteName} screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="DashboardAuditor" component={DashboardAuditor} />
+            <Stack.Screen name="DashboardBranchManager" component={DashboardBranchManager} />
+            <Stack.Screen name="DashboardAdmin" component={DashboardAdmin} />
+            <Stack.Screen name="AuditWizard" component={AuditWizard} />
+            <Stack.Screen name="AuditDetail" component={AuditDetail} />
+            <Stack.Screen name="AuditSummary" component={AuditSummary} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ApplicationProvider>
+    </QueryClientProvider>
   );
 }
 
