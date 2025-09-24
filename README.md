@@ -45,8 +45,8 @@ npm run dev:web
 # Start mobile development server  
 npm run dev:mobile
 
-# Start both simultaneously
-npm run dev:web & npm run dev:mobile
+# Start both simultaneously (root workspace)
+npm run dev
 ```
 
 ### Building
@@ -143,82 +143,6 @@ packages/shared/src/
 
 Use the template in `docs/FEATURE_REQUEST.md` to propose new features.
 
-## 🔄 Migration from Flutter
-
-This project was migrated from a Flutter implementation to React/React Native:
-
-- ✅ All Flutter models converted to TypeScript interfaces
-- ✅ Provider state management → Zustand
-- ✅ Go Router → React Router (web) + Expo Router (mobile)
-- ✅ Flutter widgets → React/React Native components
-- ✅ Custom styling → UI Kitten design system (mobile)
-- ✅ Mock data and services preserved
-- ✅ All user roles and workflows maintained
-- ✅ Consistent design system across platforms
-- ✅ PDF export and CSV functionality planned
-- ✅ Photo attachment system planned
-
 ## 📄 License
 
 MIT License - see LICENSE file for details.
-
----
-
-# Trakr – Multi‑Tenant Auditing Platform (Frontend Prototype)
-
-This repository contains the Flutter frontend for Trakr: a multi‑tenant SaaS for branch/location audits. The current version uses mocked data (local JSON) and mocked auth/payment flows. Focus is on UI/UX, role logic, and core screens.
-
-## Tech Stack
-
-- Flutter (Android, iOS, Web)
-- State: `provider`
-- Routing: `go_router`
-- Utils: `intl`, `shared_preferences`, `fl_chart`
-
-## Requirements
-
-- Flutter stable (3.29.x) and Dart 3.7+
-- Web enabled: `flutter config --enable-web`
-
-## Setup
-
-1. Install dependencies
-   - `flutter pub get`
-2. Run (Web)
-   - `flutter run -d chrome`
-3. Analyze & Test
-   - `flutter analyze`
-   - `flutter test`
-
-## Project Structure
-
-- `lib/screens/` — role selector, dashboards, audit detail
-- `lib/widgets/` — reusable UI (e.g., `audit_card.dart`, `activity_log_list.dart`)
-- `lib/models/` — data models (users, audits, surveys, enums)
-- `lib/providers/` — `AuthProvider` (mock role persistence)
-- `lib/services/mock_repository.dart` — loads mock JSON into memory
-- `lib/utils/` — `format.dart`, `route_paths.dart`, `scoring.dart`
-- `assets/mock/` — JSON data (users, orgs, branches, surveys, audits, activity logs)
-
-## Key User Flows (Mocked)
-
-- Role selector (`/role`) to sign in as Super Admin, Admin, Auditor, or Branch Manager.
-- Dashboards show relevant audits based on role.
-- Audit detail shows responses, weighted scoring, activity log, and a mocked "Export as PDF" action.
-
-## Scoring Logic (Initial)
-
-- Yes = gains weight; No = 0; N/A = excluded from denominator.
-- Unanswered questions are counted in the denominator.
-- See `lib/utils/scoring.dart` and `test/scoring_test.dart`.
-
-## Documentation
-
-- Product requirements: `docs/FEATURE_REQUEST.md`
-
-## Next Steps
-
-- Replace `MockRepository` with real backend (Supabase/Firestore).
-- Real auth (e.g., Supabase Auth) and payments (Stripe/Paddle).
-- PDF export implementation.
-- Advanced analytics & filters using `fl_chart`.

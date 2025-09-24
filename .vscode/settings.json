@@ -25,5 +25,17 @@
   "typescript.tsserver.exclude": [
     "**/android/**",
     "**/build/**"
+  ],
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "/packages/shared/package.json",
+        "packages/shared/package.json"
+      ],
+      "url": "https://json.schemastore.org/package.json"
+    }
   ]
 }

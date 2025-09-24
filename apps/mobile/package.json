@@ -11,7 +11,7 @@
     "build": "expo export",
     "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf .expo dist"
+    "clean": "rimraf .expo dist"
   },
   "dependencies": {
     "@eva-design/eva": "^2.2.0",

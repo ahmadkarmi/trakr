@@ -12,6 +12,8 @@ export interface User {
   role: UserRole;
   orgId: string;
   branchId?: string;
+  signatureUrl?: string; // optional pre-uploaded signature image for approvals
+  avatarUrl?: string; // optional profile image
   createdAt: Date;
   updatedAt: Date;
 }

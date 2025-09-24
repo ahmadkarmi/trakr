@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Layout, Text, Card, Button } from '@ui-kitten/components';
+import { Text, Card, Button } from '@ui-kitten/components';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/stores/auth';
 import DashboardHeader from '../../src/components/DashboardHeader';
@@ -77,7 +77,7 @@ export default function AuditorDashboard() {
                       size="small"
                       appearance="outline"
                       onPress={() => {
-                        // @ts-ignore
+                        // @ts-expect-error React Navigation typing not configured for string route names here
                         navigation.navigate('AuditDetail', { auditId: audit.id });
                       }}
                       style={{ marginRight: 8 }}
@@ -88,7 +88,7 @@ export default function AuditorDashboard() {
                       size="small"
                       status="primary"
                       onPress={() => {
-                        // @ts-ignore
+                        // @ts-expect-error React Navigation typing not configured for string route names here
                         navigation.navigate('AuditWizard', { auditId: audit.id });
                       }}
                     >

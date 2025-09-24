@@ -1,3 +1,5 @@
+import { AuditFrequency } from './organization'
+
 export interface Survey {
   id: string;
   title: string;
@@ -8,6 +10,7 @@ export interface Survey {
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
+  frequency?: AuditFrequency; // how often this survey can be conducted per branch
 }
 
 export interface SurveySection {
@@ -26,6 +29,11 @@ export interface SurveyQuestion {
   order: number;
   options?: string[];
   validation?: QuestionValidation;
+  // Weighting: when defined, this question participates in weighted scoring
+  // If not weighted, it will be excluded from weighted compliance calculations
+  isWeighted?: boolean;
+  yesWeight?: number; // points awarded when answered "yes"
+  noWeight?: number;  // points awarded when answered "no"
 }
 
 export enum QuestionType {

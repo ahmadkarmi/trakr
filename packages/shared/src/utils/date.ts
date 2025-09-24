@@ -26,3 +26,12 @@ export function isThisWeek(date: Date | string): boolean {
   const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
   return dateObj >= weekAgo && dateObj <= today;
 }
+
+export function getQuarterRange(date: Date = new Date()): { start: Date; end: Date } {
+  const month = date.getMonth(); // 0-11
+  const q = Math.floor(month / 3); // 0..3
+  const startMonth = q * 3;
+  const start = new Date(date.getFullYear(), startMonth, 1, 0, 0, 0, 0);
+  const end = new Date(date.getFullYear(), startMonth + 3, 0, 23, 59, 59, 999); // last day of quarter
+  return { start, end };
+}

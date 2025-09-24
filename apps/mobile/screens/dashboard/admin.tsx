@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Layout, Text, Card, Button } from '@ui-kitten/components';
+import { Text, Card, Button } from '@ui-kitten/components';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/stores/auth';
 import DashboardHeader from '../../src/components/DashboardHeader';
@@ -10,20 +10,20 @@ import { mockApi } from '@trakr/shared';
 export default function AdminDashboard() {
   const { user } = useAuthStore();
 
-  const { data: orgs = [], isLoading: loadingOrgs } = useQuery({
+  const { data: orgs = [], isLoading: _loadingOrgs } = useQuery({
     queryKey: ['organizations'],
     queryFn: mockApi.getOrganizations,
   });
-  const { data: branches = [], isLoading: loadingBranches } = useQuery({
+  const { data: branches = [], isLoading: _loadingBranches } = useQuery({
     queryKey: ['branches', orgs[0]?.id],
     queryFn: () => mockApi.getBranches(orgs[0]?.id),
     enabled: orgs.length > 0,
   });
-  const { data: users = [], isLoading: loadingUsers } = useQuery({
+  const { data: users = [], isLoading: _loadingUsers } = useQuery({
     queryKey: ['users'],
     queryFn: mockApi.getUsers,
   });
-  const { data: surveys = [], isLoading: loadingSurveys } = useQuery({
+  const { data: surveys = [], isLoading: _loadingSurveys } = useQuery({
     queryKey: ['surveys'],
     queryFn: mockApi.getSurveys,
   });

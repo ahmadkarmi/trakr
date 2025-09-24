@@ -81,7 +81,7 @@ export default function AuditDetail() {
             status="primary"
             style={styles.button}
             onPress={() => {
-              // @ts-ignore
+              // @ts-expect-error React Navigation typing not configured for string route names here
               navigation.navigate('AuditSummary', { auditId });
             }}
           >

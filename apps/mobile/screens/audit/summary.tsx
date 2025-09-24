@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Card, Button } from '@ui-kitten/components';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { mockApi, Audit, Survey, AUDIT_STATUS_LABELS, AuditStatus } from '@trakr/shared';
+import { mockApi, Audit, Survey, AUDIT_STATUS_LABELS, AuditStatus, calculateWeightedAuditScore } from '@trakr/shared';
 import DashboardHeader from '../../src/components/DashboardHeader';
 
 type RouteParams = { auditId?: string };
@@ -36,12 +36,14 @@ export default function AuditSummary() {
     const answeredNA = allQuestions.filter(q => audit.responses[q.id] === 'na').length;
     const considered = answeredYes + answeredNo; // exclude N/A from compliance
     const compliance = considered > 0 ? Math.round((answeredYes / considered) * 100) : 0;
-    return { total, answeredYes, answeredNo, answeredNA, compliance };
+    const weighted = calculateWeightedAuditScore(audit, survey);
+    const weightedCompliance = Math.round(weighted.weightedCompliancePercentage);
+    return { total, answeredYes, answeredNo, answeredNA, compliance, weightedCompliance };
   }, [audit, survey]);
 
-  const completeAudit = useMutation({
+  const completeAudit = useMutation<Audit | null, Error, void>({
     mutationFn: async () => {
-      if (!auditId) return null as any;
+      if (!auditId) return null;
       return mockApi.setAuditStatus(auditId, AuditStatus.COMPLETED);
     },
     onSuccess: () => {
@@ -90,6 +92,7 @@ export default function AuditSummary() {
           <Text appearance="hint">{`No: ${stats.answeredNo}`}</Text>
           <Text appearance="hint">{`N/A: ${stats.answeredNA}`}</Text>
           <Text category="s1" style={{ marginTop: 8 }}>{`Compliance: ${stats.compliance}%`}</Text>
+          <Text category="s1" style={{ marginTop: 4 }}>{`Weighted Compliance: ${stats.weightedCompliance}%`}</Text>
         </Card>
 
         <View style={styles.actions}>
@@ -97,7 +100,7 @@ export default function AuditSummary() {
             appearance="outline"
             style={styles.button}
             onPress={() => {
-              // @ts-ignore
+              // @ts-expect-error React Navigation typing not configured for string route names here
               navigation.navigate('AuditDetail', { auditId });
             }}
           >

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Layout, Text, Card } from '@ui-kitten/components';
+import { Text, Card } from '@ui-kitten/components';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/stores/auth';
 import DashboardHeader from '../../src/components/DashboardHeader';

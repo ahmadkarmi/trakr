@@ -15,7 +15,7 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
 
   const handleSignOut = () => {
     signOut();
-    // @ts-ignore - navigation type is inferred at runtime
+    // @ts-expect-error - navigation type is inferred at runtime
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 

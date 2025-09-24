@@ -57,7 +57,7 @@ const mockUsers: Record<UserRole, User> = {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       user: null,
       isAuthenticated: false,
       isLoading: true,

@@ -6,7 +6,7 @@ export interface TrakrCardProps extends CardProps {
 }
 
 export const Card: React.FC<TrakrCardProps> = ({ 
-  variant = 'default',
+  variant: _variant = 'default',
   ...props 
 }) => {
   return (

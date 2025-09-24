@@ -29,12 +29,24 @@
     @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-10 py-2 px-4;
   }
   
+  .btn-ghost {
+    @apply btn bg-transparent text-gray-700 hover:bg-gray-100 h-10 py-2 px-3;
+  }
+
+  /* Size variants */
+  .btn-sm {
+    @apply h-9 px-3 text-sm;
+  }
+  .btn-xs {
+    @apply h-8 px-2.5 text-xs;
+  }
+  
   .btn-danger {
     @apply btn bg-danger-600 text-white hover:bg-danger-700 h-10 py-2 px-4;
   }
   
   .card {
-    @apply bg-white rounded-lg border border-gray-200 shadow-sm;
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6;
   }
   
   .input {

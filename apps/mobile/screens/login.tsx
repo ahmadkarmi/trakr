@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { UserRole, USER_ROLE_LABELS } from '@trakr/shared';
@@ -8,7 +8,7 @@ import { useAuthStore } from '../src/stores/auth';
 export default function LoginScreen() {
   console.log('Login Screen - Rendering...');
   
-  const { signIn, isLoading } = useAuthStore();
+  const { signIn } = useAuthStore();
   const navigation = useNavigation();
 
   const handleRoleLogin = async (role: UserRole) => {
@@ -31,7 +31,7 @@ export default function LoginScreen() {
     
     await signIn(role);
     // Replace history so back does not return to Login
-    // @ts-ignore - navigation type is inferred at runtime
+    // @ts-expect-error - navigation type is inferred at runtime
     navigation.reset({ index: 0, routes: [{ name: screenName }] });
   };
 
