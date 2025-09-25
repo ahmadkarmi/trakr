@@ -370,6 +370,13 @@ export const supabaseApi = {
 
   async setAuditAssignedTo(auditId: string, userId: string) {
     const supabase = await getSupabase()
+    // Defensive block at application layer to enforce policy even if DB RPC is permissive
+    // Fetch current status and short-circuit if submitted/approved
+    const { data: cur, error: curErr } = await supabase.from('audits').select('status').eq('id', auditId).maybeSingle()
+    if (curErr) throw curErr
+    if (cur?.status === 'SUBMITTED' || cur?.status === 'APPROVED') {
+      return
+    }
     const { error } = await supabase.rpc('set_audit_assigned_to', { p_audit_id: auditId, p_to_user: userId })
     if (error) throw error
   },

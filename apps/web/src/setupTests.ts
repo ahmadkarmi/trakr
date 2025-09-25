@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom'
+import { beforeAll } from 'vitest'
+import { getSupabase } from './utils/supabaseClient'
 
 // jsdom doesn't implement scrollTo; stub to avoid errors in components that may call it.
 Object.defineProperty(window, 'scrollTo', { value: () => {}, writable: true })
@@ -30,3 +32,29 @@ console.warn = (...args: ConsoleWarnArgs) => {
   }
   originalWarn(...args)
 }
+
+// Ensure Supabase sign-in happens BEFORE tests run when using the Supabase backend.
+beforeAll(async () => {
+  try {
+    const backend = ((import.meta as any).env?.VITE_BACKEND || 'mock').toLowerCase()
+    if (backend !== 'supabase') return
+    const supabase = getSupabase()
+    const { data: sessionRes } = await supabase.auth.getSession()
+    if (sessionRes?.session?.user) return
+    const email = (import.meta as any).env?.VITE_TEST_EMAIL || (globalThis as any)?.process?.env?.VITE_TEST_EMAIL
+    const password = (import.meta as any).env?.VITE_TEST_PASSWORD || (globalThis as any)?.process?.env?.VITE_TEST_PASSWORD
+    if (email && password) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error('[setupTests] Supabase sign-in failed:', error.message)
+      }
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn('[setupTests] Missing VITE_TEST_EMAIL / VITE_TEST_PASSWORD for Supabase tests under RLS')
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[setupTests] Supabase pre-test sign-in skipped due to error:', (e as any)?.message || e)
+  }
+})

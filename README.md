@@ -90,6 +90,99 @@ npm run build:mobile
 - **🛠️ Admin:** Manage survey templates, users, and system settings
 - **🧭 Super Admin:** Full system control and analytics access
 
+## 🔐 RLS & Roles (Supabase)
+
+This project enables Row Level Security (RLS) on production and staging. A dev-mode toggle allows permissive behavior during local development and migration.
+
+### Dev Mode Toggle
+
+- Dev mode is controlled via `public.app_config` key `dev_mode`.
+- When `dev_mode=true`, RLS policies include a permissive OR-condition so local dev and tests work without friction.
+- To flip dev mode:
+
+```sql
+-- Disable dev-mode (production/staging)
+update public.app_config set value='false' where key='dev_mode';
+
+-- Re-enable dev-mode (local dev)
+update public.app_config set value='true' where key='dev_mode';
+```
+
+The helper functions used by policies:
+
+- `public.is_dev_mode()`
+- `public.current_user_org_id()`
+- `public.is_admin()`
+
+These functions are `SECURITY DEFINER` with `search_path=public` to avoid recursion issues and ensure predictable behavior under RLS.
+
+### Role Capabilities
+
+- Admin
+  - Read/write all org-scoped tables.
+  - Create/update/delete surveys, branches, zones, assignments.
+  - Edit audits regardless of status; approve/reject; manage audit photos.
+- Branch Manager
+  - Read org-scoped data.
+  - Update managed branch details; approve/reject audits for their branch.
+- Auditor
+  - Read org-scoped data.
+  - Update their assigned audits when status is not SUBMITTED/APPROVED.
+  - Upload/remove their audit photos.
+
+### RLS Overview by Table
+
+- `organizations`
+  - SELECT: same org (via `current_user_org_id()`), or dev-mode.
+  - INSERT/UPDATE/DELETE: admin-only (or dev-mode).
+
+- `users`
+  - SELECT: self or admin (or dev-mode).
+  - UPDATE: self or admin (or dev-mode).
+  - INSERT/DELETE: admin-only (or dev-mode).
+
+- `branches`
+  - SELECT: same org (or dev-mode).
+  - UPDATE: admin or branch manager for that branch (or dev-mode).
+  - INSERT/DELETE: admin-only (or dev-mode).
+
+- `zones`, `zone_branches`, `zone_assignments`
+  - SELECT: same org (or dev-mode).
+  - All writes: admin-only (or dev-mode).
+
+- `surveys`, `survey_sections`, `survey_questions`
+  - SELECT: same org (or dev-mode).
+  - All writes: admin-only (or dev-mode).
+
+- `audits`
+  - SELECT: same org (or dev-mode).
+  - UPDATE: assignee when status NOT IN (SUBMITTED, APPROVED), or admin (or dev-mode).
+  - INSERT/DELETE: admin-only (or dev-mode).
+
+- `audit_photos`
+  - SELECT: audit belongs to same org (or dev-mode).
+  - INSERT: assignee or admin (or dev-mode).
+  - DELETE: assignee or admin (or dev-mode).
+
+- `auditor_branch_assignments`
+  - SELECT: same org (or dev-mode).
+  - All writes: admin-only (or dev-mode).
+
+- `activity_logs`
+  - SELECT: logs created by users in same org (or dev-mode).
+  - INSERT: dev-mode only (in prod, these are typically written by server-side flows).
+
+### Testing with RLS
+
+When `dev_mode=false`, tests require an authenticated session. The web test setup (`apps/web/src/setupTests.ts`) can auto sign-in if you provide credentials via env:
+
+```
+VITE_TEST_EMAIL=auditor@trakr.com
+VITE_TEST_PASSWORD=<your-password>
+```
+
+These are read by vitest and used to call `supabase.auth.signInWithPassword` before tests run. You can set them in your shell before invoking tests, or use a `.env.local` not committed to source control.
+
 ## 🎯 Key Features
 
 - **Multi-platform:** Consistent experience across web and mobile
