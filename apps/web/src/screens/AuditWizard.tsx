@@ -465,6 +465,7 @@ const AuditWizard: React.FC = () => {
                                 <button
                                   key={k}
                                   type="button"
+                                  data-testid={`answer-${q.id}-${k}`}
                                   aria-pressed={answer === k}
                                   className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm border rounded-md transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 ${
                                     answer === k ? (k === 'yes' ? 'bg-primary-50 border-primary-600' : k === 'no' ? 'bg-danger-50 border-danger-600' : 'bg-gray-50 border-gray-400') : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
@@ -560,7 +561,7 @@ const AuditWizard: React.FC = () => {
                 <div className="h-1.5 bg-primary-600" style={{ width: `${currentSection && currentSection.questions.length ? Math.round((answeredCount/(currentSection.questions.length))*100) : 0}%` }} />
               </div>
             </div>
-            <button className="btn-primary" onClick={goNext} disabled={!canAdvance}>{sectionIndex === survey.sections.length - 1 ? 'Finish' : 'Next'}</button>
+            <button data-testid="finish-audit" className="btn-primary" onClick={goNext} disabled={!canAdvance}>{sectionIndex === survey.sections.length - 1 ? 'Finish' : 'Next'}</button>
           </div>
         </div>
       )}

@@ -139,6 +139,22 @@ export const useAuthStore = create<AuthState>()(
         try {
           const supabase = getSupabase()
           set({ isLoading: true })
+          // Handle Supabase magic link (email) sign-in via token_hash (supports E2E helper and real magic links)
+          try {
+            const currentUrl = new URL(window.location.href)
+            const search = currentUrl.searchParams
+            const hashParams = new URLSearchParams((currentUrl.hash || '').replace(/^#/, ''))
+            const tokenHash = search.get('token_hash') || hashParams.get('token_hash')
+            const t = (search.get('type') || hashParams.get('type') || '').toLowerCase()
+            if (tokenHash) {
+              await supabase.auth.verifyOtp({ type: (t === 'recovery' ? 'recovery' : 'magiclink') as any, token_hash: tokenHash })
+              // Clean sensitive params from the URL
+              search.delete('token_hash'); search.delete('type')
+              currentUrl.hash = ''
+              const cleaned = currentUrl.pathname + (search.toString() ? `?${search.toString()}` : '')
+              try { window.history.replaceState({}, '', cleaned) } catch {}
+            }
+          } catch {}
           const { data: sessionRes } = await supabase.auth.getSession()
           const sessUser = sessionRes?.session?.user
           if (sessUser) {
