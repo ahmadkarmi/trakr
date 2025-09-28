@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { User, UserRole } from '@trakr/shared'
 import { api } from '../utils/api'
 import { getSupabase } from '../utils/supabaseClient'
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 interface AuthState {
   user: User | null
@@ -175,7 +176,7 @@ export const useAuthStore = create<AuthState>()(
             }
           }
           // Subscribe to auth changes
-          supabase.auth.onAuthStateChange(async (_event, session) => {
+          supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
             const u = session?.user
             if (!u) {
               set({ user: null, isAuthenticated: false })

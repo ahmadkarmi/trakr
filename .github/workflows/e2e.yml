@@ -16,6 +16,8 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      BASE_URL: http://localhost:3002
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +39,7 @@ jobs:
       - name: Start Vite dev server
         working-directory: apps/web
         env:
+          VITE_BACKEND: mock
           VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
         run: |
@@ -46,10 +49,18 @@ jobs:
         working-directory: apps/web
         run: npx wait-on@7.0.1 http://localhost:3002
 
+      - name: Debug BASE_URL and /login HTML
+        run: |
+          echo "BASE_URL=$BASE_URL"
+          curl -sS -D - "$BASE_URL/login" | head -n 80
+
+      - name: Ensure BASE_URL visible to Playwright
+        working-directory: apps/web
+        run: node -e "console.log('Playwright sees BASE_URL=', process.env.BASE_URL)"
+
       - name: Run E2E tests
         working-directory: apps/web
         env:
-          BASE_URL: http://localhost:3002
           E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           E2E_SUPABASE_SERVICE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_KEY }}
         run: npm run e2e -s

@@ -1,17 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string | undefined
+const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  // Do not throw here because this file may exist while backend is still mocked.
-  // Consumers should only import this when VITE_BACKEND === 'supabase'.
-  // eslint-disable-next-line no-console
-  console.warn('[supabaseClient] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
+let supabase: any | null = null
+
+export function hasSupabaseEnv(): boolean {
+  return !!supabaseUrl && !!supabaseAnonKey
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
 export function getSupabase() {
+  if (!hasSupabaseEnv()) {
+    throw new Error('[supabaseClient] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
+  }
+  if (!supabase) {
+    supabase = createClient(supabaseUrl as string, supabaseAnonKey as string)
+  }
   return supabase
 }
