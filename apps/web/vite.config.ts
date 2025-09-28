@@ -22,6 +22,15 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 3000,
     host: true,
+    fs: {
+      // Allow serving files from the shared workspace outside this package root
+      allow: [
+        // Monorepo shared source
+        path.resolve(__dirname, '../../packages/shared/src'),
+        // Also allow monorepo root for ancillary files if referenced
+        path.resolve(__dirname, '../../'),
+      ],
+    },
   },
   build: {
     outDir: 'dist',

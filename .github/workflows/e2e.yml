@@ -43,7 +43,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
         run: |
-          nohup npm run dev -- --port 3002 >/dev/null 2>&1 &
+          nohup npm run dev -- --port 3002 > server.log 2>&1 &
 
       - name: Wait for dev server
         working-directory: apps/web
@@ -73,4 +73,5 @@ jobs:
           path: |
             apps/web/test-results
             apps/web/playwright-report
+            apps/web/server.log
           if-no-files-found: ignore
