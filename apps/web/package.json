@@ -20,7 +20,7 @@
   "dependencies": {
     "@headlessui/react": "^1.7.0",
     "@heroicons/react": "^2.0.0",
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/supabase-js": "^2.58.0",
     "@tanstack/react-query": "^5.8.0",
     "@trakr/shared": "file:../../packages/shared",
     "clsx": "^2.0.0",

@@ -41,33 +41,29 @@ async function setUserPasswords() {
     try {
       console.log(`⏳ Setting password for ${email}...`)
       
-      // Update user password using admin API
-      const { data, error } = await supabase.auth.admin.updateUserById(
-        // First, get the user by email
-        (await supabase.auth.admin.listUsers()).data.users.find(u => u.email === email)?.id || '',
+      // First, get all users and find by email
+      const { data: usersData, error: listError } = await supabase.auth.admin.listUsers()
+      
+      if (listError) {
+        throw listError
+      }
+
+      const user = usersData.users.find(u => u.email === email)
+      
+      if (!user) {
+        console.log(`⚠️  User ${email} not found in auth system`)
+        errorCount++
+        continue
+      }
+
+      // Update user password using the correct user ID
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        user.id,
         { password: newPassword }
       )
 
-      if (error) {
-        // If user not found by ID, try to find by email first
-        const { data: users } = await supabase.auth.admin.listUsers()
-        const user = users.users.find(u => u.email === email)
-        
-        if (!user) {
-          console.log(`⚠️  User ${email} not found in auth system`)
-          errorCount++
-          continue
-        }
-
-        // Try again with correct user ID
-        const { error: updateError } = await supabase.auth.admin.updateUserById(
-          user.id,
-          { password: newPassword }
-        )
-
-        if (updateError) {
-          throw updateError
-        }
+      if (updateError) {
+        throw updateError
       }
 
       console.log(`✅ Password set for ${email}`)
