@@ -6,7 +6,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   use: {
     // Point to the dev server. Ensure it's running (npm run dev) or use browser_preview
-    baseURL: process.env.BASE_URL || 'http://localhost:3001',
+    baseURL: process.env.BASE_URL || 'http://localhost:3002',
     headless: true,
     trace: 'on-first-retry',
     video: 'retain-on-failure',
