@@ -2,7 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { User, UserRole } from '@trakr/shared'
 import { api } from '../utils/api'
-import { getSupabase } from '../utils/supabaseClient'
+import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 interface AuthState {
   user: User | null
@@ -98,6 +99,11 @@ export const useAuthStore = create<AuthState>()(
       signInWithCredentials: async (email: string, password: string) => {
         set({ isLoading: true })
         try {
+          if (!hasSupabaseEnv()) {
+            // Supabase auth not configured in this environment
+            set({ isLoading: false })
+            throw new Error('Supabase auth is not configured (missing VITE_SUPABASE_URL/ANON_KEY)')
+          }
           const supabase = getSupabase()
           const { data, error } = await supabase.auth.signInWithPassword({ email, password })
           if (error) throw error
@@ -124,7 +130,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signOut: () => {
-        try { getSupabase().auth.signOut() } catch {}
+        try { if (hasSupabaseEnv()) getSupabase().auth.signOut() } catch {}
         set({ user: null, isAuthenticated: false, isLoading: false })
       },
 
@@ -137,8 +143,28 @@ export const useAuthStore = create<AuthState>()(
       init: async () => {
         // Establish session and auth state listener
         try {
-          const supabase = getSupabase()
           set({ isLoading: true })
+          // If Supabase is not configured (e.g., CI mock backend), skip auth wiring
+          if (!hasSupabaseEnv()) {
+            return
+          }
+          const supabase = getSupabase()
+          // Handle Supabase magic link (email) sign-in via token_hash (supports E2E helper and real magic links)
+          try {
+            const currentUrl = new URL(window.location.href)
+            const search = currentUrl.searchParams
+            const hashParams = new URLSearchParams((currentUrl.hash || '').replace(/^#/, ''))
+            const tokenHash = search.get('token_hash') || hashParams.get('token_hash')
+            const t = (search.get('type') || hashParams.get('type') || '').toLowerCase()
+            if (tokenHash) {
+              await supabase.auth.verifyOtp({ type: (t === 'recovery' ? 'recovery' : 'magiclink') as any, token_hash: tokenHash })
+              // Clean sensitive params from the URL
+              search.delete('token_hash'); search.delete('type')
+              currentUrl.hash = ''
+              const cleaned = currentUrl.pathname + (search.toString() ? `?${search.toString()}` : '')
+              try { window.history.replaceState({}, '', cleaned) } catch {}
+            }
+          } catch {}
           const { data: sessionRes } = await supabase.auth.getSession()
           const sessUser = sessionRes?.session?.user
           if (sessUser) {
@@ -159,7 +185,7 @@ export const useAuthStore = create<AuthState>()(
             }
           }
           // Subscribe to auth changes
-          supabase.auth.onAuthStateChange(async (_event, session) => {
+          supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
             const u = session?.user
             if (!u) {
               set({ user: null, isAuthenticated: false })

@@ -17,7 +17,8 @@
     "declaration": true,
     "outDir": "dist",
     "rootDir": "src",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": ["react"]
   },
   "include": [
     "src/**/*"

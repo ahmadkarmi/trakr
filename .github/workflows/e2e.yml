@@ -1,0 +1,77 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/e2e.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/e2e.yml'
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_URL: http://localhost:3002
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: apps/web
+        run: npx playwright install --with-deps
+
+      - name: Start Vite dev server
+        working-directory: apps/web
+        env:
+          VITE_BACKEND: supabase
+          VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+        run: |
+          nohup npm run dev -- --port 3002 > server.log 2>&1 &
+
+      - name: Wait for dev server
+        working-directory: apps/web
+        run: npx wait-on@7.0.1 http://localhost:3002
+
+      - name: Debug BASE_URL and /login HTML
+        run: |
+          echo "BASE_URL=$BASE_URL"
+          curl -sS -D - "$BASE_URL/login" | head -n 80
+
+      - name: Ensure BASE_URL visible to Playwright
+        working-directory: apps/web
+        run: node -e "console.log('Playwright sees BASE_URL=', process.env.BASE_URL)"
+
+      - name: Run E2E tests
+        working-directory: apps/web
+        env:
+          E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_SERVICE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_KEY }}
+        run: npm run e2e -s
+
+      - name: Upload Playwright artifacts (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            apps/web/test-results
+            apps/web/playwright-report
+            apps/web/server.log
+          if-no-files-found: ignore

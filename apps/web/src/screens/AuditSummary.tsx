@@ -254,6 +254,7 @@ const AuditSummary: React.FC = () => {
                 const canSubmit = !!audit && !!user && user.role === UserRole.AUDITOR && (audit.status === AuditStatus.DRAFT || audit.status === AuditStatus.IN_PROGRESS || audit.status === AuditStatus.COMPLETED)
                 return (
                   <button
+                    data-testid="submit-for-approval"
                     className={`btn-secondary btn-sm ${!canSubmit ? 'opacity-60 cursor-not-allowed' : ''}`}
                     onClick={() => canSubmit && handleSubmitForApproval()}
                     title={!canSubmit ? 'Only auditors can submit for approval. If already submitted/approved, this action is disabled.' : 'Submit for approval'}
