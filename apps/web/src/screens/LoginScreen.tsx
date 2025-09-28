@@ -18,7 +18,14 @@ const LoginScreen: React.FC = () => {
     try {
       await signInWithCredentials(email, password)
     } catch (err: any) {
-      setError(err?.message || 'Login failed')
+      const message = err?.message || 'Login failed'
+      if (message.includes('Invalid login credentials') || message.includes('invalid_credentials')) {
+        setError('Invalid credentials. Try the default password "Password123!" or use the demo role buttons below.')
+      } else if (message.includes('User profile not found')) {
+        setError('User account exists but profile not found in database. Please contact administrator.')
+      } else {
+        setError(message)
+      }
     }
   }
 
@@ -74,16 +81,29 @@ const LoginScreen: React.FC = () => {
           </button>
         </form>
 
-        {/* Demo role buttons (fallback) */}
-        <div className="space-y-2 pt-6">
-          <div className="text-center text-xs text-gray-500">or continue with demo roles</div>
-          <div className="space-y-4">
+        {/* Divider */}
+        <div className="relative pt-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-gray-50 text-gray-500">or</span>
+          </div>
+        </div>
+
+        {/* Quick Access Role Buttons */}
+        <div className="space-y-4 pt-6">
+          <div className="text-center">
+            <div className="text-sm font-medium text-gray-700 mb-2">Quick Access</div>
+            <div className="text-xs text-gray-500">Choose your role to get started immediately</div>
+          </div>
+          <div className="space-y-3">
           {roleButtons.map(({ role, icon }) => (
             <button
               key={role}
               onClick={() => handleRoleLogin(role)}
               disabled={isLoading}
-              className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {isLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
@@ -99,7 +119,12 @@ const LoginScreen: React.FC = () => {
         <div className="text-center">
           <p className="text-xs text-gray-500">
             Use your Supabase credentials to sign in.
-            If you do not have a password set for the seeded users, set one in Supabase Auth: admin@trakr.com, branchmanager@trakr.com, auditor@trakr.com.
+            <br />
+            <strong>Default accounts:</strong> admin@trakr.com, branchmanager@trakr.com, auditor@trakr.com
+            <br />
+            <strong>Default password:</strong> Password123!
+            <br />
+            <span className="text-amber-600">If login fails, passwords may need to be set in Supabase Auth dashboard.</span>
           </p>
         </div>
       </div>
