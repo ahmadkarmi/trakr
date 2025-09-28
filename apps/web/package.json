@@ -4,7 +4,7 @@
   "description": "Trakr Web Application",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3002 --strictPort --host",
     "build": "tsc && vite build",
     "build:analyze": "tsc && vite build --mode analyze",
     "preview": "vite preview",

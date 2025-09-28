@@ -39,7 +39,7 @@ jobs:
       - name: Start Vite dev server
         working-directory: apps/web
         env:
-          VITE_BACKEND: mock
+          VITE_BACKEND: supabase
           VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
         run: |

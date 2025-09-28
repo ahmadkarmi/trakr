@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
     dedupe: ['react', 'react-dom'],
   },
   server: {
-    port: 3000,
+    port: 3002,
     host: true,
     fs: {
       // Allow serving files from the shared workspace outside this package root
