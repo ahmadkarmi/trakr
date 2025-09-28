@@ -24,7 +24,7 @@ const LoginScreen: React.FC = () => {
     } catch (err: any) {
       const message = err?.message || 'Login failed'
       if (message.includes('Invalid login credentials') || message.includes('invalid_credentials')) {
-        setError('Invalid credentials. Try the default password "Password123!" or use the demo role buttons below.')
+        setError('Invalid credentials. Try the default password "Password@123" or use the demo role buttons below.')
       } else if (message.includes('User profile not found')) {
         setError('User account exists but profile not found in database. Please contact administrator.')
       } else {
@@ -175,7 +175,7 @@ const LoginScreen: React.FC = () => {
             </span>
             <br className="hidden sm:block" />
             <span className="block sm:inline mt-2 sm:mt-0">
-              <strong>Default password:</strong> Password123!
+              <strong>Default password:</strong> Password@123
             </span>
             <br className="hidden sm:block" />
             <span className="block sm:inline mt-2 sm:mt-0 text-amber-600">
