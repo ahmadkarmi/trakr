@@ -15,7 +15,7 @@ export interface Branch {
   name: string;
   address?: string;
   orgId: string;
-  managerId?: string;
+  managerId?: string; // Deprecated: kept for backward compatibility
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +42,15 @@ export interface AuditorAssignment {
   userId: string; // auditor user id
   branchIds: string[];
   zoneIds: string[];
+}
+
+export interface BranchManagerAssignment {
+  id: string;
+  branchId: string;
+  managerId: string;
+  assignedAt: Date;
+  assignedBy: string; // Who made the assignment
+  isActive: boolean;
 }
 
 export interface LogEntry {

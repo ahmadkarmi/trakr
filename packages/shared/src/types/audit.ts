@@ -33,6 +33,10 @@ export interface Audit {
   approvalSignatureUrl?: string; // image data/url used for signature
   approvalSignatureType?: 'image' | 'typed' | 'drawn';
   approvalName?: string; // if typed signature
+  approvalAuthority?: 'assigned_manager' | 'admin_fallback' | 'super_admin_override' | 'none';
+  approvalContext?: string; // Human-readable context
+  wasManagerAssignedAtApproval?: boolean; // Snapshot for audit trail
+  assignedManagerIdsAtApproval?: string[]; // Who were the managers at time of approval
   rejectedBy?: string;
   rejectedAt?: Date;
   rejectionNote?: string;
@@ -92,6 +96,21 @@ export const AUDIT_STATUS_LABELS: Record<AuditStatus, string> = {
   [AuditStatus.APPROVED]: 'Approved',
   [AuditStatus.REJECTED]: 'Rejected',
 };
+
+export interface AuditReviewLock {
+  auditId: string;
+  reviewedBy: string;
+  reviewStartedAt: Date;
+  lockExpiresAt: Date; // 15 minutes from start
+  isActive: boolean;
+}
+
+export interface ApprovalAuthority {
+  canApprove: boolean;
+  authority: 'assigned_manager' | 'admin_fallback' | 'super_admin_override' | 'none';
+  reason: string;
+  context: string;
+}
 
 export function getAuditStatusFromKey(key: string): AuditStatus {
   const status = Object.values(AuditStatus).find(s => s === key);

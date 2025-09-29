@@ -1,4 +1,4 @@
-import { User, UserRole, Audit, AuditStatus, Survey, Organization, Branch, Zone, LogEntry, QuestionType, AuditPhoto, AuditorAssignment, AuditFrequency } from '../types';
+import { User, UserRole, Audit, AuditStatus, Survey, Organization, Branch, Zone, LogEntry, QuestionType, AuditPhoto, AuditorAssignment, AuditFrequency, BranchManagerAssignment, AuditReviewLock, ApprovalAuthority } from '../types';
 
 // Mock Organizations
 export const mockOrganizations: Organization[] = [
@@ -45,6 +45,29 @@ export const mockAuditorAssignments: AuditorAssignment[] = [
     zoneIds: [],
   },
 ];
+
+// Mock Branch Manager Assignments
+export const mockBranchManagerAssignments: BranchManagerAssignment[] = [
+  {
+    id: 'bma-1',
+    branchId: 'branch-1',
+    managerId: 'user-2',
+    assignedAt: new Date('2024-01-01'),
+    assignedBy: 'user-3',
+    isActive: true,
+  },
+  {
+    id: 'bma-2',
+    branchId: 'branch-2',
+    managerId: 'user-2',
+    assignedAt: new Date('2024-01-01'),
+    assignedBy: 'user-3',
+    isActive: true,
+  },
+];
+
+// Mock Review Locks
+export const mockReviewLocks: AuditReviewLock[] = [];
 
 // Mock Branches
 export const mockBranches: Branch[] = [
@@ -428,6 +451,103 @@ function synchronizeScheduling(now: Date = new Date()) {
   ensureScheduledForCurrentPeriod(now)
 }
 
+// Helper function to get approval authority
+function getApprovalAuthority(branchId: string, user: User): ApprovalAuthority {
+  // 1. Super Admin can always approve (highest priority)
+  if (user.role === UserRole.SUPER_ADMIN) {
+    return {
+      canApprove: true,
+      authority: 'super_admin_override',
+      reason: 'Super admin has universal approval authority',
+      context: 'Super admin override'
+    };
+  }
+  
+  // 2. Get current branch manager assignments
+  const assignedManagers = mockBranchManagerAssignments.filter(
+    assignment => assignment.branchId === branchId && assignment.isActive
+  );
+  const isAssignedManager = assignedManagers.some(assignment => assignment.managerId === user.id);
+  
+  // 3. Branch has assigned managers
+  if (assignedManagers.length > 0) {
+    if (isAssignedManager && user.role === UserRole.BRANCH_MANAGER) {
+      return {
+        canApprove: true,
+        authority: 'assigned_manager',
+        reason: 'User is assigned as branch manager',
+        context: `Assigned manager for branch ${branchId}`
+      };
+    } else {
+      return {
+        canApprove: false,
+        authority: 'none',
+        reason: 'Branch has assigned managers, user is not assigned',
+        context: `Branch has ${assignedManagers.length} assigned manager(s)`
+      };
+    }
+  }
+  
+  // 4. No assigned managers - Admin fallback
+  if (user.role === UserRole.ADMIN) {
+    return {
+      canApprove: true,
+      authority: 'admin_fallback',
+      reason: 'Admin acting as branch manager (no managers assigned)',
+      context: 'Admin fallback - no assigned managers'
+    };
+  }
+  
+  // 5. No authority
+  return {
+    canApprove: false,
+    authority: 'none',
+    reason: 'Insufficient permissions for approval',
+    context: 'User lacks approval authority'
+  };
+}
+
+// Helper functions for review locks
+function createReviewLock(auditId: string, userId: string): AuditReviewLock {
+  const now = new Date();
+  const lockExpiresAt = new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes
+  
+  const lock: AuditReviewLock = {
+    auditId,
+    reviewedBy: userId,
+    reviewStartedAt: now,
+    lockExpiresAt,
+    isActive: true
+  };
+  
+  // Remove any existing locks for this audit
+  const existingIndex = mockReviewLocks.findIndex(l => l.auditId === auditId);
+  if (existingIndex !== -1) {
+    mockReviewLocks.splice(existingIndex, 1);
+  }
+  
+  mockReviewLocks.push(lock);
+  return lock;
+}
+
+function getActiveReviewLock(auditId: string): AuditReviewLock | null {
+  const now = new Date();
+  return mockReviewLocks.find(lock => 
+    lock.auditId === auditId && 
+    lock.isActive && 
+    lock.lockExpiresAt.getTime() > now.getTime()
+  ) || null;
+}
+
+function releaseReviewLock(auditId: string, userId: string): void {
+  const lockIndex = mockReviewLocks.findIndex(lock => 
+    lock.auditId === auditId && lock.reviewedBy === userId
+  );
+  if (lockIndex !== -1) {
+    mockReviewLocks[lockIndex].isActive = false;
+  }
+}
+
 // Mock API functions
 export const mockApi = {
   // Users
@@ -625,6 +745,105 @@ export const mockApi = {
 
   setBranchManager: async (branchId: string, managerId: string | null): Promise<Branch> => {
     return mockApi.updateBranch(branchId, { managerId: managerId || undefined })
+  },
+
+  // Branch Manager Assignments (new multiple manager system)
+  getBranchManagerAssignments: async (branchId?: string): Promise<BranchManagerAssignment[]> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return branchId 
+      ? mockBranchManagerAssignments.filter(assignment => assignment.branchId === branchId && assignment.isActive)
+      : mockBranchManagerAssignments.filter(assignment => assignment.isActive);
+  },
+
+  assignBranchManager: async (branchId: string, managerId: string, assignedBy: string): Promise<BranchManagerAssignment> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Check if assignment already exists
+    const existingAssignment = mockBranchManagerAssignments.find(
+      assignment => assignment.branchId === branchId && assignment.managerId === managerId && assignment.isActive
+    );
+    
+    if (existingAssignment) {
+      throw new Error('Manager is already assigned to this branch');
+    }
+    
+    const now = new Date();
+    const newAssignment: BranchManagerAssignment = {
+      id: `bma-${Date.now()}`,
+      branchId,
+      managerId,
+      assignedAt: now,
+      assignedBy,
+      isActive: true
+    };
+    
+    mockBranchManagerAssignments.push(newAssignment);
+    addLog(assignedBy, 'branch_manager_assigned', `Assigned manager ${managerId} to branch ${branchId}`, 'branch', branchId);
+    return newAssignment;
+  },
+
+  unassignBranchManager: async (branchId: string, managerId: string, unassignedBy: string): Promise<void> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const assignmentIndex = mockBranchManagerAssignments.findIndex(
+      assignment => assignment.branchId === branchId && assignment.managerId === managerId && assignment.isActive
+    );
+    
+    if (assignmentIndex === -1) {
+      throw new Error('Manager assignment not found');
+    }
+    
+    mockBranchManagerAssignments[assignmentIndex].isActive = false;
+    addLog(unassignedBy, 'branch_manager_unassigned', `Unassigned manager ${managerId} from branch ${branchId}`, 'branch', branchId);
+  },
+
+  getBranchesForManager: async (managerId: string): Promise<Branch[]> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const assignments = mockBranchManagerAssignments.filter(
+      assignment => assignment.managerId === managerId && assignment.isActive
+    );
+    const branchIds = assignments.map(assignment => assignment.branchId);
+    return mockBranches.filter(branch => branchIds.includes(branch.id));
+  },
+
+  getManagersForBranch: async (branchId: string): Promise<User[]> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const assignments = mockBranchManagerAssignments.filter(
+      assignment => assignment.branchId === branchId && assignment.isActive
+    );
+    const managerIds = assignments.map(assignment => assignment.managerId);
+    return mockUsers.filter(user => managerIds.includes(user.id));
+  },
+
+  // Approval Authority
+  getApprovalAuthority: async (branchId: string, userId: string): Promise<ApprovalAuthority> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const user = mockUsers.find(u => u.id === userId);
+    if (!user) {
+      return {
+        canApprove: false,
+        authority: 'none',
+        reason: 'User not found',
+        context: 'Invalid user ID'
+      };
+    }
+    return getApprovalAuthority(branchId, user);
+  },
+
+  // Review Locks
+  createReviewLock: async (auditId: string, userId: string): Promise<AuditReviewLock> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return createReviewLock(auditId, userId);
+  },
+
+  getActiveReviewLock: async (auditId: string): Promise<AuditReviewLock | null> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return getActiveReviewLock(auditId);
+  },
+
+  releaseReviewLock: async (auditId: string, userId: string): Promise<void> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    releaseReviewLock(auditId, userId);
   },
 
   // Survey frequency is handled at the template level
@@ -873,13 +1092,35 @@ export const mockApi = {
     const idx = mockAudits.findIndex(a => a.id === auditId);
     if (idx === -1) throw new Error(`Audit not found: ${auditId}`);
     const current = mockAudits[idx];
-    // Permission: only admin or branch manager of the audit's branch can approve/reject
-    const actor = mockUsers.find(u => u.id === payload.userId)
-    const isAdmin = actor?.role === UserRole.ADMIN
-    const isManager = actor?.role === UserRole.BRANCH_MANAGER && actor?.branchId === current.branchId
-    if (!isAdmin && !isManager) {
-      throw new Error('Permission denied: Only admin or branch manager can approve/reject')
+    
+    // Check if audit is in submitted state
+    if (current.status !== AuditStatus.SUBMITTED) {
+      throw new Error('Audit must be in submitted state to approve/reject');
     }
+    
+    // Check for active review lock by someone else
+    const activeLock = getActiveReviewLock(auditId);
+    if (activeLock && activeLock.reviewedBy !== payload.userId) {
+      const reviewer = mockUsers.find(u => u.id === activeLock.reviewedBy);
+      throw new Error(`Audit is being reviewed by ${reviewer?.name || activeLock.reviewedBy}`);
+    }
+    
+    // Check approval authority using new logic
+    const actor = mockUsers.find(u => u.id === payload.userId);
+    if (!actor) {
+      throw new Error('User not found');
+    }
+    
+    const authority = getApprovalAuthority(current.branchId, actor);
+    if (!authority.canApprove) {
+      throw new Error(`Permission denied: ${authority.reason}`);
+    }
+    
+    // Get current branch manager assignments for audit trail
+    const assignedManagers = mockBranchManagerAssignments.filter(
+      assignment => assignment.branchId === current.branchId && assignment.isActive
+    );
+    const assignedManagerIds = assignedManagers.map(assignment => assignment.managerId);
     const next: Audit = { ...current };
     if (payload.status === 'approved') {
       next.status = AuditStatus.APPROVED;
@@ -889,11 +1130,16 @@ export const mockApi = {
       next.approvalSignatureUrl = payload.signatureUrl;
       next.approvalSignatureType = payload.signatureType;
       next.approvalName = payload.approvalName;
+      // New audit trail fields (only set for approvals)
+      next.approvalAuthority = authority.authority === 'none' ? undefined : authority.authority;
+      next.approvalContext = authority.context;
+      next.wasManagerAssignedAtApproval = assignedManagerIds.length > 0;
+      next.assignedManagerIdsAtApproval = assignedManagerIds;
       // clear rejection metadata
       next.rejectedBy = undefined;
       next.rejectedAt = undefined;
       next.rejectionNote = undefined;
-      addLog(payload.userId, 'audit_approved', payload.note || 'Approved', 'audit', auditId);
+      addLog(payload.userId, 'audit_approved', `${payload.note || 'Approved'} (${authority.context})`, 'audit', auditId);
     } else {
       next.status = AuditStatus.REJECTED;
       next.rejectedBy = payload.userId;
@@ -907,6 +1153,10 @@ export const mockApi = {
     }
     next.updatedAt = new Date();
     mockAudits[idx] = next;
+    
+    // Release any review lock
+    releaseReviewLock(auditId, payload.userId);
+    
     return next;
   },
 
