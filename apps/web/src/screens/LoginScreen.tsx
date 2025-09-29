@@ -2,12 +2,14 @@ import React, { useState } from 'react'
 import { UserRole, USER_ROLE_LABELS } from '@trakr/shared'
 import { useAuthStore } from '../stores/auth'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
+import { useErrorHandler } from '../hooks/useErrorHandler'
+import { ErrorToast } from '../components/ErrorToast'
 
 const LoginScreen: React.FC = () => {
   const { signIn, signInWithCredentials, isLoading } = useAuthStore()
+  const { error: appError, handleSupabaseError, createError, clearError } = useErrorHandler()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [resetMessage, setResetMessage] = useState<string | null>(null)
   const [isResetting, setIsResetting] = useState(false)
 
@@ -17,35 +19,31 @@ const LoginScreen: React.FC = () => {
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
+    clearError()
     setResetMessage(null)
     try {
       await signInWithCredentials(email, password)
     } catch (err: any) {
-      const message = err?.message || 'Login failed'
-      if (message.includes('Invalid login credentials') || message.includes('invalid_credentials')) {
-        setError('Invalid credentials. Try the default password "Password@123" or use the demo role buttons below.')
-      } else if (message.includes('User profile not found')) {
-        setError('User account exists but profile not found in database. Please contact administrator.')
-      } else {
-        setError(message)
-      }
+      handleSupabaseError(err, { 
+        action: 'password-login',
+        email: email 
+      })
     }
   }
 
   const handleForgotPassword = async () => {
     if (!email) {
-      setError('Please enter your email address first.')
+      createError('data/validation-failed', new Error('Email required'), { field: 'email' })
       return
     }
 
     if (!hasSupabaseEnv()) {
-      setError('Password reset is not available (Supabase not configured). Please use the role buttons below.')
+      createError('app/feature-unavailable', new Error('Supabase not configured'))
       return
     }
 
     setIsResetting(true)
-    setError(null)
+    clearError()
     setResetMessage(null)
 
     try {
@@ -60,7 +58,10 @@ const LoginScreen: React.FC = () => {
 
       setResetMessage(`Password reset email sent to ${email}. Please check your inbox and follow the instructions.`)
     } catch (err: any) {
-      setError(err?.message || 'Failed to send password reset email. Please try again.')
+      handleSupabaseError(err, { 
+        action: 'password-reset',
+        email: email 
+      })
     } finally {
       setIsResetting(false)
     }
@@ -73,8 +74,10 @@ const LoginScreen: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-6 sm:space-y-8">
+    <>
+      <ErrorToast error={appError} onClose={clearError} />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-6 sm:space-y-8">
         <div className="text-center">
           <h1 className="text-3xl sm:text-4xl font-bold text-primary-600 mb-2">Trakr</h1>
           <h2 className="text-lg sm:text-xl text-gray-600 font-medium">Modern Audit Management</h2>
@@ -108,7 +111,7 @@ const LoginScreen: React.FC = () => {
               required
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {appError && <p className="text-sm text-red-600">{appError.userMessage}</p>}
           {resetMessage && <p className="text-sm text-green-600">{resetMessage}</p>}
           <button
             type="submit"
@@ -183,8 +186,9 @@ const LoginScreen: React.FC = () => {
             </span>
           </p>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
