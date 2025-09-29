@@ -9,6 +9,8 @@ import PWAInstallPrompt from './components/PWAInstallPrompt'
 import { usePWA } from './hooks/usePWA'
 import { LoadingProvider } from './contexts/LoadingContext'
 import { ErrorToastContainer } from './components/ErrorToast'
+import { OfflineStatus, OfflineBanner } from './components/OfflineStatus'
+import { usePerformanceMonitoring } from './hooks/usePerformanceMonitoring'
 
 // Eager load only critical components (login, loading)
 import LoginScreen from './screens/LoginScreen'
@@ -26,18 +28,24 @@ const SurveyTemplateEditor = lazy(() => import('./screens/SurveyTemplateEditor')
 const ActivityLogs = lazy(() => import('./screens/ActivityLogs'))
 const ManageBranches = lazy(() => import('./screens/ManageBranches'))
 const ManageZones = lazy(() => import('./screens/ManageZones'))
-const ManageAssignments = lazy(() => import('./screens/ManageAssignments'))
 const ProfileSignature = lazy(() => import('./screens/ProfileSignature'))
 const Help = lazy(() => import('./screens/Help'))
 const Profile = lazy(() => import('./screens/Profile'))
 
 function App() {
-  const { isAuthenticated, user, isLoading, init } = useAuthStore()
+  const { user, isLoading, init } = useAuthStore()
   const { isOnline, updateAvailable, updateApp } = usePWA()
+  const { logMetrics, sendMetricsToAnalytics } = usePerformanceMonitoring()
 
   // Hydrate auth session (Supabase) and subscribe to changes
   useEffect(() => {
     init().catch(() => {})
+    
+    // Log performance metrics after app loads
+    setTimeout(() => {
+      logMetrics()
+      sendMetricsToAnalytics({ appVersion: '1.0.0' })
+    }, 5000)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -67,17 +75,11 @@ function App() {
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <ErrorBoundary>
           <div className="min-h-screen bg-gray-50">
-            {/* Offline indicator */}
-            {!isOnline && (
-              <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2">
-                <div className="flex items-center justify-center">
-                  <div className="flex items-center">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
-                    <p className="text-sm text-yellow-800">You're offline. Some features may be limited.</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Offline Banner */}
+            <OfflineBanner />
+            
+            {/* Offline Status Indicator */}
+            <OfflineStatus />
             
             {/* Update available notification */}
             {updateAvailable && (
