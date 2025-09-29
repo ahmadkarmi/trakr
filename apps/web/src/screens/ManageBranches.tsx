@@ -54,28 +54,30 @@ const ManageBranches: React.FC = () => {
 
   return (
     <DashboardLayout title="Manage Branches">
-      <div className="space-y-6">
+      <div className="mobile-container space-y-6">
         {zones.length === 0 && (
-          <div className="card p-4 border border-warning-200 bg-warning-50">
-            <p className="text-warning-800 text-sm">
+          <div className="card-mobile border border-warning-200 bg-warning-50">
+            <p className="text-mobile-body text-warning-800">
               No zones found. Create zones first, then add branches into those zones. This ensures assignments by zone work as expected.
             </p>
           </div>
         )}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Create Branch</h2>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="card-mobile">
+          <div className="mobile-section">
+            <h2 className="heading-mobile-md text-gray-900">Create Branch</h2>
+          </div>
+          <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
             <div>
               <label className="label">Name</label>
-              <input className="input mt-1" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Branch name" />
+              <input className="input-mobile sm:input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Branch name" />
             </div>
             <div>
               <label className="label">Address</label>
-              <input className="input mt-1" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Address" />
+              <input className="input-mobile sm:input" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Address" />
             </div>
             <div>
               <label className="label">Manager</label>
-              <select className="input mt-1" value={form.managerId} onChange={e => setForm(f => ({ ...f, managerId: e.target.value }))}>
+              <select className="input-mobile sm:input" value={form.managerId} onChange={e => setForm(f => ({ ...f, managerId: e.target.value }))}>
                 <option value="">Unassigned</option>
                 {managers.map(m => (
                   <option key={m.id} value={m.id}>{m.name}</option>
@@ -84,14 +86,18 @@ const ManageBranches: React.FC = () => {
             </div>
             <div>
               <label className="label">Zone</label>
-              <select className="input mt-1" value={form.zoneId} onChange={e => setForm(f => ({ ...f, zoneId: e.target.value }))}>
+              <select className="input-mobile sm:input" value={form.zoneId} onChange={e => setForm(f => ({ ...f, zoneId: e.target.value }))}>
                 <option value="">No Zone</option>
                 {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
               </select>
             </div>
           </div>
-          <div className="mt-4">
-            <button className="btn-primary" onClick={() => createBranch.mutate({ name: form.name.trim(), address: form.address.trim(), managerId: form.managerId || undefined, zoneId: form.zoneId || undefined })} disabled={!form.name.trim() || createBranch.isPending}>
+          <div className="mt-6">
+            <button 
+              className="btn-mobile-primary sm:btn-primary sm:w-auto" 
+              onClick={() => createBranch.mutate({ name: form.name.trim(), address: form.address.trim(), managerId: form.managerId || undefined, zoneId: form.zoneId || undefined })} 
+              disabled={!form.name.trim() || createBranch.isPending}
+            >
               {createBranch.isPending ? 'Creating…' : 'Create Branch'}
             </button>
           </div>
