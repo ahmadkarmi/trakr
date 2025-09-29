@@ -74,13 +74,13 @@ const LoginScreen: React.FC = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center py-8">
-      {/* Darker Atmospheric Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900">
+      {/* Vibrant Brand Blue Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-700 to-purple-800">
         {/* Enhanced Organic Shapes for Depth */}
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-gradient-to-r from-purple-600/15 to-blue-600/15 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 rounded-full blur-2xl"></div>
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 rounded-full blur-xl"></div>
-        <div className="absolute bottom-1/4 right-1/3 w-48 h-48 bg-gradient-to-r from-purple-500/15 to-blue-500/15 rounded-full blur-2xl"></div>
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-gradient-to-r from-purple-500/20 to-primary-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-gradient-to-r from-blue-500/25 to-purple-500/25 rounded-full blur-2xl"></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-r from-primary-500/15 to-blue-500/15 rounded-full blur-xl"></div>
+        <div className="absolute bottom-1/4 right-1/3 w-48 h-48 bg-gradient-to-r from-purple-400/20 to-primary-400/20 rounded-full blur-2xl"></div>
       </div>
 
       {/* Main Login Card - Glass Effect with Logo Inside */}
@@ -89,10 +89,10 @@ const LoginScreen: React.FC = () => {
           {/* Glass effect overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-white/5 rounded-2xl"></div>
           
-          {/* Logo Header Inside Card */}
-          <div className="relative p-6 text-center border-b border-white/20">
+          {/* Mobile Logo Header */}
+          <div className="relative p-6 text-center border-b border-white/20 lg:hidden">
             <div className="flex items-center justify-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-xl">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center shadow-xl">
                 <span className="text-xl font-bold text-white drop-shadow-lg">T</span>
               </div>
               <span className="text-white font-bold text-2xl tracking-wide drop-shadow-lg">Trakr</span>
@@ -103,6 +103,14 @@ const LoginScreen: React.FC = () => {
             
             {/* Left Column - Login Form */}
             <div className="relative p-8 flex flex-col justify-center">
+              {/* Desktop Logo - Above Welcome Back */}
+              <div className="hidden lg:flex items-center justify-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center shadow-xl">
+                  <span className="text-2xl font-bold text-white drop-shadow-lg">T</span>
+                </div>
+                <span className="text-white font-bold text-3xl tracking-wide drop-shadow-lg">Trakr</span>
+              </div>
+
               <div className="text-center mb-6">
                 <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">Welcome back!</h1>
                 <p className="text-white/80">Sign in to continue to Trakr</p>
@@ -163,7 +171,7 @@ const LoginScreen: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 shadow-xl backdrop-blur-sm"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 shadow-xl"
                 >
                   {isLoading ? 'Signing in...' : 'Log in'}
                 </button>
