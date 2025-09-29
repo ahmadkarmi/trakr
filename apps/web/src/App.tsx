@@ -5,15 +5,14 @@ import { UserRole } from '@trakr/shared'
 import { ToastProvider } from './components/ToastProvider'
 import ErrorBoundary from './components/ErrorBoundary'
 import LoadingScreen from './components/LoadingScreen'
-import PWAInstallPrompt from './components/PWAInstallPrompt'
 import { usePWA } from './hooks/usePWA'
 import { LoadingProvider } from './contexts/LoadingContext'
 import { ErrorToastContainer } from './components/ErrorToast'
 import { OfflineBanner } from './components/OfflineStatus'
 import { usePerformanceMonitoring } from './hooks/usePerformanceMonitoring'
-
-// Eager load only critical components (login, loading)
+import { testMultipleBranchManagerSystem } from './test-integration'
 import LoginScreen from './screens/LoginScreen'
+import PWAInstallPrompt from './components/PWAInstallPrompt'
 
 // Lazy load all other screens for code splitting
 const DashboardAuditor = lazy(() => import('./screens/DashboardAuditor'))
@@ -37,6 +36,13 @@ function App() {
   const { user, isLoading, init } = useAuthStore()
   const { updateAvailable, updateApp } = usePWA()
   const { logMetrics, sendMetricsToAnalytics } = usePerformanceMonitoring()
+
+  // Make test function available globally for browser console testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).testMultipleBranchManagerSystem = testMultipleBranchManagerSystem
+    }
+  }, [])
 
   // Hydrate auth session (Supabase) and subscribe to changes
   useEffect(() => {

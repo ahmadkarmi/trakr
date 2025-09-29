@@ -1,0 +1,163 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - complementary [ref=e5]:
+    - link "Trakr" [ref=e7] [cursor=pointer]:
+      - /url: /dashboard/admin
+    - generic [ref=e9]:
+      - img [ref=e10]
+      - textbox "Search" [ref=e12]
+    - navigation [ref=e13]:
+      - link "My Dashboard" [ref=e14] [cursor=pointer]:
+        - /url: /dashboard/admin
+        - img [ref=e15] [cursor=pointer]
+        - generic [ref=e17] [cursor=pointer]: My Dashboard
+      - link "Survey Templates" [ref=e18] [cursor=pointer]:
+        - /url: /manage/surveys
+        - img [ref=e19] [cursor=pointer]
+        - generic [ref=e21] [cursor=pointer]: Survey Templates
+      - link "Activity Logs" [ref=e22] [cursor=pointer]:
+        - /url: /activity/logs
+        - img [ref=e23] [cursor=pointer]
+        - generic [ref=e25] [cursor=pointer]: Activity Logs
+      - link "Branch" [ref=e26] [cursor=pointer]:
+        - /url: /dashboard/branch-manager
+        - img [ref=e27] [cursor=pointer]
+        - generic [ref=e29] [cursor=pointer]: Branch
+      - link "Auditor" [ref=e30] [cursor=pointer]:
+        - /url: /dashboard/auditor
+        - img [ref=e31] [cursor=pointer]
+        - generic [ref=e33] [cursor=pointer]: Auditor
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - generic [ref=e36]: A
+        - generic [ref=e37]:
+          - generic [ref=e38]: Admin User
+          - generic [ref=e39]: Admin
+      - generic [ref=e40]:
+        - link "Profile" [ref=e41] [cursor=pointer]:
+          - /url: /profile
+        - link "Signature" [ref=e42] [cursor=pointer]:
+          - /url: /profile/signature
+      - button "Sign Out" [ref=e43] [cursor=pointer]:
+        - img [ref=e44] [cursor=pointer]
+        - text: Sign Out
+  - generic [ref=e46]:
+    - banner [ref=e47]:
+      - generic [ref=e48]:
+        - heading "Admin Dashboard" [level=1] [ref=e50]
+        - generic [ref=e52]:
+          - img [ref=e53]
+          - textbox "Search across audits, users, templates…" [ref=e55]
+        - generic [ref=e56]:
+          - button "Notifications" [ref=e57] [cursor=pointer]:
+            - img [ref=e58] [cursor=pointer]
+          - link "Help" [ref=e60] [cursor=pointer]:
+            - /url: /help
+            - img [ref=e61] [cursor=pointer]
+          - button "User menu" [ref=e64] [cursor=pointer]:
+            - generic [ref=e65] [cursor=pointer]: A
+            - generic [ref=e66] [cursor=pointer]: Admin User
+    - main [ref=e67]:
+      - generic [ref=e68]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - heading "Welcome back, Admin User! 🛠️" [level=2] [ref=e72]
+            - paragraph [ref=e73]: Manage the entire audit system, users, and templates.
+          - generic [ref=e74]:
+            - button "Create Survey Template" [ref=e75] [cursor=pointer]
+            - button "Manage Branches" [ref=e76] [cursor=pointer]
+            - button "Manage Zones" [ref=e77] [cursor=pointer]
+            - button "Assign Auditors" [ref=e78] [cursor=pointer]
+            - button "Invite Users" [ref=e79] [cursor=pointer]
+        - generic [ref=e81]:
+          - generic [ref=e82]:
+            - generic [ref=e83]: "Period:"
+            - generic [ref=e84]:
+              - button "This Week" [ref=e85] [cursor=pointer]
+              - button "This Month" [ref=e86] [cursor=pointer]
+              - button "This Quarter" [ref=e87] [cursor=pointer]
+          - generic [ref=e88]:
+            - generic [ref=e90]:
+              - generic [ref=e91]:
+                - paragraph [ref=e92]: Completion
+                - paragraph [ref=e94]: 0%
+                - paragraph [ref=e95]: In period
+              - img [ref=e97]
+            - generic [ref=e101]:
+              - generic [ref=e102]:
+                - paragraph [ref=e103]: On-time
+                - paragraph [ref=e105]: 0%
+                - paragraph [ref=e106]: Completed on/before due
+              - img [ref=e108]
+            - generic [ref=e111]:
+              - generic [ref=e112]:
+                - paragraph [ref=e113]: Overdue
+                - paragraph [ref=e115]: "0"
+                - paragraph [ref=e116]: Past due
+              - img [ref=e118]
+            - generic [ref=e121]:
+              - generic [ref=e122]:
+                - paragraph [ref=e123]: Coverage
+                - paragraph [ref=e125]: 0%
+                - paragraph [ref=e126]: 0/0 branches
+              - img [ref=e128]
+        - generic [ref=e130]:
+          - generic [ref=e131]:
+            - generic [ref=e132]:
+              - heading "Zone Coverage" [level=3] [ref=e133]
+              - generic [ref=e134]: Top 5
+            - paragraph [ref=e136]: No zones or audits this period.
+          - generic [ref=e137]:
+            - heading "Recent Audits" [level=3] [ref=e139]
+            - generic [ref=e140]:
+              - generic [ref=e142]:
+                - generic [ref=e143]:
+                  - generic [ref=e144]:
+                    - img [ref=e145]
+                    - textbox "Search audit, branch, auditor…" [ref=e147]
+                  - generic [ref=e148]:
+                    - button "Due Today" [ref=e149] [cursor=pointer]
+                    - button "Overdue" [ref=e150] [cursor=pointer]
+                    - button "Submitted" [ref=e151] [cursor=pointer]
+                    - button "Waiting Approval" [ref=e152] [cursor=pointer]
+                    - button "Completed" [ref=e153] [cursor=pointer]
+                    - button "Approved" [ref=e154] [cursor=pointer]
+                    - button "Finalized" [ref=e155] [cursor=pointer]
+                - generic [ref=e156]:
+                  - generic [ref=e157]: 0 results
+                  - button "Filters" [ref=e158] [cursor=pointer]:
+                    - img [ref=e159] [cursor=pointer]
+                    - text: Filters
+                  - button "Clear" [disabled] [ref=e161]:
+                    - img [ref=e162]
+                    - text: Clear
+              - paragraph [ref=e165]: No audits yet.
+          - generic [ref=e166]:
+            - generic [ref=e168]:
+              - generic [ref=e171]:
+                - generic [ref=e172]: 0%
+                - generic [ref=e173]: Completed
+              - generic [ref=e174]:
+                - generic [ref=e175]:
+                  - generic [ref=e176]: "0"
+                  - generic [ref=e177]: Completed
+                - generic [ref=e178]:
+                  - generic [ref=e179]: "0"
+                  - generic [ref=e180]: In Progress
+                - generic [ref=e181]:
+                  - generic [ref=e182]: "0"
+                  - generic [ref=e183]: Draft
+            - generic [ref=e184]:
+              - heading "Recent Activity" [level=3] [ref=e186]
+              - paragraph [ref=e188]: No recent activity.
+          - generic [ref=e189]:
+            - generic [ref=e190]:
+              - heading "Finalized Audits" [level=3] [ref=e191]
+              - generic [ref=e192]:
+                - generic [ref=e193]: "Completed: 0"
+                - generic [ref=e194]: "Approved: 0"
+                - button "Export CSV" [ref=e195] [cursor=pointer]
+            - paragraph [ref=e197]: No finalized audits in this period.
+```
