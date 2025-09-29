@@ -132,7 +132,7 @@ const LoginScreen: React.FC = () => {
   const parallaxY = window.innerWidth <= 768 ? gyroPos.y : mousePos.y
 
   return (
-    <div ref={containerRef} className="min-h-screen relative overflow-hidden flex items-center justify-center py-8">
+    <div ref={containerRef} className="min-h-screen relative overflow-hidden flex items-center justify-center py-8 pb-20">
       {/* Space Effect Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
         {/* Interactive Parallax Stars */}
@@ -145,10 +145,19 @@ const LoginScreen: React.FC = () => {
               transition: 'transform 0.1s ease-out'
             }}
           >
+            {/* Central visible area stars */}
             <div className="absolute top-1/4 left-1/4 w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-lg shadow-white/50"></div>
             <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-75 shadow-lg shadow-blue-200/50"></div>
             <div className="absolute bottom-1/3 left-1/3 w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse delay-150 shadow-lg shadow-cyan-200/50"></div>
             <div className="absolute bottom-1/4 right-1/3 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-300 shadow-lg shadow-white/50"></div>
+            
+            {/* Additional visible area stars */}
+            <div className="absolute top-1/6 left-1/2 w-1.5 h-1.5 bg-cyan-100 rounded-full animate-pulse delay-400 shadow-lg shadow-cyan-100/50"></div>
+            <div className="absolute top-2/3 right-1/2 w-1.5 h-1.5 bg-blue-300 rounded-full animate-pulse delay-500 shadow-lg shadow-blue-300/50"></div>
+            <div className="absolute top-1/2 left-1/8 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-600 shadow-lg shadow-white/50"></div>
+            <div className="absolute top-1/2 right-1/8 w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse delay-700 shadow-lg shadow-cyan-200/50"></div>
+            <div className="absolute top-5/6 left-2/5 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-800 shadow-lg shadow-blue-200/50"></div>
+            <div className="absolute top-1/8 right-2/5 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-900 shadow-lg shadow-white/50"></div>
           </div>
 
           {/* Layer 2 - Medium Distance Stars */}
@@ -159,12 +168,23 @@ const LoginScreen: React.FC = () => {
               transition: 'transform 0.15s ease-out'
             }}
           >
+            {/* Original medium stars */}
             <div className="absolute top-1/2 left-1/6 w-1 h-1 bg-white rounded-full animate-pulse delay-500"></div>
             <div className="absolute top-3/4 right-1/6 w-1 h-1 bg-blue-200 rounded-full animate-pulse delay-700"></div>
             <div className="absolute top-1/5 left-1/2 w-1 h-1 bg-cyan-100 rounded-full animate-pulse delay-200"></div>
             <div className="absolute top-2/3 left-1/5 w-1 h-1 bg-white rounded-full animate-pulse delay-400"></div>
             <div className="absolute bottom-1/5 right-1/2 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-600"></div>
             <div className="absolute top-1/8 right-2/3 w-1 h-1 bg-cyan-200 rounded-full animate-pulse delay-800"></div>
+            
+            {/* Additional medium stars for better visibility */}
+            <div className="absolute top-1/3 left-3/5 w-1 h-1 bg-blue-300 rounded-full animate-pulse delay-1000"></div>
+            <div className="absolute top-4/5 right-3/5 w-1 h-1 bg-white rounded-full animate-pulse delay-1100"></div>
+            <div className="absolute top-1/10 left-3/4 w-1 h-1 bg-cyan-100 rounded-full animate-pulse delay-1200"></div>
+            <div className="absolute top-7/8 left-1/8 w-1 h-1 bg-blue-200 rounded-full animate-pulse delay-1300"></div>
+            <div className="absolute top-2/5 right-1/10 w-1 h-1 bg-cyan-200 rounded-full animate-pulse delay-1400"></div>
+            <div className="absolute top-3/5 left-4/5 w-1 h-1 bg-white rounded-full animate-pulse delay-1500"></div>
+            <div className="absolute top-1/7 right-1/7 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-1600"></div>
+            <div className="absolute top-6/7 left-6/7 w-1 h-1 bg-cyan-300 rounded-full animate-pulse delay-1700"></div>
           </div>
 
           {/* Layer 3 - Distant Stars (subtle parallax) */}
@@ -175,12 +195,22 @@ const LoginScreen: React.FC = () => {
               transition: 'transform 0.2s ease-out'
             }}
           >
+            {/* Original distant stars */}
             <div className="absolute top-1/6 right-1/5 w-0.5 h-0.5 bg-white rounded-full animate-ping"></div>
             <div className="absolute top-3/5 left-1/8 w-0.5 h-0.5 bg-blue-200 rounded-full animate-ping delay-1000"></div>
             <div className="absolute bottom-1/6 left-3/5 w-0.5 h-0.5 bg-cyan-100 rounded-full animate-ping delay-2000"></div>
             <div className="absolute top-4/5 right-1/8 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-1500"></div>
             <div className="absolute top-1/10 left-4/5 w-0.5 h-0.5 bg-blue-100 rounded-full animate-pulse delay-900"></div>
             <div className="absolute bottom-2/5 right-3/4 w-0.5 h-0.5 bg-cyan-200 rounded-full animate-pulse delay-1200"></div>
+            
+            {/* Additional distant stars for fuller sky */}
+            <div className="absolute top-1/4 left-1/10 w-0.5 h-0.5 bg-cyan-100 rounded-full animate-ping delay-2500"></div>
+            <div className="absolute top-3/4 right-1/10 w-0.5 h-0.5 bg-blue-200 rounded-full animate-ping delay-3000"></div>
+            <div className="absolute top-1/2 left-9/10 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-2200"></div>
+            <div className="absolute top-1/8 left-1/3 w-0.5 h-0.5 bg-cyan-200 rounded-full animate-pulse delay-2800"></div>
+            <div className="absolute top-7/8 right-1/3 w-0.5 h-0.5 bg-blue-100 rounded-full animate-pulse delay-3200"></div>
+            <div className="absolute top-2/5 left-1/12 w-0.5 h-0.5 bg-white rounded-full animate-ping delay-3500"></div>
+            <div className="absolute top-3/5 right-1/12 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-ping delay-4000"></div>
           </div>
 
           {/* Layer 4 - Background Twinkles */}
@@ -402,8 +432,8 @@ const LoginScreen: React.FC = () => {
       </div>
 
       {/* Bottom Tagline */}
-      <div className="absolute bottom-8 left-0 right-0 text-center z-10">
-        <p className="text-white/90 text-sm font-medium tracking-wide">
+      <div className="absolute bottom-4 lg:bottom-8 left-0 right-0 text-center z-10 px-4">
+        <p className="text-white/90 text-xs lg:text-sm font-medium tracking-wide leading-relaxed">
           LET'S MAKE THE WORLD MORE PRODUCTIVE, TOGETHER.
         </p>
       </div>
