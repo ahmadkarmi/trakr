@@ -116,39 +116,45 @@ const DashboardAuditor: React.FC = () => {
 
   return (
     <DashboardLayout title="Auditor Dashboard">
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Welcome back, {user?.name}! 🕵️‍♂️
-          </h2>
-          <p className="text-gray-600">
-            Here you can view and complete your assigned audits.
-          </p>
+      <div className="mobile-container space-y-6">
+        <div className="card-mobile">
+          <div className="text-center sm:text-left">
+            <h2 className="heading-mobile-xl text-gray-900 mb-2">
+              Welcome back, {user?.name}! 🕵️‍♂️
+            </h2>
+            <p className="text-mobile-body text-gray-600">
+              Here you can view and complete your assigned audits.
+            </p>
+          </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="card p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div className="flex items-center gap-2 flex-1 sm:flex-none min-w-[220px]">
-                <label className="label mb-0 whitespace-nowrap">Survey</label>
-                <select className="input w-full sm:w-52" value={selectedSurveyId || ''} onChange={(e) => setSelectedSurveyId(e.target.value)}>
-                  {surveys.map(s => (
-                    <option key={s.id} value={s.id}>{s.title}</option>
-                  ))}
-                </select>
-              </div>
+        <div className="card-mobile">
+          <div className="mobile-section">
+            <h3 className="heading-mobile-md text-gray-900 mb-4">Quick Actions</h3>
+            
+            {/* Survey Selection */}
+            <div className="mb-4">
+              <label className="label">Select Survey Template</label>
+              <select className="input-mobile" value={selectedSurveyId || ''} onChange={(e) => setSelectedSurveyId(e.target.value)}>
+                {surveys.map(s => (
+                  <option key={s.id} value={s.id}>{s.title}</option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="space-y-3 sm:space-y-0 sm:flex sm:gap-3">
               <button
-                className="btn-outline btn-sm sm:px-4 sm:h-10"
+                className="btn-mobile-primary sm:btn-outline sm:flex-1"
                 disabled={!latestEditable}
                 onClick={() => latestEditable && navigate(`/audit/${latestEditable.id}/wizard`)}
                 title={latestEditable ? `Resume ${latestEditable.id}` : 'No draft/in-progress audits to resume'}
               >
-                {latestEditable ? 'Resume Latest' : 'No Drafts to Resume'}
+                {latestEditable ? 'Resume Latest Audit' : 'No Drafts to Resume'}
               </button>
               <button
-                className="btn-primary btn-sm sm:px-4 sm:h-10"
+                className="btn-mobile-primary sm:flex-1"
                 disabled={createAudit.isPending || !selectedSurvey || !firstAllowedBranchId}
                 onClick={() => selectedSurvey && firstAllowedBranchId && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: firstAllowedBranchId })}
                 title={!firstAllowedBranchId ? 'No assigned branches available to start under current survey frequency policy' : (!selectedSurvey ? 'Select a survey first' : 'Start a new audit on your first available branch')}
@@ -157,21 +163,24 @@ const DashboardAuditor: React.FC = () => {
               </button>
             </div>
           </div>
+          
           {surveys.length === 0 && (
-            <p className="text-sm text-gray-500 mt-2">No survey templates found. Ask an admin to create one under Manage Survey Templates.</p>
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+              <p className="text-mobile-caption text-amber-700">No survey templates found. Ask an admin to create one under Manage Survey Templates.</p>
+            </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mobile-grid">
           <StatCard title="Pending Audits" value={pending} subtitle="Awaiting completion" variant="primary" icon={<ClipboardDocumentCheckIcon className="w-6 h-6 text-primary-700" />} />
           <StatCard title="In Progress" value={inProgress} subtitle="Currently working on" variant="warning" icon={<ClockIcon className="w-6 h-6 text-warning-700" />} />
           <StatCard title="Completed" value={completed} subtitle="All time" variant="success" icon={<CheckCircleIcon className="w-6 h-6 text-success-700" />} />
         </div>
 
         {/* My Scheduled Audits */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">My Scheduled Audits</h3>
+        <div className="card-mobile">
+          <div className="mobile-section">
+            <h3 className="heading-mobile-md text-gray-900">My Scheduled Audits</h3>
           </div>
           <div className="p-6">
             {(() => {
