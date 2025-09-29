@@ -628,19 +628,82 @@ const DashboardAdmin: React.FC = () => {
                 items={filteredAudits.slice(0, 8)}
                 keyField={(a: Audit) => a.id}
                 empty={<p className="text-gray-500 py-8">No audits yet.</p>}
-                mobileItem={(a: Audit) => (
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{highlightMatch(a.id)}</p>
-                      <div className="text-xs text-gray-500 flex items-center gap-2">
-                        <span>{branches.find(b => b.id === a.branchId)?.name || a.branchId}</span>
-                        <StatusBadge status={a.status} />
+                mobileItem={(a: Audit) => {
+                  const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
+                  const auditorName = users.find(u => u.id === a.assignedTo)?.name || 'Unassigned'
+                  const isOverdue = a.dueAt && new Date(a.dueAt) < new Date()
+                  const isDueToday = a.dueAt && new Date(a.dueAt).toDateString() === new Date().toDateString()
+                  const pastDue = a.dueAt ? new Date(a.dueAt).getTime() < Date.now() : false
+                  const canManualArchive = !a.isArchived && pastDue && (a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS || a.status === AuditStatus.SUBMITTED)
+                  
+                  return (
+                    <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
+                      {/* Card Header */}
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                              <span className="text-lg font-bold text-primary-600">
+                                {a.id.slice(-2)}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-lg truncate">
+                                {highlightMatch(a.id)}
+                              </h4>
+                              <p className="text-gray-600 text-sm">{highlightMatch(branchName)}</p>
+                            </div>
+                          </div>
+                          
+                          {/* Status & Date Row */}
+                          <div className="flex items-center gap-3 flex-wrap mb-3">
+                            <StatusBadge status={a.status} />
+                            {isOverdue && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Overdue
+                              </span>
+                            )}
+                            {isDueToday && !isOverdue && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                Due Today
+                              </span>
+                            )}
+                            {a.isArchived && <InfoBadge label="Archived" tone="gray" />}
+                          </div>
+                          
+                          {/* Audit Details */}
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Auditor:</span>
+                              <span className="font-medium text-gray-900">{highlightMatch(auditorName)}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Updated:</span>
+                              <span className="text-gray-900">{new Date(a.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Due Date:</span>
+                              <span className="text-gray-900">{a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-500">Updated {new Date(a.updatedAt).toLocaleDateString()} • Due {a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}</p>
-                      {a.isArchived && <InfoBadge className="mt-1" label="Archived" tone="gray" />}
+                      
+                      {/* Action Button */}
+                      {canManualArchive && (
+                        <div className="pt-4 border-t border-gray-100">
+                          <button 
+                            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                            onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} 
+                            disabled={manualArchive.isPending}
+                          >
+                            {manualArchive.isPending ? 'Archiving...' : 'Archive Audit'}
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  )
+                }}
                 columns={[
                   { key: 'audit', header: 'Audit', render: (a: Audit) => highlightMatch(a.id) },
                   { key: 'branch', header: 'Branch', render: (a: Audit) => highlightMatch(branches.find(b => b.id === a.branchId)?.name || a.branchId) },
