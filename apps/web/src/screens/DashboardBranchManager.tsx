@@ -24,7 +24,14 @@ const DashboardBranchManager: React.FC = () => {
     queryFn: () => api.getBranches(),
   })
 
-  const managedBranchIds = React.useMemo(() => branches.filter(b => b.managerId === user?.id).map(b => b.id), [branches, user?.id])
+  // Get branches assigned to current manager using new assignment system
+  const { data: assignedBranches = [] } = useQuery<Branch[]>({
+    queryKey: ['branches-for-manager', user?.id],
+    queryFn: () => user?.id ? api.getBranchesForManager(user.id) : Promise.resolve([]),
+    enabled: !!user?.id,
+  })
+
+  const managedBranchIds = React.useMemo(() => assignedBranches.map(b => b.id), [assignedBranches])
   const audits = allAudits.filter(a => managedBranchIds.includes(a.branchId))
   const total = audits.length
   const inProgress = audits.filter(a => a.status === AuditStatus.IN_PROGRESS).length

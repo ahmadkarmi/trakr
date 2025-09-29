@@ -93,7 +93,9 @@ export function useOfflineSync() {
       // Register for background sync if available
       if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
         const registration = await navigator.serviceWorker.ready
-        await registration.sync.register('audit-sync')
+        if ('sync' in registration) {
+          await (registration as any).sync.register('audit-sync')
+        }
       }
 
       return offlineAudit

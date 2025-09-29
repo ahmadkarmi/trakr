@@ -3,6 +3,7 @@ import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Branch, Organization, User, UserRole, Zone } from '@trakr/shared'
 import ResponsiveTable from '../components/ResponsiveTable'
+import BranchManagerAssignments from '../components/BranchManagerAssignments'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 
@@ -19,6 +20,7 @@ const ManageBranches: React.FC = () => {
   const [form, setForm] = useState<{ name: string; address: string; managerId: string | ''; zoneId: string | '' }>(
     { name: '', address: '', managerId: '', zoneId: '' }
   )
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null)
 
   const createBranch = useMutation({
     mutationFn: async (payload: { name: string; address: string; managerId?: string; zoneId?: string }) => {
@@ -117,7 +119,13 @@ const ManageBranches: React.FC = () => {
                       {managers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                     </select>
                   </div>
-                  <div className="mt-2 flex justify-end">
+                  <div className="mt-2 flex justify-end gap-2">
+                    <button 
+                      className="btn-outline btn-sm" 
+                      onClick={() => setSelectedBranchId(b.id)}
+                    >
+                      Manage Managers
+                    </button>
                     <button className="btn-outline btn-sm" onClick={() => { if (window.confirm('Delete this branch?')) deleteBranch.mutate(b.id) }}>
                       Delete
                     </button>
@@ -134,14 +142,47 @@ const ManageBranches: React.FC = () => {
                   </select>
                 ) },
                 { key: 'actions', header: '', className: 'text-right', render: (b) => (
-                  <button className="btn-outline btn-sm" onClick={() => { if (window.confirm('Delete this branch?')) deleteBranch.mutate(b.id) }}>
-                    Delete
-                  </button>
+                  <div className="flex gap-2 justify-end">
+                    <button 
+                      className="btn-outline btn-sm" 
+                      onClick={() => setSelectedBranchId(b.id)}
+                    >
+                      Manage Managers
+                    </button>
+                    <button className="btn-outline btn-sm" onClick={() => { if (window.confirm('Delete this branch?')) deleteBranch.mutate(b.id) }}>
+                      Delete
+                    </button>
+                  </div>
                 )},
               ]}
             />
           </div>
         </div>
+
+        {/* Branch Manager Assignments Modal */}
+        {selectedBranchId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-medium">Branch Manager Assignments</h3>
+                <button
+                  onClick={() => setSelectedBranchId(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-4">
+                <BranchManagerAssignments
+                  branchId={selectedBranchId}
+                  branchName={branches.find(b => b.id === selectedBranchId)?.name || 'Unknown Branch'}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )

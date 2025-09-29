@@ -166,7 +166,7 @@ class OfflineStorageManager {
     const store = transaction.objectStore('photos')
     
     return new Promise((resolve, reject) => {
-      const request = store.index('uploaded').getAll(false)
+      const request = store.index('uploaded').getAll(false as any)
       request.onsuccess = () => resolve(request.result || [])
       request.onerror = () => reject(request.error)
     })
