@@ -673,7 +673,6 @@ const DashboardAuditor: React.FC = () => {
                 </div>
               </>
             )}
-          </div>
         </div>
 
         {/* Assigned Branches & Frequency */}
