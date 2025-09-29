@@ -270,7 +270,7 @@ export function useRenderPerformance(componentName: string) {
     const startTime = performance.now()
     
     return () => {
-      const renderTime = measureCustomMetric(`${componentName} render`)
+      const renderTime = measureCustomMetric(`${componentName} render`, startTime)
       setRenderCount(prev => prev + 1)
       setRenderTimes(prev => [...prev.slice(-9), renderTime]) // Keep last 10 renders
     }

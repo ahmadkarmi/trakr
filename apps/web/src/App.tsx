@@ -28,13 +28,14 @@ const SurveyTemplateEditor = lazy(() => import('./screens/SurveyTemplateEditor')
 const ActivityLogs = lazy(() => import('./screens/ActivityLogs'))
 const ManageBranches = lazy(() => import('./screens/ManageBranches'))
 const ManageZones = lazy(() => import('./screens/ManageZones'))
+const ManageAssignments = lazy(() => import('./screens/ManageAssignments'))
 const ProfileSignature = lazy(() => import('./screens/ProfileSignature'))
 const Help = lazy(() => import('./screens/Help'))
 const Profile = lazy(() => import('./screens/Profile'))
 
 function App() {
   const { user, isLoading, init } = useAuthStore()
-  const { isOnline, updateAvailable, updateApp } = usePWA()
+  const { updateAvailable, updateApp } = usePWA()
   const { logMetrics, sendMetricsToAnalytics } = usePerformanceMonitoring()
 
   // Hydrate auth session (Supabase) and subscribe to changes
@@ -102,14 +103,14 @@ function App() {
                 <Route 
                   path="/login" 
                   element={
-                    isAuthenticated ? 
-                      <Navigate to={getHomeRouteForRole(user!.role)} replace /> : 
+                    user ? 
+                      <Navigate to={getHomeRouteForRole(user.role)} replace /> : 
                       <LoginScreen />
                   } 
                 />
 
                 {/* Protected routes */}
-                {isAuthenticated ? (
+                {user ? (
                   <>
                     <Route 
                       path="/" 
