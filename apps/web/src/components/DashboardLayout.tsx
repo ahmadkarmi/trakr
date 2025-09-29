@@ -65,7 +65,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
         <aside className={`fixed inset-y-0 left-0 z-50 w-80 text-white bg-gradient-to-b from-primary-700 to-primary-600 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col pb-9`}>
           {/* Enhanced mobile header */}
           <div className="h-20 px-6 flex items-center justify-between border-b border-white/10">
-            <span className="text-2xl font-bold tracking-wide">Trakr</span>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-lg font-bold text-primary-600">T</span>
+              </div>
+              <span className="text-xl font-bold tracking-wide">Trakr</span>
+            </div>
             <button className="touch-target p-2 hover:bg-white/10 rounded-xl text-white" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
               <XMarkIcon className="w-6 h-6" />
             </button>
@@ -146,7 +151,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
       {/* Sidebar */}
       <aside className="hidden md:flex md:w-64 lg:w-72 flex-col text-white bg-gradient-to-b from-primary-700 to-primary-600 pb-9 overflow-y-auto">
         <div className="h-18 px-5 flex items-center justify-between">
-          <Link to={isAdmin ? '/dashboard/admin' : '/'} className="text-xl font-bold tracking-wide">Trakr</Link>
+          <Link to={isAdmin ? '/dashboard/admin' : '/'} className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <span className="text-lg font-bold text-primary-600">T</span>
+            </div>
+            <span className="text-xl font-bold tracking-wide">Trakr</span>
+          </Link>
         </div>
         <div className="px-4">
           <div className="bg-white/10 rounded-md flex items-center px-3 py-2">
