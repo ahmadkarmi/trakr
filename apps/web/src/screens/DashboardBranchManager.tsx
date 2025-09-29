@@ -215,17 +215,23 @@ const DashboardBranchManager: React.FC = () => {
           </div>
         </div>
 
-        {/* Approval-Focused Audit Overview */}
+        {/* Mobile-First Recent Audits Section */}
         <div className="card-spacious">
-          <div className="card-header">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">Recent Audits</h3>
-                <p className="text-gray-600 mt-1">Review and approve completed audits</p>
+          <div className="space-y-4">
+            {/* Header - Mobile Optimized */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">Recent Audits</h3>
+              <p className="text-gray-600 mt-1">Review and approve completed audits</p>
+            </div>
+            
+            {/* Sort Controls - Mobile First */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full w-fit">
+                {recent.length} audits
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-500 font-medium">Sort by:</span>
-                <select className="input rounded-xl border-gray-300 bg-white min-w-[140px]">
+                <select className="flex-1 sm:flex-none px-4 py-2 border border-gray-300 rounded-xl bg-white text-sm font-medium min-w-[140px] touch-target">
                   <option value="recent">Most Recent</option>
                   <option value="pending">Pending Approval</option>
                   <option value="branch">By Branch</option>
@@ -240,77 +246,116 @@ const DashboardBranchManager: React.FC = () => {
               <p className="text-gray-500 py-8">No audits found for this branch.</p>
             ) : (
               <>
-                {/* Enhanced Mobile Audit Cards */}
-                <div className="grid gap-6 md:hidden">
+                {/* Modern Mobile Audit Cards */}
+                <div className="space-y-4 md:hidden">
                   {recent.map((a) => {
                     const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
+                    const isOverdue = a.dueAt && new Date(a.dueAt) < new Date()
+                    const isDueToday = a.dueAt && new Date(a.dueAt).toDateString() === new Date().toDateString()
+                    
                     return (
-                      <div key={a.id} className="card-compact card-interactive bg-white border border-gray-200">
-                        <div className="card-header">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 text-base mb-1 truncate">
-                                Audit {a.id}
-                              </h4>
-                              <p className="text-sm text-gray-600 mb-2">{branchName}</p>
-                              <div className="flex items-center gap-2">
-                                <StatusBadge status={a.status} />
-                                <span className="text-xs text-gray-500">
-                                  Updated {new Date(a.updatedAt).toLocaleDateString()}
+                      <div key={a.id} className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-300">
+                        {/* Card Header */}
+                        <div className="flex items-start justify-between gap-4 mb-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                                <span className="text-lg font-bold text-primary-600">
+                                  {a.id.slice(-2)}
                                 </span>
                               </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-gray-900 text-lg truncate">
+                                  Audit {a.id}
+                                </h4>
+                                <p className="text-gray-600 text-sm">{branchName}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Status & Date Row */}
+                            <div className="flex items-center gap-3 flex-wrap mb-3">
+                              <StatusBadge status={a.status} />
+                              {isOverdue && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                  Overdue
+                                </span>
+                              )}
+                              {isDueToday && !isOverdue && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                  Due Today
+                                </span>
+                              )}
+                            </div>
+                            
+                            {/* Audit Details */}
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-500">Updated:</span>
+                                <span className="text-gray-900">{new Date(a.updatedAt).toLocaleDateString()}</span>
+                              </div>
+                              {a.dueAt && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-gray-500">Due Date:</span>
+                                  <span className="text-gray-900">{new Date(a.dueAt).toLocaleDateString()}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
                         
-                        <div className="card-body">
+                        {/* Action Buttons */}
+                        <div className="pt-4 border-t border-gray-100">
                           <div className="grid grid-cols-2 gap-3">
                             <button 
-                              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                              className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-colors touch-target"
                               onClick={() => navigate(`/audit/${a.id}`)}
                             >
-                              View Details
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              <span>View</span>
                             </button>
                             <button 
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                              className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
                               onClick={() => navigate(`/audit/${a.id}/summary`)}
                             >
-                              View Summary
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <span>Summary</span>
                             </button>
                           </div>
                         </div>
                         
-                        <div className="card-footer">
-                          <div className="grid grid-cols-2 gap-3">
-                            <button
-                              className={`px-4 py-3 rounded-xl font-medium transition-colors touch-target ${
-                                a.status === AuditStatus.SUBMITTED 
-                                  ? 'bg-green-600 hover:bg-green-700 text-white' 
-                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              }`}
-                              onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
-                              disabled={a.status !== AuditStatus.SUBMITTED}
-                              title={a.status !== AuditStatus.SUBMITTED ? 'Approval available after submission' : 'Approve with signature'}
-                            >
-                              {a.status === AuditStatus.APPROVED ? '✅ Approved' : '✓ Approve'}
-                            </button>
-                            <button
-                              className={`px-4 py-3 rounded-xl font-medium transition-colors touch-target ${
-                                a.status !== AuditStatus.REJECTED
-                                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              }`}
-                              onClick={() => {
-                                const note = window.prompt('Rejection reason (optional):') || ''
-                                rejectMutation.mutate({ auditId: a.id, note })
-                              }}
-                              disabled={a.status === AuditStatus.REJECTED}
-                              title={a.status === AuditStatus.REJECTED ? 'Already rejected' : 'Reject with optional reason'}
-                            >
-                              ✗ Reject
-                            </button>
+                        {/* Approval Actions */}
+                        {a.status === AuditStatus.SUBMITTED && (
+                          <div className="pt-4 border-t border-gray-100 mt-4">
+                            <div className="grid grid-cols-2 gap-3">
+                              <button
+                                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                                onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                                onClick={() => {
+                                  const note = window.prompt('Rejection reason (optional):') || ''
+                                  rejectMutation.mutate({ auditId: a.id, note })
+                                }}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span>Reject</span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     )
                   })}
