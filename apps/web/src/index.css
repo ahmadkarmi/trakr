@@ -71,13 +71,13 @@
   }
 
   .card-compact {
-    @apply bg-white rounded-xl p-6 shadow-sm border border-gray-100;
+    @apply bg-white rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100;
     @apply touch-manipulation;
   }
 
   .card-spacious {
-    @apply bg-white rounded-2xl p-8 shadow-lg border-0;
-    @apply touch-manipulation space-y-6;
+    @apply bg-white rounded-2xl p-6 sm:p-8 shadow-lg border-0;
+    @apply touch-manipulation space-y-5 sm:space-y-6;
   }
 
   /* Card content organization */
@@ -150,11 +150,11 @@
 
   /* Mobile-specific spacing utilities */
   .mobile-container {
-    @apply px-4 py-6 sm:px-6 sm:py-8;
+    @apply px-3 py-4 sm:px-4 sm:py-6;
   }
 
   .mobile-section {
-    @apply mb-8 sm:mb-10;
+    @apply mb-6 sm:mb-8;
   }
 
   .mobile-grid {
@@ -163,11 +163,11 @@
 
   /* Enhanced spacing for better breathing room */
   .breathing-room {
-    @apply space-y-6 sm:space-y-8;
+    @apply space-y-5 sm:space-y-6;
   }
 
   .content-spacing {
-    @apply space-y-4 sm:space-y-6;
+    @apply space-y-4 sm:space-y-5;
   }
 
   .tight-spacing {

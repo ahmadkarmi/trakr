@@ -191,7 +191,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Enhanced mobile-first topbar */}
         <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200 pt-[env(safe-area-inset-top)]">
-          <div className="mobile-container py-3 flex items-center justify-between gap-3">
+          <div className="mobile-container py-2 sm:py-3 flex items-center justify-between gap-3">
             {/* Left: menu + title (shrinkable) */}
             <div className="flex items-center gap-3 min-w-0">
               <button className="md:hidden touch-target p-2 hover:bg-gray-100 rounded-xl" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
@@ -269,7 +269,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
         </header>
 
         {/* Content */}
-        <main className="px-4 sm:px-6 lg:px-8 py-6">
+        <main className="px-3 sm:px-4 lg:px-6 py-4 sm:py-5">
           {children}
         </main>
 
