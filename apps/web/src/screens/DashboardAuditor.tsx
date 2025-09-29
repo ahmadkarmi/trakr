@@ -196,15 +196,19 @@ const DashboardAuditor: React.FC = () => {
                   )}
                 </div>
                 {availableSurveys.length > 1 && (
-                  <select 
-                    className="input rounded-xl border-gray-300 bg-white min-w-[140px]"
-                    value={selectedSurveyId || ''} 
-                    onChange={(e) => setSelectedSurveyId(e.target.value)}
-                  >
-                    {availableSurveys.map(s => (
-                      <option key={s.id} value={s.id}>{s.title}</option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="survey-select" className="text-sm font-medium text-gray-700">Survey</label>
+                    <select 
+                      id="survey-select"
+                      className="input rounded-xl border-gray-300 bg-white min-w-[140px]"
+                      value={selectedSurveyId || ''} 
+                      onChange={(e) => setSelectedSurveyId(e.target.value)}
+                    >
+                      {availableSurveys.map(s => (
+                        <option key={s.id} value={s.id}>{s.title}</option>
+                      ))}
+                    </select>
+                  </div>
                 )}
               </div>
             </div>

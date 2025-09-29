@@ -67,8 +67,9 @@ const LoginScreen: React.FC = () => {
   }
 
   const roleButtons = [
-    { role: UserRole.AUDITOR, icon: '🕵️‍♂️' },
+    { role: UserRole.ADMIN, icon: '🛠️' },
     { role: UserRole.BRANCH_MANAGER, icon: '🏬' },
+    { role: UserRole.AUDITOR, icon: '🕵️‍♂️' },
   ]
 
   return (
