@@ -6,7 +6,6 @@ import { Audit, AuditStatus, Survey, calculateAuditScore, getQuarterRange, Branc
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useNavigate } from 'react-router-dom'
-import StatCard from '../components/StatCard'
 import StatusBadge from '@/components/StatusBadge'
 import InfoBadge from '@/components/InfoBadge'
 import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
@@ -117,64 +116,137 @@ const DashboardAuditor: React.FC = () => {
   return (
     <DashboardLayout title="Auditor Dashboard">
       <div className="mobile-container space-y-6">
-        <div className="card-mobile">
-          <div className="text-center sm:text-left">
-            <h2 className="heading-mobile-xl text-gray-900 mb-2">
-              Welcome back, {user?.name}! 🕵️‍♂️
-            </h2>
-            <p className="text-mobile-body text-gray-600">
-              Here you can view and complete your assigned audits.
-            </p>
+        {/* Compact Header with Avatar */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+            <span className="text-xl">🕵️‍♂️</span>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}</h2>
+            <p className="text-sm text-gray-500">{assignedBranches.length} branches • {pending + inProgress} active audits</p>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="card-mobile">
-          <div className="mobile-section">
-            <h3 className="heading-mobile-md text-gray-900 mb-4">Quick Actions</h3>
-            
-            {/* Survey Selection */}
-            <div className="mb-4">
-              <label className="label">Select Survey Template</label>
-              <select className="input-mobile" value={selectedSurveyId || ''} onChange={(e) => setSelectedSurveyId(e.target.value)}>
-                {surveys.map(s => (
-                  <option key={s.id} value={s.id}>{s.title}</option>
-                ))}
-              </select>
+        {/* Action-First Quick Actions */}
+        {latestEditable && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-blue-900">Continue Your Audit</h3>
+                <p className="text-sm text-blue-700">Resume audit {latestEditable.id}</p>
+              </div>
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                onClick={() => navigate(`/audit/${latestEditable.id}/wizard`)}
+              >
+                Resume
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Smart Survey Selection */}
+        {surveys.length > 0 && (
+          <div className="card-mobile">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-gray-900">Start New Audit</h3>
+                <p className="text-sm text-gray-500">
+                  {selectedSurvey?.title || 'Select survey template'}
+                  {firstAllowedBranchId && ` • ${allowedBranches.length} branches available`}
+                </p>
+              </div>
+              {surveys.length > 1 && (
+                <select 
+                  className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white"
+                  value={selectedSurveyId || ''} 
+                  onChange={(e) => setSelectedSurveyId(e.target.value)}
+                >
+                  {surveys.map(s => (
+                    <option key={s.id} value={s.id}>{s.title}</option>
+                  ))}
+                </select>
+              )}
             </div>
             
-            {/* Action Buttons */}
-            <div className="space-y-3 sm:space-y-0 sm:flex sm:gap-3">
-              <button
-                className="btn-mobile-primary sm:btn-outline sm:flex-1"
-                disabled={!latestEditable}
-                onClick={() => latestEditable && navigate(`/audit/${latestEditable.id}/wizard`)}
-                title={latestEditable ? `Resume ${latestEditable.id}` : 'No draft/in-progress audits to resume'}
-              >
-                {latestEditable ? 'Resume Latest Audit' : 'No Drafts to Resume'}
-              </button>
-              <button
-                className="btn-mobile-primary sm:flex-1"
-                disabled={createAudit.isPending || !selectedSurvey || !firstAllowedBranchId}
-                onClick={() => selectedSurvey && firstAllowedBranchId && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: firstAllowedBranchId })}
-                title={!firstAllowedBranchId ? 'No assigned branches available to start under current survey frequency policy' : (!selectedSurvey ? 'Select a survey first' : 'Start a new audit on your first available branch')}
-              >
-                {createAudit.isPending ? 'Starting…' : 'Start New Audit'}
-              </button>
+            <button
+              className="btn-mobile-primary"
+              disabled={createAudit.isPending || !selectedSurvey || !firstAllowedBranchId}
+              onClick={() => selectedSurvey && firstAllowedBranchId && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: firstAllowedBranchId })}
+            >
+              {createAudit.isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Starting Audit...
+                </div>
+              ) : (
+                `Start Audit${firstAllowedBranchId ? ` at ${allowedBranches[0]?.name}` : ''}`
+              )}
+            </button>
+            
+            {!firstAllowedBranchId && (
+              <p className="text-sm text-amber-600 mt-2 p-2 bg-amber-50 rounded-lg">
+                No branches available under current survey frequency policy
+              </p>
+            )}
+          </div>
+        )}
+
+        {surveys.length === 0 && (
+          <div className="card-mobile border border-amber-200 bg-amber-50">
+            <div className="text-center py-4">
+              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl">📋</span>
+              </div>
+              <h3 className="font-semibold text-amber-800 mb-1">No Survey Templates</h3>
+              <p className="text-sm text-amber-700">Ask an admin to create survey templates to get started</p>
+            </div>
+          </div>
+        )}
+
+        {/* Actionable Stats Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div 
+            className="card-mobile cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {/* Navigate to pending audits filter */}}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                <ClipboardDocumentCheckIcon className="w-5 h-5 text-primary-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-primary-600">{pending}</div>
+                <div className="text-xs text-gray-500">Pending</div>
+              </div>
             </div>
           </div>
           
-          {surveys.length === 0 && (
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-              <p className="text-mobile-caption text-amber-700">No survey templates found. Ask an admin to create one under Manage Survey Templates.</p>
+          <div 
+            className="card-mobile cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {/* Navigate to in-progress audits */}}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+                <ClockIcon className="w-5 h-5 text-warning-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-warning-600">{inProgress}</div>
+                <div className="text-xs text-gray-500">In Progress</div>
+              </div>
             </div>
-          )}
-        </div>
-
-        <div className="mobile-grid">
-          <StatCard title="Pending Audits" value={pending} subtitle="Awaiting completion" variant="primary" icon={<ClipboardDocumentCheckIcon className="w-6 h-6 text-primary-700" />} />
-          <StatCard title="In Progress" value={inProgress} subtitle="Currently working on" variant="warning" icon={<ClockIcon className="w-6 h-6 text-warning-700" />} />
-          <StatCard title="Completed" value={completed} subtitle="All time" variant="success" icon={<CheckCircleIcon className="w-6 h-6 text-success-700" />} />
+          </div>
+          
+          <div className="card-mobile col-span-2 sm:col-span-1">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+                <CheckCircleIcon className="w-5 h-5 text-success-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-success-600">{completed}</div>
+                <div className="text-xs text-gray-500">Completed</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* My Scheduled Audits */}
@@ -444,6 +516,24 @@ const DashboardAuditor: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Floating Action Button for Primary Action */}
+        {selectedSurvey && firstAllowedBranchId && !latestEditable && (
+          <button
+            className="btn-mobile-fab"
+            onClick={() => createAudit.mutate({ surveyId: selectedSurvey.id, branchId: firstAllowedBranchId })}
+            disabled={createAudit.isPending}
+            title="Start New Audit"
+          >
+            {createAudit.isPending ? (
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
     </DashboardLayout>
   )
