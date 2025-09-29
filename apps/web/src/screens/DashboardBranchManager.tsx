@@ -110,9 +110,9 @@ const DashboardBranchManager: React.FC = () => {
     <DashboardLayout title="Branch Manager Dashboard">
       <div className="mobile-container breathing-room">
         {/* Mobile-First Header Layout */}
-        <div className="mb-6">
+        <div className="mb-6 lg:mb-8">
           {/* Welcome Area - Full Width on Mobile */}
-          <div className="flex items-center gap-3 mb-4 sm:mb-0">
+          <div className="flex items-center gap-3 mb-4 sm:mb-0 lg:mb-6">
             <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
               <span className="text-xl">🏬</span>
             </div>

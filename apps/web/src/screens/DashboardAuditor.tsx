@@ -145,7 +145,7 @@ const DashboardAuditor: React.FC = () => {
     <DashboardLayout title="Auditor Dashboard">
       <div className="mobile-container breathing-room">
         {/* Compact Header with Avatar */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 lg:mb-8">
           <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
             <span className="text-xl">🕵️‍♂️</span>
           </div>

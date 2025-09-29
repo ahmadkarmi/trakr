@@ -64,7 +64,7 @@
   }
 
   .card-mobile {
-    @apply bg-white rounded-xl lg:rounded-lg p-4 lg:p-3 shadow-sm lg:shadow-xs border lg:border-gray-200;
+    @apply bg-white rounded-xl lg:rounded-lg p-4 lg:p-3 shadow-sm border lg:border-gray-200;
     @apply touch-manipulation;
     /* Professional desktop spacing */
     @apply space-y-3 lg:space-y-2;
@@ -76,7 +76,7 @@
   }
 
   .card-spacious {
-    @apply bg-white rounded-xl lg:rounded-lg p-4 lg:p-4 shadow-sm lg:shadow-xs border lg:border-gray-200;
+    @apply bg-white rounded-xl lg:rounded-lg p-4 lg:p-4 shadow-sm border lg:border-gray-200;
     @apply touch-manipulation space-y-4 lg:space-y-3;
   }
 
