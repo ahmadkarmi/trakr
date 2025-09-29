@@ -6,7 +6,6 @@ import { Audit, AuditStatus, Branch } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useNavigate } from 'react-router-dom'
-import StatCard from '../components/StatCard'
 import StatusBadge from '@/components/StatusBadge'
 import { ClipboardDocumentListIcon, ClockIcon, CheckCircleIcon, ChartBarIcon } from '@heroicons/react/24/outline'
 
@@ -110,39 +109,111 @@ const DashboardBranchManager: React.FC = () => {
   return (
     <DashboardLayout title="Branch Manager Dashboard">
       <div className="mobile-container space-y-6">
-        <div className="card-mobile">
-          <div className="text-center sm:text-left">
-            <h2 className="heading-mobile-xl text-gray-900 mb-2">
-              Welcome back, {user?.name}! 🏬
-            </h2>
-            <p className="text-mobile-body text-gray-600">
-              Manage audits and oversee branch operations.
-            </p>
-          </div>
-          {assignedBranches.length > 0 && (
-            <div className="mt-4">
-              <p className="text-mobile-caption text-gray-500 mb-3">Your assigned branches:</p>
-              <div className="flex flex-wrap gap-2">
-                {assignedBranches.map(branch => (
-                  <span key={branch.id} className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-primary-100 text-primary-800 touch-manipulation">
-                    {branch.name}
-                  </span>
-                ))}
-              </div>
+        {/* Compact Header with Branch Selector */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+              <span className="text-xl">🏬</span>
             </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}</h2>
+              <p className="text-sm text-gray-500">
+                {assignedBranches.length} branches • {completed} pending approvals
+              </p>
+            </div>
+          </div>
+          
+          {assignedBranches.length > 1 && (
+            <select className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white min-w-[120px]">
+              <option value="">All Branches</option>
+              {assignedBranches.map(branch => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
+            </select>
           )}
         </div>
 
-        <div className="mobile-grid lg:grid-cols-4">
-          <StatCard title="Total Audits" value={total} subtitle="Branch total" variant="primary" icon={<ClipboardDocumentListIcon className="w-6 h-6 text-primary-700" />} />
-          <StatCard title="In Progress" value={inProgress} subtitle="Currently running" variant="warning" icon={<ClockIcon className="w-6 h-6 text-warning-700" />} />
-          <StatCard title="Completed" value={completed} subtitle="All time" variant="success" icon={<CheckCircleIcon className="w-6 h-6 text-success-700" />} />
-          <StatCard title="Completion Rate" value={`${completionRate}%`} subtitle="Completed / Total" variant="neutral" icon={<ChartBarIcon className="w-6 h-6 text-gray-700" />} progress={completionRate} />
+        {/* Approval Queue Alert */}
+        {completed > 0 && (
+          <div className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-orange-900">Pending Approvals</h3>
+                <p className="text-sm text-orange-700">{completed} audits waiting for your approval</p>
+              </div>
+              <button
+                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                onClick={() => {/* Scroll to approval section */}}
+              >
+                Review ({completed})
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Compact Actionable Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="card-mobile cursor-pointer hover:shadow-lg transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                <ClipboardDocumentListIcon className="w-5 h-5 text-primary-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-primary-600">{total}</div>
+                <div className="text-xs text-gray-500">Total Audits</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-mobile cursor-pointer hover:shadow-lg transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+                <ClockIcon className="w-5 h-5 text-warning-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-warning-600">{inProgress}</div>
+                <div className="text-xs text-gray-500">In Progress</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-mobile cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-r from-success-50 to-green-50 border-success-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+                <CheckCircleIcon className="w-5 h-5 text-success-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-success-600">{completed}</div>
+                <div className="text-xs text-gray-500">Need Approval</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-mobile">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                <ChartBarIcon className="w-5 h-5 text-gray-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-600">{completionRate}%</div>
+                <div className="text-xs text-gray-500">Completion</div>
+              </div>
+            </div>
+          </div>
         </div>
 
+        {/* Approval-Focused Audit Overview */}
         <div className="card-mobile">
-          <div className="mobile-section">
-            <h3 className="heading-mobile-md text-gray-900">Branch Audit Overview</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Recent Audits</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Sort by:</span>
+              <select className="text-sm border border-gray-300 rounded-lg px-2 py-1 bg-white">
+                <option value="recent">Most Recent</option>
+                <option value="pending">Pending Approval</option>
+                <option value="branch">By Branch</option>
+              </select>
+            </div>
           </div>
           <div className="p-6">
             {isLoading ? (
