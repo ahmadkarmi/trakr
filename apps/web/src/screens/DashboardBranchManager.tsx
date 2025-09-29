@@ -235,45 +235,76 @@ const DashboardBranchManager: React.FC = () => {
               <p className="text-gray-500 py-8">No audits found for this branch.</p>
             ) : (
               <>
-                {/* Mobile card list */}
-                <div className="grid gap-3 md:hidden">
+                {/* Enhanced Mobile Audit Cards */}
+                <div className="grid gap-6 md:hidden">
                   {recent.map((a) => {
                     const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
                     return (
-                      <div key={a.id} className="card p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-medium text-gray-900">{a.id}</div>
-                            <div className="text-xs text-gray-500">{branchName} • Updated {new Date(a.updatedAt).toLocaleDateString()}</div>
+                      <div key={a.id} className="card-compact card-interactive bg-white border border-gray-200">
+                        <div className="card-header">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-base mb-1 truncate">
+                                Audit {a.id}
+                              </h4>
+                              <p className="text-sm text-gray-600 mb-2">{branchName}</p>
+                              <div className="flex items-center gap-2">
+                                <StatusBadge status={a.status} />
+                                <span className="text-xs text-gray-500">
+                                  Updated {new Date(a.updatedAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <StatusBadge status={a.status} />
                         </div>
-                        <div className="mt-3 space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:gap-2 sm:justify-end">
-                          <button className="btn-mobile-primary sm:btn-outline sm:btn-sm w-full sm:w-auto" onClick={() => navigate(`/audit/${a.id}`)}>
-                            View Details
-                          </button>
-                          <button className="btn-mobile-primary sm:btn-primary sm:btn-sm w-full sm:w-auto" onClick={() => navigate(`/audit/${a.id}/summary`)}>
-                            View Summary
-                          </button>
-                          <button
-                            className="btn-mobile-primary sm:btn-secondary sm:btn-sm w-full sm:w-auto disabled:opacity-60"
-                            onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
-                            disabled={a.status !== AuditStatus.SUBMITTED}
-                            title={a.status !== AuditStatus.SUBMITTED ? 'Approval available after submission' : 'Approve with signature'}
-                          >
-                            {a.status === AuditStatus.APPROVED ? '✅ Approved' : '✓ Approve'}
-                          </button>
-                          <button
-                            className="btn-mobile-primary sm:btn-outline sm:btn-sm w-full sm:w-auto disabled:opacity-60 bg-red-600 hover:bg-red-700 sm:bg-white sm:hover:bg-gray-50 sm:text-gray-700"
-                            onClick={() => {
-                              const note = window.prompt('Rejection reason (optional):') || ''
-                              rejectMutation.mutate({ auditId: a.id, note })
-                            }}
-                            disabled={a.status === AuditStatus.REJECTED}
-                            title={a.status === AuditStatus.REJECTED ? 'Already rejected' : 'Reject with optional reason'}
-                          >
-                            ✗ Reject
-                          </button>
+                        
+                        <div className="card-body">
+                          <div className="grid grid-cols-2 gap-3">
+                            <button 
+                              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                              onClick={() => navigate(`/audit/${a.id}`)}
+                            >
+                              View Details
+                            </button>
+                            <button 
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                              onClick={() => navigate(`/audit/${a.id}/summary`)}
+                            >
+                              View Summary
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="card-footer">
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              className={`px-4 py-3 rounded-xl font-medium transition-colors touch-target ${
+                                a.status === AuditStatus.SUBMITTED 
+                                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              }`}
+                              onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
+                              disabled={a.status !== AuditStatus.SUBMITTED}
+                              title={a.status !== AuditStatus.SUBMITTED ? 'Approval available after submission' : 'Approve with signature'}
+                            >
+                              {a.status === AuditStatus.APPROVED ? '✅ Approved' : '✓ Approve'}
+                            </button>
+                            <button
+                              className={`px-4 py-3 rounded-xl font-medium transition-colors touch-target ${
+                                a.status !== AuditStatus.REJECTED
+                                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              }`}
+                              onClick={() => {
+                                const note = window.prompt('Rejection reason (optional):') || ''
+                                rejectMutation.mutate({ auditId: a.id, note })
+                              }}
+                              disabled={a.status === AuditStatus.REJECTED}
+                              title={a.status === AuditStatus.REJECTED ? 'Already rejected' : 'Reject with optional reason'}
+                            >
+                              ✗ Reject
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )

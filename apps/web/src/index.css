@@ -71,7 +71,7 @@
   }
 
   .card-compact {
-    @apply bg-white rounded-xl p-4 shadow-sm border border-gray-100;
+    @apply bg-white rounded-xl p-6 shadow-sm border border-gray-100;
     @apply touch-manipulation;
   }
 
@@ -82,7 +82,7 @@
 
   /* Card content organization */
   .card-header {
-    @apply pb-4 border-b border-gray-100;
+    @apply pb-4 mb-4 border-b border-gray-100;
   }
 
   .card-body {
@@ -90,7 +90,24 @@
   }
 
   .card-footer {
-    @apply pt-4 border-t border-gray-100;
+    @apply pt-4 mt-4 border-t border-gray-100;
+  }
+
+  /* Consistent audit card styling */
+  .audit-card {
+    @apply card-compact card-interactive bg-white border border-gray-200;
+  }
+
+  .audit-card-title {
+    @apply font-semibold text-gray-900 text-base mb-1 truncate;
+  }
+
+  .audit-card-subtitle {
+    @apply text-sm text-gray-600 mb-2;
+  }
+
+  .audit-card-meta {
+    @apply text-xs text-gray-500;
   }
 
   /* Interactive card states */

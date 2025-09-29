@@ -324,25 +324,44 @@ const DashboardAuditor: React.FC = () => {
               const sorted = mine.sort((a,b) => new Date(a.dueAt || a.updatedAt).getTime() - new Date(b.dueAt || b.updatedAt).getTime()).slice(0, 8)
               return (
                 <div>
-                  {/* Mobile card list */}
-                  <div className="grid gap-3 md:hidden">
+                  {/* Enhanced Mobile Audit Cards */}
+                  <div className="grid gap-6 md:hidden">
                     {sorted.map(a => {
                       const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
                       return (
-                        <div key={a.id} className="card p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="font-medium text-gray-900">{a.id}</div>
-                              <div className="text-xs text-gray-500">{branchName}</div>
-                            </div>
-                            <div className="text-right">
-                              <StatusBadge status={a.status} />
-                              <div className="text-xs text-gray-500 mt-1">{a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}</div>
+                        <div key={a.id} className="card-compact card-interactive bg-white border border-gray-200">
+                          <div className="card-header">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-gray-900 text-base mb-1 truncate">
+                                  Audit {a.id}
+                                </h4>
+                                <p className="text-sm text-gray-600 mb-2">{branchName}</p>
+                                <div className="flex items-center gap-2">
+                                  <StatusBadge status={a.status} />
+                                  <span className="text-xs text-gray-500">
+                                    {a.dueAt ? `Due ${new Date(a.dueAt).toLocaleDateString()}` : 'No due date'}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="mt-2 flex gap-2 justify-end">
-                            <button className="btn-outline btn-sm" onClick={() => navigate(`/audit/${a.id}`)}>Details</button>
-                            <button className="btn-primary btn-sm" onClick={() => navigate(`/audit/${a.id}/wizard`)}>Open</button>
+                          
+                          <div className="card-footer">
+                            <div className="flex gap-3">
+                              <button 
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                                onClick={() => navigate(`/audit/${a.id}`)}
+                              >
+                                View Details
+                              </button>
+                              <button 
+                                className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                                onClick={() => navigate(`/audit/${a.id}/wizard`)}
+                              >
+                                Open Audit
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )
