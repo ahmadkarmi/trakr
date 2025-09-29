@@ -158,6 +158,36 @@ const LoginScreen: React.FC = () => {
             <div className="absolute top-1/2 right-1/8 w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse delay-700 shadow-lg shadow-cyan-200/50"></div>
             <div className="absolute top-5/6 left-2/5 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-800 shadow-lg shadow-blue-200/50"></div>
             <div className="absolute top-1/8 right-2/5 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-900 shadow-lg shadow-white/50"></div>
+            
+            {/* Left side empty space stars */}
+            <div className="absolute top-1/12 left-1/20 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-1000 shadow-lg shadow-blue-200/50"></div>
+            <div className="absolute top-3/12 left-1/16 w-1.5 h-1.5 bg-cyan-100 rounded-full animate-pulse delay-1100 shadow-lg shadow-cyan-100/50"></div>
+            <div className="absolute top-5/12 left-1/24 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-1200 shadow-lg shadow-white/50"></div>
+            <div className="absolute top-7/12 left-1/18 w-1.5 h-1.5 bg-blue-300 rounded-full animate-pulse delay-1300 shadow-lg shadow-blue-300/50"></div>
+            <div className="absolute top-9/12 left-1/20 w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse delay-1400 shadow-lg shadow-cyan-200/50"></div>
+            <div className="absolute top-11/12 left-1/16 w-1.5 h-1.5 bg-blue-100 rounded-full animate-pulse delay-1500 shadow-lg shadow-blue-100/50"></div>
+            
+            {/* Right side empty space stars */}
+            <div className="absolute top-1/12 right-1/20 w-1.5 h-1.5 bg-cyan-300 rounded-full animate-pulse delay-1600 shadow-lg shadow-cyan-300/50"></div>
+            <div className="absolute top-3/12 right-1/16 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-1700 shadow-lg shadow-white/50"></div>
+            <div className="absolute top-5/12 right-1/24 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-1800 shadow-lg shadow-blue-200/50"></div>
+            <div className="absolute top-7/12 right-1/18 w-1.5 h-1.5 bg-cyan-100 rounded-full animate-pulse delay-1900 shadow-lg shadow-cyan-100/50"></div>
+            <div className="absolute top-9/12 right-1/20 w-1.5 h-1.5 bg-blue-300 rounded-full animate-pulse delay-2000 shadow-lg shadow-blue-300/50"></div>
+            <div className="absolute top-11/12 right-1/16 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-2100 shadow-lg shadow-white/50"></div>
+            
+            {/* Top area empty space stars */}
+            <div className="absolute top-1/24 left-1/6 w-1.5 h-1.5 bg-blue-100 rounded-full animate-pulse delay-2200 shadow-lg shadow-blue-100/50"></div>
+            <div className="absolute top-1/20 left-2/6 w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse delay-2300 shadow-lg shadow-cyan-200/50"></div>
+            <div className="absolute top-1/18 left-3/6 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-2400 shadow-lg shadow-white/50"></div>
+            <div className="absolute top-1/20 left-4/6 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-2500 shadow-lg shadow-blue-200/50"></div>
+            <div className="absolute top-1/24 left-5/6 w-1.5 h-1.5 bg-cyan-300 rounded-full animate-pulse delay-2600 shadow-lg shadow-cyan-300/50"></div>
+            
+            {/* Bottom area empty space stars */}
+            <div className="absolute bottom-1/24 left-1/6 w-1.5 h-1.5 bg-blue-300 rounded-full animate-pulse delay-2700 shadow-lg shadow-blue-300/50"></div>
+            <div className="absolute bottom-1/20 left-2/6 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-2800 shadow-lg shadow-white/50"></div>
+            <div className="absolute bottom-1/18 left-3/6 w-1.5 h-1.5 bg-cyan-100 rounded-full animate-pulse delay-2900 shadow-lg shadow-cyan-100/50"></div>
+            <div className="absolute bottom-1/20 left-4/6 w-1.5 h-1.5 bg-blue-100 rounded-full animate-pulse delay-3000 shadow-lg shadow-blue-100/50"></div>
+            <div className="absolute bottom-1/24 left-5/6 w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse delay-3100 shadow-lg shadow-cyan-200/50"></div>
           </div>
 
           {/* Layer 2 - Medium Distance Stars */}
@@ -185,6 +215,42 @@ const LoginScreen: React.FC = () => {
             <div className="absolute top-3/5 left-4/5 w-1 h-1 bg-white rounded-full animate-pulse delay-1500"></div>
             <div className="absolute top-1/7 right-1/7 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-1600"></div>
             <div className="absolute top-6/7 left-6/7 w-1 h-1 bg-cyan-300 rounded-full animate-pulse delay-1700"></div>
+            
+            {/* Left edge medium stars */}
+            <div className="absolute top-1/8 left-1/32 w-1 h-1 bg-blue-200 rounded-full animate-pulse delay-3200"></div>
+            <div className="absolute top-2/8 left-1/28 w-1 h-1 bg-cyan-100 rounded-full animate-pulse delay-3300"></div>
+            <div className="absolute top-3/8 left-1/30 w-1 h-1 bg-white rounded-full animate-pulse delay-3400"></div>
+            <div className="absolute top-4/8 left-1/26 w-1 h-1 bg-blue-300 rounded-full animate-pulse delay-3500"></div>
+            <div className="absolute top-5/8 left-1/32 w-1 h-1 bg-cyan-200 rounded-full animate-pulse delay-3600"></div>
+            <div className="absolute top-6/8 left-1/28 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-3700"></div>
+            <div className="absolute top-7/8 left-1/30 w-1 h-1 bg-white rounded-full animate-pulse delay-3800"></div>
+            
+            {/* Right edge medium stars */}
+            <div className="absolute top-1/8 right-1/32 w-1 h-1 bg-cyan-300 rounded-full animate-pulse delay-3900"></div>
+            <div className="absolute top-2/8 right-1/28 w-1 h-1 bg-blue-200 rounded-full animate-pulse delay-4000"></div>
+            <div className="absolute top-3/8 right-1/30 w-1 h-1 bg-white rounded-full animate-pulse delay-4100"></div>
+            <div className="absolute top-4/8 right-1/26 w-1 h-1 bg-cyan-100 rounded-full animate-pulse delay-4200"></div>
+            <div className="absolute top-5/8 right-1/32 w-1 h-1 bg-blue-300 rounded-full animate-pulse delay-4300"></div>
+            <div className="absolute top-6/8 right-1/28 w-1 h-1 bg-cyan-200 rounded-full animate-pulse delay-4400"></div>
+            <div className="absolute top-7/8 right-1/30 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-4500"></div>
+            
+            {/* Top edge medium stars */}
+            <div className="absolute top-1/32 left-1/8 w-1 h-1 bg-white rounded-full animate-pulse delay-4600"></div>
+            <div className="absolute top-1/28 left-2/8 w-1 h-1 bg-blue-200 rounded-full animate-pulse delay-4700"></div>
+            <div className="absolute top-1/30 left-3/8 w-1 h-1 bg-cyan-100 rounded-full animate-pulse delay-4800"></div>
+            <div className="absolute top-1/32 left-4/8 w-1 h-1 bg-blue-300 rounded-full animate-pulse delay-4900"></div>
+            <div className="absolute top-1/28 left-5/8 w-1 h-1 bg-cyan-200 rounded-full animate-pulse delay-5000"></div>
+            <div className="absolute top-1/30 left-6/8 w-1 h-1 bg-white rounded-full animate-pulse delay-5100"></div>
+            <div className="absolute top-1/32 left-7/8 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-5200"></div>
+            
+            {/* Bottom edge medium stars */}
+            <div className="absolute bottom-1/32 left-1/8 w-1 h-1 bg-cyan-300 rounded-full animate-pulse delay-5300"></div>
+            <div className="absolute bottom-1/28 left-2/8 w-1 h-1 bg-blue-200 rounded-full animate-pulse delay-5400"></div>
+            <div className="absolute bottom-1/30 left-3/8 w-1 h-1 bg-white rounded-full animate-pulse delay-5500"></div>
+            <div className="absolute bottom-1/32 left-4/8 w-1 h-1 bg-cyan-100 rounded-full animate-pulse delay-5600"></div>
+            <div className="absolute bottom-1/28 left-5/8 w-1 h-1 bg-blue-300 rounded-full animate-pulse delay-5700"></div>
+            <div className="absolute bottom-1/30 left-6/8 w-1 h-1 bg-cyan-200 rounded-full animate-pulse delay-5800"></div>
+            <div className="absolute bottom-1/32 left-7/8 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-5900"></div>
           </div>
 
           {/* Layer 3 - Distant Stars (subtle parallax) */}
@@ -211,6 +277,45 @@ const LoginScreen: React.FC = () => {
             <div className="absolute top-7/8 right-1/3 w-0.5 h-0.5 bg-blue-100 rounded-full animate-pulse delay-3200"></div>
             <div className="absolute top-2/5 left-1/12 w-0.5 h-0.5 bg-white rounded-full animate-ping delay-3500"></div>
             <div className="absolute top-3/5 right-1/12 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-ping delay-4000"></div>
+            
+            {/* Scattered distant stars throughout empty spaces */}
+            <div className="absolute top-1/16 left-1/40 w-0.5 h-0.5 bg-blue-100 rounded-full animate-ping delay-6000"></div>
+            <div className="absolute top-3/16 left-1/36 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-6100"></div>
+            <div className="absolute top-5/16 left-1/38 w-0.5 h-0.5 bg-cyan-100 rounded-full animate-ping delay-6200"></div>
+            <div className="absolute top-7/16 left-1/34 w-0.5 h-0.5 bg-blue-200 rounded-full animate-pulse delay-6300"></div>
+            <div className="absolute top-9/16 left-1/40 w-0.5 h-0.5 bg-cyan-200 rounded-full animate-ping delay-6400"></div>
+            <div className="absolute top-11/16 left-1/36 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-6500"></div>
+            <div className="absolute top-13/16 left-1/38 w-0.5 h-0.5 bg-blue-300 rounded-full animate-ping delay-6600"></div>
+            <div className="absolute top-15/16 left-1/34 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-pulse delay-6700"></div>
+            
+            <div className="absolute top-1/16 right-1/40 w-0.5 h-0.5 bg-cyan-100 rounded-full animate-pulse delay-6800"></div>
+            <div className="absolute top-3/16 right-1/36 w-0.5 h-0.5 bg-blue-200 rounded-full animate-ping delay-6900"></div>
+            <div className="absolute top-5/16 right-1/38 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-7000"></div>
+            <div className="absolute top-7/16 right-1/34 w-0.5 h-0.5 bg-cyan-200 rounded-full animate-ping delay-7100"></div>
+            <div className="absolute top-9/16 right-1/40 w-0.5 h-0.5 bg-blue-100 rounded-full animate-pulse delay-7200"></div>
+            <div className="absolute top-11/16 right-1/36 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-ping delay-7300"></div>
+            <div className="absolute top-13/16 right-1/38 w-0.5 h-0.5 bg-blue-300 rounded-full animate-pulse delay-7400"></div>
+            <div className="absolute top-15/16 right-1/34 w-0.5 h-0.5 bg-white rounded-full animate-ping delay-7500"></div>
+            
+            {/* Top edge distant stars */}
+            <div className="absolute top-1/48 left-1/16 w-0.5 h-0.5 bg-blue-200 rounded-full animate-ping delay-7600"></div>
+            <div className="absolute top-1/44 left-3/16 w-0.5 h-0.5 bg-cyan-100 rounded-full animate-pulse delay-7700"></div>
+            <div className="absolute top-1/46 left-5/16 w-0.5 h-0.5 bg-white rounded-full animate-ping delay-7800"></div>
+            <div className="absolute top-1/48 left-7/16 w-0.5 h-0.5 bg-blue-300 rounded-full animate-pulse delay-7900"></div>
+            <div className="absolute top-1/44 left-9/16 w-0.5 h-0.5 bg-cyan-200 rounded-full animate-ping delay-8000"></div>
+            <div className="absolute top-1/46 left-11/16 w-0.5 h-0.5 bg-blue-100 rounded-full animate-pulse delay-8100"></div>
+            <div className="absolute top-1/48 left-13/16 w-0.5 h-0.5 bg-white rounded-full animate-ping delay-8200"></div>
+            <div className="absolute top-1/44 left-15/16 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-pulse delay-8300"></div>
+            
+            {/* Bottom edge distant stars */}
+            <div className="absolute bottom-1/48 left-1/16 w-0.5 h-0.5 bg-cyan-200 rounded-full animate-pulse delay-8400"></div>
+            <div className="absolute bottom-1/44 left-3/16 w-0.5 h-0.5 bg-blue-200 rounded-full animate-ping delay-8500"></div>
+            <div className="absolute bottom-1/46 left-5/16 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-8600"></div>
+            <div className="absolute bottom-1/48 left-7/16 w-0.5 h-0.5 bg-cyan-100 rounded-full animate-ping delay-8700"></div>
+            <div className="absolute bottom-1/44 left-9/16 w-0.5 h-0.5 bg-blue-300 rounded-full animate-pulse delay-8800"></div>
+            <div className="absolute bottom-1/46 left-11/16 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-ping delay-8900"></div>
+            <div className="absolute bottom-1/48 left-13/16 w-0.5 h-0.5 bg-blue-100 rounded-full animate-pulse delay-9000"></div>
+            <div className="absolute bottom-1/44 left-15/16 w-0.5 h-0.5 bg-white rounded-full animate-ping delay-9100"></div>
           </div>
 
           {/* Layer 4 - Background Twinkles */}
