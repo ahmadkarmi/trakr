@@ -424,30 +424,58 @@ const DashboardAuditor: React.FC = () => {
               <p className="text-gray-500 py-8">No audits found.</p>
             ) : (
               <>
-                {/* Mobile card list */}
-                <div className="grid gap-3 md:hidden">
+                {/* Enhanced Mobile Audit Cards */}
+                <div className="grid gap-6 md:hidden">
                   {recent.map((a) => {
                     const s = surveys.find(su => su.id === a.surveyId)
                     const comp = s ? Math.round(calculateAuditScore(a, s).completionPercentage) : 0
                     const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
                     return (
-                      <div key={a.id} className="card p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-medium text-gray-900">{a.id}</div>
-                            <div className="text-xs text-gray-500">{branchName} • Updated {new Date(a.updatedAt).toLocaleDateString()}</div>
+                      <div key={a.id} className="card-compact card-interactive bg-white border border-gray-200">
+                        <div className="card-header">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-base mb-1 truncate">
+                                Audit {a.id}
+                              </h4>
+                              <p className="text-sm text-gray-600 mb-2">{branchName}</p>
+                              <div className="flex items-center gap-2">
+                                <StatusBadge status={a.status} />
+                                <span className="text-xs text-gray-500">
+                                  Updated {new Date(a.updatedAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <StatusBadge status={a.status} />
                         </div>
-                        <div className="mt-2">
-                          <div className="h-2 bg-gray-200 rounded">
-                            <div className="h-2 bg-primary-500 rounded" style={{ width: `${comp}%` }} />
+                        
+                        <div className="card-body">
+                          <div className="mb-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-700">Progress</span>
+                              <span className="text-sm font-semibold text-gray-900">{comp}%</span>
+                            </div>
+                            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-3 bg-primary-500 rounded-full transition-all duration-300" style={{ width: `${comp}%` }} />
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">{comp}%</div>
                         </div>
-                        <div className="mt-2 flex gap-2 justify-end">
-                          <button className="btn-outline btn-sm" onClick={() => navigate(`/audit/${a.id}`)}>Details</button>
-                          <button className="btn-primary btn-sm" onClick={() => navigate(`/audit/${a.id}/wizard`)}>Continue</button>
+                        
+                        <div className="card-footer">
+                          <div className="flex gap-3">
+                            <button 
+                              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                              onClick={() => navigate(`/audit/${a.id}`)}
+                            >
+                              View Details
+                            </button>
+                            <button 
+                              className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
+                              onClick={() => navigate(`/audit/${a.id}/wizard`)}
+                            >
+                              Continue Audit
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )
