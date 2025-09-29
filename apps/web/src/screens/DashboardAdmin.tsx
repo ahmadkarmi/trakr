@@ -533,8 +533,8 @@ const DashboardAdmin: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-900">Recent Audits</h3>
             </div>
             <div className="p-6">
-              {/* Enhanced Mobile-First Search & Filter Bar */}
-              <div className="mb-6 space-y-4">
+              {/* Professional Search & Filter Bar */}
+              <div className="mb-6 lg:mb-4 space-y-4 lg:space-y-3">
                 {/* Search Bar */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -544,14 +544,14 @@ const DashboardAdmin: React.FC = () => {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder="Search audit, branch, auditor..."
-                    className="w-full pl-12 pr-4 py-3 sm:py-2 border border-gray-300 rounded-xl sm:rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white transition-all duration-200"
+                    className="w-full pl-12 pr-4 py-3 lg:py-2 border border-gray-300 rounded-xl lg:rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white transition-all duration-200"
                   />
                 </div>
                 
                 {/* Filter Pills */}
                 <div className="flex flex-wrap gap-2">
                   <button 
-                    className={`px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
                       quickChip === 'due_today' 
                         ? 'bg-primary-600 text-white shadow-md' 
                         : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
@@ -561,7 +561,7 @@ const DashboardAdmin: React.FC = () => {
                     Due Today
                   </button>
                   <button 
-                    className={`px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
                       quickChip === 'overdue' 
                         ? 'bg-red-600 text-white shadow-md' 
                         : 'bg-red-100 text-red-700 hover:bg-red-200'
@@ -571,7 +571,7 @@ const DashboardAdmin: React.FC = () => {
                     Overdue
                   </button>
                   <button 
-                    className={`px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
                       quickChip === 'submitted' 
                         ? 'bg-yellow-600 text-white shadow-md' 
                         : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
@@ -581,7 +581,7 @@ const DashboardAdmin: React.FC = () => {
                     Submitted
                   </button>
                   <button 
-                    className={`px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
                       quickChip === 'waiting_approval' 
                         ? 'bg-blue-600 text-white shadow-md' 
                         : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
@@ -591,7 +591,7 @@ const DashboardAdmin: React.FC = () => {
                     Waiting Approval
                   </button>
                   <button 
-                    className={`px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
                       quickChip === 'completed' 
                         ? 'bg-green-600 text-white shadow-md' 
                         : 'bg-green-100 text-green-700 hover:bg-green-200'
@@ -601,7 +601,7 @@ const DashboardAdmin: React.FC = () => {
                     Completed
                   </button>
                   <button 
-                    className={`px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
                       quickChip === 'approved' 
                         ? 'bg-purple-600 text-white shadow-md' 
                         : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
@@ -611,7 +611,7 @@ const DashboardAdmin: React.FC = () => {
                     Approved
                   </button>
                   <button 
-                    className={`px-4 py-2 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
                       quickChip === 'finalized' 
                         ? 'bg-gray-600 text-white shadow-md' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -727,26 +727,26 @@ const DashboardAdmin: React.FC = () => {
                   const canManualArchive = !a.isArchived && pastDue && (a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS || a.status === AuditStatus.SUBMITTED)
                   
                   return (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-300">
+                    <div className="bg-white rounded-xl lg:rounded-lg border border-gray-200 p-4 lg:p-3 hover:shadow-lg lg:hover:shadow-md transition-all duration-300">
                       {/* Card Header */}
-                      <div className="flex items-start justify-between gap-4 mb-4">
+                      <div className="flex items-start justify-between gap-4 mb-4 lg:mb-3">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
-                              <span className="text-lg font-bold text-primary-600">
+                          <div className="flex items-center gap-3 mb-2 lg:mb-1.5">
+                            <div className="w-10 h-10 lg:w-8 lg:h-8 bg-primary-100 rounded-xl lg:rounded-lg flex items-center justify-center">
+                              <span className="text-lg lg:text-sm font-bold text-primary-600">
                                 {a.id.slice(-2)}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 text-lg truncate">
+                              <h4 className="font-semibold text-gray-900 text-lg lg:text-base truncate">
                                 {highlightMatch(a.id)}
                               </h4>
-                              <p className="text-gray-600 text-sm">{highlightMatch(branchName)}</p>
+                              <p className="text-gray-600 text-sm lg:text-xs">{highlightMatch(branchName)}</p>
                             </div>
                           </div>
                           
                           {/* Status & Date Row */}
-                          <div className="flex items-center gap-3 flex-wrap mb-3">
+                          <div className="flex items-center gap-3 lg:gap-2 flex-wrap mb-3 lg:mb-2">
                             <StatusBadge status={a.status} />
                             {isOverdue && (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -762,7 +762,7 @@ const DashboardAdmin: React.FC = () => {
                           </div>
                           
                           {/* Audit Details */}
-                          <div className="space-y-2 text-sm">
+                          <div className="space-y-2 lg:space-y-1 text-sm lg:text-xs">
                             <div className="flex items-center justify-between">
                               <span className="text-gray-500">Auditor:</span>
                               <span className="font-medium text-gray-900">{highlightMatch(auditorName)}</span>
@@ -781,9 +781,9 @@ const DashboardAdmin: React.FC = () => {
                       
                       {/* Action Button */}
                       {canManualArchive && (
-                        <div className="pt-4 border-t border-gray-100">
+                        <div className="pt-4 lg:pt-3 border-t border-gray-100">
                           <button 
-                            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target"
+                            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target"
                             onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} 
                             disabled={manualArchive.isPending}
                           >

@@ -269,7 +269,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
         </header>
 
         {/* Content */}
-        <main className="px-3 sm:px-4 lg:px-6 py-4 sm:py-5">
+        <main className="px-3 sm:px-4 lg:px-6 py-4 sm:py-5 lg:py-4">
           {children}
         </main>
 
