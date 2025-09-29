@@ -7,6 +7,8 @@ import ErrorBoundary from './components/ErrorBoundary'
 import LoadingScreen from './components/LoadingScreen'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import { usePWA } from './hooks/usePWA'
+import { LoadingProvider } from './contexts/LoadingContext'
+import { ErrorToastContainer } from './components/ErrorToast'
 
 // Eager load only critical components (login, loading)
 import LoginScreen from './screens/LoginScreen'
@@ -60,9 +62,10 @@ function App() {
   const isAdmin = !!user && (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN)
 
   return (
-    <ToastProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <ErrorBoundary>
+    <LoadingProvider>
+      <ToastProvider>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <ErrorBoundary>
           <div className="min-h-screen bg-gray-50">
             {/* Offline indicator */}
             {!isOnline && (
@@ -158,10 +161,14 @@ function App() {
             
             {/* PWA Install Prompt */}
             <PWAInstallPrompt />
+            
+            {/* Global Error Toast Container */}
+            <ErrorToastContainer />
           </div>
         </ErrorBoundary>
       </Router>
     </ToastProvider>
+    </LoadingProvider>
   )
 }
 
