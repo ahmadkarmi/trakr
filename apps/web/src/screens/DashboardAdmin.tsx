@@ -306,9 +306,10 @@ const DashboardAdmin: React.FC = () => {
   return (
     <DashboardLayout title="Admin Dashboard">
       <div className="mobile-container breathing-room">
-        {/* Compact Header with Smart Actions */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+        {/* Mobile-First Header Layout */}
+        <div className="mb-6">
+          {/* Welcome Area - Full Width on Mobile */}
+          <div className="flex items-center gap-3 mb-4 sm:mb-0">
             <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
               <span className="text-xl">🛠️</span>
             </div>
@@ -320,12 +321,16 @@ const DashboardAdmin: React.FC = () => {
             </div>
           </div>
           
-          <button 
-            className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            onClick={() => navigate('/manage/surveys')}
-          >
-            + Survey
-          </button>
+          {/* Actions - Below Welcome on Mobile, Inline on Desktop */}
+          <div className="sm:flex sm:items-center sm:justify-between sm:-mt-16">
+            <div className="hidden sm:block sm:flex-1"></div>
+            <button 
+              className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target"
+              onClick={() => navigate('/manage/surveys')}
+            >
+              + Create Survey Template
+            </button>
+          </div>
         </div>
 
         {/* Smart Quick Actions */}
