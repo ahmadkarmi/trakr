@@ -92,8 +92,8 @@ const LoginScreen: React.FC = () => {
           {/* Mobile Logo Header */}
           <div className="relative p-6 text-center border-b border-white/20 lg:hidden">
             <div className="flex items-center justify-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-cyan-400 rounded-xl flex items-center justify-center shadow-xl">
-                <span className="text-xl font-bold text-white drop-shadow-lg">T</span>
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-xl">
+                <span className="text-xl font-bold text-primary-600 drop-shadow-sm">T</span>
               </div>
               <span className="text-white font-bold text-2xl tracking-wide drop-shadow-lg">Trakr</span>
             </div>
@@ -105,8 +105,8 @@ const LoginScreen: React.FC = () => {
             <div className="relative p-8 flex flex-col justify-center">
               {/* Desktop Logo - Above Welcome Back */}
               <div className="hidden lg:flex items-center justify-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-cyan-400 rounded-xl flex items-center justify-center shadow-xl">
-                  <span className="text-2xl font-bold text-white drop-shadow-lg">T</span>
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-xl">
+                  <span className="text-2xl font-bold text-primary-600 drop-shadow-sm">T</span>
                 </div>
                 <span className="text-white font-bold text-3xl tracking-wide drop-shadow-lg">Trakr</span>
               </div>
