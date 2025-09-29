@@ -866,13 +866,12 @@ const DashboardAdmin: React.FC = () => {
 
           {/* Finalized Audits: Completed + Approved */}
           <div className="card xl:col-span-2">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">Finalized Audits</h3>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500">Completed: {completedOnlyCount}</span>
-                <span className="text-xs text-gray-500">Approved: {approvedOnlyCount}</span>
+            <div className="px-6 py-4 border-b border-gray-200">
+              {/* Title Row - Single Line */}
+              <div className="flex items-center justify-between gap-4 mb-3">
+                <h3 className="text-lg font-medium text-gray-900 whitespace-nowrap">Finalized Audits</h3>
                 <button 
-                  className="btn-outline btn-sm flex items-center gap-2 whitespace-nowrap" 
+                  className="btn-outline btn-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0" 
                   onClick={() => exportCsv(finalizedAuditsInPeriod)}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -881,6 +880,16 @@ const DashboardAdmin: React.FC = () => {
                   <span className="hidden sm:inline">Export CSV</span>
                   <span className="sm:hidden">CSV</span>
                 </button>
+              </div>
+              
+              {/* Status Labels Row - Below Title */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Completed: {completedOnlyCount}
+                </span>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Approved: {approvedOnlyCount}
+                </span>
               </div>
             </div>
             <div className="p-6">
