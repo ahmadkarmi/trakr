@@ -322,18 +322,23 @@ const AuditWizard: React.FC = () => {
             </div>
           ) : (
             <>
-              <div className="mobile-section">
-                <h3 className="heading-mobile-md text-gray-900 mb-2">{survey.title}</h3>
-                <p className="text-mobile-body text-gray-600 mb-4">Section {sectionIndex + 1} of {survey.sections.length}</p>
-                <div aria-label="Overall Progress">
-                  <div className="flex items-center justify-between text-mobile-caption text-gray-500 mb-2">
-                    <span className="font-medium">Overall Progress</span>
-                    <span>{overallAnsweredCount}/{overallTotalCount} ({overallPercent}%)</span>
-                  </div>
-                  <div className="h-3 rounded-full bg-gray-200 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={overallPercent}>
-                    <div className="h-3 bg-primary-600 rounded-full transition-all duration-300" style={{ width: `${overallPercent}%` }} />
-                  </div>
+              {/* Compact Header with Inline Progress */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{survey.title}</h3>
+                  <p className="text-sm text-gray-500">
+                    Section {sectionIndex + 1} of {survey.sections.length} • {overallAnsweredCount}/{overallTotalCount} questions
+                  </p>
                 </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-primary-600">{overallPercent}%</div>
+                  <div className="text-xs text-gray-500">Complete</div>
+                </div>
+              </div>
+              
+              {/* Thin Progress Bar */}
+              <div className="h-1 rounded-full bg-gray-200 overflow-hidden mb-6" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={overallPercent}>
+                <div className="h-1 bg-primary-600 rounded-full transition-all duration-500" style={{ width: `${overallPercent}%` }} />
               </div>
 
               {/* Global alerts and connection status */}
