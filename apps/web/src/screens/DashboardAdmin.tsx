@@ -7,7 +7,6 @@ import { Audit, Branch, Organization, LogEntry, AuditStatus, UserRole, Zone } fr
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import StatCard from '../components/StatCard'
 import ProgressDonut from '../components/ProgressDonut'
 import StatusBadge from '@/components/StatusBadge'
 import ResponsiveTable from '../components/ResponsiveTable'
@@ -307,62 +306,181 @@ const DashboardAdmin: React.FC = () => {
   return (
     <DashboardLayout title="Admin Dashboard">
       <div className="mobile-container space-y-6">
-        {/* Hero welcome */}
-        <div className="card-mobile">
-          <div className="text-center sm:text-left mobile-section">
-            <h2 className="heading-mobile-xl text-gray-900 mb-2">Welcome back, {user?.name}! 🛠️</h2>
-            <p className="text-mobile-body text-gray-600">Manage the entire audit system, users, and templates.</p>
-          </div>
-          <div className="mobile-section">
-            <div className="mobile-grid sm:grid-cols-2 lg:grid-cols-3">
-              <button className="btn-mobile-primary sm:btn-primary" onClick={() => navigate('/manage/surveys')}>
-                Create Survey Template
-              </button>
-              <button className="btn-mobile-primary sm:btn-outline" onClick={() => navigate('/manage/branches')}>
-                Manage Branches
-              </button>
-              <button className="btn-mobile-primary sm:btn-outline" onClick={() => navigate('/manage/zones')}>
-                Manage Zones
-              </button>
-              <button className="btn-mobile-primary sm:btn-outline" onClick={() => navigate('/manage/assignments')}>
-                Assign Auditors
-              </button>
-              <button className="btn-mobile-primary sm:btn-ghost" onClick={() => {}}>
-                Invite Users
-              </button>
+        {/* Compact Header with Smart Actions */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+              <span className="text-xl">🛠️</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}</h2>
+              <p className="text-sm text-gray-500">
+                {branches.length} branches • {audits.length} audits • {overdueCount} overdue
+              </p>
             </div>
           </div>
+          
+          <button 
+            className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            onClick={() => navigate('/manage/surveys')}
+          >
+            + Survey
+          </button>
         </div>
 
-        {/* Period selector + KPI cards */}
-        <div className="card-mobile">
-          <div className="mobile-section">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <span className="text-mobile-body text-gray-600 font-medium">Period:</span>
-                <div className="inline-flex rounded-xl border border-gray-200 overflow-hidden">
-                  {(['week','month','quarter'] as const).map(p => (
-                    <button 
-                      key={p} 
-                      className={`px-4 py-2 text-sm font-medium touch-target ${period===p ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
-                      onClick={() => setPeriod(p)}
-                    >
-                      {p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'This Quarter'}
-                    </button>
-                  ))}
-                </div>
+        {/* Smart Quick Actions */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <button 
+            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            onClick={() => navigate('/manage/branches')}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span className="text-sm">🏢</span>
               </div>
-              {org?.timeZone && (
-                <span className="text-mobile-caption text-gray-500">Timezone: {org.timeZone}</span>
-              )}
+              <div>
+                <div className="font-medium text-gray-900">Branches</div>
+                <div className="text-xs text-gray-500">{branches.length} total</div>
+              </div>
+            </div>
+          </button>
+          
+          <button 
+            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            onClick={() => navigate('/manage/zones')}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <span className="text-sm">🗺️</span>
+              </div>
+              <div>
+                <div className="font-medium text-gray-900">Zones</div>
+                <div className="text-xs text-gray-500">{zones.length} total</div>
+              </div>
+            </div>
+          </button>
+          
+          <button 
+            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            onClick={() => navigate('/manage/assignments')}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <span className="text-sm">👥</span>
+              </div>
+              <div>
+                <div className="font-medium text-gray-900">Auditors</div>
+                <div className="text-xs text-gray-500">Assignments</div>
+              </div>
+            </div>
+          </button>
+          
+          <button 
+            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            onClick={() => {/* Invite users functionality */}}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                <span className="text-sm">✉️</span>
+              </div>
+              <div>
+                <div className="font-medium text-gray-900">Invite</div>
+                <div className="text-xs text-gray-500">New users</div>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Contextual KPIs with Integrated Period Selector */}
+        <div className="card-mobile">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">System Performance</h3>
+            <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+              {(['week','month','quarter'] as const).map(p => (
+                <button 
+                  key={p} 
+                  className={`px-3 py-1.5 text-sm font-medium ${period===p ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
+                  onClick={() => setPeriod(p)}
+                >
+                  {p === 'week' ? 'Week' : p === 'month' ? 'Month' : 'Quarter'}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="mobile-grid lg:grid-cols-4">
-            <StatCard title="Completion" value={`${completionRate}%`} subtitle="In period" variant="success" progress={completionRate} icon={<ClipboardDocumentCheckIcon className="w-6 h-6 text-success-700" />} />
-            <StatCard title="On-time" value={`${onTimeRate}%`} subtitle="Completed on/before due" variant="primary" icon={<ClipboardDocumentListIcon className="w-6 h-6 text-primary-700" />} />
-            <StatCard title="Overdue" value={overdueCount} subtitle="Past due" variant="warning" icon={<BuildingOfficeIcon className="w-6 h-6 text-warning-700" />} />
-            <StatCard title="Coverage" value={`${coverageRate}%`} subtitle={`${coverageBranches.size}/${branches.length} branches`} variant="neutral" icon={<UsersIcon className="w-6 h-6 text-gray-700" />} />
+          
+          {/* Actionable KPI Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div 
+              className="card-compact cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-r from-success-50 to-green-50 border-success-200"
+              onClick={() => {/* Navigate to completion details */}}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+                  <ClipboardDocumentCheckIcon className="w-5 h-5 text-success-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-success-600">{completionRate}%</div>
+                  <div className="text-xs text-gray-500">Completion Rate</div>
+                  <div className="w-full bg-success-200 rounded-full h-1 mt-1">
+                    <div className="bg-success-600 h-1 rounded-full transition-all duration-300" style={{ width: `${completionRate}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              className="card-compact cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => {/* Navigate to on-time performance */}}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <ClipboardDocumentListIcon className="w-5 h-5 text-primary-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-primary-600">{onTimeRate}%</div>
+                  <div className="text-xs text-gray-500">On-time Rate</div>
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              className={`card-compact cursor-pointer hover:shadow-lg transition-shadow ${overdueCount > 0 ? 'bg-gradient-to-r from-warning-50 to-orange-50 border-warning-200' : ''}`}
+              onClick={() => {/* Navigate to overdue audits */}}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${overdueCount > 0 ? 'bg-warning-100' : 'bg-gray-100'}`}>
+                  <BuildingOfficeIcon className={`w-5 h-5 ${overdueCount > 0 ? 'text-warning-600' : 'text-gray-600'}`} />
+                </div>
+                <div>
+                  <div className={`text-2xl font-bold ${overdueCount > 0 ? 'text-warning-600' : 'text-gray-600'}`}>{overdueCount}</div>
+                  <div className="text-xs text-gray-500">Overdue</div>
+                  {overdueCount > 0 && <div className="text-xs text-warning-600 font-medium">Needs attention</div>}
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              className="card-compact cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => {/* Navigate to coverage details */}}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <UsersIcon className="w-5 h-5 text-gray-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-600">{coverageRate}%</div>
+                  <div className="text-xs text-gray-500">Coverage</div>
+                  <div className="text-xs text-gray-500">{coverageBranches.size}/{branches.length} branches</div>
+                </div>
+              </div>
+            </div>
           </div>
+          
+          {org?.timeZone && (
+            <div className="mt-4 text-center">
+              <span className="text-xs text-gray-500">Timezone: {org.timeZone}</span>
+            </div>
+          )}
         </div>
 
         {/* Organization Settings moved to the Settings (cogwheel) screen for admins */}
