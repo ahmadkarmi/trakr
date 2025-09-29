@@ -548,33 +548,42 @@ const DashboardAuditor: React.FC = () => {
               <p className="text-gray-500">No branches assigned yet. Ask an admin to assign branches or zones to you.</p>
             ) : (
               <>
-                {/* Mobile card list */}
-                <div className="grid gap-3 md:hidden">
+                {/* Enhanced Mobile Branch Cards */}
+                <div className="grid gap-6 md:hidden">
                   {assignedBranches.map(b => {
                     const freq = selectedSurvey?.frequency || AuditFrequency.UNLIMITED
                     const canStart = allowedBranches.some(ab => ab.id === b.id)
                     return (
-                      <div key={b.id} className="card p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-medium text-gray-900">{b.name}</div>
-                            <div className="text-xs text-gray-500">{frequencyLabel[freq]}</div>
-                          </div>
-                          <div className="text-right">
-                            {canStart ? (
-                              <InfoBadge label="Available" tone="success" />
-                            ) : (
-                              <InfoBadge label="Unavailable" tone="gray" />
-                            )}
+                      <div key={b.id} className="card-compact card-interactive bg-white border border-gray-200">
+                        <div className="card-header">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-base mb-1 truncate">
+                                {b.name}
+                              </h4>
+                              <p className="text-sm text-gray-600">{frequencyLabel[freq]} frequency</p>
+                            </div>
+                            <div className="flex-shrink-0">
+                              {canStart ? (
+                                <InfoBadge label="Available" tone="success" />
+                              ) : (
+                                <InfoBadge label="Unavailable" tone="gray" />
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="mt-2 flex gap-2 justify-end">
+                        
+                        <div className="card-footer">
                           <button
-                            className="btn-primary btn-sm disabled:opacity-60"
+                            className={`w-full px-4 py-3 rounded-xl font-medium transition-colors touch-target ${
+                              canStart && selectedSurvey && !createAudit.isPending
+                                ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            }`}
                             disabled={!canStart || !selectedSurvey || createAudit.isPending}
                             onClick={() => selectedSurvey && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: b.id })}
                           >
-                            Start Audit
+                            {createAudit.isPending ? 'Starting...' : 'Start Audit'}
                           </button>
                         </div>
                       </div>
