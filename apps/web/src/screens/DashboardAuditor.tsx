@@ -512,7 +512,7 @@ const DashboardAuditor: React.FC = () => {
                   return (
                     <div key={a.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
                       {/* Card Header with Status Indicator */}
-                      <div className="p-6 pb-4">
+                      <div className="p-4 pb-3">
                         <div className="flex items-start justify-between gap-4 mb-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-2">
@@ -592,7 +592,7 @@ const DashboardAuditor: React.FC = () => {
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="px-6 pb-6">
+                      <div className="px-4 pb-4">
                         <div className="grid grid-cols-2 gap-3">
                           <button 
                             className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-all duration-200 touch-target"

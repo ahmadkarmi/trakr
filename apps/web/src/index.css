@@ -59,38 +59,38 @@
   
   /* Enhanced card system for mobile-first design */
   .card {
-    @apply bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6;
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-4;
     @apply touch-manipulation;
   }
 
   .card-mobile {
-    @apply bg-white rounded-2xl p-6 shadow-md border-0;
+    @apply bg-white rounded-2xl p-4 shadow-md border-0;
     @apply touch-manipulation;
     /* Enhanced mobile spacing */
-    @apply space-y-4;
+    @apply space-y-3;
   }
 
   .card-compact {
-    @apply bg-white rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100;
+    @apply bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100;
     @apply touch-manipulation;
   }
 
   .card-spacious {
-    @apply bg-white rounded-2xl p-6 sm:p-8 shadow-lg border-0;
-    @apply touch-manipulation space-y-5 sm:space-y-6;
+    @apply bg-white rounded-2xl p-4 sm:p-6 shadow-lg border-0;
+    @apply touch-manipulation space-y-4 sm:space-y-5;
   }
 
   /* Card content organization */
   .card-header {
-    @apply pb-4 mb-4 border-b border-gray-100;
+    @apply pb-3 mb-3 border-b border-gray-100;
   }
 
   .card-body {
-    @apply py-4 space-y-4;
+    @apply py-3 space-y-3;
   }
 
   .card-footer {
-    @apply pt-4 mt-4 border-t border-gray-100;
+    @apply pt-3 mt-3 border-t border-gray-100;
   }
 
   /* Consistent audit card styling */
@@ -176,11 +176,11 @@
 
   /* Mobile-first content areas */
   .content-area {
-    @apply p-6 sm:p-8 space-y-6;
+    @apply p-4 sm:p-6 space-y-4;
   }
 
   .content-section {
-    @apply space-y-4 sm:space-y-6;
+    @apply space-y-3 sm:space-y-4;
   }
 
   /* Touch-friendly interactive elements */

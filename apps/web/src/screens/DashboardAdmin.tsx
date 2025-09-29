@@ -722,7 +722,7 @@ const DashboardAdmin: React.FC = () => {
                   const canManualArchive = !a.isArchived && pastDue && (a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS || a.status === AuditStatus.SUBMITTED)
                   
                   return (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
+                    <div className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-300">
                       {/* Card Header */}
                       <div className="flex items-start justify-between gap-4 mb-4">
                         <div className="flex-1 min-w-0">
