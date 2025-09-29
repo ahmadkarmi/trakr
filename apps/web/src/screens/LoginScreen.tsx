@@ -73,52 +73,85 @@ const LoginScreen: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center mobile-container">
-      <div className="w-full max-w-md">
-        <div className="card-mobile shadow-xl">
-          <div className="text-center mobile-section">
-            <h1 className="heading-mobile-xl text-gray-900 mb-2">Welcome to Trakr</h1>
-            <p className="text-mobile-body text-gray-600">Sign in to your account</p>
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+      {/* Modern Gradient Background with Organic Shapes */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500">
+        {/* Organic Shape 1 - Top Left */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+        {/* Organic Shape 2 - Bottom Right */}
+        <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-white/15 rounded-full blur-2xl"></div>
+        {/* Organic Shape 3 - Center */}
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-r from-white/5 to-transparent rounded-full blur-xl"></div>
+      </div>
+
+      {/* Top Navigation Bar */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-6 z-10">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+            <span className="text-lg font-bold text-purple-600">T</span>
+          </div>
+          <span className="text-white font-semibold text-lg">Trakr</span>
+        </div>
+        <div className="text-white/80 text-sm">
+          Don't have an account? <span className="text-white font-medium cursor-pointer hover:underline">Sign up</span>
+        </div>
+      </div>
+
+      {/* Main Login Card */}
+      <div className="relative z-10 w-full max-w-md mx-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome back!</h1>
           </div>
 
           {/* Email/Password Login Form */}
-          <form onSubmit={handlePasswordLogin} className="space-y-4">
+          <form onSubmit={handlePasswordLogin} className="space-y-6">
             <div>
-              <label htmlFor="email" className="label">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input-mobile"
-                placeholder="you@example.com"
-                autoComplete="username"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                placeholder="Enter your email"
+                autoComplete="email"
                 required
               />
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="label">Password</label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <button
+                  type="button"
+                  className="text-sm text-purple-600 hover:text-purple-500 font-medium transition-colors disabled:opacity-50"
+                  onClick={handleForgotPassword}
+                  disabled={isResetting}
+                >
+                  {isResetting ? 'Sending reset email...' : 'Forgot Password?'}
+                </button>
+              </div>
               <input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input-mobile"
-                placeholder="••••••••"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                placeholder="Enter password"
                 autoComplete="current-password"
                 required
               />
             </div>
 
             {appError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-sm text-red-600">{appError.userMessage}</p>
               </div>
             )}
             
             {resetMessage && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-xl">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-600">{resetMessage}</p>
               </div>
             )}
@@ -126,39 +159,27 @@ const LoginScreen: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-mobile-primary"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Signing in...' : 'Log in'}
             </button>
-            
-            {/* Forgot Password Link */}
-            <div className="text-center">
-              <button
-                type="button"
-                className="text-base text-primary-600 hover:text-primary-500 font-medium transition-colors disabled:opacity-50 touch-target"
-                onClick={handleForgotPassword}
-                disabled={isResetting}
-              >
-                {isResetting ? 'Sending reset email...' : 'Forgot your password?'}
-            </button>
-          </div>
-        </form>
+          </form>
 
           {/* Divider */}
-          <div className="relative mobile-section">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center">
-              <span className="px-4 bg-white text-mobile-body text-gray-500">or</span>
+              <span className="px-4 bg-white text-sm text-gray-500">or login with SSO</span>
             </div>
           </div>
 
           {/* Quick Access Role Buttons */}
-          <div className="mobile-section">
-            <div className="text-center mb-4">
-              <div className="heading-mobile-md text-gray-700 mb-2">Quick Access</div>
-              <div className="text-mobile-caption text-gray-500">Choose your role to get started immediately</div>
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-700 mb-2">Quick Access</div>
+              <div className="text-sm text-gray-500">Choose your role to get started immediately</div>
             </div>
             <div className="space-y-3">
               {roleButtons.map(({ role, icon }) => (
@@ -166,33 +187,40 @@ const LoginScreen: React.FC = () => {
                   key={role}
                   onClick={() => handleRoleLogin(role)}
                   disabled={isLoading}
-                  className="btn-mobile-primary flex items-center justify-center gap-3"
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   {isLoading ? (
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
                   ) : (
-                    <span className="text-2xl">{icon}</span>
+                    <span className="text-xl">{icon}</span>
                   )}
-                  <span>Login as {USER_ROLE_LABELS[role]}</span>
+                  <span className="font-medium text-gray-700">Login as {USER_ROLE_LABELS[role]}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Help Text */}
-          <div className="text-center mobile-section">
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <p className="text-mobile-caption text-gray-600 leading-relaxed space-y-2">
-                <span className="block font-medium">Default credentials:</span>
+          <div className="mt-6 text-center">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-600 leading-relaxed">
+                <span className="block font-medium mb-1">Default credentials:</span>
                 <span className="block">admin@trakr.com, branchmanager@trakr.com, auditor@trakr.com</span>
-                <span className="block font-medium">Password: Password@123</span>
-                <span className="block text-amber-600 mt-3">
+                <span className="block font-medium mt-2">Password: Password@123</span>
+                <span className="block text-amber-600 mt-2 text-xs">
                   If login fails, passwords may need to be set in Supabase Auth dashboard.
                 </span>
               </p>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Bottom Tagline */}
+      <div className="absolute bottom-8 left-0 right-0 text-center z-10">
+        <p className="text-white/90 text-sm font-medium tracking-wide">
+          LET'S MAKE THE WORLD MORE PRODUCTIVE, TOGETHER.
+        </p>
       </div>
     </div>
   )
