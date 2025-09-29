@@ -115,7 +115,7 @@ const DashboardAuditor: React.FC = () => {
 
   return (
     <DashboardLayout title="Auditor Dashboard">
-      <div className="mobile-container space-y-6">
+      <div className="mobile-container breathing-room">
         {/* Compact Header with Avatar */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
@@ -129,14 +129,15 @@ const DashboardAuditor: React.FC = () => {
 
         {/* Action-First Quick Actions */}
         {latestEditable && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-blue-900">Continue Your Audit</h3>
-                <p className="text-sm text-blue-700">Resume audit {latestEditable.id}</p>
+          <div className="card-spacious bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">Continue Your Audit</h3>
+                <p className="text-blue-700">Resume audit {latestEditable.id}</p>
+                <p className="text-sm text-blue-600 mt-1">Pick up where you left off</p>
               </div>
               <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:shadow-lg touch-target"
                 onClick={() => navigate(`/audit/${latestEditable.id}/wizard`)}
               >
                 Resume
@@ -147,48 +148,67 @@ const DashboardAuditor: React.FC = () => {
 
         {/* Smart Survey Selection */}
         {surveys.length > 0 && (
-          <div className="card-mobile">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-semibold text-gray-900">Start New Audit</h3>
-                <p className="text-sm text-gray-500">
-                  {selectedSurvey?.title || 'Select survey template'}
-                  {firstAllowedBranchId && ` • ${allowedBranches.length} branches available`}
-                </p>
+          <div className="card-spacious">
+            <div className="card-header">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Start New Audit</h3>
+                  <p className="text-gray-600">
+                    {selectedSurvey?.title || 'Select survey template'}
+                  </p>
+                  {firstAllowedBranchId && (
+                    <p className="text-sm text-green-600 mt-1">
+                      ✓ {allowedBranches.length} branches available
+                    </p>
+                  )}
+                </div>
+                {surveys.length > 1 && (
+                  <select 
+                    className="input rounded-xl border-gray-300 bg-white min-w-[140px]"
+                    value={selectedSurveyId || ''} 
+                    onChange={(e) => setSelectedSurveyId(e.target.value)}
+                  >
+                    {surveys.map(s => (
+                      <option key={s.id} value={s.id}>{s.title}</option>
+                    ))}
+                  </select>
+                )}
               </div>
-              {surveys.length > 1 && (
-                <select 
-                  className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white"
-                  value={selectedSurveyId || ''} 
-                  onChange={(e) => setSelectedSurveyId(e.target.value)}
-                >
-                  {surveys.map(s => (
-                    <option key={s.id} value={s.id}>{s.title}</option>
-                  ))}
-                </select>
-              )}
             </div>
             
-            <button
-              className="btn-mobile-primary"
-              disabled={createAudit.isPending || !selectedSurvey || !firstAllowedBranchId}
-              onClick={() => selectedSurvey && firstAllowedBranchId && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: firstAllowedBranchId })}
-            >
-              {createAudit.isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Starting Audit...
+            <div className="card-body">
+              <button
+                className="btn-mobile-primary text-lg py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200"
+                disabled={createAudit.isPending || !selectedSurvey || !firstAllowedBranchId}
+                onClick={() => selectedSurvey && firstAllowedBranchId && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: firstAllowedBranchId })}
+              >
+                {createAudit.isPending ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Starting Audit...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-xl">🚀</span>
+                    <span>Start Audit{firstAllowedBranchId ? ` at ${allowedBranches[0]?.name}` : ''}</span>
+                  </div>
+                )}
+              </button>
+              
+              {!firstAllowedBranchId && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <span className="text-amber-500 text-lg">⚠️</span>
+                    <div>
+                      <p className="font-medium text-amber-800">No branches available</p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        Current survey frequency policy prevents new audits at this time
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                `Start Audit${firstAllowedBranchId ? ` at ${allowedBranches[0]?.name}` : ''}`
               )}
-            </button>
-            
-            {!firstAllowedBranchId && (
-              <p className="text-sm text-amber-600 mt-2 p-2 bg-amber-50 rounded-lg">
-                No branches available under current survey frequency policy
-              </p>
-            )}
+            </div>
           </div>
         )}
 
@@ -205,54 +225,52 @@ const DashboardAuditor: React.FC = () => {
         )}
 
         {/* Actionable Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div 
-            className="card-mobile cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {/* Navigate to pending audits filter */}}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                <ClipboardDocumentCheckIcon className="w-5 h-5 text-primary-600" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="card-compact card-interactive bg-gradient-to-br from-primary-50 to-blue-50 border-primary-200">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center shadow-sm">
+                <ClipboardDocumentCheckIcon className="w-7 h-7 text-primary-600" />
               </div>
-              <div>
-                <div className="text-2xl font-bold text-primary-600">{pending}</div>
-                <div className="text-xs text-gray-500">Pending</div>
+              <div className="flex-1">
+                <div className="text-3xl font-bold text-primary-600 mb-1">{pending}</div>
+                <div className="text-sm font-medium text-gray-700">Pending Audits</div>
+                <div className="text-xs text-gray-500 mt-1">Ready to start</div>
               </div>
             </div>
           </div>
           
-          <div 
-            className="card-mobile cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {/* Navigate to in-progress audits */}}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
-                <ClockIcon className="w-5 h-5 text-warning-600" />
+          <div className="card-compact card-interactive bg-gradient-to-br from-warning-50 to-orange-50 border-warning-200">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-warning-100 rounded-2xl flex items-center justify-center shadow-sm">
+                <ClockIcon className="w-7 h-7 text-warning-600" />
               </div>
-              <div>
-                <div className="text-2xl font-bold text-warning-600">{inProgress}</div>
-                <div className="text-xs text-gray-500">In Progress</div>
+              <div className="flex-1">
+                <div className="text-3xl font-bold text-warning-600 mb-1">{inProgress}</div>
+                <div className="text-sm font-medium text-gray-700">In Progress</div>
+                <div className="text-xs text-gray-500 mt-1">Currently working</div>
               </div>
             </div>
           </div>
           
-          <div className="card-mobile col-span-2 sm:col-span-1">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
-                <CheckCircleIcon className="w-5 h-5 text-success-600" />
+          <div className="card-compact card-interactive bg-gradient-to-br from-success-50 to-green-50 border-success-200">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-success-100 rounded-2xl flex items-center justify-center shadow-sm">
+                <CheckCircleIcon className="w-7 h-7 text-success-600" />
               </div>
-              <div>
-                <div className="text-2xl font-bold text-success-600">{completed}</div>
-                <div className="text-xs text-gray-500">Completed</div>
+              <div className="flex-1">
+                <div className="text-3xl font-bold text-success-600 mb-1">{completed}</div>
+                <div className="text-sm font-medium text-gray-700">Completed</div>
+                <div className="text-xs text-gray-500 mt-1">All time total</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* My Scheduled Audits */}
-        <div className="card-mobile">
-          <div className="mobile-section">
-            <h3 className="heading-mobile-md text-gray-900">My Scheduled Audits</h3>
+        <div className="card-spacious">
+          <div className="card-header">
+            <h3 className="text-xl font-semibold text-gray-900">My Scheduled Audits</h3>
+            <p className="text-gray-600 mt-1">Recent audit activity and upcoming tasks</p>
           </div>
           <div className="p-6">
             {(() => {

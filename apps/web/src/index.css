@@ -57,19 +57,51 @@
     @apply btn-primary rounded-full w-14 h-14 p-0 shadow-lg fixed bottom-6 right-6 z-50;
   }
   
-  /* Enhanced card system for mobile */
+  /* Enhanced card system for mobile-first design */
   .card {
     @apply bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6;
-    /* Better mobile touch spacing */
     @apply touch-manipulation;
   }
 
   .card-mobile {
-    @apply card rounded-xl p-4 shadow-md border-0 bg-white;
+    @apply bg-white rounded-2xl p-6 shadow-md border-0;
+    @apply touch-manipulation;
+    /* Enhanced mobile spacing */
+    @apply space-y-4;
   }
 
   .card-compact {
-    @apply card p-3 sm:p-4;
+    @apply bg-white rounded-xl p-4 shadow-sm border border-gray-100;
+    @apply touch-manipulation;
+  }
+
+  .card-spacious {
+    @apply bg-white rounded-2xl p-8 shadow-lg border-0;
+    @apply touch-manipulation space-y-6;
+  }
+
+  /* Card content organization */
+  .card-header {
+    @apply pb-4 border-b border-gray-100;
+  }
+
+  .card-body {
+    @apply py-4 space-y-4;
+  }
+
+  .card-footer {
+    @apply pt-4 border-t border-gray-100;
+  }
+
+  /* Interactive card states */
+  .card-interactive {
+    @apply cursor-pointer transition-all duration-200;
+    @apply hover:shadow-lg hover:-translate-y-0.5;
+    @apply active:scale-98;
+  }
+
+  .card-interactive:hover {
+    @apply shadow-xl;
   }
   
   /* Mobile-optimized input system */
@@ -101,15 +133,37 @@
 
   /* Mobile-specific spacing utilities */
   .mobile-container {
-    @apply px-4 py-4 sm:px-6 sm:py-6;
+    @apply px-4 py-6 sm:px-6 sm:py-8;
   }
 
   .mobile-section {
-    @apply mb-6 sm:mb-8;
+    @apply mb-8 sm:mb-10;
   }
 
   .mobile-grid {
-    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3;
+    @apply grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3;
+  }
+
+  /* Enhanced spacing for better breathing room */
+  .breathing-room {
+    @apply space-y-6 sm:space-y-8;
+  }
+
+  .content-spacing {
+    @apply space-y-4 sm:space-y-6;
+  }
+
+  .tight-spacing {
+    @apply space-y-3 sm:space-y-4;
+  }
+
+  /* Mobile-first content areas */
+  .content-area {
+    @apply p-6 sm:p-8 space-y-6;
+  }
+
+  .content-section {
+    @apply space-y-4 sm:space-y-6;
   }
 
   /* Touch-friendly interactive elements */
