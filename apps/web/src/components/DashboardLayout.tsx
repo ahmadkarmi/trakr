@@ -66,8 +66,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
           {/* Enhanced mobile header */}
           <div className="h-20 px-6 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-lg font-bold text-primary-600">T</span>
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-teal-400 to-purple-500 rounded-lg flex items-center justify-center shadow-lg">
+                <span className="text-lg font-bold text-white drop-shadow-sm">T</span>
               </div>
               <span className="text-xl font-bold tracking-wide">Trakr</span>
             </div>
@@ -152,8 +152,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
       <aside className="hidden md:flex md:w-64 lg:w-72 flex-col text-white bg-gradient-to-b from-primary-700 to-primary-600 pb-9 overflow-y-auto">
         <div className="h-18 px-5 flex items-center justify-between">
           <Link to={isAdmin ? '/dashboard/admin' : '/'} className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-              <span className="text-lg font-bold text-primary-600">T</span>
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-teal-400 to-purple-500 rounded-lg flex items-center justify-center shadow-lg">
+              <span className="text-lg font-bold text-white drop-shadow-sm">T</span>
             </div>
             <span className="text-xl font-bold tracking-wide">Trakr</span>
           </Link>
