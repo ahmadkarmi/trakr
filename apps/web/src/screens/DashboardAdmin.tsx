@@ -47,24 +47,23 @@ const DashboardAdmin: React.FC = () => {
     queryFn: () => api.getActivityLogs(),
   })
 
-  // Get branches without assigned managers (admin needs to approve these)
-  const { data: branchManagerAssignments = [] } = useQuery({
-    queryKey: ['branch-manager-assignments'],
-    queryFn: () => api.getBranchManagerAssignments(),
-  })
+  // TODO: Get branches without assigned managers (admin needs to approve these)
+  // const { data: branchManagerAssignments = [] } = useQuery({
+  //   queryKey: ['branch-manager-assignments'],
+  //   queryFn: () => api.getBranchManagerAssignments(),
+  // })
 
-  const branchesWithoutManagers = React.useMemo(() => {
-    const assignedBranchIds = branchManagerAssignments.map(assignment => assignment.branchId);
-    return branches.filter(branch => !assignedBranchIds.includes(branch.id));
-  }, [branches, branchManagerAssignments]);
+  // TODO: Implement admin approval logic for branches without managers
+  // const branchesWithoutManagers = React.useMemo(() => {
+  //   const assignedBranchIds = branchManagerAssignments.map(assignment => assignment.branchId);
+  //   return branches.filter(branch => !assignedBranchIds.includes(branch.id));
+  // }, [branches, branchManagerAssignments]);
 
-  const auditsNeedingAdminApproval = React.useMemo(() => {
-    const unassignedBranchIds = branchesWithoutManagers.map(branch => branch.id);
-    return audits.filter(audit => 
-      audit.status === AuditStatus.SUBMITTED && 
-      unassignedBranchIds.includes(audit.branchId)
-    );
-  }, [audits, branchesWithoutManagers]);
+  // TODO: Use branchesWithoutManagers to show admin approval stats in UI
+  // const auditsNeedingAdminApproval = audits.filter(audit => 
+  //   audit.status === AuditStatus.SUBMITTED && 
+  //   branchesWithoutManagers.some(branch => branch.id === audit.branchId)
+  // );
 
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'finalized' | AuditStatus>('all')
   const [branchFilter, setBranchFilter] = React.useState<string>('all')
