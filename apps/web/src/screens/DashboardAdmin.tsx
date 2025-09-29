@@ -528,52 +528,137 @@ const DashboardAdmin: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-900">Recent Audits</h3>
             </div>
             <div className="p-6">
-              {/* Filters: compact toolbar */}
-              <div className="mb-3 sticky top-0 bg-white z-10 pb-2">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative">
-                      <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                      <input
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        placeholder="Search audit, branch, auditor…"
-                        className="input pl-7 h-9 text-sm w-64"
-                      />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='due_today' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='due_today'?'none':'due_today')}>Due Today</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='overdue' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='overdue'?'none':'overdue')}>Overdue</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='submitted' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='submitted'?'none':'submitted')}>Submitted</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='waiting_approval' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='waiting_approval'?'none':'waiting_approval')}>Waiting Approval</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='completed' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='completed'?'none':'completed')}>Completed</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='approved' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='approved'?'none':'approved')}>Approved</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='finalized' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='finalized'?'none':'finalized')}>Finalized</button>
-                    </div>
+              {/* Enhanced Mobile-First Search & Filter Bar */}
+              <div className="mb-6 space-y-4">
+                {/* Search Bar */}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 hidden sm:inline">{filteredAudits.length} results</span>
-                    <button className="inline-flex items-center gap-1 px-2 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50" onClick={() => setShowAdvanced((v) => !v)}>
-                      <FunnelIcon className="w-4 h-4" /> Filters
-                    </button>
-                    <button className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50" onClick={clearAllFilters} disabled={!hasFilters}>
-                      <XMarkIcon className="w-4 h-4" /> Clear
-                    </button>
-                  </div>
+                  <input
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search audit, branch, auditor..."
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white transition-all duration-200"
+                  />
                 </div>
-                {!showAdvanced && activeBadges.length > 0 && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {activeBadges.map(b => (
-                      <span key={b.key} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                        {b.label}
-                        <button className="hover:text-gray-900" onClick={b.onClear} aria-label={`Clear ${b.key}`}>
-                          <XMarkIcon className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
+                
+                {/* Filter Pills */}
+                <div className="flex flex-wrap gap-2">
+                  <button 
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors touch-target ${
+                      quickChip === 'due_today' 
+                        ? 'bg-primary-600 text-white shadow-md' 
+                        : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'due_today' ? 'none' : 'due_today')}
+                  >
+                    Due Today
+                  </button>
+                  <button 
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors touch-target ${
+                      quickChip === 'overdue' 
+                        ? 'bg-red-600 text-white shadow-md' 
+                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'overdue' ? 'none' : 'overdue')}
+                  >
+                    Overdue
+                  </button>
+                  <button 
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors touch-target ${
+                      quickChip === 'submitted' 
+                        ? 'bg-yellow-600 text-white shadow-md' 
+                        : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'submitted' ? 'none' : 'submitted')}
+                  >
+                    Submitted
+                  </button>
+                  <button 
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors touch-target ${
+                      quickChip === 'waiting_approval' 
+                        ? 'bg-blue-600 text-white shadow-md' 
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'waiting_approval' ? 'none' : 'waiting_approval')}
+                  >
+                    Waiting Approval
+                  </button>
+                  <button 
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors touch-target ${
+                      quickChip === 'completed' 
+                        ? 'bg-green-600 text-white shadow-md' 
+                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'completed' ? 'none' : 'completed')}
+                  >
+                    Completed
+                  </button>
+                  <button 
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors touch-target ${
+                      quickChip === 'approved' 
+                        ? 'bg-purple-600 text-white shadow-md' 
+                        : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'approved' ? 'none' : 'approved')}
+                  >
+                    Approved
+                  </button>
+                  <button 
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors touch-target ${
+                      quickChip === 'finalized' 
+                        ? 'bg-gray-600 text-white shadow-md' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'finalized' ? 'none' : 'finalized')}
+                  >
+                    Finalized
+                  </button>
+                </div>
+                
+                {/* Filter Controls */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button 
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors touch-target"
+                      onClick={() => setShowAdvanced((v) => !v)}
+                    >
+                      <FunnelIcon className="w-4 h-4" />
+                      <span>Advanced Filters</span>
+                    </button>
+                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                      {filteredAudits.length} results
+                    </div>
                   </div>
-                )}
-                {showAdvanced && (
+                  <button 
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors"
+                    onClick={clearAllFilters} 
+                    disabled={!hasFilters}
+                  >
+                    <XMarkIcon className="w-4 h-4" />
+                    <span>Clear All</span>
+                  </button>
+                </div>
+                
+              </div>
+              
+              {/* Active Filter Badges */}
+              {!showAdvanced && activeBadges.length > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  {activeBadges.map(b => (
+                    <span key={b.key} className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                      {b.label}
+                      <button className="hover:text-gray-900" onClick={b.onClear} aria-label={`Clear ${b.key}`}>
+                        <XMarkIcon className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              
+              {/* Advanced Filters */}
+              {showAdvanced && (
                   <div className="mt-3 p-3 border rounded-md bg-gray-50">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <div>
