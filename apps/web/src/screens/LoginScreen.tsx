@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { UserRole, USER_ROLE_LABELS } from '@trakr/shared'
 import { useAuthStore } from '../stores/auth'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
@@ -11,6 +11,11 @@ const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('')
   const [resetMessage, setResetMessage] = useState<string | null>(null)
   const [isResetting, setIsResetting] = useState(false)
+  
+  // Parallax effect state
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [gyroPos, setGyroPos] = useState({ x: 0, y: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const handleRoleLogin = async (role: UserRole) => {
     await signIn(role)
@@ -66,35 +71,131 @@ const LoginScreen: React.FC = () => {
     }
   }
 
+  // Mouse movement tracking for desktop parallax
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        const centerX = rect.width / 2
+        const centerY = rect.height / 2
+        const x = (e.clientX - rect.left - centerX) / centerX
+        const y = (e.clientY - rect.top - centerY) / centerY
+        setMousePos({ x: x * 50, y: y * 50 }) // Scale movement
+      }
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [])
+
+  // Gyroscope tracking for mobile parallax
+  useEffect(() => {
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      if (e.beta !== null && e.gamma !== null) {
+        // Beta is front-to-back tilt (-180 to 180)
+        // Gamma is left-to-right tilt (-90 to 90)
+        const x = Math.max(-30, Math.min(30, e.gamma)) / 30 * 50
+        const y = Math.max(-30, Math.min(30, e.beta - 90)) / 30 * 50
+        setGyroPos({ x, y })
+      }
+    }
+
+    // Request permission for iOS devices
+    const requestPermission = async () => {
+      if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+        try {
+          const permission = await (DeviceOrientationEvent as any).requestPermission()
+          if (permission === 'granted') {
+            window.addEventListener('deviceorientation', handleOrientation)
+          }
+        } catch (error) {
+          console.log('Device orientation permission denied')
+        }
+      } else {
+        // For non-iOS devices
+        window.addEventListener('deviceorientation', handleOrientation)
+      }
+    }
+
+    requestPermission()
+    return () => window.removeEventListener('deviceorientation', handleOrientation)
+  }, [])
+
   const roleButtons = [
     { role: UserRole.ADMIN, icon: '🛠️' },
     { role: UserRole.BRANCH_MANAGER, icon: '🏬' },
     { role: UserRole.AUDITOR, icon: '🕵️‍♂️' },
   ]
 
+  // Calculate parallax offset (use gyroscope on mobile, mouse on desktop)
+  const parallaxX = window.innerWidth <= 768 ? gyroPos.x : mousePos.x
+  const parallaxY = window.innerWidth <= 768 ? gyroPos.y : mousePos.y
+
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center py-8">
+    <div ref={containerRef} className="min-h-screen relative overflow-hidden flex items-center justify-center py-8">
       {/* Space Effect Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-        {/* Animated Stars */}
+        {/* Interactive Parallax Stars */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Large Stars */}
-          <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-white rounded-full animate-pulse"></div>
-          <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-blue-200 rounded-full animate-pulse delay-75"></div>
-          <div className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-white rounded-full animate-pulse delay-150"></div>
-          <div className="absolute bottom-1/4 right-1/3 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-300"></div>
-          <div className="absolute top-1/2 left-1/6 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-500"></div>
-          <div className="absolute top-3/4 right-1/6 w-0.5 h-0.5 bg-blue-200 rounded-full animate-pulse delay-700"></div>
-          
-          {/* Medium Stars */}
-          <div className="absolute top-1/5 left-1/2 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-200"></div>
-          <div className="absolute top-2/3 left-1/5 w-0.5 h-0.5 bg-blue-100 rounded-full animate-pulse delay-400"></div>
-          <div className="absolute bottom-1/5 right-1/2 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-600"></div>
-          
-          {/* Small Twinkling Stars */}
-          <div className="absolute top-1/6 right-1/5 w-px h-px bg-white rounded-full animate-ping"></div>
-          <div className="absolute top-3/5 left-1/8 w-px h-px bg-blue-200 rounded-full animate-ping delay-1000"></div>
-          <div className="absolute bottom-1/6 left-3/5 w-px h-px bg-white rounded-full animate-ping delay-2000"></div>
+          {/* Layer 1 - Closest Stars (strongest parallax) */}
+          <div 
+            className="absolute inset-0"
+            style={{ 
+              transform: `translate(${parallaxX * 0.8}px, ${parallaxY * 0.8}px)`,
+              transition: 'transform 0.1s ease-out'
+            }}
+          >
+            <div className="absolute top-1/4 left-1/4 w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-lg shadow-white/50"></div>
+            <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-75 shadow-lg shadow-blue-200/50"></div>
+            <div className="absolute bottom-1/3 left-1/3 w-1.5 h-1.5 bg-cyan-200 rounded-full animate-pulse delay-150 shadow-lg shadow-cyan-200/50"></div>
+            <div className="absolute bottom-1/4 right-1/3 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-300 shadow-lg shadow-white/50"></div>
+          </div>
+
+          {/* Layer 2 - Medium Distance Stars */}
+          <div 
+            className="absolute inset-0"
+            style={{ 
+              transform: `translate(${parallaxX * 0.5}px, ${parallaxY * 0.5}px)`,
+              transition: 'transform 0.15s ease-out'
+            }}
+          >
+            <div className="absolute top-1/2 left-1/6 w-1 h-1 bg-white rounded-full animate-pulse delay-500"></div>
+            <div className="absolute top-3/4 right-1/6 w-1 h-1 bg-blue-200 rounded-full animate-pulse delay-700"></div>
+            <div className="absolute top-1/5 left-1/2 w-1 h-1 bg-cyan-100 rounded-full animate-pulse delay-200"></div>
+            <div className="absolute top-2/3 left-1/5 w-1 h-1 bg-white rounded-full animate-pulse delay-400"></div>
+            <div className="absolute bottom-1/5 right-1/2 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-600"></div>
+            <div className="absolute top-1/8 right-2/3 w-1 h-1 bg-cyan-200 rounded-full animate-pulse delay-800"></div>
+          </div>
+
+          {/* Layer 3 - Distant Stars (subtle parallax) */}
+          <div 
+            className="absolute inset-0"
+            style={{ 
+              transform: `translate(${parallaxX * 0.2}px, ${parallaxY * 0.2}px)`,
+              transition: 'transform 0.2s ease-out'
+            }}
+          >
+            <div className="absolute top-1/6 right-1/5 w-0.5 h-0.5 bg-white rounded-full animate-ping"></div>
+            <div className="absolute top-3/5 left-1/8 w-0.5 h-0.5 bg-blue-200 rounded-full animate-ping delay-1000"></div>
+            <div className="absolute bottom-1/6 left-3/5 w-0.5 h-0.5 bg-cyan-100 rounded-full animate-ping delay-2000"></div>
+            <div className="absolute top-4/5 right-1/8 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-1500"></div>
+            <div className="absolute top-1/10 left-4/5 w-0.5 h-0.5 bg-blue-100 rounded-full animate-pulse delay-900"></div>
+            <div className="absolute bottom-2/5 right-3/4 w-0.5 h-0.5 bg-cyan-200 rounded-full animate-pulse delay-1200"></div>
+          </div>
+
+          {/* Layer 4 - Background Twinkles */}
+          <div 
+            className="absolute inset-0"
+            style={{ 
+              transform: `translate(${parallaxX * 0.1}px, ${parallaxY * 0.1}px)`,
+              transition: 'transform 0.3s ease-out'
+            }}
+          >
+            <div className="absolute top-1/12 left-1/12 w-px h-px bg-white rounded-full animate-ping delay-3000"></div>
+            <div className="absolute top-5/6 right-1/12 w-px h-px bg-blue-200 rounded-full animate-ping delay-4000"></div>
+            <div className="absolute top-1/2 left-5/6 w-px h-px bg-cyan-100 rounded-full animate-ping delay-5000"></div>
+            <div className="absolute bottom-1/12 left-1/2 w-px h-px bg-white rounded-full animate-ping delay-6000"></div>
+          </div>
         </div>
         
         {/* Nebula Effects */}
