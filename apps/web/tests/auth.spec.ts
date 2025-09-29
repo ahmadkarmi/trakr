@@ -19,7 +19,7 @@ test.describe('Auth smoke', () => {
     // Open user menu and sign out
     await page.getByLabel('User menu').click()
     await page.getByRole('menuitem', { name: 'Sign Out' }).click()
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible({ timeout: 60_000 })
+    await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible({ timeout: 60_000 })
 
     // Use role button to sign in as auditor
     await page.getByRole('button', { name: /Login as Auditor/i }).click()
