@@ -708,7 +708,7 @@ const DashboardAdmin: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              
               <ResponsiveTable
                 items={filteredAudits.slice(0, 8)}
                 keyField={(a: Audit) => a.id}
