@@ -354,64 +354,62 @@ const LoginScreen: React.FC = () => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-radial from-blue-400/5 to-transparent rounded-full blur-xl"></div>
       </div>
 
-      {/* Tree Silhouettes Layer - Desktop Only */}
+      {/* Minimalist Black Globe Layer - Desktop Only */}
       <div className="hidden lg:block absolute inset-0 z-5">
-        {/* Left side trees */}
-        <div className="absolute bottom-0 left-0 w-32 h-64">
-          <svg viewBox="0 0 100 200" className="w-full h-full fill-slate-900/80">
-            <path d="M10 200 L10 150 Q15 140 20 130 Q25 120 30 110 Q35 100 40 90 Q45 80 50 70 Q55 60 60 50 Q65 40 70 30 Q75 20 80 10 Q85 5 90 0 L95 0 Q90 10 85 20 Q80 30 75 40 Q70 50 65 60 Q60 70 55 80 Q50 90 45 100 Q40 110 35 120 Q30 130 25 140 Q20 150 15 160 L15 200 Z"/>
+        {/* Large globe covering bottom half */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-[1400px] h-[1400px]">
+          <svg viewBox="0 0 400 400" className="w-full h-full">
+            <defs>
+              {/* Subtle atmospheric glow */}
+              <radialGradient id="atmosphereGlow" cx="0.5" cy="0.5" r="0.7">
+                <stop offset="0%" stopColor="transparent"/>
+                <stop offset="75%" stopColor="rgba(148, 163, 184, 0.05)"/>
+                <stop offset="85%" stopColor="rgba(148, 163, 184, 0.1)"/>
+                <stop offset="95%" stopColor="rgba(148, 163, 184, 0.15)"/>
+                <stop offset="100%" stopColor="rgba(148, 163, 184, 0.2)"/>
+              </radialGradient>
+              
+              {/* Black globe with subtle gradient */}
+              <radialGradient id="globeGradient" cx="0.3" cy="0.3" r="0.8">
+                <stop offset="0%" stopColor="#1e293b"/>
+                <stop offset="40%" stopColor="#0f172a"/>
+                <stop offset="70%" stopColor="#020617"/>
+                <stop offset="90%" stopColor="#000000"/>
+                <stop offset="100%" stopColor="#000000"/>
+              </radialGradient>
+              
+              {/* Edge highlight */}
+              <radialGradient id="edgeGlow" cx="0.2" cy="0.2" r="1.2">
+                <stop offset="0%" stopColor="rgba(148, 163, 184, 0.1)"/>
+                <stop offset="60%" stopColor="rgba(148, 163, 184, 0.05)"/>
+                <stop offset="85%" stopColor="rgba(148, 163, 184, 0.15)"/>
+                <stop offset="95%" stopColor="rgba(148, 163, 184, 0.25)"/>
+                <stop offset="100%" stopColor="rgba(148, 163, 184, 0.3)"/>
+              </radialGradient>
+            </defs>
+            
+            {/* Outer atmospheric glow */}
+            <circle cx="200" cy="200" r="220" fill="url(#atmosphereGlow)" opacity="0.6"/>
+            
+            {/* Main black globe */}
+            <circle cx="200" cy="200" r="190" fill="url(#globeGradient)"/>
+            
+            {/* Subtle edge highlight for depth */}
+            <circle cx="200" cy="200" r="190" fill="url(#edgeGlow)" opacity="0.4"/>
+            
+            {/* Subtle surface texture with minimal detail */}
+            <g opacity="0.1">
+              <circle cx="150" cy="120" r="15" fill="rgba(148, 163, 184, 0.1)"/>
+              <circle cx="280" cy="160" r="20" fill="rgba(148, 163, 184, 0.08)"/>
+              <circle cx="200" cy="250" r="12" fill="rgba(148, 163, 184, 0.12)"/>
+              <circle cx="320" cy="220" r="18" fill="rgba(148, 163, 184, 0.09)"/>
+              <circle cx="120" cy="280" r="10" fill="rgba(148, 163, 184, 0.11)"/>
+            </g>
           </svg>
         </div>
         
-        <div className="absolute bottom-0 left-20 w-24 h-48">
-          <svg viewBox="0 0 80 150" className="w-full h-full fill-slate-800/70">
-            <path d="M5 150 L5 120 Q10 110 15 100 Q20 90 25 80 Q30 70 35 60 Q40 50 45 40 Q50 30 55 20 Q60 15 65 10 Q70 5 75 0 L78 0 Q73 8 68 16 Q63 24 58 32 Q53 40 48 48 Q43 56 38 64 Q33 72 28 80 Q23 88 18 96 Q13 104 8 112 L8 150 Z"/>
-          </svg>
-        </div>
-
-        <div className="absolute bottom-0 left-8 w-20 h-40">
-          <svg viewBox="0 0 60 120" className="w-full h-full fill-slate-900/60">
-            <path d="M8 120 L8 100 Q12 90 16 80 Q20 70 24 60 Q28 50 32 40 Q36 30 40 20 Q44 15 48 10 Q52 5 56 0 L58 0 Q54 6 50 12 Q46 18 42 24 Q38 30 34 36 Q30 42 26 48 Q22 54 18 60 Q14 66 10 72 L10 120 Z"/>
-          </svg>
-        </div>
-
-        {/* Right side trees */}
-        <div className="absolute bottom-0 right-0 w-28 h-56">
-          <svg viewBox="0 0 90 180" className="w-full h-full fill-slate-900/75">
-            <path d="M80 180 L80 140 Q75 130 70 120 Q65 110 60 100 Q55 90 50 80 Q45 70 40 60 Q35 50 30 40 Q25 30 20 20 Q15 10 10 5 Q5 2 0 0 L2 0 Q7 5 12 10 Q17 15 22 20 Q27 25 32 30 Q37 35 42 40 Q47 45 52 50 Q57 55 62 60 Q67 65 72 70 Q77 75 82 80 L85 180 Z"/>
-          </svg>
-        </div>
-
-        <div className="absolute bottom-0 right-16 w-22 h-44">
-          <svg viewBox="0 0 70 140" className="w-full h-full fill-slate-800/65">
-            <path d="M65 140 L65 110 Q60 100 55 90 Q50 80 45 70 Q40 60 35 50 Q30 40 25 30 Q20 20 15 15 Q10 10 5 5 Q2 2 0 0 L3 0 Q8 4 13 8 Q18 12 23 16 Q28 20 33 24 Q38 28 43 32 Q48 36 53 40 Q58 44 63 48 L68 140 Z"/>
-          </svg>
-        </div>
-
-        <div className="absolute bottom-0 right-6 w-18 h-36">
-          <svg viewBox="0 0 50 110" className="w-full h-full fill-slate-900/55">
-            <path d="M45 110 L45 90 Q40 80 35 70 Q30 60 25 50 Q20 40 15 30 Q10 20 5 15 Q2 10 0 5 L2 5 Q7 8 12 11 Q17 14 22 17 Q27 20 32 23 Q37 26 42 29 L47 110 Z"/>
-          </svg>
-        </div>
-
-        {/* Additional scattered trees for more depth */}
-        <div className="absolute bottom-0 left-1/4 w-16 h-32">
-          <svg viewBox="0 0 40 80" className="w-full h-full fill-slate-800/50">
-            <path d="M35 80 L35 65 Q30 55 25 45 Q20 35 15 25 Q10 15 5 10 Q2 5 0 0 L3 0 Q8 3 13 6 Q18 9 23 12 Q28 15 33 18 L38 80 Z"/>
-          </svg>
-        </div>
-
-        <div className="absolute bottom-0 right-1/3 w-14 h-28">
-          <svg viewBox="0 0 35 70" className="w-full h-full fill-slate-900/45">
-            <path d="M30 70 L30 58 Q25 48 20 38 Q15 28 10 18 Q5 8 2 4 Q1 2 0 0 L2 0 Q7 2 12 4 Q17 6 22 8 Q27 10 32 12 L33 70 Z"/>
-          </svg>
-        </div>
-
-        <div className="absolute bottom-0 left-3/5 w-12 h-24">
-          <svg viewBox="0 0 30 60" className="w-full h-full fill-slate-800/40">
-            <path d="M25 60 L25 50 Q20 40 15 30 Q10 20 5 10 Q2 5 0 0 L2 0 Q7 2 12 4 Q17 6 22 8 L27 60 Z"/>
-          </svg>
-        </div>
+        {/* Subtle horizon fade */}
+        <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-black/20 via-slate-900/10 to-transparent"></div>
       </div>
 
       {/* Main Login Card - Glass Effect with Logo Inside */}
