@@ -305,45 +305,55 @@ const AuditWizard: React.FC = () => {
 
   return (
     <DashboardLayout title="Audit Wizard">
-      <div className="space-y-6 max-w-3xl 2xl:max-w-4xl mx-auto pb-24">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Audit Wizard - {auditId}</h2>
+      <div className="mobile-container space-y-6 max-w-3xl 2xl:max-w-4xl mx-auto pb-24">
+        <div className="card-mobile">
+          <div className="text-center sm:text-left mobile-section">
+            <h2 className="heading-mobile-lg text-gray-900 mb-2">Audit Wizard</h2>
+            <p className="text-mobile-caption text-gray-500">ID: {auditId}</p>
+          </div>
           {loadingAudit || loadingSurvey ? (
-            <p className="text-gray-500">Loading audit…</p>
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+              <p className="text-mobile-body text-gray-500">Loading audit…</p>
+            </div>
           ) : !audit || !survey ? (
-            <p className="text-gray-500">Audit or Survey not found.</p>
+            <div className="text-center py-8">
+              <p className="text-mobile-body text-gray-500">Audit or Survey not found.</p>
+            </div>
           ) : (
             <>
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{survey.title}</h3>
-                <p className="text-sm text-gray-500">Section {sectionIndex + 1} of {survey.sections.length}</p>
-                <div className="mt-2" aria-label="Overall Progress">
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                    <span>Overall Progress</span>
+              <div className="mobile-section">
+                <h3 className="heading-mobile-md text-gray-900 mb-2">{survey.title}</h3>
+                <p className="text-mobile-body text-gray-600 mb-4">Section {sectionIndex + 1} of {survey.sections.length}</p>
+                <div aria-label="Overall Progress">
+                  <div className="flex items-center justify-between text-mobile-caption text-gray-500 mb-2">
+                    <span className="font-medium">Overall Progress</span>
                     <span>{overallAnsweredCount}/{overallTotalCount} ({overallPercent}%)</span>
                   </div>
-                  <div className="h-2 rounded bg-gray-200 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={overallPercent}>
-                    <div className="h-2 bg-primary-600" style={{ width: `${overallPercent}%` }} />
+                  <div className="h-3 rounded-full bg-gray-200 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={overallPercent}>
+                    <div className="h-3 bg-primary-600 rounded-full transition-all duration-300" style={{ width: `${overallPercent}%` }} />
                   </div>
                 </div>
               </div>
 
               {/* Global alerts and connection status */}
               {offline && (
-                <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3 flex items-start gap-2">
-                  <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 mt-0.5" />
-                  <div className="text-sm text-amber-800">You are offline. Some actions may fail until connection is restored.</div>
+                <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+                  <ExclamationTriangleIcon className="w-6 h-6 text-amber-600 flex-shrink-0" />
+                  <div className="text-mobile-body text-amber-800">You are offline. Some actions may fail until connection is restored.</div>
                 </div>
               )}
               {alerts.length > 0 && (
-                <div className="mb-3 space-y-2" role="status" aria-live="polite">
+                <div className="mb-4 space-y-3" role="status" aria-live="polite">
                   {alerts.map(a => (
-                    <div key={a.id} className={`rounded-md border p-3 flex items-start gap-2 ${a.type === 'error' ? 'bg-danger-50 border-danger-200' : a.type === 'warning' ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
-                      {a.type === 'error' && <XCircleIcon className="w-5 h-5 text-danger-600 mt-0.5" />}
-                      {a.type === 'warning' && <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 mt-0.5" />}
-                      {a.type === 'success' && <CheckCircleIcon className="w-5 h-5 text-green-600 mt-0.5" />}
-                      <div className={`text-sm ${a.type === 'error' ? 'text-danger-800' : a.type === 'warning' ? 'text-amber-800' : 'text-green-800'}`}>{a.text}</div>
-                      <button className="ml-auto btn-ghost btn-xs" onClick={() => dismissAlert(a.id)}>Dismiss</button>
+                    <div key={a.id} className={`rounded-xl border p-4 flex items-start gap-3 ${a.type === 'error' ? 'bg-danger-50 border-danger-200' : a.type === 'warning' ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
+                      {a.type === 'error' && <XCircleIcon className="w-6 h-6 text-danger-600 flex-shrink-0" />}
+                      {a.type === 'warning' && <ExclamationTriangleIcon className="w-6 h-6 text-amber-600 flex-shrink-0" />}
+                      {a.type === 'success' && <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0" />}
+                      <div className={`text-mobile-body flex-1 ${a.type === 'error' ? 'text-danger-800' : a.type === 'warning' ? 'text-amber-800' : 'text-green-800'}`}>{a.text}</div>
+                      <button className="touch-target p-1 hover:bg-black/5 rounded-lg" onClick={() => dismissAlert(a.id)}>
+                        <XMarkIcon className="w-5 h-5 text-gray-400" />
+                      </button>
                     </div>
                   ))}
                 </div>
