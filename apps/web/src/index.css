@@ -175,6 +175,31 @@
     @apply p-3 -m-3 touch-manipulation;
   }
 
+  .touch-button {
+    @apply min-h-[48px] px-6 py-3 touch-manipulation;
+    @apply rounded-xl font-semibold transition-all duration-200;
+    @apply hover:shadow-lg active:scale-95;
+  }
+
+  .touch-input {
+    @apply min-h-[48px] px-4 py-3 touch-manipulation;
+    @apply rounded-xl border-2 transition-all duration-200;
+    @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+  }
+
+  /* Enhanced interactive states */
+  .interactive-card {
+    @apply transition-all duration-300 ease-out;
+    @apply hover:shadow-xl hover:-translate-y-1;
+    @apply active:scale-98 active:shadow-lg;
+  }
+
+  .interactive-button {
+    @apply transition-all duration-200 ease-out;
+    @apply hover:shadow-lg hover:-translate-y-0.5;
+    @apply active:scale-95 active:shadow-md;
+  }
+
   /* Mobile-optimized text hierarchy */
   .heading-mobile-xl {
     @apply text-2xl font-bold text-gray-900 sm:text-3xl;

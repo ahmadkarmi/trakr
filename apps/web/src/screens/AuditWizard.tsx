@@ -305,11 +305,13 @@ const AuditWizard: React.FC = () => {
 
   return (
     <DashboardLayout title="Audit Wizard">
-      <div className="mobile-container space-y-6 max-w-3xl 2xl:max-w-4xl mx-auto pb-24">
-        <div className="card-mobile">
-          <div className="text-center sm:text-left mobile-section">
-            <h2 className="heading-mobile-lg text-gray-900 mb-2">Audit Wizard</h2>
-            <p className="text-mobile-caption text-gray-500">ID: {auditId}</p>
+      <div className="mobile-container breathing-room max-w-3xl 2xl:max-w-4xl mx-auto pb-24">
+        <div className="card-spacious">
+          <div className="card-header">
+            <div className="text-center sm:text-left">
+              <h2 className="text-xl font-semibold text-gray-900">Audit Wizard</h2>
+              <p className="text-gray-600 mt-1">ID: {auditId}</p>
+            </div>
           </div>
           {loadingAudit || loadingSurvey ? (
             <div className="text-center py-8">
