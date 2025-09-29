@@ -9,7 +9,7 @@ import PWAInstallPrompt from './components/PWAInstallPrompt'
 import { usePWA } from './hooks/usePWA'
 import { LoadingProvider } from './contexts/LoadingContext'
 import { ErrorToastContainer } from './components/ErrorToast'
-import { OfflineStatus, OfflineBanner } from './components/OfflineStatus'
+import { OfflineBanner } from './components/OfflineStatus'
 import { usePerformanceMonitoring } from './hooks/usePerformanceMonitoring'
 
 // Eager load only critical components (login, loading)
@@ -78,9 +78,6 @@ function App() {
           <div className="min-h-screen bg-gray-50">
             {/* Offline Banner */}
             <OfflineBanner />
-            
-            {/* Offline Status Indicator */}
-            <OfflineStatus />
             
             {/* Update available notification */}
             {updateAvailable && (
