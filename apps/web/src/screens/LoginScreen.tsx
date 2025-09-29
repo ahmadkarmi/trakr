@@ -356,60 +356,64 @@ const LoginScreen: React.FC = () => {
 
       {/* Minimalist Black Globe Layer - Desktop Only */}
       <div className="hidden lg:block absolute inset-0 z-5">
-        {/* Large globe covering bottom half */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-[1400px] h-[1400px]">
-          <svg viewBox="0 0 400 400" className="w-full h-full">
+        {/* Globe positioned so center aligns with screen bottom edge */}
+        <div className="absolute bottom-0 left-0 w-full h-[400px] transform translate-y-[200px]">
+          <svg viewBox="0 0 800 400" className="w-full h-full" preserveAspectRatio="none">
             <defs>
               {/* Subtle atmospheric glow */}
-              <radialGradient id="atmosphereGlow" cx="0.5" cy="0.5" r="0.7">
+              <radialGradient id="atmosphereGlow" cx="0.5" cy="0.5" r="0.8">
                 <stop offset="0%" stopColor="transparent"/>
-                <stop offset="75%" stopColor="rgba(148, 163, 184, 0.05)"/>
-                <stop offset="85%" stopColor="rgba(148, 163, 184, 0.1)"/>
-                <stop offset="95%" stopColor="rgba(148, 163, 184, 0.15)"/>
+                <stop offset="70%" stopColor="rgba(148, 163, 184, 0.05)"/>
+                <stop offset="80%" stopColor="rgba(148, 163, 184, 0.1)"/>
+                <stop offset="90%" stopColor="rgba(148, 163, 184, 0.15)"/>
                 <stop offset="100%" stopColor="rgba(148, 163, 184, 0.2)"/>
               </radialGradient>
               
               {/* Black globe with subtle gradient */}
-              <radialGradient id="globeGradient" cx="0.3" cy="0.3" r="0.8">
+              <radialGradient id="globeGradient" cx="0.5" cy="0.5" r="0.9">
                 <stop offset="0%" stopColor="#1e293b"/>
-                <stop offset="40%" stopColor="#0f172a"/>
-                <stop offset="70%" stopColor="#020617"/>
-                <stop offset="90%" stopColor="#000000"/>
+                <stop offset="30%" stopColor="#0f172a"/>
+                <stop offset="60%" stopColor="#020617"/>
+                <stop offset="85%" stopColor="#000000"/>
                 <stop offset="100%" stopColor="#000000"/>
               </radialGradient>
               
               {/* Edge highlight */}
-              <radialGradient id="edgeGlow" cx="0.2" cy="0.2" r="1.2">
+              <radialGradient id="edgeGlow" cx="0.5" cy="0.3" r="1.0">
                 <stop offset="0%" stopColor="rgba(148, 163, 184, 0.1)"/>
-                <stop offset="60%" stopColor="rgba(148, 163, 184, 0.05)"/>
-                <stop offset="85%" stopColor="rgba(148, 163, 184, 0.15)"/>
-                <stop offset="95%" stopColor="rgba(148, 163, 184, 0.25)"/>
+                <stop offset="50%" stopColor="rgba(148, 163, 184, 0.05)"/>
+                <stop offset="75%" stopColor="rgba(148, 163, 184, 0.15)"/>
+                <stop offset="90%" stopColor="rgba(148, 163, 184, 0.25)"/>
                 <stop offset="100%" stopColor="rgba(148, 163, 184, 0.3)"/>
               </radialGradient>
             </defs>
             
-            {/* Outer atmospheric glow */}
-            <circle cx="200" cy="200" r="220" fill="url(#atmosphereGlow)" opacity="0.6"/>
+            {/* Outer atmospheric glow - stretched ellipse */}
+            <ellipse cx="400" cy="200" rx="420" ry="220" fill="url(#atmosphereGlow)" opacity="0.6"/>
             
-            {/* Main black globe */}
-            <circle cx="200" cy="200" r="190" fill="url(#globeGradient)"/>
+            {/* Main black globe - stretched ellipse, center at screen bottom */}
+            <ellipse cx="400" cy="200" rx="400" ry="200" fill="url(#globeGradient)"/>
             
-            {/* Subtle edge highlight for depth */}
-            <circle cx="200" cy="200" r="190" fill="url(#edgeGlow)" opacity="0.4"/>
+            {/* Subtle edge highlight for depth - stretched */}
+            <ellipse cx="400" cy="200" rx="400" ry="200" fill="url(#edgeGlow)" opacity="0.4"/>
             
-            {/* Subtle surface texture with minimal detail */}
+            {/* Subtle surface texture - only bottom half visible */}
             <g opacity="0.1">
-              <circle cx="150" cy="120" r="15" fill="rgba(148, 163, 184, 0.1)"/>
-              <circle cx="280" cy="160" r="20" fill="rgba(148, 163, 184, 0.08)"/>
-              <circle cx="200" cy="250" r="12" fill="rgba(148, 163, 184, 0.12)"/>
-              <circle cx="320" cy="220" r="18" fill="rgba(148, 163, 184, 0.09)"/>
-              <circle cx="120" cy="280" r="10" fill="rgba(148, 163, 184, 0.11)"/>
+              <ellipse cx="200" cy="250" rx="20" ry="15" fill="rgba(148, 163, 184, 0.1)"/>
+              <ellipse cx="500" cy="280" rx="25" ry="20" fill="rgba(148, 163, 184, 0.08)"/>
+              <ellipse cx="400" cy="320" rx="15" ry="12" fill="rgba(148, 163, 184, 0.12)"/>
+              <ellipse cx="600" cy="290" rx="22" ry="18" fill="rgba(148, 163, 184, 0.09)"/>
+              <ellipse cx="150" cy="350" rx="12" ry="10" fill="rgba(148, 163, 184, 0.11)"/>
+              <ellipse cx="650" cy="370" rx="18" ry="14" fill="rgba(148, 163, 184, 0.07)"/>
             </g>
           </svg>
         </div>
         
-        {/* Subtle horizon fade */}
-        <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-black/20 via-slate-900/10 to-transparent"></div>
+        {/* Pure black bottom section */}
+        <div className="absolute bottom-0 left-0 w-full h-[200px] bg-black"></div>
+        
+        {/* Subtle horizon fade above black section */}
+        <div className="absolute bottom-[200px] left-0 w-full h-[100px] bg-gradient-to-t from-black via-slate-900/50 to-transparent"></div>
       </div>
 
       {/* Main Login Card - Glass Effect with Logo Inside */}
