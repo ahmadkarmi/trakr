@@ -74,13 +74,37 @@ const LoginScreen: React.FC = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center py-8">
-      {/* Vibrant Brand Blue Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-700 to-purple-800">
-        {/* Enhanced Organic Shapes for Depth */}
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-gradient-to-r from-purple-500/20 to-primary-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-gradient-to-r from-blue-500/25 to-purple-500/25 rounded-full blur-2xl"></div>
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-r from-primary-500/15 to-blue-500/15 rounded-full blur-xl"></div>
-        <div className="absolute bottom-1/4 right-1/3 w-48 h-48 bg-gradient-to-r from-purple-400/20 to-primary-400/20 rounded-full blur-2xl"></div>
+      {/* Space Effect Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+        {/* Animated Stars */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Large Stars */}
+          <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-white rounded-full animate-pulse"></div>
+          <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-blue-200 rounded-full animate-pulse delay-75"></div>
+          <div className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-white rounded-full animate-pulse delay-150"></div>
+          <div className="absolute bottom-1/4 right-1/3 w-1 h-1 bg-blue-100 rounded-full animate-pulse delay-300"></div>
+          <div className="absolute top-1/2 left-1/6 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-500"></div>
+          <div className="absolute top-3/4 right-1/6 w-0.5 h-0.5 bg-blue-200 rounded-full animate-pulse delay-700"></div>
+          
+          {/* Medium Stars */}
+          <div className="absolute top-1/5 left-1/2 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-200"></div>
+          <div className="absolute top-2/3 left-1/5 w-0.5 h-0.5 bg-blue-100 rounded-full animate-pulse delay-400"></div>
+          <div className="absolute bottom-1/5 right-1/2 w-0.5 h-0.5 bg-white rounded-full animate-pulse delay-600"></div>
+          
+          {/* Small Twinkling Stars */}
+          <div className="absolute top-1/6 right-1/5 w-px h-px bg-white rounded-full animate-ping"></div>
+          <div className="absolute top-3/5 left-1/8 w-px h-px bg-blue-200 rounded-full animate-ping delay-1000"></div>
+          <div className="absolute bottom-1/6 left-3/5 w-px h-px bg-white rounded-full animate-ping delay-2000"></div>
+        </div>
+        
+        {/* Nebula Effects */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-gradient-to-r from-indigo-600/15 to-purple-600/15 rounded-full blur-2xl"></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-600/8 to-indigo-600/8 rounded-full blur-xl"></div>
+        <div className="absolute bottom-1/4 right-1/3 w-48 h-48 bg-gradient-to-r from-purple-500/12 to-blue-500/12 rounded-full blur-2xl"></div>
+        
+        {/* Distant Galaxy Effect */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-radial from-blue-400/5 to-transparent rounded-full blur-xl"></div>
       </div>
 
       {/* Main Login Card - Glass Effect with Logo Inside */}
@@ -171,7 +195,7 @@ const LoginScreen: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 shadow-xl"
+                  className="w-full bg-blue-200 hover:bg-blue-300 text-blue-900 font-semibold py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 shadow-xl"
                 >
                   {isLoading ? 'Signing in...' : 'Log in'}
                 </button>
