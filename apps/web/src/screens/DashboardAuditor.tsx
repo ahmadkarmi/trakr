@@ -413,74 +413,212 @@ const DashboardAuditor: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Recent Audits</h3>
+        {/* Completely Redesigned Recent Audits - Mobile First */}
+        <div className="card-spacious">
+          <div className="card-header">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">Recent Audits</h3>
+                <p className="text-gray-600 mt-1">Your audit history and progress</p>
+              </div>
+              <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                {recent.length} audits
+              </div>
+            </div>
+            
+            {/* Mobile-First Search & Filter Bar */}
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white transition-all"
+                  placeholder="Search audit, branch, auditor..."
+                />
+              </div>
+              
+              {/* Filter Pills */}
+              <div className="flex flex-wrap gap-2">
+                <button className="px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-medium hover:bg-primary-200 transition-colors">
+                  Due Today
+                </button>
+                <button className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium hover:bg-orange-200 transition-colors">
+                  Overdue
+                </button>
+                <button className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium hover:bg-yellow-200 transition-colors">
+                  Submitted
+                </button>
+                <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors">
+                  Waiting Approval
+                </button>
+                <button className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium hover:bg-green-200 transition-colors">
+                  Completed
+                </button>
+                <button className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium hover:bg-purple-200 transition-colors">
+                  Approved
+                </button>
+                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors">
+                  Finalized
+                </button>
+              </div>
+              
+              {/* Filter Toggle & Clear */}
+              <div className="flex items-center justify-between">
+                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  <span className="text-sm font-medium">Filters</span>
+                </button>
+                <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                  Clear
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="p-6">
-            {isLoading ? (
-              <p className="text-gray-500 py-8">Loading audits...</p>
-            ) : recent.length === 0 ? (
-              <p className="text-gray-500 py-8">No audits found.</p>
-            ) : (
-              <>
-                {/* Enhanced Mobile Audit Cards */}
-                <div className="grid gap-6 md:hidden">
-                  {recent.map((a) => {
-                    const s = surveys.find(su => su.id === a.surveyId)
-                    const comp = s ? Math.round(calculateAuditScore(a, s).completionPercentage) : 0
-                    const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
-                    return (
-                      <div key={a.id} className="card-compact card-interactive bg-white border border-gray-200">
-                        <div className="card-header">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 text-base mb-1 truncate">
-                                Audit {a.id}
-                              </h4>
-                              <p className="text-sm text-gray-600 mb-2">{branchName}</p>
-                              <div className="flex items-center gap-2">
-                                <StatusBadge status={a.status} />
-                                <span className="text-xs text-gray-500">
-                                  Updated {new Date(a.updatedAt).toLocaleDateString()}
+          
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+              <p className="text-gray-500 text-lg">Loading audits...</p>
+            </div>
+          ) : recent.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <span className="text-4xl">📋</span>
+              </div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">No audits found</h4>
+              <p className="text-gray-500 mb-6">Your completed audits will appear here</p>
+              <button className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-medium transition-colors">
+                Start Your First Audit
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Optimized Mobile Audit Cards */}
+              <div className="space-y-4 md:hidden">
+                {recent.map((a) => {
+                  const s = surveys.find(su => su.id === a.surveyId)
+                  const comp = s ? Math.round(calculateAuditScore(a, s).completionPercentage) : 0
+                  const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
+                  const isOverdue = a.dueAt && new Date(a.dueAt) < new Date()
+                  const isDueToday = a.dueAt && new Date(a.dueAt).toDateString() === new Date().toDateString()
+                  
+                  return (
+                    <div key={a.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
+                      {/* Card Header with Status Indicator */}
+                      <div className="p-6 pb-4">
+                        <div className="flex items-start justify-between gap-4 mb-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                                <span className="text-lg font-bold text-primary-600">
+                                  {a.id.slice(-2)}
                                 </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-gray-900 text-lg truncate">
+                                  {a.id}
+                                </h4>
+                                <p className="text-gray-600 text-sm">{branchName}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Status & Date Row */}
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <StatusBadge status={a.status} />
+                              {isOverdue && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                  Overdue
+                                </span>
+                              )}
+                              {isDueToday && !isOverdue && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                  Due Today
+                                </span>
+                              )}
+                              <span className="text-xs text-gray-500">
+                                Updated {new Date(a.updatedAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Progress Circle */}
+                          <div className="flex-shrink-0">
+                            <div className="relative w-16 h-16">
+                              <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                                <path
+                                  className="text-gray-200"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  fill="none"
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                                <path
+                                  className="text-primary-500"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  fill="none"
+                                  strokeDasharray={`${comp}, 100`}
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-sm font-bold text-gray-900">{comp}%</span>
                               </div>
                             </div>
                           </div>
                         </div>
                         
-                        <div className="card-body">
-                          <div className="mb-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">Progress</span>
-                              <span className="text-sm font-semibold text-gray-900">{comp}%</span>
-                            </div>
-                            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                              <div className="h-3 bg-primary-500 rounded-full transition-all duration-300" style={{ width: `${comp}%` }} />
-                            </div>
+                        {/* Progress Bar for Mobile */}
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700">Completion Progress</span>
+                            <span className="text-sm text-gray-500">{comp}% complete</span>
                           </div>
-                        </div>
-                        
-                        <div className="card-footer">
-                          <div className="flex gap-3">
-                            <button 
-                              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-colors touch-target"
-                              onClick={() => navigate(`/audit/${a.id}`)}
-                            >
-                              View Details
-                            </button>
-                            <button 
-                              className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
-                              onClick={() => navigate(`/audit/${a.id}/wizard`)}
-                            >
-                              Continue Audit
-                            </button>
+                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className="h-2 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out" 
+                              style={{ width: `${comp}%` }} 
+                            />
                           </div>
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="px-6 pb-6">
+                        <div className="grid grid-cols-2 gap-3">
+                          <button 
+                            className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-all duration-200 touch-target"
+                            onClick={() => navigate(`/audit/${a.id}`)}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <span>View</span>
+                          </button>
+                          <button 
+                            className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 touch-target hover:shadow-lg"
+                            onClick={() => navigate(`/audit/${a.id}/wizard`)}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5l7 7-7 7M4 12h14" />
+                            </svg>
+                            <span>Continue</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
                 {/* Desktop table */}
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full min-w-[960px] divide-y divide-gray-200">
