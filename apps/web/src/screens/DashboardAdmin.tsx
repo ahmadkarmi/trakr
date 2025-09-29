@@ -305,7 +305,7 @@ const DashboardAdmin: React.FC = () => {
 
   return (
     <DashboardLayout title="Admin Dashboard">
-      <div className="mobile-container space-y-6">
+      <div className="mobile-container breathing-room">
         {/* Compact Header with Smart Actions */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -329,18 +329,18 @@ const DashboardAdmin: React.FC = () => {
         </div>
 
         {/* Smart Quick Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
           <button 
-            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            className="card-compact card-interactive text-left bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200"
             onClick={() => navigate('/manage/branches')}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm">🏢</span>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center shadow-sm">
+                <span className="text-xl">🏢</span>
               </div>
-              <div>
-                <div className="font-medium text-gray-900">Branches</div>
-                <div className="text-xs text-gray-500">{branches.length} total</div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900 mb-1">Branches</div>
+                <div className="text-sm text-gray-600">{branches.length} total</div>
               </div>
             </div>
           </button>
