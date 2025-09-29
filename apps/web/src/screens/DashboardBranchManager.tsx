@@ -255,51 +255,50 @@ const DashboardBranchManager: React.FC = () => {
                     
                     return (
                       <div key={a.id} className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-300">
-                        {/* Card Header */}
-                        <div className="flex items-start justify-between gap-4 mb-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
-                                <span className="text-lg font-bold text-primary-600">
-                                  {a.id.slice(-2)}
-                                </span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-gray-900 text-lg truncate">
-                                  Audit {a.id}
-                                </h4>
-                                <p className="text-gray-600 text-sm">{branchName}</p>
-                              </div>
+                        {/* Card Header - Mobile Optimized */}
+                        <div className="mb-4">
+                          {/* Title Row - Single Line */}
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <span className="text-lg font-bold text-primary-600">
+                                {a.id.slice(-2)}
+                              </span>
                             </div>
-                            
-                            {/* Status & Date Row */}
-                            <div className="flex items-center gap-3 flex-wrap mb-3">
-                              <StatusBadge status={a.status} />
-                              {isOverdue && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                  Overdue
-                                </span>
-                              )}
-                              {isDueToday && !isOverdue && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                  Due Today
-                                </span>
-                              )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-lg truncate whitespace-nowrap">
+                                Audit {a.id}
+                              </h4>
+                              <p className="text-gray-600 text-sm truncate">{branchName}</p>
                             </div>
-                            
-                            {/* Audit Details */}
-                            <div className="space-y-2 text-sm">
+                          </div>
+                          
+                          {/* Status Labels Row - Below Title */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <StatusBadge status={a.status} />
+                            {isOverdue && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Overdue
+                              </span>
+                            )}
+                            {isDueToday && !isOverdue && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                Due Today
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Audit Details */}
+                          <div className="mt-3 space-y-2 text-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Updated:</span>
+                              <span className="text-gray-900">{new Date(a.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                            {a.dueAt && (
                               <div className="flex items-center justify-between">
-                                <span className="text-gray-500">Updated:</span>
-                                <span className="text-gray-900">{new Date(a.updatedAt).toLocaleDateString()}</span>
+                                <span className="text-gray-500">Due Date:</span>
+                                <span className="text-gray-900">{new Date(a.dueAt).toLocaleDateString()}</span>
                               </div>
-                              {a.dueAt && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-gray-500">Due Date:</span>
-                                  <span className="text-gray-900">{new Date(a.dueAt).toLocaleDateString()}</span>
-                                </div>
-                              )}
-                            </div>
+                            )}
                           </div>
                         </div>
                         

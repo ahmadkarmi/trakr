@@ -626,23 +626,25 @@ const DashboardAdmin: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <button 
-                      className="flex items-center gap-2 px-4 py-2 sm:px-3 sm:py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl sm:rounded-lg font-medium transition-colors touch-target"
+                      className="flex items-center gap-2 px-4 py-2 sm:px-3 sm:py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
                       onClick={() => setShowAdvanced((v) => !v)}
                     >
                       <FunnelIcon className="w-4 h-4" />
-                      <span>Advanced Filters</span>
+                      <span className="hidden sm:inline">Advanced Filters</span>
+                      <span className="sm:hidden">Filters</span>
                     </button>
                     <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                       {filteredAudits.length} results
                     </div>
                   </div>
                   <button 
-                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors whitespace-nowrap"
                     onClick={clearAllFilters} 
                     disabled={!hasFilters}
                   >
                     <XMarkIcon className="w-4 h-4" />
-                    <span>Clear All</span>
+                    <span className="hidden sm:inline">Clear All</span>
+                    <span className="sm:hidden">Clear</span>
                   </button>
                 </div>
                 
@@ -729,24 +731,24 @@ const DashboardAdmin: React.FC = () => {
                   return (
                     <div className="bg-white rounded-xl lg:rounded-lg border border-gray-200 p-4 lg:p-3 hover:shadow-lg lg:hover:shadow-md transition-all duration-300">
                       {/* Card Header */}
-                      <div className="flex items-start justify-between gap-4 mb-4 lg:mb-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2 lg:mb-1.5">
-                            <div className="w-10 h-10 lg:w-8 lg:h-8 bg-primary-100 rounded-xl lg:rounded-lg flex items-center justify-center">
-                              <span className="text-lg lg:text-sm font-bold text-primary-600">
-                                {a.id.slice(-2)}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 text-lg lg:text-base truncate">
-                                {highlightMatch(a.id)}
-                              </h4>
-                              <p className="text-gray-600 text-sm lg:text-xs">{highlightMatch(branchName)}</p>
-                            </div>
+                      <div className="mb-4 lg:mb-3">
+                        {/* Title Row - Single Line */}
+                        <div className="flex items-center gap-3 mb-3 lg:mb-2">
+                          <div className="w-10 h-10 lg:w-8 lg:h-8 bg-primary-100 rounded-xl lg:rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span className="text-lg lg:text-sm font-bold text-primary-600">
+                              {a.id.slice(-2)}
+                            </span>
                           </div>
-                          
-                          {/* Status & Date Row */}
-                          <div className="flex items-center gap-3 lg:gap-2 flex-wrap mb-3 lg:mb-2">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-900 text-lg lg:text-base truncate whitespace-nowrap">
+                              {highlightMatch(a.id)}
+                            </h4>
+                            <p className="text-gray-600 text-sm lg:text-xs truncate">{highlightMatch(branchName)}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Status Labels Row - Below Title */}
+                        <div className="flex items-center gap-2 lg:gap-1.5 flex-wrap mb-3 lg:mb-2">
                             <StatusBadge status={a.status} />
                             {isOverdue && (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -759,22 +761,21 @@ const DashboardAdmin: React.FC = () => {
                               </span>
                             )}
                             {a.isArchived && <InfoBadge label="Archived" tone="gray" />}
+                        </div>
+                        
+                        {/* Audit Details */}
+                        <div className="mt-3 space-y-2 lg:space-y-1 text-sm lg:text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-500">Auditor:</span>
+                            <span className="font-medium text-gray-900">{highlightMatch(auditorName)}</span>
                           </div>
-                          
-                          {/* Audit Details */}
-                          <div className="space-y-2 lg:space-y-1 text-sm lg:text-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="text-gray-500">Auditor:</span>
-                              <span className="font-medium text-gray-900">{highlightMatch(auditorName)}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-gray-500">Updated:</span>
-                              <span className="text-gray-900">{new Date(a.updatedAt).toLocaleDateString()}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-gray-500">Due Date:</span>
-                              <span className="text-gray-900">{a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}</span>
-                            </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-500">Updated:</span>
+                            <span className="text-gray-900">{new Date(a.updatedAt).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-500">Due Date:</span>
+                            <span className="text-gray-900">{a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}</span>
                           </div>
                         </div>
                       </div>
@@ -870,7 +871,16 @@ const DashboardAdmin: React.FC = () => {
               <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-500">Completed: {completedOnlyCount}</span>
                 <span className="text-xs text-gray-500">Approved: {approvedOnlyCount}</span>
-                <button className="btn-outline btn-sm" onClick={() => exportCsv(finalizedAuditsInPeriod)}>Export CSV</button>
+                <button 
+                  className="btn-outline btn-sm flex items-center gap-2 whitespace-nowrap" 
+                  onClick={() => exportCsv(finalizedAuditsInPeriod)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="hidden sm:inline">Export CSV</span>
+                  <span className="sm:hidden">CSV</span>
+                </button>
               </div>
             </div>
             <div className="p-6">
