@@ -113,6 +113,34 @@ const DashboardAuditor: React.FC = () => {
   }, [assignedBranches, allAudits, selectedSurvey?.id, selectedSurvey?.frequency, orgs])
   const firstAllowedBranchId = allowedBranches[0]?.id
 
+  // Filter surveys to only show those with available branches
+  const availableSurveys = React.useMemo(() => {
+    return surveys.filter(survey => {
+      const freq = survey.frequency || AuditFrequency.UNLIMITED
+      if (freq === AuditFrequency.UNLIMITED) return assignedBranches.length > 0
+      
+      const gating = orgs[0]?.gatingPolicy || 'completed_approved'
+      const now = new Date().getTime()
+      
+      const surveyAllowedBranches = assignedBranches.filter(b => {
+        const periodAudits = allAudits.filter(a => a.branchId === b.id && a.surveyId === survey.id && a.periodStart && a.dueAt && new Date(a.periodStart).getTime() <= now && now <= new Date(a.dueAt).getTime())
+        if (gating === 'any') return periodAudits.length === 0
+        return !periodAudits.some(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED)
+      })
+      
+      return surveyAllowedBranches.length > 0
+    })
+  }, [surveys, assignedBranches, allAudits, orgs])
+
+  // Auto-select first available survey if current selection is not available
+  React.useEffect(() => {
+    if (availableSurveys.length > 0) {
+      if (!selectedSurveyId || !availableSurveys.find(s => s.id === selectedSurveyId)) {
+        setSelectedSurveyId(availableSurveys[0].id)
+      }
+    }
+  }, [availableSurveys, selectedSurveyId])
+
   return (
     <DashboardLayout title="Auditor Dashboard">
       <div className="mobile-container breathing-room">
@@ -146,8 +174,8 @@ const DashboardAuditor: React.FC = () => {
           </div>
         )}
 
-        {/* Smart Survey Selection */}
-        {surveys.length > 0 && (
+        {/* Smart Survey Selection - Only Available Surveys */}
+        {availableSurveys.length > 0 && (
           <div className="card-spacious">
             <div className="card-header">
               <div className="flex items-start justify-between gap-4">
@@ -158,17 +186,22 @@ const DashboardAuditor: React.FC = () => {
                   </p>
                   {firstAllowedBranchId && (
                     <p className="text-sm text-green-600 mt-1">
-                      ✓ {allowedBranches.length} branches available
+                      ✓ {allowedBranches.length} branches available for this period
+                    </p>
+                  )}
+                  {availableSurveys.length < surveys.length && (
+                    <p className="text-sm text-amber-600 mt-1">
+                      📅 {surveys.length - availableSurveys.length} surveys not available due to frequency policy
                     </p>
                   )}
                 </div>
-                {surveys.length > 1 && (
+                {availableSurveys.length > 1 && (
                   <select 
                     className="input rounded-xl border-gray-300 bg-white min-w-[140px]"
                     value={selectedSurveyId || ''} 
                     onChange={(e) => setSelectedSurveyId(e.target.value)}
                   >
-                    {surveys.map(s => (
+                    {availableSurveys.map(s => (
                       <option key={s.id} value={s.id}>{s.title}</option>
                     ))}
                   </select>
@@ -212,14 +245,26 @@ const DashboardAuditor: React.FC = () => {
           </div>
         )}
 
-        {surveys.length === 0 && (
-          <div className="card-mobile border border-amber-200 bg-amber-50">
-            <div className="text-center py-4">
-              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl">📋</span>
+        {availableSurveys.length === 0 && (
+          <div className="card-spacious border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">📅</span>
               </div>
-              <h3 className="font-semibold text-amber-800 mb-1">No Survey Templates</h3>
-              <p className="text-sm text-amber-700">Ask an admin to create survey templates to get started</p>
+              {surveys.length === 0 ? (
+                <>
+                  <h3 className="text-lg font-semibold text-amber-800 mb-2">No Survey Templates</h3>
+                  <p className="text-amber-700 mb-4">Ask an admin to create survey templates to get started</p>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold text-amber-800 mb-2">No Audits Available</h3>
+                  <p className="text-amber-700 mb-2">All surveys have been completed for this period</p>
+                  <p className="text-sm text-amber-600">
+                    {surveys.length} survey{surveys.length !== 1 ? 's' : ''} exist but frequency policy prevents new audits
+                  </p>
+                </>
+              )}
             </div>
           </div>
         )}
