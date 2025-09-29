@@ -90,7 +90,7 @@ const ManageSurveyTemplates: React.FC = () => {
                 keyField={(s) => s.id}
                 empty={<p className="text-gray-500 py-8">No templates found.</p>}
                 mobileItem={(s) => (
-                  <>
+                  <div className="card-compact card-interactive bg-white border border-gray-200">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-medium text-gray-900 truncate">{s.title}</p>
@@ -104,7 +104,7 @@ const ManageSurveyTemplates: React.FC = () => {
                       <button data-testid="toggle-active-template" data-id={s.id} className="btn-outline btn-sm" onClick={() => toggleActiveMutation.mutate(s)} disabled={toggleActiveMutation.isPending}>{s.isActive ? 'Deactivate' : 'Activate'}</button>
                       <button data-testid="delete-template" data-id={s.id} className="btn-danger btn-sm" onClick={() => deleteMutation.mutate(s.id)} disabled={deleteMutation.isPending}>Delete</button>
                     </div>
-                  </>
+                  </div>
                 )}
                 columns={[
                   { key: 'title', header: 'Title', render: (s) => s.title },

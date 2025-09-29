@@ -34,9 +34,9 @@ function ResponsiveTable<T>({ items, keyField, columns, mobileItem, empty }: Res
   return (
     <>
       {/* Enhanced mobile list */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-6">
         {items.map((row) => (
-          <div key={keyField(row)} className="card-mobile touch-manipulation">
+          <div key={keyField(row)}>
             {mobileItem(row)}
           </div>
         ))}
