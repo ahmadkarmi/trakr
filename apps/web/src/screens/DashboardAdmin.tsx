@@ -306,44 +306,62 @@ const DashboardAdmin: React.FC = () => {
 
   return (
     <DashboardLayout title="Admin Dashboard">
-      <div className="space-y-6">
+      <div className="mobile-container space-y-6">
         {/* Hero welcome */}
-        <div className="card p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}! 🛠️</h2>
-              <p className="text-gray-600">Manage the entire audit system, users, and templates.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button className="btn-primary" onClick={() => navigate('/manage/surveys')}>Create Survey Template</button>
-              <button className="btn-outline" onClick={() => navigate('/manage/branches')}>Manage Branches</button>
-              <button className="btn-outline" onClick={() => navigate('/manage/zones')}>Manage Zones</button>
-              <button className="btn-outline" onClick={() => navigate('/manage/assignments')}>Assign Auditors</button>
-              <button className="btn-ghost">Invite Users</button>
+        <div className="card-mobile">
+          <div className="text-center sm:text-left mobile-section">
+            <h2 className="heading-mobile-xl text-gray-900 mb-2">Welcome back, {user?.name}! 🛠️</h2>
+            <p className="text-mobile-body text-gray-600">Manage the entire audit system, users, and templates.</p>
+          </div>
+          <div className="mobile-section">
+            <div className="mobile-grid sm:grid-cols-2 lg:grid-cols-3">
+              <button className="btn-mobile-primary sm:btn-primary" onClick={() => navigate('/manage/surveys')}>
+                Create Survey Template
+              </button>
+              <button className="btn-mobile-primary sm:btn-outline" onClick={() => navigate('/manage/branches')}>
+                Manage Branches
+              </button>
+              <button className="btn-mobile-primary sm:btn-outline" onClick={() => navigate('/manage/zones')}>
+                Manage Zones
+              </button>
+              <button className="btn-mobile-primary sm:btn-outline" onClick={() => navigate('/manage/assignments')}>
+                Assign Auditors
+              </button>
+              <button className="btn-mobile-primary sm:btn-ghost" onClick={() => {}}>
+                Invite Users
+              </button>
             </div>
           </div>
         </div>
 
         {/* Period selector + KPI cards */}
-        <div className="card p-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Period:</span>
-              <div className="inline-flex rounded-md border border-gray-200 overflow-hidden">
-                {(['week','month','quarter'] as const).map(p => (
-                  <button key={p} className={`px-3 py-1 text-sm ${period===p ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} onClick={() => setPeriod(p)}>
-                    {p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'This Quarter'}
-                  </button>
-                ))}
+        <div className="card-mobile">
+          <div className="mobile-section">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <span className="text-mobile-body text-gray-600 font-medium">Period:</span>
+                <div className="inline-flex rounded-xl border border-gray-200 overflow-hidden">
+                  {(['week','month','quarter'] as const).map(p => (
+                    <button 
+                      key={p} 
+                      className={`px-4 py-2 text-sm font-medium touch-target ${period===p ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
+                      onClick={() => setPeriod(p)}
+                    >
+                      {p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'This Quarter'}
+                    </button>
+                  ))}
+                </div>
               </div>
-              {org?.timeZone && <span className="text-xs text-gray-500">Timezone: {org.timeZone}</span>}
+              {org?.timeZone && (
+                <span className="text-mobile-caption text-gray-500">Timezone: {org.timeZone}</span>
+              )}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:w-auto">
-              <StatCard title="Completion" value={`${completionRate}%`} subtitle="In period" variant="success" progress={completionRate} icon={<ClipboardDocumentCheckIcon className="w-6 h-6 text-success-700" />} />
-              <StatCard title="On-time" value={`${onTimeRate}%`} subtitle="Completed on/before due" variant="primary" icon={<ClipboardDocumentListIcon className="w-6 h-6 text-primary-700" />} />
-              <StatCard title="Overdue" value={overdueCount} subtitle="Past due" variant="warning" icon={<BuildingOfficeIcon className="w-6 h-6 text-warning-700" />} />
-              <StatCard title="Coverage" value={`${coverageRate}%`} subtitle={`${coverageBranches.size}/${branches.length} branches`} variant="neutral" icon={<UsersIcon className="w-6 h-6 text-gray-700" />} />
-            </div>
+          </div>
+          <div className="mobile-grid lg:grid-cols-4">
+            <StatCard title="Completion" value={`${completionRate}%`} subtitle="In period" variant="success" progress={completionRate} icon={<ClipboardDocumentCheckIcon className="w-6 h-6 text-success-700" />} />
+            <StatCard title="On-time" value={`${onTimeRate}%`} subtitle="Completed on/before due" variant="primary" icon={<ClipboardDocumentListIcon className="w-6 h-6 text-primary-700" />} />
+            <StatCard title="Overdue" value={overdueCount} subtitle="Past due" variant="warning" icon={<BuildingOfficeIcon className="w-6 h-6 text-warning-700" />} />
+            <StatCard title="Coverage" value={`${coverageRate}%`} subtitle={`${coverageBranches.size}/${branches.length} branches`} variant="neutral" icon={<UsersIcon className="w-6 h-6 text-gray-700" />} />
           </div>
         </div>
 

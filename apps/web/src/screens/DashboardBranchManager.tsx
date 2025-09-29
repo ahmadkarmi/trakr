@@ -109,26 +109,40 @@ const DashboardBranchManager: React.FC = () => {
 
   return (
     <DashboardLayout title="Branch Manager Dashboard">
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Welcome back, {user?.name}! 🏬
-          </h2>
-          <p className="text-gray-600">
-            Manage audits and oversee branch operations.
-          </p>
+      <div className="mobile-container space-y-6">
+        <div className="card-mobile">
+          <div className="text-center sm:text-left">
+            <h2 className="heading-mobile-xl text-gray-900 mb-2">
+              Welcome back, {user?.name}! 🏬
+            </h2>
+            <p className="text-mobile-body text-gray-600">
+              Manage audits and oversee branch operations.
+            </p>
+          </div>
+          {assignedBranches.length > 0 && (
+            <div className="mt-4">
+              <p className="text-mobile-caption text-gray-500 mb-3">Your assigned branches:</p>
+              <div className="flex flex-wrap gap-2">
+                {assignedBranches.map(branch => (
+                  <span key={branch.id} className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-primary-100 text-primary-800 touch-manipulation">
+                    {branch.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="mobile-grid lg:grid-cols-4">
           <StatCard title="Total Audits" value={total} subtitle="Branch total" variant="primary" icon={<ClipboardDocumentListIcon className="w-6 h-6 text-primary-700" />} />
           <StatCard title="In Progress" value={inProgress} subtitle="Currently running" variant="warning" icon={<ClockIcon className="w-6 h-6 text-warning-700" />} />
           <StatCard title="Completed" value={completed} subtitle="All time" variant="success" icon={<CheckCircleIcon className="w-6 h-6 text-success-700" />} />
           <StatCard title="Completion Rate" value={`${completionRate}%`} subtitle="Completed / Total" variant="neutral" icon={<ChartBarIcon className="w-6 h-6 text-gray-700" />} progress={completionRate} />
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Branch Audit Overview</h3>
+        <div className="card-mobile">
+          <div className="mobile-section">
+            <h3 className="heading-mobile-md text-gray-900">Branch Audit Overview</h3>
           </div>
           <div className="p-6">
             {isLoading ? (
@@ -150,19 +164,23 @@ const DashboardBranchManager: React.FC = () => {
                           </div>
                           <StatusBadge status={a.status} />
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2 justify-end">
-                          <button className="btn-outline btn-sm" onClick={() => navigate(`/audit/${a.id}`)}>Details</button>
-                          <button className="btn-primary btn-sm" onClick={() => navigate(`/audit/${a.id}/summary`)}>Summary</button>
+                        <div className="mt-3 space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:gap-2 sm:justify-end">
+                          <button className="btn-mobile-primary sm:btn-outline sm:btn-sm w-full sm:w-auto" onClick={() => navigate(`/audit/${a.id}`)}>
+                            View Details
+                          </button>
+                          <button className="btn-mobile-primary sm:btn-primary sm:btn-sm w-full sm:w-auto" onClick={() => navigate(`/audit/${a.id}/summary`)}>
+                            View Summary
+                          </button>
                           <button
-                            className="btn-secondary btn-sm disabled:opacity-60"
+                            className="btn-mobile-primary sm:btn-secondary sm:btn-sm w-full sm:w-auto disabled:opacity-60"
                             onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
                             disabled={a.status !== AuditStatus.SUBMITTED}
                             title={a.status !== AuditStatus.SUBMITTED ? 'Approval available after submission' : 'Approve with signature'}
                           >
-                            {a.status === AuditStatus.APPROVED ? 'Approved' : 'Approve'}
+                            {a.status === AuditStatus.APPROVED ? '✅ Approved' : '✓ Approve'}
                           </button>
                           <button
-                            className="btn-outline btn-sm disabled:opacity-60"
+                            className="btn-mobile-primary sm:btn-outline sm:btn-sm w-full sm:w-auto disabled:opacity-60 bg-red-600 hover:bg-red-700 sm:bg-white sm:hover:bg-gray-50 sm:text-gray-700"
                             onClick={() => {
                               const note = window.prompt('Rejection reason (optional):') || ''
                               rejectMutation.mutate({ auditId: a.id, note })
@@ -170,7 +188,7 @@ const DashboardBranchManager: React.FC = () => {
                             disabled={a.status === AuditStatus.REJECTED}
                             title={a.status === AuditStatus.REJECTED ? 'Already rejected' : 'Reject with optional reason'}
                           >
-                            Reject
+                            ✗ Reject
                           </button>
                         </div>
                       </div>
