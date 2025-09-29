@@ -307,7 +307,7 @@ const DashboardBranchManager: React.FC = () => {
                         <div className="pt-4 border-t border-gray-100">
                           <div className="grid grid-cols-2 gap-3">
                             <button 
-                              className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target"
+                              className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
                               onClick={() => navigate(`/audit/${a.id}`)}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,7 +317,7 @@ const DashboardBranchManager: React.FC = () => {
                               <span>View</span>
                             </button>
                             <button 
-                              className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target"
+                              className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
                               onClick={() => navigate(`/audit/${a.id}/summary`)}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,7 +333,7 @@ const DashboardBranchManager: React.FC = () => {
                           <div className="pt-4 border-t border-gray-100 mt-4">
                             <div className="grid grid-cols-2 gap-3">
                               <button
-                                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target"
+                                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
                                 onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,7 +342,7 @@ const DashboardBranchManager: React.FC = () => {
                                 <span>Approve</span>
                               </button>
                               <button
-                                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target"
+                                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
                                 onClick={() => {
                                   const note = window.prompt('Rejection reason (optional):') || ''
                                   rejectMutation.mutate({ auditId: a.id, note })

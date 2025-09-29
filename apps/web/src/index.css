@@ -21,40 +21,45 @@
   }
   
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 h-11 py-2 px-4 sm:h-10;
-  }
-  
-  .btn-secondary {
-    @apply btn bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300 h-11 py-2 px-4 sm:h-10;
-  }
-  
-  .btn-outline {
-    @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 h-11 py-2 px-4 sm:h-10;
-  }
-  
-  .btn-ghost {
-    @apply btn bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200 h-11 py-2 px-3 sm:h-10;
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
   }
 
-  /* Mobile-optimized size variants */
-  .btn-sm {
-    @apply h-10 px-3 text-sm min-h-[40px] sm:h-9;
+  .btn-secondary {
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
   }
-  .btn-xs {
-    @apply h-9 px-2.5 text-xs min-h-[36px] sm:h-8;
+
+  .btn-outline {
+    @apply border border-gray-300 hover:border-gray-400 text-gray-700 hover:text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
   }
-  
+
+  .btn-ghost {
+    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
+  }
+
   .btn-danger {
-    @apply btn bg-danger-600 text-white hover:bg-danger-700 active:bg-danger-800 h-11 py-2 px-4 sm:h-10;
+    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
   }
 
   /* Mobile-first button variants */
   .btn-mobile-primary {
-    @apply btn-primary w-full text-base font-semibold h-12 rounded-xl;
+    @apply btn-primary w-full text-base font-semibold h-12 rounded-xl whitespace-nowrap;
   }
   
   .btn-mobile-fab {
     @apply btn-primary rounded-full w-14 h-14 p-0 shadow-lg fixed bottom-6 right-6 z-50;
+  }
+
+  /* Filter pills and labels - single line optimization */
+  .filter-pill {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors whitespace-nowrap;
+  }
+
+  .label-single-line {
+    @apply inline-block truncate max-w-full whitespace-nowrap;
+  }
+
+  .button-text-nowrap {
+    @apply whitespace-nowrap overflow-hidden text-ellipsis;
   }
   
   /* Professional desktop-optimized card system */

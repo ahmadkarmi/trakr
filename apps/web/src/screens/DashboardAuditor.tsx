@@ -595,7 +595,7 @@ const DashboardAuditor: React.FC = () => {
                       <div className="px-4 pb-4">
                         <div className="grid grid-cols-2 gap-3">
                           <button 
-                            className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-all duration-200 touch-target"
+                            className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-all duration-200 touch-target whitespace-nowrap"
                             onClick={() => navigate(`/audit/${a.id}`)}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -605,7 +605,7 @@ const DashboardAuditor: React.FC = () => {
                             <span>View</span>
                           </button>
                           <button 
-                            className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-all duration-200 touch-target hover:shadow-lg"
+                            className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-all duration-200 touch-target hover:shadow-lg whitespace-nowrap"
                             onClick={() => navigate(`/audit/${a.id}/wizard`)}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -551,7 +551,7 @@ const DashboardAdmin: React.FC = () => {
                 {/* Filter Pills */}
                 <div className="flex flex-wrap gap-2">
                   <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
                       quickChip === 'due_today' 
                         ? 'bg-primary-600 text-white shadow-md' 
                         : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
@@ -561,7 +561,7 @@ const DashboardAdmin: React.FC = () => {
                     Due Today
                   </button>
                   <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
                       quickChip === 'overdue' 
                         ? 'bg-red-600 text-white shadow-md' 
                         : 'bg-red-100 text-red-700 hover:bg-red-200'
@@ -571,7 +571,7 @@ const DashboardAdmin: React.FC = () => {
                     Overdue
                   </button>
                   <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
                       quickChip === 'submitted' 
                         ? 'bg-yellow-600 text-white shadow-md' 
                         : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
@@ -581,17 +581,17 @@ const DashboardAdmin: React.FC = () => {
                     Submitted
                   </button>
                   <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
                       quickChip === 'waiting_approval' 
                         ? 'bg-blue-600 text-white shadow-md' 
                         : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                     }`} 
                     onClick={() => setQuickChip(quickChip === 'waiting_approval' ? 'none' : 'waiting_approval')}
                   >
-                    Waiting Approval
+                    Pending
                   </button>
                   <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
                       quickChip === 'completed' 
                         ? 'bg-green-600 text-white shadow-md' 
                         : 'bg-green-100 text-green-700 hover:bg-green-200'
@@ -601,7 +601,7 @@ const DashboardAdmin: React.FC = () => {
                     Completed
                   </button>
                   <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
                       quickChip === 'approved' 
                         ? 'bg-purple-600 text-white shadow-md' 
                         : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
@@ -611,7 +611,7 @@ const DashboardAdmin: React.FC = () => {
                     Approved
                   </button>
                   <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target ${
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
                       quickChip === 'finalized' 
                         ? 'bg-gray-600 text-white shadow-md' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -783,11 +783,11 @@ const DashboardAdmin: React.FC = () => {
                       {canManualArchive && (
                         <div className="pt-4 lg:pt-3 border-t border-gray-100">
                           <button 
-                            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target"
+                            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target whitespace-nowrap"
                             onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} 
                             disabled={manualArchive.isPending}
                           >
-                            {manualArchive.isPending ? 'Archiving...' : 'Archive Audit'}
+                            {manualArchive.isPending ? 'Archiving...' : 'Archive'}
                           </button>
                         </div>
                       )}
