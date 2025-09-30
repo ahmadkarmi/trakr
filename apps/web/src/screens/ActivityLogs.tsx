@@ -65,7 +65,7 @@ const ActivityLogs: React.FC = () => {
               keyField={(l) => l.id}
               empty={<p className="text-gray-500 py-8">No logs found.</p>}
               mobileItem={(l) => (
-                <div>
+                <div className="card-compact card-interactive bg-white border border-gray-200">
                   <p className="text-sm text-gray-500">{new Date(l.timestamp).toLocaleString()}</p>
                   <p className="font-medium text-gray-900">{l.action}</p>
                   <p className="text-sm text-gray-700">{l.details}</p>

@@ -18,22 +18,29 @@ export interface ResponsiveTableProps<T> {
 function ResponsiveTable<T>({ items, keyField, columns, mobileItem, empty }: ResponsiveTableProps<T>) {
   if (!items || items.length === 0) {
     return (
-      <div className="py-8 text-center text-gray-500">
-        {empty ?? 'No records.'}
+      <div className="py-12 text-center">
+        <div className="text-gray-400 mb-2">
+          <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <p className="text-mobile-body text-gray-500">
+          {empty ?? 'No records found.'}
+        </p>
       </div>
     )
   }
 
   return (
     <>
-      {/* Mobile list */}
-      <ul className="md:hidden space-y-3">
+      {/* Enhanced mobile list */}
+      <div className="md:hidden space-y-6">
         {items.map((row) => (
-          <li key={keyField(row)} className="card">
+          <div key={keyField(row)}>
             {mobileItem(row)}
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
 
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
@@ -47,9 +54,11 @@ function ResponsiveTable<T>({ items, keyField, columns, mobileItem, empty }: Res
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {items.map((row) => (
-              <tr key={keyField(row)}>
+              <tr key={keyField(row)} className="hover:bg-gray-50 transition-colors">
                 {columns.map((c) => (
-                  <td key={c.key} className={`px-3 py-1.5 ${c.className ?? ''}`}>{c.render(row)}</td>
+                  <td key={c.key} className={`px-3 py-2 whitespace-nowrap text-sm text-gray-900 ${c.className ?? ''}`}>
+                    {c.render(row)}
+                  </td>
                 ))}
               </tr>
             ))}

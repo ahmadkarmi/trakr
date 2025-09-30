@@ -13,47 +13,233 @@
 }
 
 @layer components {
+  /* Mobile-first button system with proper touch targets */
   .btn {
     @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 disabled:pointer-events-none;
+    /* Minimum 44px touch target for mobile */
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
   }
   
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 h-10 py-2 px-4;
-  }
-  
-  .btn-secondary {
-    @apply btn bg-gray-100 text-gray-900 hover:bg-gray-200 h-10 py-2 px-4;
-  }
-  
-  .btn-outline {
-    @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 h-10 py-2 px-4;
-  }
-  
-  .btn-ghost {
-    @apply btn bg-transparent text-gray-700 hover:bg-gray-100 h-10 py-2 px-3;
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
   }
 
-  /* Size variants */
-  .btn-sm {
-    @apply h-9 px-3 text-sm;
+  .btn-secondary {
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
   }
-  .btn-xs {
-    @apply h-8 px-2.5 text-xs;
+
+  .btn-outline {
+    @apply border border-gray-300 hover:border-gray-400 text-gray-700 hover:text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
   }
-  
+
+  .btn-ghost {
+    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
+  }
+
   .btn-danger {
-    @apply btn bg-danger-600 text-white hover:bg-danger-700 h-10 py-2 px-4;
+    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
+  }
+
+  /* Mobile-first button variants */
+  .btn-mobile-primary {
+    @apply btn-primary w-full text-base font-semibold h-12 rounded-xl whitespace-nowrap;
   }
   
+  .btn-mobile-fab {
+    @apply btn-primary rounded-full w-14 h-14 p-0 shadow-lg fixed bottom-6 right-6 z-50;
+  }
+
+  /* Filter pills and labels - single line optimization */
+  .filter-pill {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors whitespace-nowrap;
+  }
+
+  .label-single-line {
+    @apply inline-block truncate max-w-full whitespace-nowrap;
+  }
+
+  .button-text-nowrap {
+    @apply whitespace-nowrap overflow-hidden text-ellipsis;
+  }
+  
+  /* Professional desktop-optimized card system */
   .card {
-    @apply bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6;
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm p-4 lg:p-3;
+    @apply touch-manipulation;
+  }
+
+  .card-mobile {
+    @apply bg-white rounded-xl lg:rounded-lg p-4 lg:p-3 shadow-sm border lg:border-gray-200;
+    @apply touch-manipulation;
+    /* Professional desktop spacing */
+    @apply space-y-3 lg:space-y-2;
+  }
+
+  .card-compact {
+    @apply bg-white rounded-xl lg:rounded-lg p-4 lg:p-3 shadow-sm border border-gray-100;
+    @apply touch-manipulation;
+  }
+
+  .card-spacious {
+    @apply bg-white rounded-xl lg:rounded-lg p-4 lg:p-4 shadow-sm border lg:border-gray-200;
+    @apply touch-manipulation space-y-4 lg:space-y-3;
+  }
+
+  /* Card content organization */
+  .card-header {
+    @apply pb-3 mb-3 border-b border-gray-100;
+  }
+
+  .card-body {
+    @apply py-3 space-y-3;
+  }
+
+  .card-footer {
+    @apply pt-3 mt-3 border-t border-gray-100;
+  }
+
+  /* Consistent audit card styling */
+  .audit-card {
+    @apply card-compact card-interactive bg-white border border-gray-200;
+  }
+
+  .audit-card-title {
+    @apply font-semibold text-gray-900 text-base mb-1 truncate;
+  }
+
+  .audit-card-subtitle {
+    @apply text-sm text-gray-600 mb-2;
+  }
+
+  .audit-card-meta {
+    @apply text-xs text-gray-500;
+  }
+
+  /* Interactive card states */
+  .card-interactive {
+    @apply cursor-pointer transition-all duration-200;
+    @apply hover:shadow-lg hover:-translate-y-0.5;
+    @apply active:scale-95;
+  }
+
+  .card-interactive:hover {
+    @apply shadow-xl;
   }
   
+  /* Mobile-optimized input system */
   .input {
-    @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    /* Mobile-friendly input height */
+    @apply h-12 text-base sm:h-10 sm:text-sm;
+    @apply touch-manipulation;
+  }
+
+  .input-mobile {
+    @apply input h-14 text-lg rounded-xl px-4;
   }
   
   .label {
     @apply text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+    /* Better mobile label spacing */
+    @apply mb-2 text-base sm:text-sm sm:mb-1;
+  }
+
+  /* Mobile navigation helpers */
+  .nav-mobile {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-40;
+  }
+
+  .nav-item-mobile {
+    @apply flex flex-col items-center justify-center p-2 min-h-[48px] text-xs font-medium text-gray-600 hover:text-primary-600 active:text-primary-700 touch-manipulation;
+  }
+
+  /* Professional responsive spacing utilities */
+  .mobile-container {
+    @apply px-3 py-4 sm:px-4 sm:py-5 lg:px-3 lg:py-3;
+  }
+
+  .mobile-section {
+    @apply mb-6 sm:mb-6 lg:mb-4;
+  }
+
+  .mobile-grid {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-4;
+  }
+
+  /* Professional desktop spacing */
+  .breathing-room {
+    @apply space-y-5 sm:space-y-6 lg:space-y-4;
+  }
+
+  .content-spacing {
+    @apply space-y-4 sm:space-y-5 lg:space-y-3;
+  }
+
+  .tight-spacing {
+    @apply space-y-3 sm:space-y-4 lg:space-y-2;
+  }
+
+  /* Professional content areas */
+  .content-area {
+    @apply p-4 sm:p-5 lg:p-3 space-y-4 lg:space-y-3;
+  }
+
+  .content-section {
+    @apply space-y-3 sm:space-y-4 lg:space-y-2;
+  }
+
+  /* Touch-friendly interactive elements */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
+  }
+
+  .touch-area {
+    @apply p-3 -m-3 touch-manipulation;
+  }
+
+  .touch-button {
+    @apply min-h-[48px] px-6 py-3 touch-manipulation;
+    @apply rounded-xl font-semibold transition-all duration-200;
+    @apply hover:shadow-lg active:scale-95;
+  }
+
+  .touch-input {
+    @apply min-h-[48px] px-4 py-3 touch-manipulation;
+    @apply rounded-xl border-2 transition-all duration-200;
+    @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+  }
+
+  /* Enhanced interactive states */
+  .interactive-card {
+    @apply transition-all duration-300 ease-out;
+    @apply hover:shadow-xl hover:-translate-y-1;
+    @apply active:scale-95 active:shadow-lg;
+  }
+
+  .interactive-button {
+    @apply transition-all duration-200 ease-out;
+    @apply hover:shadow-lg hover:-translate-y-0.5;
+    @apply active:scale-95 active:shadow-md;
+  }
+
+  /* Mobile-optimized text hierarchy */
+  .heading-mobile-xl {
+    @apply text-2xl font-bold text-gray-900 sm:text-3xl;
+  }
+
+  .heading-mobile-lg {
+    @apply text-xl font-semibold text-gray-900 sm:text-2xl;
+  }
+
+  .heading-mobile-md {
+    @apply text-lg font-semibold text-gray-900 sm:text-xl;
+  }
+
+  .text-mobile-body {
+    @apply text-base text-gray-700 sm:text-sm;
+  }
+
+  .text-mobile-caption {
+    @apply text-sm text-gray-500 sm:text-xs;
   }
 }

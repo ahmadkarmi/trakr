@@ -7,7 +7,6 @@ import { Audit, Branch, Organization, LogEntry, AuditStatus, UserRole, Zone } fr
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import StatCard from '../components/StatCard'
 import ProgressDonut from '../components/ProgressDonut'
 import StatusBadge from '@/components/StatusBadge'
 import ResponsiveTable from '../components/ResponsiveTable'
@@ -306,45 +305,187 @@ const DashboardAdmin: React.FC = () => {
 
   return (
     <DashboardLayout title="Admin Dashboard">
-      <div className="space-y-6">
-        {/* Hero welcome */}
-        <div className="card p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mobile-container breathing-room">
+        {/* Mobile-First Header Layout */}
+        <div className="mb-6 lg:mb-8">
+          {/* Welcome Area - Full Width on Mobile */}
+          <div className="flex items-center gap-3 mb-4 sm:mb-0 lg:mb-6">
+            <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+              <span className="text-xl">🛠️</span>
+            </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}! 🛠️</h2>
-              <p className="text-gray-600">Manage the entire audit system, users, and templates.</p>
+              <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}</h2>
+              <p className="text-sm text-gray-500">
+                {branches.length} branches • {audits.length} audits • {overdueCount} overdue
+              </p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <button className="btn-primary" onClick={() => navigate('/manage/surveys')}>Create Survey Template</button>
-              <button className="btn-outline" onClick={() => navigate('/manage/branches')}>Manage Branches</button>
-              <button className="btn-outline" onClick={() => navigate('/manage/zones')}>Manage Zones</button>
-              <button className="btn-outline" onClick={() => navigate('/manage/assignments')}>Assign Auditors</button>
-              <button className="btn-ghost">Invite Users</button>
-            </div>
+          </div>
+          
+          {/* Actions - Below Welcome on Mobile, Inline on Desktop */}
+          <div className="sm:flex sm:items-center sm:justify-between sm:-mt-16">
+            <div className="hidden sm:block sm:flex-1"></div>
+            <button 
+              className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target"
+              onClick={() => navigate('/manage/surveys')}
+            >
+              + Create Survey Template
+            </button>
           </div>
         </div>
 
-        {/* Period selector + KPI cards */}
-        <div className="card p-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Period:</span>
-              <div className="inline-flex rounded-md border border-gray-200 overflow-hidden">
-                {(['week','month','quarter'] as const).map(p => (
-                  <button key={p} className={`px-3 py-1 text-sm ${period===p ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} onClick={() => setPeriod(p)}>
-                    {p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'This Quarter'}
-                  </button>
-                ))}
+        {/* Smart Quick Actions */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+          <button 
+            className="card-compact card-interactive text-left bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200"
+            onClick={() => navigate('/manage/branches')}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center shadow-sm">
+                <span className="text-xl">🏢</span>
               </div>
-              {org?.timeZone && <span className="text-xs text-gray-500">Timezone: {org.timeZone}</span>}
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900 mb-1">Branches</div>
+                <div className="text-sm text-gray-600">{branches.length} total</div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:w-auto">
-              <StatCard title="Completion" value={`${completionRate}%`} subtitle="In period" variant="success" progress={completionRate} icon={<ClipboardDocumentCheckIcon className="w-6 h-6 text-success-700" />} />
-              <StatCard title="On-time" value={`${onTimeRate}%`} subtitle="Completed on/before due" variant="primary" icon={<ClipboardDocumentListIcon className="w-6 h-6 text-primary-700" />} />
-              <StatCard title="Overdue" value={overdueCount} subtitle="Past due" variant="warning" icon={<BuildingOfficeIcon className="w-6 h-6 text-warning-700" />} />
-              <StatCard title="Coverage" value={`${coverageRate}%`} subtitle={`${coverageBranches.size}/${branches.length} branches`} variant="neutral" icon={<UsersIcon className="w-6 h-6 text-gray-700" />} />
+          </button>
+          
+          <button 
+            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            onClick={() => navigate('/manage/zones')}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <span className="text-sm">🗺️</span>
+              </div>
+              <div>
+                <div className="font-medium text-gray-900">Zones</div>
+                <div className="text-xs text-gray-500">{zones.length} total</div>
+              </div>
+            </div>
+          </button>
+          
+          <button 
+            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            onClick={() => navigate('/manage/assignments')}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <span className="text-sm">👥</span>
+              </div>
+              <div>
+                <div className="font-medium text-gray-900">Auditors</div>
+                <div className="text-xs text-gray-500">Assignments</div>
+              </div>
+            </div>
+          </button>
+          
+          <button 
+            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            onClick={() => {/* Invite users functionality */}}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                <span className="text-sm">✉️</span>
+              </div>
+              <div>
+                <div className="font-medium text-gray-900">Invite</div>
+                <div className="text-xs text-gray-500">New users</div>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Contextual KPIs with Integrated Period Selector */}
+        <div className="card-mobile">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">System Performance</h3>
+            <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+              {(['week','month','quarter'] as const).map(p => (
+                <button 
+                  key={p} 
+                  className={`px-3 py-1.5 text-sm font-medium ${period===p ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
+                  onClick={() => setPeriod(p)}
+                >
+                  {p === 'week' ? 'Week' : p === 'month' ? 'Month' : 'Quarter'}
+                </button>
+              ))}
             </div>
           </div>
+          
+          {/* Actionable KPI Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div 
+              className="card-compact cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-r from-success-50 to-green-50 border-success-200"
+              onClick={() => {/* Navigate to completion details */}}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+                  <ClipboardDocumentCheckIcon className="w-5 h-5 text-success-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-success-600">{completionRate}%</div>
+                  <div className="text-xs text-gray-500">Completion Rate</div>
+                  <div className="w-full bg-success-200 rounded-full h-1 mt-1">
+                    <div className="bg-success-600 h-1 rounded-full transition-all duration-300" style={{ width: `${completionRate}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              className="card-compact cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => {/* Navigate to on-time performance */}}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <ClipboardDocumentListIcon className="w-5 h-5 text-primary-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-primary-600">{onTimeRate}%</div>
+                  <div className="text-xs text-gray-500">On-time Rate</div>
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              className={`card-compact cursor-pointer hover:shadow-lg transition-shadow ${overdueCount > 0 ? 'bg-gradient-to-r from-warning-50 to-orange-50 border-warning-200' : ''}`}
+              onClick={() => {/* Navigate to overdue audits */}}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${overdueCount > 0 ? 'bg-warning-100' : 'bg-gray-100'}`}>
+                  <BuildingOfficeIcon className={`w-5 h-5 ${overdueCount > 0 ? 'text-warning-600' : 'text-gray-600'}`} />
+                </div>
+                <div>
+                  <div className={`text-2xl font-bold ${overdueCount > 0 ? 'text-warning-600' : 'text-gray-600'}`}>{overdueCount}</div>
+                  <div className="text-xs text-gray-500">Overdue</div>
+                  {overdueCount > 0 && <div className="text-xs text-warning-600 font-medium">Needs attention</div>}
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              className="card-compact cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => {/* Navigate to coverage details */}}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <UsersIcon className="w-5 h-5 text-gray-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-600">{coverageRate}%</div>
+                  <div className="text-xs text-gray-500">Coverage</div>
+                  <div className="text-xs text-gray-500">{coverageBranches.size}/{branches.length} branches</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {org?.timeZone && (
+            <div className="mt-4 text-center">
+              <span className="text-xs text-gray-500">Timezone: {org.timeZone}</span>
+            </div>
+          )}
         </div>
 
         {/* Organization Settings moved to the Settings (cogwheel) screen for admins */}
@@ -392,52 +533,139 @@ const DashboardAdmin: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-900">Recent Audits</h3>
             </div>
             <div className="p-6">
-              {/* Filters: compact toolbar */}
-              <div className="mb-3 sticky top-0 bg-white z-10 pb-2">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative">
-                      <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                      <input
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        placeholder="Search audit, branch, auditor…"
-                        className="input pl-7 h-9 text-sm w-64"
-                      />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='due_today' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='due_today'?'none':'due_today')}>Due Today</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='overdue' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='overdue'?'none':'overdue')}>Overdue</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='submitted' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='submitted'?'none':'submitted')}>Submitted</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='waiting_approval' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='waiting_approval'?'none':'waiting_approval')}>Waiting Approval</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='completed' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='completed'?'none':'completed')}>Completed</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='approved' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='approved'?'none':'approved')}>Approved</button>
-                      <button className={`px-2 py-1 rounded-full border text-xs ${quickChip==='finalized' ? 'bg-primary-50 border-primary-300 text-primary-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`} onClick={() => setQuickChip(quickChip==='finalized'?'none':'finalized')}>Finalized</button>
-                    </div>
+              {/* Professional Search & Filter Bar */}
+              <div className="mb-6 lg:mb-4 space-y-4 lg:space-y-3">
+                {/* Search Bar */}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 hidden sm:inline">{filteredAudits.length} results</span>
-                    <button className="inline-flex items-center gap-1 px-2 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50" onClick={() => setShowAdvanced((v) => !v)}>
-                      <FunnelIcon className="w-4 h-4" /> Filters
-                    </button>
-                    <button className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50" onClick={clearAllFilters} disabled={!hasFilters}>
-                      <XMarkIcon className="w-4 h-4" /> Clear
-                    </button>
-                  </div>
+                  <input
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search audit, branch, auditor..."
+                    className="w-full pl-12 pr-4 py-3 lg:py-2 border border-gray-300 rounded-xl lg:rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white transition-all duration-200"
+                  />
                 </div>
-                {!showAdvanced && activeBadges.length > 0 && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {activeBadges.map(b => (
-                      <span key={b.key} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                        {b.label}
-                        <button className="hover:text-gray-900" onClick={b.onClear} aria-label={`Clear ${b.key}`}>
-                          <XMarkIcon className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
+                
+                {/* Filter Pills */}
+                <div className="flex flex-wrap gap-2">
+                  <button 
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
+                      quickChip === 'due_today' 
+                        ? 'bg-primary-600 text-white shadow-md' 
+                        : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'due_today' ? 'none' : 'due_today')}
+                  >
+                    Due Today
+                  </button>
+                  <button 
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
+                      quickChip === 'overdue' 
+                        ? 'bg-red-600 text-white shadow-md' 
+                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'overdue' ? 'none' : 'overdue')}
+                  >
+                    Overdue
+                  </button>
+                  <button 
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
+                      quickChip === 'submitted' 
+                        ? 'bg-yellow-600 text-white shadow-md' 
+                        : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'submitted' ? 'none' : 'submitted')}
+                  >
+                    Submitted
+                  </button>
+                  <button 
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
+                      quickChip === 'waiting_approval' 
+                        ? 'bg-blue-600 text-white shadow-md' 
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'waiting_approval' ? 'none' : 'waiting_approval')}
+                  >
+                    Pending
+                  </button>
+                  <button 
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
+                      quickChip === 'completed' 
+                        ? 'bg-green-600 text-white shadow-md' 
+                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'completed' ? 'none' : 'completed')}
+                  >
+                    Completed
+                  </button>
+                  <button 
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
+                      quickChip === 'approved' 
+                        ? 'bg-purple-600 text-white shadow-md' 
+                        : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'approved' ? 'none' : 'approved')}
+                  >
+                    Approved
+                  </button>
+                  <button 
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
+                      quickChip === 'finalized' 
+                        ? 'bg-gray-600 text-white shadow-md' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'finalized' ? 'none' : 'finalized')}
+                  >
+                    Finalized
+                  </button>
+                </div>
+                
+                {/* Filter Controls */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button 
+                      className="flex items-center gap-2 px-4 py-2 sm:px-3 sm:py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
+                      onClick={() => setShowAdvanced((v) => !v)}
+                    >
+                      <FunnelIcon className="w-4 h-4" />
+                      <span className="hidden sm:inline">Advanced Filters</span>
+                      <span className="sm:hidden">Filters</span>
+                    </button>
+                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                      {filteredAudits.length} results
+                    </div>
                   </div>
-                )}
-                {showAdvanced && (
+                  <button 
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors whitespace-nowrap"
+                    onClick={clearAllFilters} 
+                    disabled={!hasFilters}
+                  >
+                    <XMarkIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">Clear All</span>
+                    <span className="sm:hidden">Clear</span>
+                  </button>
+                </div>
+                
+              </div>
+              
+              {/* Active Filter Badges */}
+              {!showAdvanced && activeBadges.length > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  {activeBadges.map(b => (
+                    <span key={b.key} className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                      {b.label}
+                      <button className="hover:text-gray-900" onClick={b.onClear} aria-label={`Clear ${b.key}`}>
+                        <XMarkIcon className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              
+              {/* Advanced Filters */}
+              {showAdvanced && (
                   <div className="mt-3 p-3 border rounded-md bg-gray-50">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <div>
@@ -487,24 +715,86 @@ const DashboardAdmin: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              
               <ResponsiveTable
                 items={filteredAudits.slice(0, 8)}
                 keyField={(a: Audit) => a.id}
                 empty={<p className="text-gray-500 py-8">No audits yet.</p>}
-                mobileItem={(a: Audit) => (
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{highlightMatch(a.id)}</p>
-                      <div className="text-xs text-gray-500 flex items-center gap-2">
-                        <span>{branches.find(b => b.id === a.branchId)?.name || a.branchId}</span>
-                        <StatusBadge status={a.status} />
+                mobileItem={(a: Audit) => {
+                  const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
+                  const auditorName = users.find(u => u.id === a.assignedTo)?.name || 'Unassigned'
+                  const isOverdue = a.dueAt && new Date(a.dueAt) < new Date()
+                  const isDueToday = a.dueAt && new Date(a.dueAt).toDateString() === new Date().toDateString()
+                  const pastDue = a.dueAt ? new Date(a.dueAt).getTime() < Date.now() : false
+                  const canManualArchive = !a.isArchived && pastDue && (a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS || a.status === AuditStatus.SUBMITTED)
+                  
+                  return (
+                    <div className="bg-white rounded-xl lg:rounded-lg border border-gray-200 p-4 lg:p-3 hover:shadow-lg lg:hover:shadow-md transition-all duration-300">
+                      {/* Card Header */}
+                      <div className="mb-4 lg:mb-3">
+                        {/* Title Row - Single Line */}
+                        <div className="flex items-center gap-3 mb-3 lg:mb-2">
+                          <div className="w-10 h-10 lg:w-8 lg:h-8 bg-primary-100 rounded-xl lg:rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span className="text-lg lg:text-sm font-bold text-primary-600">
+                              {a.id.slice(-2)}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-900 text-lg lg:text-base truncate whitespace-nowrap">
+                              {highlightMatch(a.id)}
+                            </h4>
+                            <p className="text-gray-600 text-sm lg:text-xs truncate">{highlightMatch(branchName)}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Status Labels Row - Below Title */}
+                        <div className="flex items-center gap-2 lg:gap-1.5 flex-wrap mb-3 lg:mb-2">
+                            <StatusBadge status={a.status} />
+                            {isOverdue && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Overdue
+                              </span>
+                            )}
+                            {isDueToday && !isOverdue && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                Due Today
+                              </span>
+                            )}
+                            {a.isArchived && <InfoBadge label="Archived" tone="gray" />}
+                        </div>
+                        
+                        {/* Audit Details */}
+                        <div className="mt-3 space-y-2 lg:space-y-1 text-sm lg:text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-500">Auditor:</span>
+                            <span className="font-medium text-gray-900">{highlightMatch(auditorName)}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-500">Updated:</span>
+                            <span className="text-gray-900">{new Date(a.updatedAt).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-500">Due Date:</span>
+                            <span className="text-gray-900">{a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}</span>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-500">Updated {new Date(a.updatedAt).toLocaleDateString()} • Due {a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}</p>
-                      {a.isArchived && <InfoBadge className="mt-1" label="Archived" tone="gray" />}
+                      
+                      {/* Action Button */}
+                      {canManualArchive && (
+                        <div className="pt-4 lg:pt-3 border-t border-gray-100">
+                          <button 
+                            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target whitespace-nowrap"
+                            onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} 
+                            disabled={manualArchive.isPending}
+                          >
+                            {manualArchive.isPending ? 'Archiving...' : 'Archive'}
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  )
+                }}
                 columns={[
                   { key: 'audit', header: 'Audit', render: (a: Audit) => highlightMatch(a.id) },
                   { key: 'branch', header: 'Branch', render: (a: Audit) => highlightMatch(branches.find(b => b.id === a.branchId)?.name || a.branchId) },
@@ -576,12 +866,30 @@ const DashboardAdmin: React.FC = () => {
 
           {/* Finalized Audits: Completed + Approved */}
           <div className="card xl:col-span-2">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">Finalized Audits</h3>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500">Completed: {completedOnlyCount}</span>
-                <span className="text-xs text-gray-500">Approved: {approvedOnlyCount}</span>
-                <button className="btn-outline btn-sm" onClick={() => exportCsv(finalizedAuditsInPeriod)}>Export CSV</button>
+            <div className="px-6 py-4 border-b border-gray-200">
+              {/* Title Row - Single Line */}
+              <div className="flex items-center justify-between gap-4 mb-3">
+                <h3 className="text-lg font-medium text-gray-900 whitespace-nowrap">Finalized Audits</h3>
+                <button 
+                  className="btn-outline btn-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0" 
+                  onClick={() => exportCsv(finalizedAuditsInPeriod)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="hidden sm:inline">Export CSV</span>
+                  <span className="sm:hidden">CSV</span>
+                </button>
+              </div>
+              
+              {/* Status Labels Row - Below Title */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Completed: {completedOnlyCount}
+                </span>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Approved: {approvedOnlyCount}
+                </span>
               </div>
             </div>
             <div className="p-6">

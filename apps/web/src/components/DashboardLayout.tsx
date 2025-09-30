@@ -47,6 +47,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
   const nav = [
     { to: '/dashboard/admin', label: 'My Dashboard', icon: <HomeIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/manage/surveys', label: 'Survey Templates', icon: <ClipboardDocumentListIcon className="w-5 h-5" />, show: isAdmin },
+    { to: '/manage/branches', label: 'Manage Branches', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: isAdmin },
+    { to: '/manage/zones', label: 'Manage Zones', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: isAdmin },
     { to: '/activity/logs', label: 'Activity Logs', icon: <ClockIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/dashboard/branch-manager', label: 'Branch', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: true },
     { to: '/dashboard/auditor', label: 'Auditor', icon: <ClipboardDocumentCheckIcon className="w-5 h-5" />, show: true },
@@ -60,46 +62,101 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
           className={`fixed inset-0 z-40 bg-black/30 transition-opacity ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => setMobileOpen(false)}
         />
-        <aside className={`fixed inset-y-0 left-0 z-50 w-72 text-white bg-gradient-to-b from-primary-700 to-primary-600 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col pb-9`}>
-          <div className="h-18 px-5 flex items-center justify-between">
-            <span className="text-xl font-bold tracking-wide">Trakr</span>
-            <button className="btn-ghost p-2 h-10 w-10 text-white" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
+        <aside className={`fixed inset-y-0 left-0 z-50 w-80 text-white bg-gradient-to-b from-primary-700 to-primary-600 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col pb-9`}>
+          {/* Enhanced mobile header */}
+          <div className="h-20 px-6 flex items-center justify-between border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-lg font-bold text-primary-600">T</span>
+              </div>
+              <span className="text-xl font-bold tracking-wide">Trakr</span>
+            </div>
+            <button className="touch-target p-2 hover:bg-white/10 rounded-xl text-white" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
               <XMarkIcon className="w-6 h-6" />
             </button>
           </div>
-          <div className="px-4">
-            <div className="bg-white/10 rounded-md flex items-center px-3 py-2">
+          
+          {/* Mobile-optimized search */}
+          <div className="px-6 py-4">
+            <div className="bg-white/10 rounded-xl flex items-center px-4 py-3">
               <MagnifyingGlassIcon className="w-5 h-5 text-white/80" />
-              <input placeholder="Search" className="ml-2 bg-transparent placeholder-white/70 text-white text-sm outline-none flex-1" />
+              <input placeholder="Search" className="ml-3 bg-transparent placeholder-white/70 text-white text-base outline-none flex-1" />
             </div>
           </div>
-          <nav className="mt-4 px-2 space-y-1">
+          
+          {/* Enhanced navigation with better touch targets */}
+          <nav className="px-4 space-y-2">
             {nav.map(item => {
               const active = location.pathname.startsWith(item.to)
               return (
-                <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2 rounded-md transition ${active ? 'bg-white/20' : 'hover:bg-white/10'}`}>
-                  {item.icon}
-                  <span className="text-sm">{item.label}</span>
+                <Link 
+                  key={item.to} 
+                  to={item.to} 
+                  onClick={() => setMobileOpen(false)} 
+                  className={`flex items-center gap-4 px-4 py-4 rounded-xl transition touch-target ${active ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    {item.icon}
+                  </div>
+                  <span className="text-base font-medium">{item.label}</span>
                 </Link>
               )
             })}
           </nav>
-          <div className="mt-auto p-4 border-t border-white/10 text-sm space-y-2">
-            <div className="text-white/90 font-medium">{user?.name}</div>
-            <div className="text-white/70">{user?.role && USER_ROLE_LABELS[user.role]}</div>
-            <Link to="/profile/signature" onClick={() => setMobileOpen(false)} className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white/10 hover:bg-white/20">
-              <PencilSquareIcon className="w-5 h-5" /> Profile · Signature
-            </Link>
-            <button onClick={signOut} className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white/10 hover:bg-white/20">
-              <ArrowRightOnRectangleIcon className="w-5 h-5" /> Sign Out
-            </button>
+          
+          {/* Enhanced user section */}
+          <div className="mt-auto p-6 border-t border-white/10 space-y-4">
+            <div className="flex items-center gap-4">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-white/20" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-white/10 text-white/90 flex items-center justify-center text-lg font-medium border-2 border-white/20">
+                  {user?.name?.charAt(0) || '?'}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="text-white/90 font-semibold text-base truncate">{user?.name}</div>
+                <div className="text-white/70 text-sm">{user?.role && USER_ROLE_LABELS[user.role]}</div>
+              </div>
+            </div>
+            
+            {/* Mobile-optimized action buttons */}
+            <div className="space-y-2">
+              <Link 
+                to="/profile" 
+                onClick={() => setMobileOpen(false)} 
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+              >
+                <span className="text-base">Profile</span>
+              </Link>
+              <Link 
+                to="/profile/signature" 
+                onClick={() => setMobileOpen(false)} 
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+              >
+                <PencilSquareIcon className="w-5 h-5" />
+                <span className="text-base">Signature</span>
+              </Link>
+              <button 
+                onClick={signOut} 
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5" />
+                <span className="text-base">Sign Out</span>
+              </button>
+            </div>
           </div>
         </aside>
       </div>
       {/* Sidebar */}
       <aside className="hidden md:flex md:w-64 lg:w-72 flex-col text-white bg-gradient-to-b from-primary-700 to-primary-600 pb-9 overflow-y-auto">
         <div className="h-18 px-5 flex items-center justify-between">
-          <Link to={isAdmin ? '/dashboard/admin' : '/'} className="text-xl font-bold tracking-wide">Trakr</Link>
+          <Link to={isAdmin ? '/dashboard/admin' : '/'} className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <span className="text-lg font-bold text-primary-600">T</span>
+            </div>
+            <span className="text-xl font-bold tracking-wide">Trakr</span>
+          </Link>
         </div>
         <div className="px-4">
           <div className="bg-white/10 rounded-md flex items-center px-3 py-2">
@@ -144,15 +201,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Topbar */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-gray-200 pt-[env(safe-area-inset-top)]">
-          <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+        {/* Enhanced mobile-first topbar */}
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200 pt-[env(safe-area-inset-top)]">
+          <div className="mobile-container py-2 sm:py-3 flex items-center justify-between gap-3">
             {/* Left: menu + title (shrinkable) */}
-            <div className="flex items-center gap-2 min-w-0">
-              <button className="md:hidden btn-outline p-2 h-10 w-10" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
-                <Bars3Icon className="w-5 h-5" />
+            <div className="flex items-center gap-3 min-w-0">
+              <button className="md:hidden touch-target p-2 hover:bg-gray-100 rounded-xl" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
+                <Bars3Icon className="w-6 h-6" />
               </button>
-              <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate xl:whitespace-normal xl:break-words xl:leading-snug xl:line-clamp-2" title={title}>{title}</h1>
+              <h1 className="heading-mobile-lg truncate xl:whitespace-normal xl:break-words xl:leading-snug xl:line-clamp-2" title={title}>{title}</h1>
             </div>
 
             {/* Middle: inline search (only on large screens) */}
@@ -163,20 +220,28 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
               </div>
             </div>
 
-            {/* Right: actions (non-shrinking) */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button className="lg:hidden btn-outline p-2 h-10 w-10" aria-label="Search" onClick={() => setMobileSearchOpen(true)}><MagnifyingGlassIcon className="w-5 h-5" /></button>
-              <button className="btn-outline p-2 h-10 w-10" aria-label="Notifications"><BellIcon className="w-5 h-5" /></button>
-              <Link to="/help" className="hidden lg:inline-flex btn-outline p-2 h-10 w-10" aria-label="Help"><QuestionMarkCircleIcon className="w-5 h-5" /></Link>
-              {/* Overflow actions on smaller screens */}
+            {/* Right: mobile-optimized actions */}
+            <div className="flex items-center gap-1 shrink-0">
+              <button className="lg:hidden touch-target p-2 hover:bg-gray-100 rounded-xl" aria-label="Search" onClick={() => setMobileSearchOpen(true)}>
+                <MagnifyingGlassIcon className="w-6 h-6" />
+              </button>
+              <button className="touch-target p-2 hover:bg-gray-100 rounded-xl" aria-label="Notifications">
+                <BellIcon className="w-6 h-6" />
+              </button>
+              <Link to="/help" className="hidden lg:inline-flex touch-target p-2 hover:bg-gray-100 rounded-xl" aria-label="Help">
+                <QuestionMarkCircleIcon className="w-6 h-6" />
+              </Link>
+              
+              {/* Mobile overflow menu */}
               <div ref={moreRef} className="relative lg:hidden">
-                <button className="btn-outline p-2 h-10 w-10" aria-haspopup="menu" aria-expanded={moreOpen} aria-label="More actions" onClick={() => setMoreOpen(v => !v)}>
-                  <EllipsisVerticalIcon className="w-5 h-5" />
+                <button className="touch-target p-2 hover:bg-gray-100 rounded-xl" aria-haspopup="menu" aria-expanded={moreOpen} aria-label="More actions" onClick={() => setMoreOpen(v => !v)}>
+                  <EllipsisVerticalIcon className="w-6 h-6" />
                 </button>
                 {moreOpen && (
-                  <div className="absolute right-0 mt-2 w-44 rounded-md border border-gray-200 bg-white shadow-lg py-1 z-50" role="menu">
-                    <Link to="/help" className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50" role="menuitem" onClick={() => setMoreOpen(false)}>
-                      <QuestionMarkCircleIcon className="w-4 h-4 text-gray-600" /> Help
+                  <div className="absolute right-0 mt-2 w-48 rounded-xl border border-gray-200 bg-white shadow-lg py-2 z-50" role="menu">
+                    <Link to="/help" className="w-full text-left flex items-center gap-3 px-4 py-3 text-base hover:bg-gray-50 touch-target" role="menuitem" onClick={() => setMoreOpen(false)}>
+                      <QuestionMarkCircleIcon className="w-5 h-5 text-gray-600" /> 
+                      <span>Help</span>
                     </Link>
                   </div>
                 )}
@@ -216,7 +281,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
         </header>
 
         {/* Content */}
-        <main className="px-4 sm:px-6 lg:px-8 py-6">
+        <main className="px-3 sm:px-4 lg:px-6 py-4 sm:py-5 lg:py-4">
           {children}
         </main>
 

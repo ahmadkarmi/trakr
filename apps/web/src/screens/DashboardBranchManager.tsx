@@ -6,7 +6,6 @@ import { Audit, AuditStatus, Branch } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useNavigate } from 'react-router-dom'
-import StatCard from '../components/StatCard'
 import StatusBadge from '@/components/StatusBadge'
 import { ClipboardDocumentListIcon, ClockIcon, CheckCircleIcon, ChartBarIcon } from '@heroicons/react/24/outline'
 
@@ -109,26 +108,136 @@ const DashboardBranchManager: React.FC = () => {
 
   return (
     <DashboardLayout title="Branch Manager Dashboard">
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Welcome back, {user?.name}! 🏬
-          </h2>
-          <p className="text-gray-600">
-            Manage audits and oversee branch operations.
-          </p>
+      <div className="mobile-container breathing-room">
+        {/* Mobile-First Header Layout */}
+        <div className="mb-6 lg:mb-8">
+          {/* Welcome Area - Full Width on Mobile */}
+          <div className="flex items-center gap-3 mb-4 sm:mb-0 lg:mb-6">
+            <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+              <span className="text-xl">🏬</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}</h2>
+              <p className="text-sm text-gray-500">
+                {assignedBranches.length} branches • {completed} pending approvals
+              </p>
+            </div>
+          </div>
+          
+          {/* Branch Selector - Below Welcome on Mobile, Inline on Desktop */}
+          {assignedBranches.length > 1 && (
+            <div className="sm:flex sm:items-center sm:justify-between sm:-mt-16">
+              <div className="hidden sm:block sm:flex-1"></div>
+              <select className="w-full sm:w-auto text-sm border border-gray-300 rounded-xl sm:rounded-lg px-4 py-3 sm:py-2 bg-white touch-target">
+                <option value="">All Branches</option>
+                {assignedBranches.map(branch => (
+                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Audits" value={total} subtitle="Branch total" variant="primary" icon={<ClipboardDocumentListIcon className="w-6 h-6 text-primary-700" />} />
-          <StatCard title="In Progress" value={inProgress} subtitle="Currently running" variant="warning" icon={<ClockIcon className="w-6 h-6 text-warning-700" />} />
-          <StatCard title="Completed" value={completed} subtitle="All time" variant="success" icon={<CheckCircleIcon className="w-6 h-6 text-success-700" />} />
-          <StatCard title="Completion Rate" value={`${completionRate}%`} subtitle="Completed / Total" variant="neutral" icon={<ChartBarIcon className="w-6 h-6 text-gray-700" />} progress={completionRate} />
+        {/* Approval Queue Alert */}
+        {completed > 0 && (
+          <div className="card-spacious bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">🔔</span>
+                  <h3 className="text-lg font-semibold text-orange-900">Pending Approvals</h3>
+                </div>
+                <p className="text-orange-700 mb-1">{completed} audits waiting for your approval</p>
+                <p className="text-sm text-orange-600">Review and approve completed audits</p>
+              </div>
+              <button
+                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:shadow-lg touch-target"
+                onClick={() => {/* Scroll to approval section */}}
+              >
+                Review ({completed})
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced Actionable Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="card-compact card-interactive bg-gradient-to-br from-primary-50 to-blue-50 border-primary-200">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center shadow-sm">
+                <ClipboardDocumentListIcon className="w-7 h-7 text-primary-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-3xl font-bold text-primary-600 mb-1">{total}</div>
+                <div className="text-sm font-medium text-gray-700">Total Audits</div>
+                <div className="text-xs text-gray-500 mt-1">All branches</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-compact card-interactive bg-gradient-to-br from-warning-50 to-orange-50 border-warning-200">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-warning-100 rounded-2xl flex items-center justify-center shadow-sm">
+                <ClockIcon className="w-7 h-7 text-warning-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-3xl font-bold text-warning-600 mb-1">{inProgress}</div>
+                <div className="text-sm font-medium text-gray-700">In Progress</div>
+                <div className="text-xs text-gray-500 mt-1">Currently active</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-compact card-interactive bg-gradient-to-br from-success-50 to-green-50 border-success-200">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-success-100 rounded-2xl flex items-center justify-center shadow-sm">
+                <CheckCircleIcon className="w-7 h-7 text-success-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-3xl font-bold text-success-600 mb-1">{completed}</div>
+                <div className="text-sm font-medium text-gray-700">Need Approval</div>
+                <div className="text-xs text-gray-500 mt-1">Awaiting review</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-compact card-interactive bg-gradient-to-br from-gray-50 to-slate-50 border-gray-200">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center shadow-sm">
+                <ChartBarIcon className="w-7 h-7 text-gray-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-3xl font-bold text-gray-600 mb-1">{completionRate}%</div>
+                <div className="text-sm font-medium text-gray-700">Completion Rate</div>
+                <div className="text-xs text-gray-500 mt-1">Overall progress</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Branch Audit Overview</h3>
+        {/* Mobile-First Recent Audits Section */}
+        <div className="card-spacious">
+          <div className="space-y-4">
+            {/* Header - Mobile Optimized */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">Recent Audits</h3>
+              <p className="text-gray-600 mt-1">Review and approve completed audits</p>
+            </div>
+            
+            {/* Sort Controls - Mobile First */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full w-fit">
+                {recent.length} audits
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-500 font-medium">Sort by:</span>
+                <select className="flex-1 sm:flex-none px-4 py-2 sm:py-1.5 border border-gray-300 rounded-xl sm:rounded-lg bg-white text-sm font-medium min-w-[140px] touch-target">
+                  <option value="recent">Most Recent</option>
+                  <option value="pending">Pending Approval</option>
+                  <option value="branch">By Branch</option>
+                </select>
+              </div>
+            </div>
           </div>
           <div className="p-6">
             {isLoading ? (
@@ -137,42 +246,115 @@ const DashboardBranchManager: React.FC = () => {
               <p className="text-gray-500 py-8">No audits found for this branch.</p>
             ) : (
               <>
-                {/* Mobile card list */}
-                <div className="grid gap-3 md:hidden">
+                {/* Modern Mobile Audit Cards */}
+                <div className="space-y-4 md:hidden">
                   {recent.map((a) => {
                     const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
+                    const isOverdue = a.dueAt && new Date(a.dueAt) < new Date()
+                    const isDueToday = a.dueAt && new Date(a.dueAt).toDateString() === new Date().toDateString()
+                    
                     return (
-                      <div key={a.id} className="card p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-medium text-gray-900">{a.id}</div>
-                            <div className="text-xs text-gray-500">{branchName} • Updated {new Date(a.updatedAt).toLocaleDateString()}</div>
+                      <div key={a.id} className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-300">
+                        {/* Card Header - Mobile Optimized */}
+                        <div className="mb-4">
+                          {/* Title Row - Single Line */}
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <span className="text-lg font-bold text-primary-600">
+                                {a.id.slice(-2)}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-lg truncate whitespace-nowrap">
+                                Audit {a.id}
+                              </h4>
+                              <p className="text-gray-600 text-sm truncate">{branchName}</p>
+                            </div>
                           </div>
-                          <StatusBadge status={a.status} />
+                          
+                          {/* Status Labels Row - Below Title */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <StatusBadge status={a.status} />
+                            {isOverdue && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Overdue
+                              </span>
+                            )}
+                            {isDueToday && !isOverdue && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                Due Today
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Audit Details */}
+                          <div className="mt-3 space-y-2 text-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-500">Updated:</span>
+                              <span className="text-gray-900">{new Date(a.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                            {a.dueAt && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-500">Due Date:</span>
+                                <span className="text-gray-900">{new Date(a.dueAt).toLocaleDateString()}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2 justify-end">
-                          <button className="btn-outline btn-sm" onClick={() => navigate(`/audit/${a.id}`)}>Details</button>
-                          <button className="btn-primary btn-sm" onClick={() => navigate(`/audit/${a.id}/summary`)}>Summary</button>
-                          <button
-                            className="btn-secondary btn-sm disabled:opacity-60"
-                            onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
-                            disabled={a.status !== AuditStatus.SUBMITTED}
-                            title={a.status !== AuditStatus.SUBMITTED ? 'Approval available after submission' : 'Approve with signature'}
-                          >
-                            {a.status === AuditStatus.APPROVED ? 'Approved' : 'Approve'}
-                          </button>
-                          <button
-                            className="btn-outline btn-sm disabled:opacity-60"
-                            onClick={() => {
-                              const note = window.prompt('Rejection reason (optional):') || ''
-                              rejectMutation.mutate({ auditId: a.id, note })
-                            }}
-                            disabled={a.status === AuditStatus.REJECTED}
-                            title={a.status === AuditStatus.REJECTED ? 'Already rejected' : 'Reject with optional reason'}
-                          >
-                            Reject
-                          </button>
+                        
+                        {/* Action Buttons */}
+                        <div className="pt-4 border-t border-gray-100">
+                          <div className="grid grid-cols-2 gap-3">
+                            <button 
+                              className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
+                              onClick={() => navigate(`/audit/${a.id}`)}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              <span>View</span>
+                            </button>
+                            <button 
+                              className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
+                              onClick={() => navigate(`/audit/${a.id}/summary`)}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <span>Summary</span>
+                            </button>
+                          </div>
                         </div>
+                        
+                        {/* Approval Actions */}
+                        {a.status === AuditStatus.SUBMITTED && (
+                          <div className="pt-4 border-t border-gray-100 mt-4">
+                            <div className="grid grid-cols-2 gap-3">
+                              <button
+                                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
+                                onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
+                                onClick={() => {
+                                  const note = window.prompt('Rejection reason (optional):') || ''
+                                  rejectMutation.mutate({ auditId: a.id, note })
+                                }}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
                   })}

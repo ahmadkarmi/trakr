@@ -54,45 +54,90 @@ const ManageBranches: React.FC = () => {
 
   return (
     <DashboardLayout title="Manage Branches">
-      <div className="space-y-6">
+      <div className="mobile-container breathing-room">
         {zones.length === 0 && (
-          <div className="card p-4 border border-warning-200 bg-warning-50">
-            <p className="text-warning-800 text-sm">
-              No zones found. Create zones first, then add branches into those zones. This ensures assignments by zone work as expected.
-            </p>
+          <div className="card-spacious border border-warning-200 bg-gradient-to-r from-warning-50 to-orange-50">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-warning-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-warning-800 mb-2">No Zones Found</h3>
+                <p className="text-warning-700 mb-3">
+                  Create zones first, then add branches into those zones. This ensures assignments by zone work as expected.
+                </p>
+                <button className="bg-warning-600 hover:bg-warning-700 text-white px-4 py-2 rounded-xl font-medium transition-colors">
+                  Create Zones First
+                </button>
+              </div>
+            </div>
           </div>
         )}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Create Branch</h2>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div>
-              <label className="label">Name</label>
-              <input className="input mt-1" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Branch name" />
-            </div>
-            <div>
-              <label className="label">Address</label>
-              <input className="input mt-1" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Address" />
-            </div>
-            <div>
-              <label className="label">Manager</label>
-              <select className="input mt-1" value={form.managerId} onChange={e => setForm(f => ({ ...f, managerId: e.target.value }))}>
-                <option value="">Unassigned</option>
-                {managers.map(m => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Zone</label>
-              <select className="input mt-1" value={form.zoneId} onChange={e => setForm(f => ({ ...f, zoneId: e.target.value }))}>
-                <option value="">No Zone</option>
-                {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-              </select>
+        
+        <div className="card-spacious">
+          <div className="card-header">
+            <h2 className="text-xl font-semibold text-gray-900">Create New Branch</h2>
+            <p className="text-gray-600 mt-1">Add a new branch location to your organization</p>
+          </div>
+          
+          <div className="card-body">
+            <div className="content-spacing">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="content-section">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Branch Name</label>
+                  <input 
+                    className="input rounded-xl border-gray-300 bg-white w-full" 
+                    value={form.name} 
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))} 
+                    placeholder="Enter branch name" 
+                  />
+                </div>
+                <div className="content-section">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
+                  <input 
+                    className="input rounded-xl border-gray-300 bg-white w-full" 
+                    value={form.address} 
+                    onChange={e => setForm(f => ({ ...f, address: e.target.value }))} 
+                    placeholder="Enter branch address" 
+                  />
+                </div>
+                <div className="content-section">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Branch Manager</label>
+                  <select className="input rounded-xl border-gray-300 bg-white w-full" value={form.managerId} onChange={e => setForm(f => ({ ...f, managerId: e.target.value }))}>
+                    <option value="">Select manager (optional)</option>
+                    {managers.map(m => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="content-section">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Zone Assignment</label>
+                  <select className="input rounded-xl border-gray-300 bg-white w-full" value={form.zoneId} onChange={e => setForm(f => ({ ...f, zoneId: e.target.value }))}>
+                    <option value="">No zone assigned</option>
+                    {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="mt-4">
-            <button className="btn-primary" onClick={() => createBranch.mutate({ name: form.name.trim(), address: form.address.trim(), managerId: form.managerId || undefined, zoneId: form.zoneId || undefined })} disabled={!form.name.trim() || createBranch.isPending}>
-              {createBranch.isPending ? 'Creating…' : 'Create Branch'}
+          
+          <div className="card-footer">
+            <button 
+              className="btn-mobile-primary text-lg py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200" 
+              onClick={() => createBranch.mutate({ name: form.name.trim(), address: form.address.trim(), managerId: form.managerId || undefined, zoneId: form.zoneId || undefined })} 
+              disabled={!form.name.trim() || createBranch.isPending}
+            >
+              {createBranch.isPending ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Creating Branch...</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl">🏢</span>
+                  <span>Create Branch</span>
+                </div>
+              )}
             </button>
           </div>
         </div>
@@ -105,7 +150,7 @@ const ManageBranches: React.FC = () => {
               keyField={(b) => b.id}
               empty={<p className="text-gray-500 py-8">No branches found.</p>}
               mobileItem={(b) => (
-                <div className="p-3">
+                <div className="card-compact card-interactive bg-white border border-gray-200">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-medium text-gray-900 truncate">{b.name}</p>
