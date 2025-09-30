@@ -402,8 +402,8 @@ const DashboardAuditor: React.FC = () => {
                                 {overdue && !isArchived && <InfoBadge label="Overdue" tone="danger" />}
                               </td>
                               <td className="px-3 py-1.5 text-right space-x-2">
-                                <button className="btn-outline btn-sm md:h-10 md:px-4 xl:h-11 xl:px-5" onClick={() => navigate(`/audit/${a.id}`)}>Details</button>
-                                <button className="btn-primary btn-sm md:h-10 md:px-4 xl:h-11 xl:px-5" onClick={() => navigate(`/audit/${a.id}/wizard`)}>Open</button>
+                                <button className="btn btn-outline btn-responsive-sm" onClick={() => navigate(`/audit/${a.id}`)}>Details</button>
+                                <button className="btn btn-primary btn-responsive-sm" onClick={() => navigate(`/audit/${a.id}/wizard`)}>Open</button>
                               </td>
                             </tr>
                           )
@@ -657,13 +657,13 @@ const DashboardAuditor: React.FC = () => {
                           <td className="px-3 py-1.5">{new Date(a.updatedAt).toLocaleDateString()}</td>
                           <td className="px-3 py-1.5 text-right space-x-2">
                             <button
-                              className="btn-outline btn-sm md:h-10 md:px-4 xl:h-11 xl:px-5"
+                              className="btn btn-outline btn-responsive-sm"
                               onClick={() => navigate(`/audit/${a.id}`)}
                             >
                               Details
                             </button>
                             <button
-                              className="btn-primary btn-sm md:h-10 md:px-4 xl:h-11 xl:px-5"
+                              className="btn btn-primary btn-responsive-sm"
                               onClick={() => navigate(`/audit/${a.id}/wizard`)}
                             >
                               Continue
@@ -759,7 +759,7 @@ const DashboardAuditor: React.FC = () => {
                             </td>
                             <td className="px-3 py-1.5 text-right">
                               <button
-                                className="btn-primary btn-sm disabled:opacity-60"
+                                className="btn btn-primary btn-sm disabled:opacity-60"
                                 disabled={!canStart || !selectedSurvey || createAudit.isPending}
                                 onClick={() => selectedSurvey && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: b.id })}
                               >

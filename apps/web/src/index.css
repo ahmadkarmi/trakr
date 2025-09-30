@@ -13,40 +13,75 @@
 }
 
 @layer components {
-  /* Mobile-first button system with proper touch targets */
+  /* STANDARDIZED BUTTON SYSTEM - Consistent sizes across all pages */
   .btn {
-    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap;
     /* Minimum 44px touch target for mobile */
     @apply min-h-[44px] min-w-[44px] touch-manipulation;
   }
-  
+
+  /* BUTTON SIZE VARIANTS - Consistent across all components */
+  .btn-xs {
+    @apply h-8 px-3 text-xs font-medium rounded-md;
+  }
+
+  .btn-sm {
+    @apply h-9 px-4 text-sm font-medium rounded-lg;
+  }
+
+  .btn-md {
+    @apply h-10 px-5 text-sm font-medium rounded-lg;
+  }
+
+  .btn-lg {
+    @apply h-12 px-6 text-base font-semibold rounded-lg;
+  }
+
+  .btn-xl {
+    @apply h-14 px-8 text-lg font-semibold rounded-xl;
+  }
+
+  /* BUTTON COLOR VARIANTS - Applied to any size */
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
+    @apply bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-900 shadow-sm hover:shadow-md;
   }
 
   .btn-outline {
-    @apply border border-gray-300 hover:border-gray-400 text-gray-700 hover:text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
+    @apply border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 shadow-sm hover:shadow-md;
   }
 
   .btn-ghost {
-    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
+    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-100;
   }
 
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors whitespace-nowrap;
+    @apply bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow-md;
   }
 
-  /* Mobile-first button variants */
+  /* MOBILE-OPTIMIZED BUTTON VARIANTS */
   .btn-mobile-primary {
-    @apply btn-primary w-full text-base font-semibold h-12 rounded-xl whitespace-nowrap;
+    @apply btn btn-primary btn-lg w-full rounded-xl;
   }
   
   .btn-mobile-fab {
-    @apply btn-primary rounded-full w-14 h-14 p-0 shadow-lg fixed bottom-6 right-6 z-50;
+    @apply btn btn-primary rounded-full w-14 h-14 p-0 shadow-lg fixed bottom-6 right-6 z-50;
+  }
+
+  /* RESPONSIVE BUTTON DEFAULTS - Use these for consistent responsive sizing */
+  .btn-responsive-sm {
+    @apply btn-sm md:btn-md;
+  }
+
+  .btn-responsive-md {
+    @apply btn-md lg:btn-lg;
+  }
+
+  .btn-responsive-lg {
+    @apply btn-lg lg:btn-xl;
   }
 
   /* Filter pills and labels - single line optimization */

@@ -484,7 +484,7 @@ const SurveyTemplateEditor: React.FC = () => {
                 <label className="label" htmlFor="active">Active</label>
                 <div className="mt-2">
                   <button
-                    className="btn-outline"
+                    className="btn btn-outline btn-md"
                     onClick={() => setActive(v => !v)}
                   >
                     {active ? 'Deactivate' : 'Activate'}
@@ -521,8 +521,8 @@ const SurveyTemplateEditor: React.FC = () => {
             </div>
 
             <div className="flex justify-end gap-3">
-              <button className="btn-outline" onClick={() => { setTitle(survey.title); setDescription(survey.description); setActive(!!survey.isActive); setFrequency(survey.frequency || AuditFrequency.UNLIMITED); setSections(survey.sections || []); }}>Reset</button>
-              <button className="btn-primary" onClick={onSave} disabled={updateMutation.isPending}>
+              <button className="btn btn-outline btn-md" onClick={() => { setTitle(survey.title); setDescription(survey.description); setActive(!!survey.isActive); setFrequency(survey.frequency || AuditFrequency.UNLIMITED); setSections(survey.sections || []); }}>Reset</button>
+              <button className="btn btn-primary btn-md" onClick={onSave} disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
@@ -544,18 +544,18 @@ const SurveyTemplateEditor: React.FC = () => {
                   ))}
                 </div>
                 <div className="flex gap-2 items-center">
-                  <button className="btn-ghost btn-sm" title="Add Page" onClick={addSection}>
+                  <button className="btn btn-ghost btn-sm" title="Add Page" onClick={addSection}>
                     <PlusIcon className="w-5 h-5" />
                   </button>
                   {selectedSectionId && (
                     <>
-                      <button className="btn-ghost btn-sm" title="Move Left" onClick={() => moveSection(selectedSectionId, 'up')}>
+                      <button className="btn btn-ghost btn-sm" title="Move Left" onClick={() => moveSection(selectedSectionId, 'up')}>
                         <ChevronLeftIcon className="w-5 h-5" />
                       </button>
-                      <button className="btn-ghost btn-sm" title="Move Right" onClick={() => moveSection(selectedSectionId, 'down')}>
+                      <button className="btn btn-ghost btn-sm" title="Move Right" onClick={() => moveSection(selectedSectionId, 'down')}>
                         <ChevronRightIcon className="w-5 h-5" />
                       </button>
-                      <button className="btn-ghost btn-sm text-danger-600" title="Remove Page" onClick={() => removeSection(selectedSectionId)}>
+                      <button className="btn btn-ghost btn-sm text-danger-600" title="Remove Page" onClick={() => removeSection(selectedSectionId)}>
                         <TrashIcon className="w-5 h-5" />
                       </button>
                     </>
@@ -584,7 +584,7 @@ const SurveyTemplateEditor: React.FC = () => {
 
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="text-md font-semibold text-gray-900">Questions</h4>
-                        <button className="btn-secondary" onClick={() => addQuestion(sec.id)}>Add Question</button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => addQuestion(sec.id)}>Add Question</button>
                       </div>
 
                       {sec.questions.length === 0 ? (
@@ -602,16 +602,16 @@ const SurveyTemplateEditor: React.FC = () => {
                                     <div className="text-xs text-gray-500">{getQuestionSummary(q)}</div>
                                   </div>
                                   <div className="flex gap-1">
-                                    <button className="btn-ghost btn-xs" title="Edit" onClick={() => openEditQuestion(sec.id, q.id)}>
+                                    <button className="btn btn-ghost btn-xs" title="Edit" onClick={() => openEditQuestion(sec.id, q.id)}>
                                       <PencilSquareIcon className="w-4 h-4" />
                                     </button>
-                                    <button className="btn-ghost btn-xs" title="Move Up" onClick={() => moveQuestion(sec.id, q.id, 'up')}>
+                                    <button className="btn btn-ghost btn-xs" title="Move Up" onClick={() => moveQuestion(sec.id, q.id, 'up')}>
                                       <ChevronUpIcon className="w-4 h-4" />
                                     </button>
-                                    <button className="btn-ghost btn-xs" title="Move Down" onClick={() => moveQuestion(sec.id, q.id, 'down')}>
+                                    <button className="btn btn-ghost btn-xs" title="Move Down" onClick={() => moveQuestion(sec.id, q.id, 'down')}>
                                       <ChevronDownIcon className="w-4 h-4" />
                                     </button>
-                                    <button className="btn-ghost btn-xs text-danger-600" title="Delete" onClick={() => removeQuestion(sec.id, q.id)}>
+                                    <button className="btn btn-ghost btn-xs text-danger-600" title="Delete" onClick={() => removeQuestion(sec.id, q.id)}>
                                       <TrashIcon className="w-4 h-4" />
                                     </button>
                                   </div>
@@ -641,16 +641,16 @@ const SurveyTemplateEditor: React.FC = () => {
                                     <td className="px-2 py-1.5 align-top">{getQuestionSummary(q)}</td>
                                     <td className="px-2 py-1.5 align-top">
                                       <div className="flex gap-1">
-                                        <button className="btn-ghost btn-xs" title="Edit" onClick={() => openEditQuestion(sec.id, q.id)}>
+                                        <button className="btn btn-ghost btn-xs" title="Edit" onClick={() => openEditQuestion(sec.id, q.id)}>
                                           <PencilSquareIcon className="w-4 h-4" />
                                         </button>
-                                        <button className="btn-ghost btn-xs" title="Move Up" onClick={() => moveQuestion(sec.id, q.id, 'up')}>
+                                        <button className="btn btn-ghost btn-xs" title="Move Up" onClick={() => moveQuestion(sec.id, q.id, 'up')}>
                                           <ChevronUpIcon className="w-4 h-4" />
                                         </button>
-                                        <button className="btn-ghost btn-xs" title="Move Down" onClick={() => moveQuestion(sec.id, q.id, 'down')}>
+                                        <button className="btn btn-ghost btn-xs" title="Move Down" onClick={() => moveQuestion(sec.id, q.id, 'down')}>
                                           <ChevronDownIcon className="w-4 h-4" />
                                         </button>
-                                        <button className="btn-ghost btn-xs text-danger-600" title="Delete" onClick={() => removeQuestion(sec.id, q.id)}>
+                                        <button className="btn btn-ghost btn-xs text-danger-600" title="Delete" onClick={() => removeQuestion(sec.id, q.id)}>
                                           <TrashIcon className="w-4 h-4" />
                                         </button>
                                       </div>
@@ -678,7 +678,7 @@ const SurveyTemplateEditor: React.FC = () => {
           <div ref={modalRef} className="relative bg-white rounded-xl shadow-xl w-[92vw] max-w-3xl mx-auto max-h-[85vh] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="question-editor-title">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h3 id="question-editor-title" className="text-lg font-semibold">{questionModal.questionId ? 'Edit Question' : 'Add Question'}</h3>
-              <button className="btn-ghost btn-sm" onClick={closeQuestionModal}>
+              <button className="btn btn-ghost btn-sm" onClick={closeQuestionModal}>
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
@@ -773,15 +773,15 @@ const SurveyTemplateEditor: React.FC = () => {
                     {(questionModal.draft!.options || []).map((opt, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <input className="input flex-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={opt} onChange={(e) => updateDraftOption(i, e.target.value)} />
-                        <button className="btn-ghost btn-xs" title="Up" onClick={() => moveDraftOption(i, 'up')}><ChevronUpIcon className="w-4 h-4"/></button>
-                        <button className="btn-ghost btn-xs" title="Down" onClick={() => moveDraftOption(i, 'down')}><ChevronDownIcon className="w-4 h-4"/></button>
-                        <button className="btn-ghost btn-xs text-danger-600" title="Delete" onClick={() => removeDraftOption(i)}><TrashIcon className="w-4 h-4"/></button>
+                        <button className="btn btn-ghost btn-xs" title="Up" onClick={() => moveDraftOption(i, 'up')}><ChevronUpIcon className="w-4 h-4"/></button>
+                        <button className="btn btn-ghost btn-xs" title="Down" onClick={() => moveDraftOption(i, 'down')}><ChevronDownIcon className="w-4 h-4"/></button>
+                        <button className="btn btn-ghost btn-xs text-danger-600" title="Delete" onClick={() => removeDraftOption(i)}><TrashIcon className="w-4 h-4"/></button>
                       </li>
                     ))}
                   </ul>
                   <div className="mt-3 flex gap-2">
                     <input className="input flex-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" placeholder="Add option" onKeyDown={(e) => { if (e.key === 'Enter') { addDraftOption((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).value=''; } }} />
-                    <button className="btn-secondary btn-sm" onClick={(e) => { const inp = (e.currentTarget.previousElementSibling as HTMLInputElement); if (inp?.value) { addDraftOption(inp.value); inp.value=''; } }}>Add</button>
+                    <button className="btn btn-secondary btn-sm" onClick={(e) => { const inp = (e.currentTarget.previousElementSibling as HTMLInputElement); if (inp?.value) { addDraftOption(inp.value); inp.value=''; } }}>Add</button>
                   </div>
                 </div>
               </fieldset>
@@ -839,9 +839,9 @@ const SurveyTemplateEditor: React.FC = () => {
             </div>
 
             <div className="px-6 py-4 border-t flex justify-end gap-3">
-              <button className="btn-outline" onClick={closeQuestionModal}>Cancel</button>
+              <button className="btn btn-outline btn-md" onClick={closeQuestionModal}>Cancel</button>
               <button
-                className="btn-primary"
+                className="btn btn-primary btn-md"
                 onClick={saveQuestionFromModal}
                 disabled={
                   !questionModal.draft!.text.trim() ||

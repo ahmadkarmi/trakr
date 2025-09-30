@@ -62,9 +62,9 @@ const Profile: React.FC = () => {
             </div>
           )}
           <div className="flex gap-2">
-            <button className="btn-secondary btn-sm" onClick={onPickFile} disabled={isUploading}>{isUploading ? 'Uploading…' : (user.avatarUrl ? 'Change' : 'Upload')} Photo</button>
+            <button className="btn btn-secondary btn-sm" onClick={onPickFile} disabled={isUploading}>{isUploading ? 'Uploading…' : (user.avatarUrl ? 'Change' : 'Upload')} Photo</button>
             {user.avatarUrl && (
-              <button className="btn-outline btn-sm" onClick={onRemoveAvatar} disabled={isUploading}>Remove</button>
+              <button className="btn btn-outline btn-sm" onClick={onRemoveAvatar} disabled={isUploading}>Remove</button>
             )}
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
@@ -104,7 +104,7 @@ const Profile: React.FC = () => {
 
           <div className="mt-4 flex gap-2">
             <button
-              className="btn-primary btn-sm"
+              className="btn btn-primary btn-sm"
               onClick={async () => {
                 setSaving(true)
                 try {
@@ -126,7 +126,7 @@ const Profile: React.FC = () => {
               {saving ? 'Saving…' : 'Save changes'}
             </button>
             <button
-              className="btn-outline btn-sm"
+              className="btn btn-outline btn-sm"
               onClick={() => { setName(user.name || ''); setEmail(user.email || '') }}
               disabled={saving}
             >
@@ -138,7 +138,7 @@ const Profile: React.FC = () => {
           <div className="mt-6">
             <label className="label">Signature</label>
             <p className="text-sm text-gray-600 mt-1">Manage your approval signature from the dedicated Signature page.</p>
-            <a href="/profile/signature" className="inline-flex items-center gap-2 btn-outline btn-sm mt-2">Go to Signature</a>
+            <a href="/profile/signature" className="inline-flex items-center gap-2 btn btn-outline btn-sm mt-2">Go to Signature</a>
           </div>
         </div>
       </div>

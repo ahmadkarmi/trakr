@@ -710,8 +710,8 @@ const DashboardAdmin: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-end gap-2">
-                      <button className="btn-ghost btn-sm" onClick={() => setShowAdvanced(false)}>Close</button>
-                      <button className="btn-ghost btn-sm disabled:opacity-50" onClick={clearAllFilters} disabled={!hasFilters}>Clear all</button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => setShowAdvanced(false)}>Close</button>
+                      <button className="btn btn-ghost btn-sm disabled:opacity-50" onClick={clearAllFilters} disabled={!hasFilters}>Clear all</button>
                     </div>
                   </div>
                 )}
@@ -809,7 +809,7 @@ const DashboardAdmin: React.FC = () => {
                     return (
                       <div className="space-x-2">
                         {canManualArchive && (
-                          <button className="btn-danger btn-sm" onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} disabled={manualArchive.isPending}>
+                          <button className="btn btn-danger btn-sm" onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} disabled={manualArchive.isPending}>
                             {manualArchive.isPending ? 'Archiving…' : 'Archive'}
                           </button>
                         )}
@@ -871,7 +871,7 @@ const DashboardAdmin: React.FC = () => {
               <div className="flex items-center justify-between gap-4 mb-3">
                 <h3 className="text-lg font-medium text-gray-900 whitespace-nowrap">Finalized Audits</h3>
                 <button 
-                  className="btn-outline btn-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0" 
+                  className="btn btn-outline btn-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0" 
                   onClick={() => exportCsv(finalizedAuditsInPeriod)}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

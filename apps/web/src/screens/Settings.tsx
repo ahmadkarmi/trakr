@@ -215,7 +215,7 @@ const Settings: React.FC = () => {
               </div>
             </div>
             <div className="mt-4">
-              <button className="btn-primary" disabled={!org || updateOrg.isPending} onClick={() => updateOrg.mutate()}>
+              <button className="btn btn-primary btn-md" disabled={!org || updateOrg.isPending} onClick={() => updateOrg.mutate()}>
                 {updateOrg.isPending ? 'Saving…' : 'Save Settings'}
               </button>
             </div>
@@ -225,7 +225,7 @@ const Settings: React.FC = () => {
           <h2 className="text-lg font-semibold text-gray-900">Signature</h2>
           <p className="text-sm text-gray-600 mt-1">Manage your saved signature for approvals in your profile.</p>
           <div className="mt-3">
-            <Link to="/profile/signature" className="btn-outline btn-sm">Open Profile · Signature</Link>
+            <Link to="/profile/signature" className="btn btn-outline btn-sm">Open Profile · Signature</Link>
           </div>
         </div>
       </div>
