@@ -554,8 +554,8 @@ const DashboardAdmin: React.FC = () => {
 
         {/* Organization Settings moved to the Settings (cogwheel) screen for admins */}
 
-        {/* Middle row: zone coverage + table + activity */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Zone coverage + Recent activity row */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
           {/* Zone coverage */}
           <div className="card">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -591,8 +591,31 @@ const DashboardAdmin: React.FC = () => {
               )}
             </div>
           </div>
-          {/* Recent audits table */}
-          <div className="card xl:col-span-2">
+
+          {/* Recent Activity */}
+          <div className="card">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+            </div>
+            <div className="p-6">
+              {activity.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No recent activity.</p>
+              ) : (
+                <ul className="space-y-3 text-sm">
+                  {activity.slice(0, 6).map((log) => (
+                    <li key={log.id} className="flex justify-between">
+                      <span className="text-gray-700">{log.action} – {log.details}</span>
+                      <span className="text-gray-400">{new Date(log.timestamp).toLocaleDateString()}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* This Week's Audits - Full width row */}
+        <div className="card">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900">
@@ -1006,30 +1029,6 @@ const DashboardAdmin: React.FC = () => {
               />
             </div>
           </div>
-
-          {/* Side column */}
-          <div className="space-y-6">
-            <div className="card">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
-              </div>
-              <div className="p-6">
-                {activity.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No recent activity.</p>
-                ) : (
-                  <ul className="space-y-3 text-sm">
-                    {activity.slice(0, 6).map((log) => (
-                      <li key={log.id} className="flex justify-between">
-                        <span className="text-gray-700">{log.action} – {log.details}</span>
-                        <span className="text-gray-400">{new Date(log.timestamp).toLocaleDateString()}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          </div>
-
 
         </div>
       </div>
