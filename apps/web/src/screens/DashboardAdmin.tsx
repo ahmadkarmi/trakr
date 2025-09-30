@@ -129,18 +129,41 @@ const DashboardAdmin: React.FC = () => {
     } catch { return due.toDateString() === now.toDateString() }
   }, [org?.timeZone])
 
+  // Weekly insights - fixed to current week only
+  const weeklyAudits = React.useMemo(() => {
+    const now = new Date()
+    const orgNow = getOrgLocalNow(now)
+    const startOfWeek = (d: Date) => {
+      const w = (org?.weekStartsOn ?? 1) as 0 | 1
+      const day = d.getDay()
+      const diff = (day - w + 7) % 7
+      const s = new Date(d); s.setDate(d.getDate() - diff); s.setHours(0,0,0,0); return s
+    }
+    const endOfWeek = (d: Date) => { const s = startOfWeek(d); const e = new Date(s); e.setDate(s.getDate() + 6); e.setHours(23,59,59,999); return e }
+    const weekStart = startOfWeek(orgNow)
+    const weekEnd = endOfWeek(orgNow)
+    const delta = orgNow.getTime() - now.getTime()
+    const adjustedStart = new Date(weekStart.getTime() - delta)
+    const adjustedEnd = new Date(weekEnd.getTime() - delta)
+    
+    return audits.filter(a => {
+      const t = a.periodStart ? new Date(a.periodStart).getTime() : new Date(a.updatedAt).getTime()
+      return t >= adjustedStart.getTime() && t <= adjustedEnd.getTime()
+    })
+  }, [audits, getOrgLocalNow, org?.weekStartsOn])
+
   const auditsInPeriod = React.useMemo(() => audits.filter(isInPeriod), [audits, isInPeriod])
-  const completedOrApproved = auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED)
-  const completionRate = auditsInPeriod.length > 0 ? Math.round((completedOrApproved.length / auditsInPeriod.length) * 100) : 0
+  const completedOrApproved = weeklyAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED)
+  const completionRate = weeklyAudits.length > 0 ? Math.round((completedOrApproved.length / weeklyAudits.length) * 100) : 0
   
   // On-time rate: Simple logic - 100% unless there are overdue audits
-  const auditsWithDueDates = auditsInPeriod.filter(a => a.dueAt)
+  const auditsWithDueDates = weeklyAudits.filter(a => a.dueAt)
   const overdueAuditsAll = auditsWithDueDates.filter(isOverdue) // All overdue (including completed late)
   const onTimeRate = auditsWithDueDates.length > 0 ? 
     Math.round(((auditsWithDueDates.length - overdueAuditsAll.length) / auditsWithDueDates.length) * 100) : 100
   // Only count overdue audits that are NOT yet completed/approved (still actionable)
   const overdueCount = auditsInPeriod.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
-  const coverageBranches = React.useMemo(() => new Set(auditsInPeriod.map(a => a.branchId)), [auditsInPeriod])
+  const coverageBranches = React.useMemo(() => new Set(weeklyAudits.map(a => a.branchId)), [weeklyAudits])
   const coverageRate = branches.length > 0 ? Math.round((coverageBranches.size / branches.length) * 100) : 0
 
   // Zone coverage summary (top 5 by scheduled)
@@ -185,10 +208,10 @@ const DashboardAdmin: React.FC = () => {
     })
   }, [audits, statusFilter, branchFilter, auditorFilter, dateFrom, dateTo, quickChip, isInPeriod, isDueTodayOrg, isOverdue, searchQuery, branches, users])
 
-  const completedCount = auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
-  const inProgressCount = auditsInPeriod.filter(a => a.status === AuditStatus.IN_PROGRESS).length
-  const draftCount = auditsInPeriod.filter(a => a.status === AuditStatus.DRAFT).length
-  const submittedCount = auditsInPeriod.filter(a => a.status === AuditStatus.SUBMITTED).length
+  const completedCount = weeklyAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
+  const inProgressCount = weeklyAudits.filter(a => a.status === AuditStatus.IN_PROGRESS).length
+  const draftCount = weeklyAudits.filter(a => a.status === AuditStatus.DRAFT).length
+  const submittedCount = weeklyAudits.filter(a => a.status === AuditStatus.SUBMITTED).length
   
   // Real-time priorities (not period-filtered)
   const dueTodayCount = audits.filter(isDueTodayOrg).length
@@ -410,21 +433,11 @@ const DashboardAdmin: React.FC = () => {
           </button>
         </div>
 
-        {/* Main Statistics - Horizontal Scrolling KPIs */}
+        {/* Weekly Insights - Fixed to Current Week */}
         <div className="card-mobile">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Key Metrics</h3>
-            <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
-              {(['week','month','quarter'] as const).map(p => (
-                <button 
-                  key={p} 
-                  className={`px-3 py-1.5 text-sm font-medium ${period===p ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
-                  onClick={() => setPeriod(p)}
-                >
-                  {p === 'week' ? 'Week' : p === 'month' ? 'Month' : 'Quarter'}
-                </button>
-              ))}
-            </div>
+            <h3 className="font-semibold text-gray-900">Weekly Insights</h3>
+            <span className="text-xs text-gray-500">Current week performance</span>
           </div>
           
           {/* Horizontal Scrolling Stats Cards */}
@@ -465,7 +478,7 @@ const DashboardAdmin: React.FC = () => {
                   <div className="flex-1">
                     <div className="text-2xl font-bold text-success-600">{completionRate}%</div>
                     <div className="text-sm text-gray-600">Completion Rate</div>
-                    <div className="text-xs text-gray-500">{completedCount} of {auditsInPeriod.length}</div>
+                    <div className="text-xs text-gray-500">{completedCount} of {weeklyAudits.length}</div>
                   </div>
                 </div>
               </div>
@@ -553,7 +566,7 @@ const DashboardAdmin: React.FC = () => {
           
           {org?.timeZone && (
             <div className="mt-4 text-center">
-              <span className="text-xs text-gray-500">Timezone: {org.timeZone} • Period: {period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'This Quarter'}</span>
+              <span className="text-xs text-gray-500">Timezone: {org.timeZone} • Current week insights</span>
             </div>
           )}
         </div>
