@@ -2,7 +2,7 @@ import React, { ReactNode, useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
 import { USER_ROLE_LABELS, UserRole } from '@trakr/shared'
-import { MagnifyingGlassIcon, BellIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, ClipboardDocumentCheckIcon, PencilSquareIcon, EllipsisVerticalIcon, MapIcon, UserGroupIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, BellIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, ClipboardDocumentCheckIcon, PencilSquareIcon, EllipsisVerticalIcon, MapIcon, UserGroupIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon, UsersIcon } from '@heroicons/react/24/outline'
 
 interface DashboardLayoutProps {
   title: string
@@ -49,6 +49,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
     { to: '/manage/surveys', label: 'Survey Templates', icon: <DocumentTextIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/manage/branches', label: 'Manage Branches', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: isAdmin },
     { to: '/manage/zones', label: 'Manage Zones', icon: <MapIcon className="w-5 h-5" />, show: isAdmin },
+    { to: '/manage/users', label: 'Manage Users', icon: <UsersIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/activity/logs', label: 'Activity Logs', icon: <ClockIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/dashboard/branch-manager', label: 'Branch Manager', icon: <UserGroupIcon className="w-5 h-5" />, show: true },
     { to: '/dashboard/auditor', label: 'Audit Manager', icon: <ClipboardDocumentCheckIcon className="w-5 h-5" />, show: true },

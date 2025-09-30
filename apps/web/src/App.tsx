@@ -28,6 +28,7 @@ const ActivityLogs = lazy(() => import('./screens/ActivityLogs'))
 const ManageBranches = lazy(() => import('./screens/ManageBranches'))
 const ManageZones = lazy(() => import('./screens/ManageZones'))
 const ManageAssignments = lazy(() => import('./screens/ManageAssignments'))
+const ManageUsers = lazy(() => import('./screens/ManageUsers'))
 const ProfileSignature = lazy(() => import('./screens/ProfileSignature'))
 const Help = lazy(() => import('./screens/Help'))
 const Profile = lazy(() => import('./screens/Profile'))
@@ -144,6 +145,7 @@ function App() {
                         <Route path="/manage/branches" element={<ManageBranches />} />
                         <Route path="/manage/zones" element={<ManageZones />} />
                         <Route path="/manage/assignments" element={<ManageAssignments />} />
+                        <Route path="/manage/users" element={<ManageUsers />} />
                       </>
                     ) : (
                       <>
@@ -153,6 +155,7 @@ function App() {
                         <Route path="/manage/branches" element={<Navigate to={getHomeRouteForRole(user!.role)} replace />} />
                         <Route path="/manage/zones" element={<Navigate to={getHomeRouteForRole(user!.role)} replace />} />
                         <Route path="/manage/assignments" element={<Navigate to={getHomeRouteForRole(user!.role)} replace />} />
+                        <Route path="/manage/users" element={<Navigate to={getHomeRouteForRole(user!.role)} replace />} />
                       </>
                     )}
 

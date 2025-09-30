@@ -48,6 +48,9 @@ const mapUser = (row: Tables<'users'>): User => ({
   branchId: row.branch_id || undefined,
   signatureUrl: (row as any).signature_url || undefined,
   avatarUrl: (row as any).avatar_url || undefined,
+  emailVerified: (row as any).email_verified || false,
+  isActive: (row as any).is_active !== false, // default to true if not specified
+  lastSeenAt: (row as any).last_seen_at ? new Date((row as any).last_seen_at) : undefined,
   createdAt: new Date(row.created_at),
   updatedAt: new Date(row.updated_at),
 })
@@ -957,11 +960,13 @@ export const supabaseApi = {
     if (error) throw error
     return mapUser(data as any)
   },
-  async updateUser(id: string, updates: Partial<{ name: string; email: string }>) {
+  async updateUser(id: string, updates: Partial<{ name: string; email: string; role: UserRole; isActive: boolean }>) {
     const supabase = await getSupabase()
     const base: any = { updated_at: new Date().toISOString() }
     if (updates.name != null) base.full_name = updates.name
     if (updates.email != null) base.email = updates.email
+    if (updates.role != null) base.role = updates.role.toUpperCase()
+    if (updates.isActive != null) base.is_active = updates.isActive
     const { data, error } = await supabase.from('users').update(base).eq('id', id).select('*').single()
     if (error) throw error
     return mapUser(data as any)
@@ -978,5 +983,48 @@ export const supabaseApi = {
     const { data, error } = await supabase.from('organizations').update(base).eq('id', id).select('*').single()
     if (error) throw error
     return mapOrganization(data as Tables<'organizations'>)
+  },
+
+  // User management functions
+  async inviteUser(email: string, name: string, role: UserRole): Promise<User> {
+    const supabase = await getSupabase()
+    
+    // Get current user's org
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser) throw new Error('Not authenticated')
+    
+    const { data: userData } = await supabase.from('users').select('org_id').eq('id', currentUser.id).single()
+    if (!userData) throw new Error('User not found')
+
+    // Create user record
+    const { data, error } = await supabase.from('users').insert({
+      email,
+      full_name: name,
+      role: role.toUpperCase() as any,
+      org_id: userData.org_id,
+      email_verified: false,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }).select('*').single()
+    
+    if (error) throw error
+
+    // TODO: Send invitation email via Supabase Auth or email service
+    // For now, we'll just create the user record
+    
+    return mapUser(data as any)
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    const supabase = await getSupabase()
+    const { error } = await supabase.from('users').delete().eq('id', userId)
+    if (error) throw error
+  },
+
+  async resendInvitation(userId: string): Promise<void> {
+    // TODO: Implement resend invitation logic
+    // This would typically involve sending another invitation email
+    console.log('Resending invitation for user:', userId)
   },
 }
