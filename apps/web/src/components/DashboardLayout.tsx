@@ -63,7 +63,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
           className={`fixed inset-0 z-40 bg-black/30 transition-opacity ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => setMobileOpen(false)}
         />
-        <aside className={`fixed inset-y-0 left-0 z-50 w-80 text-white bg-gradient-to-b from-primary-700 to-primary-600 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col pb-9`}>
+        <aside className={`fixed inset-y-0 left-0 z-50 w-80 text-white bg-gradient-to-b from-primary-700 to-primary-600 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col max-h-screen overflow-hidden`}>
           {/* Enhanced mobile header */}
           <div className="h-20 px-6 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -77,36 +77,39 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
             </button>
           </div>
           
-          {/* Mobile-optimized search */}
-          <div className="px-6 py-4">
-            <div className="bg-white/10 rounded-xl flex items-center px-4 py-3">
-              <MagnifyingGlassIcon className="w-5 h-5 text-white/80" />
-              <input placeholder="Search" className="ml-3 bg-transparent placeholder-white/70 text-white text-base outline-none flex-1" />
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            {/* Mobile-optimized search */}
+            <div className="px-6 py-4">
+              <div className="bg-white/10 rounded-xl flex items-center px-4 py-3">
+                <MagnifyingGlassIcon className="w-5 h-5 text-white/80" />
+                <input placeholder="Search" className="ml-3 bg-transparent placeholder-white/70 text-white text-base outline-none flex-1" />
+              </div>
             </div>
+            
+            {/* Enhanced navigation with better touch targets */}
+            <nav className="px-4 space-y-2 pb-4">
+              {nav.map(item => {
+                const active = location.pathname.startsWith(item.to)
+                return (
+                  <Link 
+                    key={item.to} 
+                    to={item.to} 
+                    onClick={() => setMobileOpen(false)} 
+                    className={`flex items-center gap-4 px-4 py-4 rounded-xl transition touch-target ${active ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      {item.icon}
+                    </div>
+                    <span className="text-base font-medium">{item.label}</span>
+                  </Link>
+                )
+              })}
+            </nav>
           </div>
           
-          {/* Enhanced navigation with better touch targets */}
-          <nav className="px-4 space-y-2">
-            {nav.map(item => {
-              const active = location.pathname.startsWith(item.to)
-              return (
-                <Link 
-                  key={item.to} 
-                  to={item.to} 
-                  onClick={() => setMobileOpen(false)} 
-                  className={`flex items-center gap-4 px-4 py-4 rounded-xl transition touch-target ${active ? 'bg-white/20' : 'hover:bg-white/10'}`}
-                >
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    {item.icon}
-                  </div>
-                  <span className="text-base font-medium">{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
-          
-          {/* Enhanced user section */}
-          <div className="mt-auto p-6 border-t border-white/10 space-y-4">
+          {/* Enhanced user section - Fixed at bottom */}
+          <div className="flex-shrink-0 p-6 pb-8 border-t border-white/10 space-y-4">
             <div className="flex items-center gap-4">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-white/20" />
@@ -121,37 +124,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
               </div>
             </div>
             
-            {/* Mobile-optimized action buttons */}
-            <div className="space-y-2">
+            {/* Mobile-optimized action buttons - Compact layout */}
+            <div className="space-y-1">
               <Link 
                 to="/profile" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
               >
-                <span className="text-base">Profile</span>
+                <span>Profile</span>
               </Link>
               <Link 
                 to="/profile/signature" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
               >
-                <PencilSquareIcon className="w-5 h-5" />
-                <span className="text-base">Signature</span>
+                <PencilSquareIcon className="w-4 h-4" />
+                <span>Signature</span>
               </Link>
               <Link 
                 to="/settings" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
               >
-                <Cog6ToothIcon className="w-5 h-5" />
-                <span className="text-base">Settings</span>
+                <Cog6ToothIcon className="w-4 h-4" />
+                <span>Settings</span>
               </Link>
               <button 
                 onClick={signOut} 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
               >
-                <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                <span className="text-base">Sign Out</span>
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                <span>Sign Out</span>
               </button>
             </div>
           </div>
