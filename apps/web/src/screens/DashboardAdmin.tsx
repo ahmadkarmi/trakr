@@ -11,7 +11,7 @@ import ProgressDonut from '../components/ProgressDonut'
 import StatusBadge from '@/components/StatusBadge'
 import ResponsiveTable from '../components/ResponsiveTable'
 import InfoBadge from '@/components/InfoBadge'
-import { UsersIcon, ClipboardDocumentListIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline'
 
 const DashboardAdmin: React.FC = () => {
   const { user } = useAuthStore()
@@ -164,7 +164,6 @@ const DashboardAdmin: React.FC = () => {
   // Only count overdue audits that are NOT yet completed/approved (still actionable)
   const overdueCount = auditsInPeriod.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
   const coverageBranches = React.useMemo(() => new Set(weeklyAudits.map(a => a.branchId)), [weeklyAudits])
-  const coverageRate = branches.length > 0 ? Math.round((coverageBranches.size / branches.length) * 100) : 0
 
   // Zone coverage summary (top 5 by scheduled)
   const zoneRows = React.useMemo(() => {
@@ -496,7 +495,7 @@ const DashboardAdmin: React.FC = () => {
                 </div>
               </div>
 
-              {/* Secondary Insights */}
+              {/* Weekly Operational Insights */}
               <div className="card-compact min-w-[200px] bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -505,7 +504,7 @@ const DashboardAdmin: React.FC = () => {
                   <div className="flex-1">
                     <div className="text-2xl font-bold text-blue-600">{inProgressCount}</div>
                     <div className="text-sm text-gray-600">In Progress</div>
-                    <div className="text-xs text-gray-500">Active work</div>
+                    <div className="text-xs text-gray-500">This week</div>
                   </div>
                 </div>
               </div>
@@ -513,12 +512,12 @@ const DashboardAdmin: React.FC = () => {
               <div className="card-compact min-w-[200px] bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <UsersIcon className="w-6 h-6 text-indigo-600" />
+                    <span className="text-lg">🏢</span>
                   </div>
                   <div className="flex-1">
-                    <div className="text-2xl font-bold text-indigo-600">{coverageRate}%</div>
-                    <div className="text-sm text-gray-600">Branch Coverage</div>
-                    <div className="text-xs text-gray-500">{coverageBranches.size} of {branches.length}</div>
+                    <div className="text-2xl font-bold text-indigo-600">{coverageBranches.size}</div>
+                    <div className="text-sm text-gray-600">Branches to Audit</div>
+                    <div className="text-xs text-gray-500">This week</div>
                   </div>
                 </div>
               </div>
@@ -531,7 +530,7 @@ const DashboardAdmin: React.FC = () => {
                   <div className="flex-1">
                     <div className="text-2xl font-bold text-yellow-600">{submittedCount}</div>
                     <div className="text-sm text-gray-600">Awaiting Review</div>
-                    <div className="text-xs text-gray-500">Submitted audits</div>
+                    <div className="text-xs text-gray-500">This week</div>
                   </div>
                 </div>
               </div>
@@ -539,12 +538,12 @@ const DashboardAdmin: React.FC = () => {
               <div className="card-compact min-w-[200px] bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <span className="text-lg">👥</span>
+                    <span className="text-lg">📝</span>
                   </div>
                   <div className="flex-1">
-                    <div className="text-2xl font-bold text-purple-600">{activeUsersCount}</div>
-                    <div className="text-sm text-gray-600">Active Users</div>
-                    <div className="text-xs text-gray-500">Team members</div>
+                    <div className="text-2xl font-bold text-purple-600">{draftCount}</div>
+                    <div className="text-sm text-gray-600">Draft Audits</div>
+                    <div className="text-xs text-gray-500">Need completion</div>
                   </div>
                 </div>
               </div>
@@ -552,12 +551,12 @@ const DashboardAdmin: React.FC = () => {
               <div className="card-compact min-w-[200px] bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <span className="text-lg">🏢</span>
+                    <span className="text-lg">👥</span>
                   </div>
                   <div className="flex-1">
-                    <div className="text-2xl font-bold text-emerald-600">{branches.length}</div>
-                    <div className="text-sm text-gray-600">Total Branches</div>
-                    <div className="text-xs text-gray-500">Locations</div>
+                    <div className="text-2xl font-bold text-emerald-600">{weeklyAudits.length}</div>
+                    <div className="text-sm text-gray-600">Total Scheduled</div>
+                    <div className="text-xs text-gray-500">This week</div>
                   </div>
                 </div>
               </div>
