@@ -188,9 +188,16 @@ const DashboardAdmin: React.FC = () => {
   const completedCount = auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
   const inProgressCount = auditsInPeriod.filter(a => a.status === AuditStatus.IN_PROGRESS).length
   const draftCount = auditsInPeriod.filter(a => a.status === AuditStatus.DRAFT).length
+  const submittedCount = auditsInPeriod.filter(a => a.status === AuditStatus.SUBMITTED).length
+  const dueTodayCount = auditsInPeriod.filter(isDueTodayOrg).length
   const completedOnlyCount = auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED).length
   const approvedOnlyCount = auditsInPeriod.filter(a => a.status === AuditStatus.APPROVED).length
   const finalizedAuditsInPeriod = React.useMemo(() => auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED), [auditsInPeriod])
+
+  // User management stats
+  const activeUsersCount = users.filter(u => u.isActive !== false).length
+  const pendingInvitesCount = users.filter(u => !u.emailVerified).length
+  const auditorCount = users.filter(u => u.role === UserRole.AUDITOR).length
 
   const hasFilters = React.useMemo(() => (
     statusFilter !== 'all' || branchFilter !== 'all' || auditorFilter !== 'all' || !!dateFrom || !!dateTo || quickChip !== 'none' || searchQuery.trim() !== ''
@@ -372,33 +379,103 @@ const DashboardAdmin: React.FC = () => {
           
           <button 
             className="card-mobile hover:shadow-lg transition-shadow text-left"
-            onClick={() => navigate('/manage/assignments')}
+            onClick={() => navigate('/manage/users')}
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                 <span className="text-sm">👥</span>
               </div>
               <div>
-                <div className="font-medium text-gray-900">Auditors</div>
-                <div className="text-xs text-gray-500">Assignments</div>
+                <div className="font-medium text-gray-900">Users</div>
+                <div className="text-xs text-gray-500">{activeUsersCount} active</div>
               </div>
             </div>
           </button>
           
           <button 
             className="card-mobile hover:shadow-lg transition-shadow text-left"
-            onClick={() => {/* Invite users functionality */}}
+            onClick={() => navigate('/manage/users')}
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                 <span className="text-sm">✉️</span>
               </div>
               <div>
-                <div className="font-medium text-gray-900">Invite</div>
-                <div className="text-xs text-gray-500">New users</div>
+                <div className="font-medium text-gray-900">Invites</div>
+                <div className="text-xs text-gray-500">{pendingInvitesCount} pending</div>
               </div>
             </div>
           </button>
+        </div>
+
+        {/* Audit Status Breakdown */}
+        <div className="card-mobile">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Audit Status</h3>
+            <span className="text-xs text-gray-500">This {period}</span>
+          </div>
+          
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <span className="text-sm">📝</span>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-gray-600">{draftCount}</div>
+                  <div className="text-xs text-gray-500">Draft</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="card-compact bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-sm">⚡</span>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-blue-600">{inProgressCount}</div>
+                  <div className="text-xs text-gray-500">In Progress</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="card-compact bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <span className="text-sm">📤</span>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-yellow-600">{submittedCount}</div>
+                  <div className="text-xs text-gray-500">Submitted</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className={`card-compact ${dueTodayCount > 0 ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dueTodayCount > 0 ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                  <span className="text-sm">⏰</span>
+                </div>
+                <div>
+                  <div className={`text-xl font-bold ${dueTodayCount > 0 ? 'text-orange-600' : 'text-gray-600'}`}>{dueTodayCount}</div>
+                  <div className="text-xs text-gray-500">Due Today</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="card-compact bg-gradient-to-r from-success-50 to-green-50 border-success-200">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-success-100 rounded-lg flex items-center justify-center">
+                  <span className="text-sm">✅</span>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-success-600">{completedCount}</div>
+                  <div className="text-xs text-gray-500">Completed</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Contextual KPIs with Integrated Period Selector */}
