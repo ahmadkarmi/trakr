@@ -7,7 +7,6 @@ import { Audit, Branch, Organization, LogEntry, AuditStatus, UserRole, Zone } fr
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import ProgressDonut from '../components/ProgressDonut'
 import StatusBadge from '@/components/StatusBadge'
 import ResponsiveTable from '../components/ResponsiveTable'
 import InfoBadge from '@/components/InfoBadge'
@@ -88,34 +87,7 @@ const DashboardAdmin: React.FC = () => {
   const getOrgLocalNow = React.useCallback((now: Date) => {
     try { return new Date(now.toLocaleString('en-US', { timeZone: org?.timeZone || 'UTC' })) } catch { return new Date(now) }
   }, [org?.timeZone])
-  const getPeriodRange = React.useMemo(() => {
-    const now = new Date()
-    const orgNow = getOrgLocalNow(now)
-    const startOfWeek = (d: Date) => {
-      const w = (org?.weekStartsOn ?? 1) as 0 | 1
-      const day = d.getDay()
-      const diff = (day - w + 7) % 7
-      const s = new Date(d); s.setDate(d.getDate() - diff); s.setHours(0,0,0,0); return s
-    }
-    const endOfWeek = (d: Date) => { const s = startOfWeek(d); const e = new Date(s); e.setDate(s.getDate() + 6); e.setHours(23,59,59,999); return e }
-    const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0)
-    const endOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999)
-    const startOfQuarter = (d: Date) => { const q = Math.floor(d.getMonth()/3); return new Date(d.getFullYear(), q*3, 1, 0,0,0,0) }
-    const endOfQuarter = (d: Date) => { const q = Math.floor(d.getMonth()/3); return new Date(d.getFullYear(), (q+1)*3, 0, 23,59,59,999) }
-    let s: Date, e: Date
-    if (period === 'week') { s = startOfWeek(orgNow); e = endOfWeek(orgNow) }
-    else if (period === 'month') { s = startOfMonth(orgNow); e = endOfMonth(orgNow) }
-    else { s = startOfQuarter(orgNow); e = endOfQuarter(orgNow) }
-    const delta = orgNow.getTime() - now.getTime()
-    return { start: new Date(s.getTime() - delta), end: new Date(e.getTime() - delta) }
-  }, [period, getOrgLocalNow, org?.weekStartsOn])
 
-  // Period-scoped utilities
-  const isInPeriod = React.useCallback((a: Audit) => {
-    const start = getPeriodRange.start.getTime(); const end = getPeriodRange.end.getTime()
-    const t = a.periodStart ? new Date(a.periodStart).getTime() : new Date(a.updatedAt).getTime()
-    return t >= start && t <= end
-  }, [getPeriodRange])
   const nowTs = Date.now()
   const isOverdue = React.useCallback((a: Audit) => !!a.dueAt && new Date(a.dueAt).getTime() < nowTs && a.status !== AuditStatus.APPROVED && a.status !== AuditStatus.REJECTED, [nowTs])
   const isDueTodayOrg = React.useCallback((a: Audit) => {
@@ -152,7 +124,6 @@ const DashboardAdmin: React.FC = () => {
     })
   }, [audits, getOrgLocalNow, org?.weekStartsOn])
 
-  const auditsInPeriod = React.useMemo(() => audits.filter(isInPeriod), [audits, isInPeriod])
   const completedOrApproved = weeklyAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED)
   const completionRate = weeklyAudits.length > 0 ? Math.round((completedOrApproved.length / weeklyAudits.length) * 100) : 0
   
@@ -161,26 +132,23 @@ const DashboardAdmin: React.FC = () => {
   const overdueAuditsAll = auditsWithDueDates.filter(isOverdue) // All overdue (including completed late)
   const onTimeRate = auditsWithDueDates.length > 0 ? 
     Math.round(((auditsWithDueDates.length - overdueAuditsAll.length) / auditsWithDueDates.length) * 100) : 100
-  // Only count overdue audits that are NOT yet completed/approved (still actionable)
-  const overdueCount = auditsInPeriod.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
   const coverageBranches = React.useMemo(() => new Set(weeklyAudits.map(a => a.branchId)), [weeklyAudits])
 
-  // Zone coverage summary (top 5 by scheduled)
+  // Zone coverage summary (top 5 by scheduled) - Weekly focus
   const zoneRows = React.useMemo(() => {
     const rows = zones.map((z) => {
       const bids = new Set(z.branchIds)
-      const list = auditsInPeriod.filter((a) => bids.has(a.branchId))
+      const list = weeklyAudits.filter((a) => bids.has(a.branchId))
       const scheduled = list.length
       const completed = list.filter((a) => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
       const overdue = list.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
       return { id: z.id, name: z.name, scheduled, completed, overdue }
     }).sort((a, b) => b.scheduled - a.scheduled).slice(0, 5)
     return rows
-  }, [zones, auditsInPeriod, isOverdue])
+  }, [zones, weeklyAudits, isOverdue])
 
   const filteredAudits = React.useMemo(() => {
-    return audits.filter(a => {
-      if (!isInPeriod(a)) return false
+    return weeklyAudits.filter(a => {
       const statusOk = statusFilter === 'all' || (statusFilter === 'finalized' ? (a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED) : a.status === statusFilter)
       const branchOk = branchFilter === 'all' || a.branchId === branchFilter
       const auditorOk = auditorFilter === 'all' || a.assignedTo === auditorFilter
@@ -205,7 +173,7 @@ const DashboardAdmin: React.FC = () => {
       }
       return statusOk && branchOk && auditorOk && fromOk && toOk && quickOk && searchOk
     })
-  }, [audits, statusFilter, branchFilter, auditorFilter, dateFrom, dateTo, quickChip, isInPeriod, isDueTodayOrg, isOverdue, searchQuery, branches, users])
+  }, [weeklyAudits, statusFilter, branchFilter, auditorFilter, dateFrom, dateTo, quickChip, isDueTodayOrg, isOverdue, searchQuery, branches, users])
 
   const completedCount = weeklyAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
   const inProgressCount = weeklyAudits.filter(a => a.status === AuditStatus.IN_PROGRESS).length
@@ -215,9 +183,6 @@ const DashboardAdmin: React.FC = () => {
   // Real-time priorities (not period-filtered)
   const dueTodayCount = audits.filter(isDueTodayOrg).length
   const overdueCountAll = audits.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
-  const completedOnlyCount = auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED).length
-  const approvedOnlyCount = auditsInPeriod.filter(a => a.status === AuditStatus.APPROVED).length
-  const finalizedAuditsInPeriod = React.useMemo(() => auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED), [auditsInPeriod])
 
   // User management stats
   const activeUsersCount = users.filter(u => u.isActive !== false).length
@@ -308,36 +273,6 @@ const DashboardAdmin: React.FC = () => {
     setSearchQuery('')
   }
 
-  // CSV export helpers
-  const csvEscape = (val: unknown) => {
-    if (val === null || val === undefined) return ''
-    const s = String(val)
-    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"'
-    return s
-  }
-  const exportCsv = (rows: Audit[]) => {
-    const headers = ['Audit ID','Branch','Auditor','Status','Updated','Due','Approved At','Approval Note']
-    const lines = [headers.join(',')]
-    rows.forEach(a => {
-      const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
-      const auditorName = users.find(u => u.id === a.assignedTo)?.name || a.assignedTo || ''
-      const updated = new Date(a.updatedAt).toLocaleString()
-      const due = a.dueAt ? new Date(a.dueAt).toLocaleDateString() : ''
-      const approvedAt = a.approvedAt ? new Date(a.approvedAt).toLocaleString() : ''
-      const row = [a.id, branchName, auditorName, a.status, updated, due, approvedAt, a.approvalNote || '']
-      lines.push(row.map(csvEscape).join(','))
-    })
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')
-    link.download = `audits-${ts}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
 
   return (
     <DashboardLayout title="Admin Dashboard">
@@ -352,7 +287,7 @@ const DashboardAdmin: React.FC = () => {
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}</h2>
               <p className="text-sm text-gray-500">
-                {branches.length} branches • {audits.length} audits • {overdueCount} overdue
+                {branches.length} branches • {audits.length} audits • {overdueCountAll} overdue
               </p>
             </div>
           </div>
@@ -577,8 +512,8 @@ const DashboardAdmin: React.FC = () => {
           {/* Zone coverage */}
           <div className="card">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">Zone Coverage</h3>
-              <span className="text-xs text-gray-500">Top 5</span>
+              <h3 className="text-lg font-medium text-gray-900">Weekly Zone Coverage</h3>
+              <span className="text-xs text-gray-500">This week • Top 5</span>
             </div>
             <div className="p-6">
               {zoneRows.length === 0 ? (
@@ -612,7 +547,7 @@ const DashboardAdmin: React.FC = () => {
           {/* Recent audits table */}
           <div className="card xl:col-span-2">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Recent Audits</h3>
+              <h3 className="text-lg font-medium text-gray-900">This Week's Audits</h3>
             </div>
             <div className="p-6">
               {/* Professional Search & Filter Bar */}
@@ -905,26 +840,6 @@ const DashboardAdmin: React.FC = () => {
 
           {/* Side column */}
           <div className="space-y-6">
-            <div className="card p-6 flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                <ProgressDonut value={completionRate} label="Completed" />
-                <div className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
-                  <div>
-                    <div className="font-semibold text-success-700">{completedCount}</div>
-                    <div className="text-gray-500">Completed</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-warning-700">{inProgressCount}</div>
-                    <div className="text-gray-500">In Progress</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-700">{draftCount}</div>
-                    <div className="text-gray-500">Draft</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <div className="card">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
@@ -946,67 +861,6 @@ const DashboardAdmin: React.FC = () => {
             </div>
           </div>
 
-          {/* Finalized Audits: Completed + Approved */}
-          <div className="card xl:col-span-2">
-            <div className="px-6 py-4 border-b border-gray-200">
-              {/* Title Row - Single Line */}
-              <div className="flex items-center justify-between gap-4 mb-3">
-                <h3 className="text-lg font-medium text-gray-900 whitespace-nowrap">Finalized Audits</h3>
-                <button 
-                  className="btn btn-outline btn-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0" 
-                  onClick={() => exportCsv(finalizedAuditsInPeriod)}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span className="hidden sm:inline">Export CSV</span>
-                  <span className="sm:hidden">CSV</span>
-                </button>
-              </div>
-              
-              {/* Status Labels Row - Below Title */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Completed: {completedOnlyCount}
-                </span>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Approved: {approvedOnlyCount}
-                </span>
-              </div>
-            </div>
-            <div className="p-6">
-              {finalizedAuditsInPeriod.length === 0 ? (
-                <p className="text-gray-500">No finalized audits in this period.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-1.5 text-left">Audit</th>
-                        <th className="px-3 py-1.5 text-left">Branch</th>
-                        <th className="px-3 py-1.5 text-left">Auditor</th>
-                        <th className="px-3 py-1.5 text-left">Status</th>
-                        <th className="px-3 py-1.5 text-left">Approved</th>
-                        <th className="px-3 py-1.5 text-left">Updated</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {finalizedAuditsInPeriod.slice(0, 12).map(a => (
-                        <tr key={a.id}>
-                          <td className="px-3 py-1.5">{a.id}</td>
-                          <td className="px-3 py-1.5">{branches.find(b => b.id === a.branchId)?.name || a.branchId}</td>
-                          <td className="px-3 py-1.5">{users.find(u => u.id === a.assignedTo)?.name || a.assignedTo || ''}</td>
-                          <td className="px-3 py-1.5"><StatusBadge status={a.status} /></td>
-                          <td className="px-3 py-1.5">{a.approvedAt ? new Date(a.approvedAt).toLocaleDateString() : '—'}</td>
-                          <td className="px-3 py-1.5">{new Date(a.updatedAt).toLocaleDateString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
 
         </div>
       </div>
