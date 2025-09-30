@@ -134,7 +134,8 @@ const DashboardAdmin: React.FC = () => {
   const completionRate = auditsInPeriod.length > 0 ? Math.round((completedOrApproved.length / auditsInPeriod.length) * 100) : 0
   const onTimeNumerator = completedOrApproved.filter(a => a.dueAt ? new Date((a.approvedAt || a.updatedAt)).getTime() <= new Date(a.dueAt).getTime() : true).length
   const onTimeRate = completedOrApproved.length > 0 ? Math.round((onTimeNumerator / completedOrApproved.length) * 100) : 0
-  const overdueCount = auditsInPeriod.filter(isOverdue).length
+  // Only count overdue audits that are NOT yet completed/approved (still actionable)
+  const overdueCount = auditsInPeriod.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
   const coverageBranches = React.useMemo(() => new Set(auditsInPeriod.map(a => a.branchId)), [auditsInPeriod])
   const coverageRate = branches.length > 0 ? Math.round((coverageBranches.size / branches.length) * 100) : 0
 
@@ -145,7 +146,7 @@ const DashboardAdmin: React.FC = () => {
       const list = auditsInPeriod.filter((a) => bids.has(a.branchId))
       const scheduled = list.length
       const completed = list.filter((a) => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
-      const overdue = list.filter(isOverdue).length
+      const overdue = list.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
       return { id: z.id, name: z.name, scheduled, completed, overdue }
     }).sort((a, b) => b.scheduled - a.scheduled).slice(0, 5)
     return rows
