@@ -197,7 +197,6 @@ const DashboardAdmin: React.FC = () => {
   // User management stats
   const activeUsersCount = users.filter(u => u.isActive !== false).length
   const pendingInvitesCount = users.filter(u => !u.emailVerified).length
-  const auditorCount = users.filter(u => u.role === UserRole.AUDITOR).length
 
   const hasFilters = React.useMemo(() => (
     statusFilter !== 'all' || branchFilter !== 'all' || auditorFilter !== 'all' || !!dateFrom || !!dateTo || quickChip !== 'none' || searchQuery.trim() !== ''
@@ -408,80 +407,61 @@ const DashboardAdmin: React.FC = () => {
           </button>
         </div>
 
-        {/* Audit Status Breakdown */}
+        {/* Today's Priorities - Simple and Clear */}
         <div className="card-mobile">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Audit Status</h3>
-            <span className="text-xs text-gray-500">This {period}</span>
+            <h3 className="font-semibold text-gray-900">Today's Priorities</h3>
+            <span className="text-xs text-gray-500">Real-time</span>
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className={`card-compact ${dueTodayCount > 0 ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">📝</span>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dueTodayCount > 0 ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                  <span className="text-lg">⏰</span>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-gray-600">{draftCount}</div>
-                  <div className="text-xs text-gray-500">Draft</div>
+                  <div className={`text-2xl font-bold ${dueTodayCount > 0 ? 'text-orange-600' : 'text-gray-600'}`}>{dueTodayCount}</div>
+                  <div className="text-xs text-gray-500">Due Today</div>
+                  {dueTodayCount > 0 && <div className="text-xs text-orange-600 font-medium">Needs attention</div>}
+                </div>
+              </div>
+            </div>
+            
+            <div className={`card-compact ${overdueCount > 0 ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${overdueCount > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
+                  <span className="text-lg">🚨</span>
+                </div>
+                <div>
+                  <div className={`text-2xl font-bold ${overdueCount > 0 ? 'text-red-600' : 'text-gray-600'}`}>{overdueCount}</div>
+                  <div className="text-xs text-gray-500">Overdue</div>
+                  {overdueCount > 0 && <div className="text-xs text-red-600 font-medium">Urgent action</div>}
                 </div>
               </div>
             </div>
             
             <div className="card-compact bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">⚡</span>
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">⚡</span>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-blue-600">{inProgressCount}</div>
+                  <div className="text-2xl font-bold text-blue-600">{inProgressCount}</div>
                   <div className="text-xs text-gray-500">In Progress</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="card-compact bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">📤</span>
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-yellow-600">{submittedCount}</div>
-                  <div className="text-xs text-gray-500">Submitted</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className={`card-compact ${dueTodayCount > 0 ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dueTodayCount > 0 ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                  <span className="text-sm">⏰</span>
-                </div>
-                <div>
-                  <div className={`text-xl font-bold ${dueTodayCount > 0 ? 'text-orange-600' : 'text-gray-600'}`}>{dueTodayCount}</div>
-                  <div className="text-xs text-gray-500">Due Today</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="card-compact bg-gradient-to-r from-success-50 to-green-50 border-success-200">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-success-100 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">✅</span>
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-success-600">{completedCount}</div>
-                  <div className="text-xs text-gray-500">Completed</div>
+                  <div className="text-xs text-blue-600">Active work</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Contextual KPIs with Integrated Period Selector */}
+        {/* Period Performance - Clear Time Context */}
         <div className="card-mobile">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">System Performance</h3>
+            <h3 className="font-semibold text-gray-900">
+              {period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'This Quarter'} Performance
+            </h3>
             <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
               {(['week','month','quarter'] as const).map(p => (
                 <button 
@@ -495,73 +475,46 @@ const DashboardAdmin: React.FC = () => {
             </div>
           </div>
           
-          {/* Actionable KPI Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div 
-              className="card-compact cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-r from-success-50 to-green-50 border-success-200"
-              onClick={() => {/* Navigate to completion details */}}
-            >
+          {/* Simplified Performance Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="card-compact bg-gradient-to-r from-success-50 to-green-50 border-success-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
-                  <ClipboardDocumentCheckIcon className="w-5 h-5 text-success-600" />
+                <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
+                  <ClipboardDocumentCheckIcon className="w-6 h-6 text-success-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="text-2xl font-bold text-success-600">{completionRate}%</div>
-                  <div className="text-xs text-gray-500">Completion Rate</div>
-                  <div className="text-xs text-gray-400">This {period}</div>
-                  <div className="w-full bg-success-200 rounded-full h-1 mt-1">
-                    <div className="bg-success-600 h-1 rounded-full transition-all duration-300" style={{ width: `${completionRate}%` }}></div>
+                  <div className="text-sm text-gray-600">Completion Rate</div>
+                  <div className="text-xs text-gray-500">{completedCount} of {auditsInPeriod.length} audits</div>
+                  <div className="w-full bg-success-200 rounded-full h-2 mt-2">
+                    <div className="bg-success-600 h-2 rounded-full transition-all duration-300" style={{ width: `${completionRate}%` }}></div>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div 
-              className="card-compact cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => {/* Navigate to on-time performance */}}
-            >
+            <div className="card-compact bg-gradient-to-r from-primary-50 to-blue-50 border-primary-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <ClipboardDocumentListIcon className="w-5 h-5 text-primary-600" />
+                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <ClipboardDocumentListIcon className="w-6 h-6 text-primary-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="text-2xl font-bold text-primary-600">{onTimeRate}%</div>
-                  <div className="text-xs text-gray-500">On-time Rate</div>
-                  <div className="text-xs text-gray-400">This {period}</div>
+                  <div className="text-sm text-gray-600">On-time Delivery</div>
+                  <div className="text-xs text-gray-500">Meeting deadlines</div>
                 </div>
               </div>
             </div>
             
-            <div 
-              className={`card-compact cursor-pointer hover:shadow-lg transition-shadow ${overdueCount > 0 ? 'bg-gradient-to-r from-warning-50 to-orange-50 border-warning-200' : ''}`}
-              onClick={() => {/* Navigate to overdue audits */}}
-            >
+            <div className="card-compact bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${overdueCount > 0 ? 'bg-warning-100' : 'bg-gray-100'}`}>
-                  <BuildingOfficeIcon className={`w-5 h-5 ${overdueCount > 0 ? 'text-warning-600' : 'text-gray-600'}`} />
+                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <UsersIcon className="w-6 h-6 text-indigo-600" />
                 </div>
-                <div>
-                  <div className={`text-2xl font-bold ${overdueCount > 0 ? 'text-warning-600' : 'text-gray-600'}`}>{overdueCount}</div>
-                  <div className="text-xs text-gray-500">Overdue</div>
-                  <div className="text-xs text-gray-400">This {period}</div>
-                  {overdueCount > 0 && <div className="text-xs text-warning-600 font-medium">Needs attention</div>}
-                </div>
-              </div>
-            </div>
-            
-            <div 
-              className="card-compact cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => {/* Navigate to coverage details */}}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <UsersIcon className="w-5 h-5 text-gray-600" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-600">{coverageRate}%</div>
-                  <div className="text-xs text-gray-500">Coverage</div>
-                  <div className="text-xs text-gray-400">This {period}</div>
-                  <div className="text-xs text-gray-500">{coverageBranches.size}/{branches.length} branches</div>
+                <div className="flex-1">
+                  <div className="text-2xl font-bold text-indigo-600">{coverageRate}%</div>
+                  <div className="text-sm text-gray-600">Branch Coverage</div>
+                  <div className="text-xs text-gray-500">{coverageBranches.size} of {branches.length} branches</div>
                 </div>
               </div>
             </div>
