@@ -32,6 +32,7 @@ const ManageUsers = lazy(() => import('./screens/ManageUsers'))
 const ProfileSignature = lazy(() => import('./screens/ProfileSignature'))
 const Help = lazy(() => import('./screens/Help'))
 const Profile = lazy(() => import('./screens/Profile'))
+const Analytics = lazy(() => import('./screens/Analytics'))
 
 function App() {
   const { user, isLoading, init } = useAuthStore()
@@ -125,6 +126,7 @@ function App() {
                     <Route path="/dashboard/auditor" element={<DashboardAuditor />} />
                     <Route path="/dashboard/branch-manager" element={<DashboardBranchManager />} />
                     <Route path="/dashboard/admin" element={<DashboardAdmin />} />
+                    <Route path="/analytics" element={<Analytics />} />
                     <Route path="/activity/logs" element={<ActivityLogs />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/profile/signature" element={<ProfileSignature />} />
