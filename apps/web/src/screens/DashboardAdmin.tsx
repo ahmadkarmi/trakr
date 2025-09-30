@@ -181,7 +181,7 @@ const DashboardAdmin: React.FC = () => {
   const submittedCount = weeklyAudits.filter(a => a.status === AuditStatus.SUBMITTED).length
   
   // Real-time priorities (not period-filtered)
-  const dueTodayCount = audits.filter(isDueTodayOrg).length
+  const dueThisWeekCount = weeklyAudits.filter(a => a.dueAt && !isOverdue(a)).length
   const overdueCountAll = audits.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
 
   // User management stats
@@ -377,20 +377,7 @@ const DashboardAdmin: React.FC = () => {
           {/* Horizontal Scrolling Stats Cards */}
           <div className="overflow-x-auto pb-2">
             <div className="flex gap-4 min-w-max">
-              {/* Priority KPIs First */}
-              <div className={`card-compact min-w-[200px] ${dueTodayCount > 0 ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${dueTodayCount > 0 ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                    <span className="text-lg">⏰</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className={`text-2xl font-bold ${dueTodayCount > 0 ? 'text-orange-600' : 'text-gray-600'}`}>{dueTodayCount}</div>
-                    <div className="text-sm text-gray-600">Due Today</div>
-                    <div className="text-xs text-gray-500">Immediate action</div>
-                  </div>
-                </div>
-              </div>
-
+              {/* Priority KPIs First - Overdue is most critical */}
               <div className={`card-compact min-w-[200px] ${overdueCountAll > 0 ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${overdueCountAll > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
@@ -400,6 +387,19 @@ const DashboardAdmin: React.FC = () => {
                     <div className={`text-2xl font-bold ${overdueCountAll > 0 ? 'text-red-600' : 'text-gray-600'}`}>{overdueCountAll}</div>
                     <div className="text-sm text-gray-600">Overdue</div>
                     <div className="text-xs text-gray-500">Urgent action</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`card-compact min-w-[200px] ${dueThisWeekCount > 0 ? 'bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${dueThisWeekCount > 0 ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                    <span className="text-lg">⏰</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className={`text-2xl font-bold ${dueThisWeekCount > 0 ? 'text-orange-600' : 'text-gray-600'}`}>{dueThisWeekCount}</div>
+                    <div className="text-sm text-gray-600">Due This Week</div>
+                    <div className="text-xs text-gray-500">Weekly deadlines</div>
                   </div>
                 </div>
               </div>
