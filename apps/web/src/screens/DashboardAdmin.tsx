@@ -1028,8 +1028,6 @@ const DashboardAdmin: React.FC = () => {
                 ]}
               />
             </div>
-          </div>
-
         </div>
       </div>
     </DashboardLayout>
