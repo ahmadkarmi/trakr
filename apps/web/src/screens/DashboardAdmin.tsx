@@ -133,18 +133,11 @@ const DashboardAdmin: React.FC = () => {
   const completedOrApproved = auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED)
   const completionRate = auditsInPeriod.length > 0 ? Math.round((completedOrApproved.length / auditsInPeriod.length) * 100) : 0
   
-  // On-time rate: Include all audits with due dates (completed on time + overdue = total measurable)
+  // On-time rate: Simple logic - 100% unless there are overdue audits
   const auditsWithDueDates = auditsInPeriod.filter(a => a.dueAt)
-  const onTimeAudits = auditsWithDueDates.filter(a => {
-    if (a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED) {
-      // Completed audits: check if finished on time
-      return new Date((a.approvedAt || a.updatedAt)).getTime() <= new Date(a.dueAt!).getTime()
-    } else {
-      // Incomplete audits: only count as on-time if not yet overdue
-      return !isOverdue(a)
-    }
-  })
-  const onTimeRate = auditsWithDueDates.length > 0 ? Math.round((onTimeAudits.length / auditsWithDueDates.length) * 100) : 0
+  const overdueAuditsAll = auditsWithDueDates.filter(isOverdue) // All overdue (including completed late)
+  const onTimeRate = auditsWithDueDates.length > 0 ? 
+    Math.round(((auditsWithDueDates.length - overdueAuditsAll.length) / auditsWithDueDates.length) * 100) : 100
   // Only count overdue audits that are NOT yet completed/approved (still actionable)
   const overdueCount = auditsInPeriod.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
   const coverageBranches = React.useMemo(() => new Set(auditsInPeriod.map(a => a.branchId)), [auditsInPeriod])
