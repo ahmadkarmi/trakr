@@ -73,6 +73,9 @@ const DashboardAdmin: React.FC = () => {
   const [searchInput, setSearchInput] = React.useState<string>('')
   const [searchQuery, setSearchQuery] = React.useState<string>('')
   const [showAdvanced, setShowAdvanced] = React.useState<boolean>(false)
+  const [sortField, setSortField] = React.useState<'due' | 'updated' | 'status' | 'branch' | 'auditor'>('due')
+  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc')
+  const [viewScope, setViewScope] = React.useState<'week' | 'all'>('week')
   const [searchParams, setSearchParams] = useSearchParams()
   const filtersInitialized = React.useRef(false)
 
@@ -138,7 +141,8 @@ const DashboardAdmin: React.FC = () => {
   }, [zones, weeklyAudits, isOverdue])
 
   const filteredAudits = React.useMemo(() => {
-    const filtered = weeklyAudits.filter(a => {
+    const sourceAudits = viewScope === 'week' ? weeklyAudits : audits
+    const filtered = sourceAudits.filter(a => {
       const statusOk = statusFilter === 'all' || (statusFilter === 'finalized' ? (a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED) : a.status === statusFilter)
       const branchOk = branchFilter === 'all' || a.branchId === branchFilter
       const auditorOk = auditorFilter === 'all' || a.assignedTo === auditorFilter
@@ -176,35 +180,47 @@ const DashboardAdmin: React.FC = () => {
       return statusOk && branchOk && auditorOk && fromOk && toOk && quickOk && searchOk
     })
     
-    // Priority-based sorting: Overdue first, then due this week, then by due date
+    // Apply sorting based on selected field and direction
     return filtered.sort((a, b) => {
-      const aOverdue = isOverdue(a)
-      const bOverdue = isOverdue(b)
+      let aVal: any, bVal: any
       
-      // Overdue items first
-      if (aOverdue && !bOverdue) return -1
-      if (!aOverdue && bOverdue) return 1
-      
-      // Among overdue items, sort by due date (most overdue first)
-      if (aOverdue && bOverdue) {
-        const aDue = a.dueAt ? new Date(a.dueAt).getTime() : 0
-        const bDue = b.dueAt ? new Date(b.dueAt).getTime() : 0
-        return aDue - bDue
+      switch (sortField) {
+        case 'due':
+          aVal = a.dueAt ? new Date(a.dueAt).getTime() : Number.MAX_SAFE_INTEGER
+          bVal = b.dueAt ? new Date(b.dueAt).getTime() : Number.MAX_SAFE_INTEGER
+          break
+        case 'updated':
+          aVal = new Date(a.updatedAt).getTime()
+          bVal = new Date(b.updatedAt).getTime()
+          break
+        case 'status':
+          aVal = a.status
+          bVal = b.status
+          break
+        case 'branch':
+          aVal = branches.find(br => br.id === a.branchId)?.name || a.branchId
+          bVal = branches.find(br => br.id === b.branchId)?.name || b.branchId
+          break
+        case 'auditor':
+          aVal = users.find(u => u.id === a.assignedTo)?.name || a.assignedTo || ''
+          bVal = users.find(u => u.id === b.assignedTo)?.name || b.assignedTo || ''
+          break
+        default:
+          aVal = a.dueAt ? new Date(a.dueAt).getTime() : Number.MAX_SAFE_INTEGER
+          bVal = b.dueAt ? new Date(b.dueAt).getTime() : Number.MAX_SAFE_INTEGER
       }
       
-      // Among non-overdue items, prioritize those due this week
-      const aDueThisWeek = a.dueAt && !aOverdue
-      const bDueThisWeek = b.dueAt && !bOverdue
+      // Handle string vs number comparison
+      let result = 0
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        result = aVal.localeCompare(bVal)
+      } else {
+        result = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+      }
       
-      if (aDueThisWeek && !bDueThisWeek) return -1
-      if (!aDueThisWeek && bDueThisWeek) return 1
-      
-      // Finally, sort by due date (soonest first)
-      const aDue = a.dueAt ? new Date(a.dueAt).getTime() : Number.MAX_SAFE_INTEGER
-      const bDue = b.dueAt ? new Date(b.dueAt).getTime() : Number.MAX_SAFE_INTEGER
-      return aDue - bDue
+      return sortDirection === 'desc' ? -result : result
     })
-  }, [weeklyAudits, statusFilter, branchFilter, auditorFilter, dateFrom, dateTo, quickChip, isOverdue, searchQuery, branches, users])
+  }, [viewScope, weeklyAudits, audits, statusFilter, branchFilter, auditorFilter, dateFrom, dateTo, quickChip, isOverdue, searchQuery, branches, users, sortField, sortDirection])
 
   const completedCount = weeklyAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
   const inProgressCount = weeklyAudits.filter(a => a.status === AuditStatus.IN_PROGRESS).length
@@ -578,7 +594,28 @@ const DashboardAdmin: React.FC = () => {
           {/* Recent audits table */}
           <div className="card xl:col-span-2">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">This Week's Audits</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900">
+                  {viewScope === 'week' ? 'This Week\'s Audits' : 'All Audits'}
+                </h3>
+                <div className="flex items-center gap-3">
+                  {/* View Scope Toggle */}
+                  <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+                    <button 
+                      className={`px-3 py-1.5 text-sm font-medium ${viewScope === 'week' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
+                      onClick={() => setViewScope('week')}
+                    >
+                      This Week
+                    </button>
+                    <button 
+                      className={`px-3 py-1.5 text-sm font-medium ${viewScope === 'all' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
+                      onClick={() => setViewScope('all')}
+                    >
+                      All Audits
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="p-6">
               {/* Professional Search & Filter Bar */}
@@ -596,88 +633,50 @@ const DashboardAdmin: React.FC = () => {
                   />
                 </div>
                 
-                {/* Filter Pills */}
-                <div className="flex flex-wrap gap-2">
-                  <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
-                      quickChip === 'due_this_week' 
-                        ? 'bg-orange-600 text-white shadow-md' 
-                        : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                    }`} 
-                    onClick={() => setQuickChip(quickChip === 'due_this_week' ? 'none' : 'due_this_week')}
-                  >
-                    Due This Week
-                  </button>
-                  <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
-                      quickChip === 'overdue' 
-                        ? 'bg-red-600 text-white shadow-md' 
-                        : 'bg-red-100 text-red-700 hover:bg-red-200'
-                    }`} 
-                    onClick={() => setQuickChip(quickChip === 'overdue' ? 'none' : 'overdue')}
-                  >
-                    Overdue
-                  </button>
-                  <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
-                      quickChip === 'due_next_week' 
-                        ? 'bg-blue-600 text-white shadow-md' 
-                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    }`} 
-                    onClick={() => setQuickChip(quickChip === 'due_next_week' ? 'none' : 'due_next_week')}
-                  >
-                    Due Next Week
-                  </button>
-                  <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
-                      quickChip === 'submitted' 
-                        ? 'bg-yellow-600 text-white shadow-md' 
-                        : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                    }`} 
-                    onClick={() => setQuickChip(quickChip === 'submitted' ? 'none' : 'submitted')}
-                  >
-                    Submitted
-                  </button>
-                  <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
-                      quickChip === 'waiting_approval' 
-                        ? 'bg-blue-600 text-white shadow-md' 
-                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    }`} 
-                    onClick={() => setQuickChip(quickChip === 'waiting_approval' ? 'none' : 'waiting_approval')}
-                  >
-                    Pending
-                  </button>
-                  <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
-                      quickChip === 'completed' 
-                        ? 'bg-green-600 text-white shadow-md' 
-                        : 'bg-green-100 text-green-700 hover:bg-green-200'
-                    }`} 
-                    onClick={() => setQuickChip(quickChip === 'completed' ? 'none' : 'completed')}
-                  >
-                    Completed
-                  </button>
-                  <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
-                      quickChip === 'approved' 
-                        ? 'bg-purple-600 text-white shadow-md' 
-                        : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                    }`} 
-                    onClick={() => setQuickChip(quickChip === 'approved' ? 'none' : 'approved')}
-                  >
-                    Approved
-                  </button>
-                  <button 
-                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
-                      quickChip === 'finalized' 
-                        ? 'bg-gray-600 text-white shadow-md' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`} 
-                    onClick={() => setQuickChip(quickChip === 'finalized' ? 'none' : 'finalized')}
-                  >
-                    Finalized
-                  </button>
+                {/* Compact Filter & Sort Controls */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Quick Filter Dropdown */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700">Filter:</label>
+                    <select 
+                      className="input h-9 min-w-[140px]" 
+                      value={quickChip} 
+                      onChange={(e) => setQuickChip(e.target.value as typeof quickChip)}
+                    >
+                      <option value="none">All</option>
+                      <option value="overdue">🚨 Overdue</option>
+                      <option value="due_this_week">⏰ Due This Week</option>
+                      <option value="due_next_week">📅 Due Next Week</option>
+                      <option value="submitted">📤 Submitted</option>
+                      <option value="waiting_approval">⏳ Pending</option>
+                      <option value="completed">✅ Completed</option>
+                      <option value="approved">👍 Approved</option>
+                      <option value="finalized">🎯 Finalized</option>
+                    </select>
+                  </div>
+                  
+                  {/* Sort Controls */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700">Sort:</label>
+                    <select 
+                      className="input h-9 min-w-[100px]" 
+                      value={sortField} 
+                      onChange={(e) => setSortField(e.target.value as typeof sortField)}
+                    >
+                      <option value="due">Due Date</option>
+                      <option value="updated">Updated</option>
+                      <option value="status">Status</option>
+                      <option value="branch">Branch</option>
+                      <option value="auditor">Auditor</option>
+                    </select>
+                    <button 
+                      className="btn btn-ghost btn-sm px-2 py-1 h-9"
+                      onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                      title={`Sort ${sortDirection === 'asc' ? 'Descending' : 'Ascending'}`}
+                    >
+                      {sortDirection === 'asc' ? '↑' : '↓'}
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Filter Controls */}
@@ -775,7 +774,7 @@ const DashboardAdmin: React.FC = () => {
                 )}
               
               <ResponsiveTable
-                items={filteredAudits.slice(0, 8)}
+                items={filteredAudits.slice(0, viewScope === 'week' ? 8 : 20)}
                 keyField={(a: Audit) => a.id}
                 empty={<p className="text-gray-500 py-8">No audits yet.</p>}
                 mobileItem={(a: Audit) => {
@@ -871,12 +870,102 @@ const DashboardAdmin: React.FC = () => {
                 }}
                 columns={[
                   { key: 'audit', header: 'Audit', render: (a: Audit) => highlightMatch(a.id) },
-                  { key: 'branch', header: 'Branch', render: (a: Audit) => highlightMatch(branches.find(b => b.id === a.branchId)?.name || a.branchId) },
-                  { key: 'auditor', header: 'Auditor', render: (a: Audit) => highlightMatch(users.find(u => u.id === a.assignedTo)?.name || a.assignedTo || '') },
-                  { key: 'status', header: 'Status', render: (a: Audit) => <StatusBadge status={a.status} /> },
-                  { key: 'due', header: 'Due', render: (a: Audit) => a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—' },
+                  { 
+                    key: 'branch', 
+                    header: (
+                      <button 
+                        className="flex items-center gap-1 hover:text-primary-600 transition-colors"
+                        onClick={() => {
+                          if (sortField === 'branch') {
+                            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+                          } else {
+                            setSortField('branch')
+                            setSortDirection('asc')
+                          }
+                        }}
+                      >
+                        Branch {sortField === 'branch' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </button>
+                    ), 
+                    render: (a: Audit) => highlightMatch(branches.find(b => b.id === a.branchId)?.name || a.branchId) 
+                  },
+                  { 
+                    key: 'auditor', 
+                    header: (
+                      <button 
+                        className="flex items-center gap-1 hover:text-primary-600 transition-colors"
+                        onClick={() => {
+                          if (sortField === 'auditor') {
+                            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+                          } else {
+                            setSortField('auditor')
+                            setSortDirection('asc')
+                          }
+                        }}
+                      >
+                        Auditor {sortField === 'auditor' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </button>
+                    ), 
+                    render: (a: Audit) => highlightMatch(users.find(u => u.id === a.assignedTo)?.name || a.assignedTo || '') 
+                  },
+                  { 
+                    key: 'status', 
+                    header: (
+                      <button 
+                        className="flex items-center gap-1 hover:text-primary-600 transition-colors"
+                        onClick={() => {
+                          if (sortField === 'status') {
+                            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+                          } else {
+                            setSortField('status')
+                            setSortDirection('asc')
+                          }
+                        }}
+                      >
+                        Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </button>
+                    ), 
+                    render: (a: Audit) => <StatusBadge status={a.status} /> 
+                  },
+                  { 
+                    key: 'due', 
+                    header: (
+                      <button 
+                        className="flex items-center gap-1 hover:text-primary-600 transition-colors"
+                        onClick={() => {
+                          if (sortField === 'due') {
+                            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+                          } else {
+                            setSortField('due')
+                            setSortDirection('asc')
+                          }
+                        }}
+                      >
+                        Due Date {sortField === 'due' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </button>
+                    ), 
+                    render: (a: Audit) => a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—' 
+                  },
                   { key: 'archived', header: 'Archived', render: (a: Audit) => a.isArchived ? 'Yes' : 'No' },
-                  { key: 'updated', header: 'Updated', render: (a: Audit) => new Date(a.updatedAt).toLocaleDateString() },
+                  { 
+                    key: 'updated', 
+                    header: (
+                      <button 
+                        className="flex items-center gap-1 hover:text-primary-600 transition-colors"
+                        onClick={() => {
+                          if (sortField === 'updated') {
+                            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+                          } else {
+                            setSortField('updated')
+                            setSortDirection('asc')
+                          }
+                        }}
+                      >
+                        Updated {sortField === 'updated' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </button>
+                    ), 
+                    render: (a: Audit) => new Date(a.updatedAt).toLocaleDateString() 
+                  },
                   { key: 'actions', header: '', className: 'text-right', render: (a: Audit) => {
                     const pastDue = a.dueAt ? new Date(a.dueAt).getTime() < Date.now() : false
                     const canManualArchive = !a.isArchived && pastDue && (a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS || a.status === AuditStatus.SUBMITTED)
