@@ -32,16 +32,17 @@ test.describe('Zones CRUD (real session via magic link)', () => {
       await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
     }
 
-    // Navigate to Manage Zones via UI with fallback
-    const manageZonesBtn = page.getByRole('button', { name: 'Manage Zones' })
+    // Navigate to Manage Zones - now uses navigation buttons
     try {
-      await expect(manageZonesBtn).toBeVisible({ timeout: 10_000 })
-      await manageZonesBtn.click()
+      // Look for the Zones navigation button (it's now a card-style button)
+      const zonesCard = page.locator('button').filter({ hasText: 'Zones' }).first()
+      await expect(zonesCard).toBeVisible({ timeout: 10_000 })
+      await zonesCard.click()
       await expect(page.getByRole('heading', { name: 'Manage Zones' })).toBeVisible({ timeout: 30_000 })
     } catch {
-      // Fallback: try direct navigation if button not visible
-      console.log('ℹ️ Manage Zones button not visible - trying direct navigation')
-      await page.goto('/dashboard/admin/zones')
+      // Fallback: try direct navigation
+      console.log('ℹ️ Zones navigation button not visible - trying direct navigation')
+      await page.goto('/manage/zones')
       try {
         await expect(page.getByRole('heading', { name: 'Manage Zones' })).toBeVisible({ timeout: 15_000 })
       } catch {

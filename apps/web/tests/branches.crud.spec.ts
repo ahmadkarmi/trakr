@@ -25,16 +25,17 @@ test.describe('Branches CRUD (real session via magic link)', () => {
       await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
     }
 
-    // Navigate to Manage Branches with fallback
-    const manageBranchesBtn = page.getByRole('button', { name: 'Manage Branches' })
+    // Navigate to Manage Branches - now uses navigation buttons
     try {
-      await expect(manageBranchesBtn).toBeVisible({ timeout: 10_000 })
-      await manageBranchesBtn.click()
+      // Look for the Branches navigation button (it's now a card-style button)
+      const branchesCard = page.locator('button').filter({ hasText: 'Branches' }).first()
+      await expect(branchesCard).toBeVisible({ timeout: 10_000 })
+      await branchesCard.click()
       await expect(page.getByRole('heading', { name: 'Manage Branches' })).toBeVisible({ timeout: 30_000 })
     } catch {
-      // Fallback: try direct navigation if button not visible
-      console.log('ℹ️ Manage Branches button not visible - trying direct navigation')
-      await page.goto('/dashboard/admin/branches')
+      // Fallback: try direct navigation
+      console.log('ℹ️ Branches navigation button not visible - trying direct navigation')
+      await page.goto('/manage/branches')
       try {
         await expect(page.getByRole('heading', { name: 'Manage Branches' })).toBeVisible({ timeout: 15_000 })
       } catch {

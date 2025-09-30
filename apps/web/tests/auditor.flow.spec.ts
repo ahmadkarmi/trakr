@@ -22,12 +22,14 @@ test.describe('Auditor flow (create → answer → finish → submit)', () => {
 
     // Try to use Quick Actions if available
     try {
-      const surveySelect = page.locator('label:has-text("Survey") + select').first()
-      await expect(surveySelect).toBeVisible({ timeout: 10_000 })
-      await surveySelect.selectOption({ label: survey.title })
+      // Look for survey selector if available
+      const surveySelect = page.locator('select#survey-select').first()
+      if (await surveySelect.isVisible({ timeout: 5_000 }).catch(() => false)) {
+        await surveySelect.selectOption({ label: survey.title })
+      }
 
-      // Start New Audit
-      const startBtn = page.getByRole('button', { name: /Start New Audit/i })
+      // Look for the Start Audit button (text now includes branch name)
+      const startBtn = page.getByRole('button', { name: /Start Audit/i })
       await expect(startBtn).toBeEnabled({ timeout: 15_000 })
       await startBtn.click()
       
@@ -35,7 +37,7 @@ test.describe('Auditor flow (create → answer → finish → submit)', () => {
       await expect(page).toHaveURL(/\/audit\/[^/]+\/wizard/, { timeout: 15_000 })
     } catch {
       // Fallback: create a draft audit via admin API and navigate directly
-      console.log('ℹ️ Start New Audit button not available - using API fallback')
+      console.log('ℹ️ Start Audit button not available - using API fallback')
       const draft = await ensureAuditFor(auditor.id, orgId, branch.id, survey.id)
       await page.goto(`/audit/${draft.id}/wizard`)
       try {
@@ -46,8 +48,8 @@ test.describe('Auditor flow (create → answer → finish → submit)', () => {
         test.skip(true, 'Audit wizard not accessible')
       }
     }
-    // Audit Wizard heading (topbar title is unique and exact)
-    await expect(page.getByRole('heading', { name: 'Audit Wizard', exact: true })).toBeVisible({ timeout: 30_000 })
+    // Look for Audit Wizard heading - use first() to handle multiple headings
+    await expect(page.getByRole('heading', { name: 'Audit Wizard' }).first()).toBeVisible({ timeout: 30_000 })
 
     // Answer the single required question "Fire exit clear?" with Yes
     const yesBtn = page.getByRole('button', { name: /^Yes$/i }).first()
