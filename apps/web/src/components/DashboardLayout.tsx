@@ -2,7 +2,7 @@ import React, { ReactNode, useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
 import { USER_ROLE_LABELS, UserRole } from '@trakr/shared'
-import { MagnifyingGlassIcon, BellIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, HomeIcon, ClipboardDocumentListIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, ClipboardDocumentCheckIcon, PencilSquareIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, BellIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, ClipboardDocumentCheckIcon, PencilSquareIcon, EllipsisVerticalIcon, MapIcon, UserGroupIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
 
 interface DashboardLayoutProps {
   title: string
@@ -45,12 +45,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
 
   const nav = [
-    { to: '/dashboard/admin', label: 'My Dashboard', icon: <HomeIcon className="w-5 h-5" />, show: isAdmin },
-    { to: '/manage/surveys', label: 'Survey Templates', icon: <ClipboardDocumentListIcon className="w-5 h-5" />, show: isAdmin },
+    { to: '/dashboard/admin', label: 'My Dashboard', icon: <ChartBarIcon className="w-5 h-5" />, show: isAdmin },
+    { to: '/manage/surveys', label: 'Survey Templates', icon: <DocumentTextIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/manage/branches', label: 'Manage Branches', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: isAdmin },
-    { to: '/manage/zones', label: 'Manage Zones', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: isAdmin },
+    { to: '/manage/zones', label: 'Manage Zones', icon: <MapIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/activity/logs', label: 'Activity Logs', icon: <ClockIcon className="w-5 h-5" />, show: isAdmin },
-    { to: '/dashboard/branch-manager', label: 'Branch', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: true },
+    { to: '/dashboard/branch-manager', label: 'Branch', icon: <UserGroupIcon className="w-5 h-5" />, show: true },
     { to: '/dashboard/auditor', label: 'Auditor', icon: <ClipboardDocumentCheckIcon className="w-5 h-5" />, show: true },
   ].filter(i => i.show)
 
@@ -136,6 +136,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
               >
                 <PencilSquareIcon className="w-5 h-5" />
                 <span className="text-base">Signature</span>
+              </Link>
+              <Link 
+                to="/settings" 
+                onClick={() => setMobileOpen(false)} 
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+              >
+                <Cog6ToothIcon className="w-5 h-5" />
+                <span className="text-base">Settings</span>
               </Link>
               <button 
                 onClick={signOut} 
