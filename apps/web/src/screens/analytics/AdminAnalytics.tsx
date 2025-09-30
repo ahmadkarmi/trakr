@@ -3,17 +3,15 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../../utils/api'
 import { QK } from '../../utils/queryKeys'
 import { Audit, Branch, User, Zone, AuditStatus, UserRole } from '@trakr/shared'
-import AnalyticsKPICard from '../../components/analytics/AnalyticsKPICard'
-import AnalyticsChart from '../../components/analytics/AnalyticsChart'
-import BranchPerformanceMatrix from '../../components/analytics/BranchPerformanceMatrix'
-import AuditorRankingTable from '../../components/analytics/AuditorRankingTable'
+// Note: Analytics components will be imported when they're properly set up
+// For now, we'll use placeholder components
 
 const AdminAnalytics: React.FC = () => {
   // Fetch all data for admin analytics
   const { data: audits = [] } = useQuery<Audit[]>({ queryKey: QK.AUDITS('admin'), queryFn: () => api.getAudits() })
-  const { data: branches = [] } = useQuery<Branch[]>({ queryKey: QK.BRANCHES, queryFn: api.getBranches })
-  const { data: users = [] } = useQuery<User[]>({ queryKey: QK.USERS, queryFn: api.getUsers })
-  const { data: zones = [] } = useQuery<Zone[]>({ queryKey: QK.ZONES, queryFn: api.getZones })
+  const { data: branches = [] } = useQuery<Branch[]>({ queryKey: ['branches'], queryFn: () => api.getBranches() })
+  const { data: users = [] } = useQuery<User[]>({ queryKey: ['users'], queryFn: () => api.getUsers() })
+  const { data: zones = [] } = useQuery<Zone[]>({ queryKey: ['zones'], queryFn: () => api.getZones() })
 
   // Calculate system-wide KPIs
   const totalAudits = audits.length
@@ -59,64 +57,99 @@ const AdminAnalytics: React.FC = () => {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <AnalyticsKPICard
-            title="Total Audits"
-            value={totalAudits.toString()}
-            trend="+12%"
-            trendDirection="up"
-            icon="📊"
-            description="All audits in system"
-          />
-          <AnalyticsKPICard
-            title="Completion Rate"
-            value={`${completionRate}%`}
-            trend="+5%"
-            trendDirection="up"
-            icon="✅"
-            description="Completed audits"
-          />
-          <AnalyticsKPICard
-            title="Average Score"
-            value={averageScore.toString()}
-            trend="+2.3"
-            trendDirection="up"
-            icon="⭐"
-            description="Quality rating"
-          />
-          <AnalyticsKPICard
-            title="Overdue"
-            value={overdueAudits.toString()}
-            trend="-8%"
-            trendDirection="down"
-            icon="🚨"
-            description="Past due audits"
-            variant={overdueAudits > 0 ? "danger" : "success"}
-          />
+          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
+                <span className="text-xl">📊</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-2xl font-bold text-gray-900">{totalAudits}</div>
+                <div className="text-sm text-gray-600">Total Audits</div>
+                <div className="text-xs text-gray-500">All audits in system</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-compact bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
+                <span className="text-xl">✅</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-2xl font-bold text-gray-900">{completionRate}%</div>
+                <div className="text-sm text-gray-600">Completion Rate</div>
+                <div className="text-xs text-gray-500">Completed audits</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-compact bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
+                <span className="text-xl">⭐</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-2xl font-bold text-gray-900">{averageScore}</div>
+                <div className="text-sm text-gray-600">Average Score</div>
+                <div className="text-xs text-gray-500">Quality rating</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className={`card-compact ${overdueAudits > 0 ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
+                <span className="text-xl">🚨</span>
+              </div>
+              <div className="flex-1">
+                <div className={`text-2xl font-bold ${overdueAudits > 0 ? 'text-red-600' : 'text-gray-900'}`}>{overdueAudits}</div>
+                <div className="text-sm text-gray-600">Overdue</div>
+                <div className="text-xs text-gray-500">Past due audits</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Secondary KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <AnalyticsKPICard
-            title="Active Branches"
-            value={activeBranches.toString()}
-            icon="🏢"
-            description="Operational locations"
-            compact
-          />
-          <AnalyticsKPICard
-            title="Active Auditors"
-            value={activeAuditors.toString()}
-            icon="👥"
-            description="Team members"
-            compact
-          />
-          <AnalyticsKPICard
-            title="Active Zones"
-            value={zones.length.toString()}
-            icon="🗺️"
-            description="Geographic areas"
-            compact
-          />
+          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center">
+                <span className="text-lg">🏢</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-xl font-bold text-gray-900">{activeBranches}</div>
+                <div className="text-sm text-gray-600">Active Branches</div>
+                <div className="text-xs text-gray-500">Operational locations</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center">
+                <span className="text-lg">👥</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-xl font-bold text-gray-900">{activeAuditors}</div>
+                <div className="text-sm text-gray-600">Active Auditors</div>
+                <div className="text-xs text-gray-500">Team members</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center">
+                <span className="text-lg">🗺️</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-xl font-bold text-gray-900">{zones.length}</div>
+                <div className="text-sm text-gray-600">Active Zones</div>
+                <div className="text-xs text-gray-500">Geographic areas</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -129,20 +162,13 @@ const AdminAnalytics: React.FC = () => {
             <p className="text-sm text-gray-500">Audit completion over time</p>
           </div>
           <div className="p-6">
-            <AnalyticsChart
-              type="line"
-              data={[
-                { name: 'Jan', completed: 45, total: 50 },
-                { name: 'Feb', completed: 52, total: 60 },
-                { name: 'Mar', completed: 48, total: 55 },
-                { name: 'Apr', completed: 61, total: 65 },
-                { name: 'May', completed: 58, total: 62 },
-                { name: 'Jun', completed: 67, total: 70 },
-              ]}
-              xKey="name"
-              yKeys={['completed', 'total']}
-              colors={['#10B981', '#6B7280']}
-            />
+            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <div className="text-center">
+                <div className="text-4xl mb-2">📈</div>
+                <div className="text-lg font-medium text-gray-700">Completion Trends Chart</div>
+                <div className="text-sm text-gray-500">Line chart showing audit completion over time</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -153,30 +179,53 @@ const AdminAnalytics: React.FC = () => {
             <p className="text-sm text-gray-500">Audit scores breakdown</p>
           </div>
           <div className="p-6">
-            <AnalyticsChart
-              type="bar"
-              data={[
-                { name: 'Excellent (90-100)', count: 45 },
-                { name: 'Good (80-89)', count: 32 },
-                { name: 'Fair (70-79)', count: 18 },
-                { name: 'Poor (<70)', count: 5 },
-              ]}
-              xKey="name"
-              yKeys={['count']}
-              colors={['#3B82F6']}
-            />
+            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <div className="text-center">
+                <div className="text-4xl mb-2">📊</div>
+                <div className="text-lg font-medium text-gray-700">Quality Distribution Chart</div>
+                <div className="text-sm text-gray-500">Bar chart showing audit score ranges</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Branch Performance Matrix */}
       <div className="mb-8">
-        <BranchPerformanceMatrix branches={branches} audits={audits} />
+        <div className="card">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">Branch Performance Matrix</h3>
+            <p className="text-sm text-gray-500">Completion rates and quality scores by branch</p>
+          </div>
+          <div className="p-6">
+            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <div className="text-center">
+                <div className="text-4xl mb-2">🏢</div>
+                <div className="text-lg font-medium text-gray-700">Branch Performance Matrix</div>
+                <div className="text-sm text-gray-500">Table showing performance metrics for {branches.length} branches</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Auditor Rankings */}
       <div className="mb-8">
-        <AuditorRankingTable users={users.filter(u => u.role === UserRole.AUDITOR)} audits={audits} />
+        <div className="card">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">Auditor Performance Rankings</h3>
+            <p className="text-sm text-gray-500">Top performing auditors by completion rate and quality</p>
+          </div>
+          <div className="p-6">
+            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <div className="text-center">
+                <div className="text-4xl mb-2">👥</div>
+                <div className="text-lg font-medium text-gray-700">Auditor Rankings Table</div>
+                <div className="text-sm text-gray-500">Performance rankings for {users.filter(u => u.role === UserRole.AUDITOR).length} auditors</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
