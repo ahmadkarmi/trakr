@@ -427,6 +427,7 @@ const DashboardAdmin: React.FC = () => {
                 <div>
                   <div className="text-2xl font-bold text-success-600">{completionRate}%</div>
                   <div className="text-xs text-gray-500">Completion Rate</div>
+                  <div className="text-xs text-gray-400">This {period}</div>
                   <div className="w-full bg-success-200 rounded-full h-1 mt-1">
                     <div className="bg-success-600 h-1 rounded-full transition-all duration-300" style={{ width: `${completionRate}%` }}></div>
                   </div>
@@ -445,6 +446,7 @@ const DashboardAdmin: React.FC = () => {
                 <div>
                   <div className="text-2xl font-bold text-primary-600">{onTimeRate}%</div>
                   <div className="text-xs text-gray-500">On-time Rate</div>
+                  <div className="text-xs text-gray-400">This {period}</div>
                 </div>
               </div>
             </div>
@@ -460,6 +462,7 @@ const DashboardAdmin: React.FC = () => {
                 <div>
                   <div className={`text-2xl font-bold ${overdueCount > 0 ? 'text-warning-600' : 'text-gray-600'}`}>{overdueCount}</div>
                   <div className="text-xs text-gray-500">Overdue</div>
+                  <div className="text-xs text-gray-400">This {period}</div>
                   {overdueCount > 0 && <div className="text-xs text-warning-600 font-medium">Needs attention</div>}
                 </div>
               </div>
@@ -476,6 +479,7 @@ const DashboardAdmin: React.FC = () => {
                 <div>
                   <div className="text-2xl font-bold text-gray-600">{coverageRate}%</div>
                   <div className="text-xs text-gray-500">Coverage</div>
+                  <div className="text-xs text-gray-400">This {period}</div>
                   <div className="text-xs text-gray-500">{coverageBranches.size}/{branches.length} branches</div>
                 </div>
               </div>
