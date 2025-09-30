@@ -50,8 +50,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
     { to: '/manage/branches', label: 'Manage Branches', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: isAdmin },
     { to: '/manage/zones', label: 'Manage Zones', icon: <MapIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/activity/logs', label: 'Activity Logs', icon: <ClockIcon className="w-5 h-5" />, show: isAdmin },
-    { to: '/dashboard/branch-manager', label: 'Branch', icon: <UserGroupIcon className="w-5 h-5" />, show: true },
-    { to: '/dashboard/auditor', label: 'Auditor', icon: <ClipboardDocumentCheckIcon className="w-5 h-5" />, show: true },
+    { to: '/dashboard/branch-manager', label: 'Branch Manager', icon: <UserGroupIcon className="w-5 h-5" />, show: true },
+    { to: '/dashboard/auditor', label: 'Audit Manager', icon: <ClipboardDocumentCheckIcon className="w-5 h-5" />, show: true },
   ].filter(i => i.show)
 
   return (
