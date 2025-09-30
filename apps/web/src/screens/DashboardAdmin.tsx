@@ -69,7 +69,7 @@ const DashboardAdmin: React.FC = () => {
   const [dateFrom, setDateFrom] = React.useState<string>('')
   const [dateTo, setDateTo] = React.useState<string>('')
   const [period, setPeriod] = React.useState<'week' | 'month' | 'quarter'>('week')
-  const [quickChip, setQuickChip] = React.useState<'none' | 'due_today' | 'overdue' | 'submitted' | 'waiting_approval' | 'completed' | 'approved' | 'finalized'>('none')
+  const [quickChip, setQuickChip] = React.useState<'none' | 'due_this_week' | 'due_next_week' | 'overdue' | 'submitted' | 'waiting_approval' | 'completed' | 'approved' | 'finalized'>('none')
   const [searchInput, setSearchInput] = React.useState<string>('')
   const [searchQuery, setSearchQuery] = React.useState<string>('')
   const [showAdvanced, setShowAdvanced] = React.useState<boolean>(false)
@@ -90,16 +90,6 @@ const DashboardAdmin: React.FC = () => {
 
   const nowTs = Date.now()
   const isOverdue = React.useCallback((a: Audit) => !!a.dueAt && new Date(a.dueAt).getTime() < nowTs && a.status !== AuditStatus.APPROVED && a.status !== AuditStatus.REJECTED, [nowTs])
-  const isDueTodayOrg = React.useCallback((a: Audit) => {
-    if (!a.dueAt) return false
-    const due = new Date(a.dueAt)
-    const now = new Date()
-    try {
-      const dueStr = due.toLocaleDateString('en-CA', { timeZone: org?.timeZone || 'UTC' })
-      const nowStr = now.toLocaleDateString('en-CA', { timeZone: org?.timeZone || 'UTC' })
-      return dueStr === nowStr
-    } catch { return due.toDateString() === now.toDateString() }
-  }, [org?.timeZone])
 
   // Weekly insights - fixed to current week only
   const weeklyAudits = React.useMemo(() => {
@@ -148,7 +138,7 @@ const DashboardAdmin: React.FC = () => {
   }, [zones, weeklyAudits, isOverdue])
 
   const filteredAudits = React.useMemo(() => {
-    return weeklyAudits.filter(a => {
+    const filtered = weeklyAudits.filter(a => {
       const statusOk = statusFilter === 'all' || (statusFilter === 'finalized' ? (a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED) : a.status === statusFilter)
       const branchOk = branchFilter === 'all' || a.branchId === branchFilter
       const auditorOk = auditorFilter === 'all' || a.assignedTo === auditorFilter
@@ -156,7 +146,19 @@ const DashboardAdmin: React.FC = () => {
       const fromOk = !dateFrom || t >= new Date(dateFrom).getTime()
       const toOk = !dateTo || t <= new Date(dateTo).getTime()
       let quickOk = true
-      if (quickChip === 'due_today') quickOk = isDueTodayOrg(a)
+      if (quickChip === 'due_this_week') quickOk = !!(a.dueAt && !isOverdue(a))
+      else if (quickChip === 'due_next_week') {
+        // Check if due in next week
+        const now = new Date()
+        const nextWeekStart = new Date(now)
+        nextWeekStart.setDate(now.getDate() + 7)
+        nextWeekStart.setHours(0, 0, 0, 0)
+        const nextWeekEnd = new Date(nextWeekStart)
+        nextWeekEnd.setDate(nextWeekStart.getDate() + 6)
+        nextWeekEnd.setHours(23, 59, 59, 999)
+        const dueDate = a.dueAt ? new Date(a.dueAt) : null
+        quickOk = !!(dueDate && dueDate >= nextWeekStart && dueDate <= nextWeekEnd)
+      }
       else if (quickChip === 'overdue') quickOk = isOverdue(a)
       else if (quickChip === 'submitted') quickOk = a.status === AuditStatus.SUBMITTED
       else if (quickChip === 'waiting_approval') quickOk = a.status === AuditStatus.SUBMITTED
@@ -173,7 +175,36 @@ const DashboardAdmin: React.FC = () => {
       }
       return statusOk && branchOk && auditorOk && fromOk && toOk && quickOk && searchOk
     })
-  }, [weeklyAudits, statusFilter, branchFilter, auditorFilter, dateFrom, dateTo, quickChip, isDueTodayOrg, isOverdue, searchQuery, branches, users])
+    
+    // Priority-based sorting: Overdue first, then due this week, then by due date
+    return filtered.sort((a, b) => {
+      const aOverdue = isOverdue(a)
+      const bOverdue = isOverdue(b)
+      
+      // Overdue items first
+      if (aOverdue && !bOverdue) return -1
+      if (!aOverdue && bOverdue) return 1
+      
+      // Among overdue items, sort by due date (most overdue first)
+      if (aOverdue && bOverdue) {
+        const aDue = a.dueAt ? new Date(a.dueAt).getTime() : 0
+        const bDue = b.dueAt ? new Date(b.dueAt).getTime() : 0
+        return aDue - bDue
+      }
+      
+      // Among non-overdue items, prioritize those due this week
+      const aDueThisWeek = a.dueAt && !aOverdue
+      const bDueThisWeek = b.dueAt && !bOverdue
+      
+      if (aDueThisWeek && !bDueThisWeek) return -1
+      if (!aDueThisWeek && bDueThisWeek) return 1
+      
+      // Finally, sort by due date (soonest first)
+      const aDue = a.dueAt ? new Date(a.dueAt).getTime() : Number.MAX_SAFE_INTEGER
+      const bDue = b.dueAt ? new Date(b.dueAt).getTime() : Number.MAX_SAFE_INTEGER
+      return aDue - bDue
+    })
+  }, [weeklyAudits, statusFilter, branchFilter, auditorFilter, dateFrom, dateTo, quickChip, isOverdue, searchQuery, branches, users])
 
   const completedCount = weeklyAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
   const inProgressCount = weeklyAudits.filter(a => a.status === AuditStatus.IN_PROGRESS).length
@@ -207,7 +238,7 @@ const DashboardAdmin: React.FC = () => {
     const a = sp.get('auditor')
     const f = sp.get('from')
     const t = sp.get('to')
-    const c = sp.get('chip') as 'none' | 'due_today' | 'overdue' | 'submitted' | 'waiting_approval' | 'completed' | 'approved' | 'finalized' | null
+    const c = sp.get('chip') as 'none' | 'due_this_week' | 'due_next_week' | 'overdue' | 'submitted' | 'waiting_approval' | 'completed' | 'approved' | 'finalized' | null
     const q = sp.get('q')
     const p = sp.get('period') as 'week' | 'month' | 'quarter' | null
     if (s) setStatusFilter(s as 'all' | 'finalized' | AuditStatus)
@@ -569,13 +600,13 @@ const DashboardAdmin: React.FC = () => {
                 <div className="flex flex-wrap gap-2">
                   <button 
                     className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
-                      quickChip === 'due_today' 
-                        ? 'bg-primary-600 text-white shadow-md' 
-                        : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
+                      quickChip === 'due_this_week' 
+                        ? 'bg-orange-600 text-white shadow-md' 
+                        : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
                     }`} 
-                    onClick={() => setQuickChip(quickChip === 'due_today' ? 'none' : 'due_today')}
+                    onClick={() => setQuickChip(quickChip === 'due_this_week' ? 'none' : 'due_this_week')}
                   >
-                    Due Today
+                    Due This Week
                   </button>
                   <button 
                     className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
@@ -586,6 +617,16 @@ const DashboardAdmin: React.FC = () => {
                     onClick={() => setQuickChip(quickChip === 'overdue' ? 'none' : 'overdue')}
                   >
                     Overdue
+                  </button>
+                  <button 
+                    className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
+                      quickChip === 'due_next_week' 
+                        ? 'bg-blue-600 text-white shadow-md' 
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    }`} 
+                    onClick={() => setQuickChip(quickChip === 'due_next_week' ? 'none' : 'due_next_week')}
+                  >
+                    Due Next Week
                   </button>
                   <button 
                     className={`px-4 py-2 lg:px-3 lg:py-1 rounded-full text-sm lg:text-xs font-medium transition-colors touch-target whitespace-nowrap ${
@@ -797,18 +838,34 @@ const DashboardAdmin: React.FC = () => {
                         </div>
                       </div>
                       
-                      {/* Action Button */}
-                      {canManualArchive && (
-                        <div className="pt-4 lg:pt-3 border-t border-gray-100">
+                      {/* Action Buttons */}
+                      <div className="pt-4 lg:pt-3 border-t border-gray-100">
+                        <div className="flex gap-2">
                           <button 
-                            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target whitespace-nowrap"
-                            onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} 
-                            disabled={manualArchive.isPending}
+                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target"
+                            onClick={() => navigate(`/audits/${a.id}`)}
                           >
-                            {manualArchive.isPending ? 'Archiving...' : 'Archive'}
+                            View Details
                           </button>
+                          {(a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS) && (
+                            <button 
+                              className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target"
+                              onClick={() => navigate(`/audits/${a.id}/edit`)}
+                            >
+                              Edit
+                            </button>
+                          )}
+                          {canManualArchive && (
+                            <button 
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target"
+                              onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} 
+                              disabled={manualArchive.isPending}
+                            >
+                              {manualArchive.isPending ? 'Archiving...' : 'Archive'}
+                            </button>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   )
                 }}
@@ -823,10 +880,33 @@ const DashboardAdmin: React.FC = () => {
                   { key: 'actions', header: '', className: 'text-right', render: (a: Audit) => {
                     const pastDue = a.dueAt ? new Date(a.dueAt).getTime() < Date.now() : false
                     const canManualArchive = !a.isArchived && pastDue && (a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS || a.status === AuditStatus.SUBMITTED)
+                    const canEdit = a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS
+                    
                     return (
-                      <div className="space-x-2">
+                      <div className="flex items-center gap-1 justify-end">
+                        <button 
+                          className="btn btn-ghost btn-sm text-xs px-2 py-1"
+                          onClick={() => navigate(`/audits/${a.id}`)}
+                          title="View audit details"
+                        >
+                          View
+                        </button>
+                        {canEdit && (
+                          <button 
+                            className="btn btn-primary btn-sm text-xs px-2 py-1"
+                            onClick={() => navigate(`/audits/${a.id}/edit`)}
+                            title="Edit audit"
+                          >
+                            Edit
+                          </button>
+                        )}
                         {canManualArchive && (
-                          <button className="btn btn-danger btn-sm" onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} disabled={manualArchive.isPending}>
+                          <button 
+                            className="btn btn-danger btn-sm text-xs px-2 py-1" 
+                            onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} 
+                            disabled={manualArchive.isPending}
+                            title="Archive overdue audit"
+                          >
                             {manualArchive.isPending ? 'Archiving…' : 'Archive'}
                           </button>
                         )}
