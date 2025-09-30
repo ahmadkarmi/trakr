@@ -11,7 +11,7 @@ import ProgressDonut from '../components/ProgressDonut'
 import StatusBadge from '@/components/StatusBadge'
 import ResponsiveTable from '../components/ResponsiveTable'
 import InfoBadge from '@/components/InfoBadge'
-import { UsersIcon, ClipboardDocumentListIcon, BuildingOfficeIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { UsersIcon, ClipboardDocumentListIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline'
 
 const DashboardAdmin: React.FC = () => {
   const { user } = useAuthStore()
@@ -189,7 +189,10 @@ const DashboardAdmin: React.FC = () => {
   const inProgressCount = auditsInPeriod.filter(a => a.status === AuditStatus.IN_PROGRESS).length
   const draftCount = auditsInPeriod.filter(a => a.status === AuditStatus.DRAFT).length
   const submittedCount = auditsInPeriod.filter(a => a.status === AuditStatus.SUBMITTED).length
-  const dueTodayCount = auditsInPeriod.filter(isDueTodayOrg).length
+  
+  // Real-time priorities (not period-filtered)
+  const dueTodayCount = audits.filter(isDueTodayOrg).length
+  const overdueCountAll = audits.filter(a => isOverdue(a) && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED).length
   const completedOnlyCount = auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED).length
   const approvedOnlyCount = auditsInPeriod.filter(a => a.status === AuditStatus.APPROVED).length
   const finalizedAuditsInPeriod = React.useMemo(() => auditsInPeriod.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED), [auditsInPeriod])
@@ -407,61 +410,10 @@ const DashboardAdmin: React.FC = () => {
           </button>
         </div>
 
-        {/* Today's Priorities - Simple and Clear */}
+        {/* Main Statistics - Horizontal Scrolling KPIs */}
         <div className="card-mobile">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Today's Priorities</h3>
-            <span className="text-xs text-gray-500">Real-time</span>
-          </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className={`card-compact ${dueTodayCount > 0 ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dueTodayCount > 0 ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                  <span className="text-lg">⏰</span>
-                </div>
-                <div>
-                  <div className={`text-2xl font-bold ${dueTodayCount > 0 ? 'text-orange-600' : 'text-gray-600'}`}>{dueTodayCount}</div>
-                  <div className="text-xs text-gray-500">Due Today</div>
-                  {dueTodayCount > 0 && <div className="text-xs text-orange-600 font-medium">Needs attention</div>}
-                </div>
-              </div>
-            </div>
-            
-            <div className={`card-compact ${overdueCount > 0 ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${overdueCount > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
-                  <span className="text-lg">🚨</span>
-                </div>
-                <div>
-                  <div className={`text-2xl font-bold ${overdueCount > 0 ? 'text-red-600' : 'text-gray-600'}`}>{overdueCount}</div>
-                  <div className="text-xs text-gray-500">Overdue</div>
-                  {overdueCount > 0 && <div className="text-xs text-red-600 font-medium">Urgent action</div>}
-                </div>
-              </div>
-            </div>
-            
-            <div className="card-compact bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-lg">⚡</span>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-blue-600">{inProgressCount}</div>
-                  <div className="text-xs text-gray-500">In Progress</div>
-                  <div className="text-xs text-blue-600">Active work</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Period Performance - Clear Time Context */}
-        <div className="card-mobile">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">
-              {period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'This Quarter'} Performance
-            </h3>
+            <h3 className="font-semibold text-gray-900">Key Metrics</h3>
             <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
               {(['week','month','quarter'] as const).map(p => (
                 <button 
@@ -475,46 +427,125 @@ const DashboardAdmin: React.FC = () => {
             </div>
           </div>
           
-          {/* Simplified Performance Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="card-compact bg-gradient-to-r from-success-50 to-green-50 border-success-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
-                  <ClipboardDocumentCheckIcon className="w-6 h-6 text-success-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-2xl font-bold text-success-600">{completionRate}%</div>
-                  <div className="text-sm text-gray-600">Completion Rate</div>
-                  <div className="text-xs text-gray-500">{completedCount} of {auditsInPeriod.length} audits</div>
-                  <div className="w-full bg-success-200 rounded-full h-2 mt-2">
-                    <div className="bg-success-600 h-2 rounded-full transition-all duration-300" style={{ width: `${completionRate}%` }}></div>
+          {/* Horizontal Scrolling Stats Cards */}
+          <div className="overflow-x-auto pb-2">
+            <div className="flex gap-4 min-w-max">
+              {/* Priority KPIs First */}
+              <div className={`card-compact min-w-[200px] ${dueTodayCount > 0 ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${dueTodayCount > 0 ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                    <span className="text-lg">⏰</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className={`text-2xl font-bold ${dueTodayCount > 0 ? 'text-orange-600' : 'text-gray-600'}`}>{dueTodayCount}</div>
+                    <div className="text-sm text-gray-600">Due Today</div>
+                    <div className="text-xs text-gray-500">Immediate action</div>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="card-compact bg-gradient-to-r from-primary-50 to-blue-50 border-primary-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <ClipboardDocumentListIcon className="w-6 h-6 text-primary-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-2xl font-bold text-primary-600">{onTimeRate}%</div>
-                  <div className="text-sm text-gray-600">On-time Delivery</div>
-                  <div className="text-xs text-gray-500">Meeting deadlines</div>
+
+              <div className={`card-compact min-w-[200px] ${overdueCountAll > 0 ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${overdueCountAll > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
+                    <span className="text-lg">🚨</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className={`text-2xl font-bold ${overdueCountAll > 0 ? 'text-red-600' : 'text-gray-600'}`}>{overdueCountAll}</div>
+                    <div className="text-sm text-gray-600">Overdue</div>
+                    <div className="text-xs text-gray-500">Urgent action</div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="card-compact bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <UsersIcon className="w-6 h-6 text-indigo-600" />
+
+              <div className="card-compact min-w-[200px] bg-gradient-to-r from-success-50 to-green-50 border-success-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
+                    <ClipboardDocumentCheckIcon className="w-6 h-6 text-success-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-success-600">{completionRate}%</div>
+                    <div className="text-sm text-gray-600">Completion Rate</div>
+                    <div className="text-xs text-gray-500">{completedCount} of {auditsInPeriod.length}</div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <div className="text-2xl font-bold text-indigo-600">{coverageRate}%</div>
-                  <div className="text-sm text-gray-600">Branch Coverage</div>
-                  <div className="text-xs text-gray-500">{coverageBranches.size} of {branches.length} branches</div>
+              </div>
+
+              <div className="card-compact min-w-[200px] bg-gradient-to-r from-primary-50 to-blue-50 border-primary-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                    <ClipboardDocumentListIcon className="w-6 h-6 text-primary-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-primary-600">{onTimeRate}%</div>
+                    <div className="text-sm text-gray-600">On-time Rate</div>
+                    <div className="text-xs text-gray-500">Meeting deadlines</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary Insights */}
+              <div className="card-compact min-w-[200px] bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span className="text-lg">⚡</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-blue-600">{inProgressCount}</div>
+                    <div className="text-sm text-gray-600">In Progress</div>
+                    <div className="text-xs text-gray-500">Active work</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-compact min-w-[200px] bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <UsersIcon className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-indigo-600">{coverageRate}%</div>
+                    <div className="text-sm text-gray-600">Branch Coverage</div>
+                    <div className="text-xs text-gray-500">{coverageBranches.size} of {branches.length}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-compact min-w-[200px] bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <span className="text-lg">📤</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-yellow-600">{submittedCount}</div>
+                    <div className="text-sm text-gray-600">Awaiting Review</div>
+                    <div className="text-xs text-gray-500">Submitted audits</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-compact min-w-[200px] bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <span className="text-lg">👥</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-purple-600">{activeUsersCount}</div>
+                    <div className="text-sm text-gray-600">Active Users</div>
+                    <div className="text-xs text-gray-500">Team members</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-compact min-w-[200px] bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <span className="text-lg">🏢</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-emerald-600">{branches.length}</div>
+                    <div className="text-sm text-gray-600">Total Branches</div>
+                    <div className="text-xs text-gray-500">Locations</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -522,7 +553,7 @@ const DashboardAdmin: React.FC = () => {
           
           {org?.timeZone && (
             <div className="mt-4 text-center">
-              <span className="text-xs text-gray-500">Timezone: {org.timeZone}</span>
+              <span className="text-xs text-gray-500">Timezone: {org.timeZone} • Period: {period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'This Quarter'}</span>
             </div>
           )}
         </div>
