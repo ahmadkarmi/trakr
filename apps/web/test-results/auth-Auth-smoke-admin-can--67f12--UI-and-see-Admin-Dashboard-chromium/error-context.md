@@ -1,29 +1,449 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e4]:
-  - generic [ref=e155]:
-    - generic [ref=e156]:
-      - generic [ref=e158]: T
-      - generic [ref=e159]: Trakr
-    - generic [ref=e160]:
-      - heading "Welcome back!" [level=1] [ref=e161]
-      - paragraph [ref=e162]: Sign in to continue to Trakr
-    - generic [ref=e163]:
-      - generic [ref=e164]:
-        - generic [ref=e165]: Email
-        - textbox "Email" [ref=e166]
-      - generic [ref=e167]:
-        - generic [ref=e168]:
-          - generic [ref=e169]: Password
-          - button "Forgot?" [ref=e170] [cursor=pointer]
-        - generic [ref=e171]:
-          - textbox "Password" [ref=e172]
-          - button [ref=e173] [cursor=pointer]:
-            - img [ref=e174] [cursor=pointer]
-      - button "Sign in" [ref=e177] [cursor=pointer]
-    - generic [ref=e178]:
-      - text: Don't have an account?
-      - button "Sign up" [ref=e179] [cursor=pointer]
-  - paragraph [ref=e181]: LET'S MAKE THE WORLD MORE PRODUCTIVE, TOGETHER.
+- generic [ref=e5]:
+  - complementary [ref=e6]:
+    - link "T Trakr" [ref=e8] [cursor=pointer]:
+      - /url: /dashboard/admin
+      - generic [ref=e10] [cursor=pointer]: T
+      - generic [ref=e11] [cursor=pointer]: Trakr
+    - generic [ref=e13]:
+      - img [ref=e14]
+      - textbox "Search" [ref=e16]
+    - navigation [ref=e17]:
+      - link "My Dashboard" [ref=e18] [cursor=pointer]:
+        - /url: /dashboard/admin
+        - img [ref=e19] [cursor=pointer]
+        - generic [ref=e21] [cursor=pointer]: My Dashboard
+      - link "Notifications" [ref=e22] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e23] [cursor=pointer]
+        - generic [ref=e25] [cursor=pointer]: Notifications
+      - link "Analytics" [ref=e26] [cursor=pointer]:
+        - /url: /analytics
+        - img [ref=e27] [cursor=pointer]
+        - generic [ref=e29] [cursor=pointer]: Analytics
+      - link "Survey Templates" [ref=e30] [cursor=pointer]:
+        - /url: /manage/surveys
+        - img [ref=e31] [cursor=pointer]
+        - generic [ref=e33] [cursor=pointer]: Survey Templates
+      - link "Manage Branches" [ref=e34] [cursor=pointer]:
+        - /url: /manage/branches
+        - img [ref=e35] [cursor=pointer]
+        - generic [ref=e37] [cursor=pointer]: Manage Branches
+      - link "Manage Zones" [ref=e38] [cursor=pointer]:
+        - /url: /manage/zones
+        - img [ref=e39] [cursor=pointer]
+        - generic [ref=e41] [cursor=pointer]: Manage Zones
+      - link "Manage Users" [ref=e42] [cursor=pointer]:
+        - /url: /manage/users
+        - img [ref=e43] [cursor=pointer]
+        - generic [ref=e45] [cursor=pointer]: Manage Users
+      - link "Activity Logs" [ref=e46] [cursor=pointer]:
+        - /url: /activity/logs
+        - img [ref=e47] [cursor=pointer]
+        - generic [ref=e49] [cursor=pointer]: Activity Logs
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - img "Ahmad Admin" [ref=e52]
+        - generic [ref=e53]:
+          - generic [ref=e54]: Ahmad Admin
+          - generic [ref=e55]: Super Admin
+      - generic [ref=e56]:
+        - link "Profile" [ref=e57] [cursor=pointer]:
+          - /url: /profile
+        - link "Signature" [ref=e58] [cursor=pointer]:
+          - /url: /profile/signature
+      - button "Sign Out" [ref=e59] [cursor=pointer]:
+        - img [ref=e60] [cursor=pointer]
+        - text: Sign Out
+  - generic [ref=e62]:
+    - banner [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e66]:
+          - heading "Admin Dashboard" [level=1] [ref=e67]
+          - paragraph [ref=e68]: Welcome back, Ahmad
+        - generic [ref=e70]:
+          - img [ref=e71]
+          - textbox "Search..." [ref=e73]
+        - generic [ref=e74]:
+          - button "Notifications" [ref=e76] [cursor=pointer]:
+            - img [ref=e77] [cursor=pointer]
+            - generic [ref=e79] [cursor=pointer]: 9+
+          - link "Help" [ref=e80] [cursor=pointer]:
+            - /url: /help
+            - img [ref=e81] [cursor=pointer]
+          - button "User menu" [ref=e85] [cursor=pointer]:
+            - img "Ahmad Admin" [ref=e86] [cursor=pointer]
+            - generic [ref=e87] [cursor=pointer]:
+              - generic [ref=e88] [cursor=pointer]: Ahmad Admin
+              - generic [ref=e89] [cursor=pointer]: Super Admin
+            - img [ref=e90] [cursor=pointer]
+    - main [ref=e92]:
+      - generic [ref=e93]:
+        - generic [ref=e94]:
+          - generic [ref=e95]:
+            - heading "Admin Dashboard" [level=1] [ref=e96]
+            - paragraph [ref=e97]: 0 branches • 12 audits • Ahmad Admin
+          - button "+ Create Survey Template" [ref=e98] [cursor=pointer]
+        - generic [ref=e99]:
+          - button "🏢 0 Branches" [ref=e100] [cursor=pointer]:
+            - generic [ref=e102] [cursor=pointer]: 🏢
+            - paragraph [ref=e103] [cursor=pointer]: "0"
+            - paragraph [ref=e104] [cursor=pointer]: Branches
+          - button "🗺️ 0 Zones" [ref=e105] [cursor=pointer]:
+            - generic [ref=e107] [cursor=pointer]: 🗺️
+            - paragraph [ref=e108] [cursor=pointer]: "0"
+            - paragraph [ref=e109] [cursor=pointer]: Zones
+          - button "👥 0 Active Users" [ref=e110] [cursor=pointer]:
+            - generic [ref=e112] [cursor=pointer]: 👥
+            - paragraph [ref=e113] [cursor=pointer]: "0"
+            - paragraph [ref=e114] [cursor=pointer]: Active Users
+          - button "✉️ 0 Pending Invites" [ref=e115] [cursor=pointer]:
+            - generic [ref=e117] [cursor=pointer]: ✉️
+            - paragraph [ref=e118] [cursor=pointer]: "0"
+            - paragraph [ref=e119] [cursor=pointer]: Pending Invites
+        - generic [ref=e120]:
+          - generic [ref=e122]:
+            - heading "Weekly Insights" [level=2] [ref=e123]
+            - paragraph [ref=e124]: Current week performance
+          - generic [ref=e125]:
+            - generic [ref=e126]:
+              - generic [ref=e128]: ✅
+              - paragraph [ref=e129]: "0"
+              - paragraph [ref=e130]: Overdue
+            - generic [ref=e131]:
+              - generic [ref=e133]: ⏰
+              - paragraph [ref=e134]: "9"
+              - paragraph [ref=e135]: Due This Week
+            - generic [ref=e136]:
+              - img [ref=e138]
+              - paragraph [ref=e140]: 89%
+              - paragraph [ref=e141]: Completion
+              - paragraph [ref=e142]: 8 of 9
+            - generic [ref=e143]:
+              - generic [ref=e145]: ⚡
+              - paragraph [ref=e146]: "0"
+              - paragraph [ref=e147]: In Progress
+            - generic [ref=e148]:
+              - img [ref=e150]
+              - paragraph [ref=e152]: 100%
+              - paragraph [ref=e153]: On-time
+            - generic [ref=e154]:
+              - generic [ref=e156]: 🏢
+              - paragraph [ref=e157]: "5"
+              - paragraph [ref=e158]: Branches
+        - generic [ref=e159]:
+          - generic [ref=e160]:
+            - generic [ref=e161]:
+              - heading "Weekly Zone Coverage" [level=3] [ref=e162]
+              - generic [ref=e163]: This week • Top 5
+            - paragraph [ref=e165]: No zones or audits this period.
+          - generic [ref=e166]:
+            - heading "Recent Activity" [level=3] [ref=e168]
+            - table [ref=e171]:
+              - rowgroup [ref=e172]:
+                - row "Action Branch By When" [ref=e173]:
+                  - cell "Action" [ref=e174]
+                  - cell "Branch" [ref=e175]
+                  - cell "By" [ref=e176]
+                  - cell "When" [ref=e177]
+                  - cell [ref=e178]
+              - rowgroup [ref=e179]:
+                - row "📝 Draft Created Unknown Branch U Unassigned Oct 5, 04:54 PM View →" [ref=e180]:
+                  - cell "📝 Draft Created" [ref=e181]:
+                    - generic [ref=e183]: 📝 Draft Created
+                  - cell "Unknown Branch" [ref=e184]:
+                    - generic [ref=e185]: Unknown Branch
+                  - cell "U Unassigned" [ref=e186]:
+                    - generic [ref=e187]:
+                      - generic [ref=e188]: U
+                      - generic [ref=e189]: Unassigned
+                  - cell "Oct 5, 04:54 PM" [ref=e190]:
+                    - generic [ref=e191]: Oct 5, 04:54 PM
+                  - cell "View →" [ref=e192]:
+                    - button "View →" [ref=e193] [cursor=pointer]
+                - row "✅ Approved Unknown Branch UM Unknown Manager Oct 5, 02:23 PM View →" [ref=e194]:
+                  - cell "✅ Approved" [ref=e195]:
+                    - generic [ref=e197]: ✅ Approved
+                  - cell "Unknown Branch" [ref=e198]:
+                    - generic [ref=e199]: Unknown Branch
+                  - cell "UM Unknown Manager" [ref=e200]:
+                    - generic [ref=e201]:
+                      - generic [ref=e202]: UM
+                      - generic [ref=e203]: Unknown Manager
+                  - cell "Oct 5, 02:23 PM" [ref=e204]:
+                    - generic [ref=e205]: Oct 5, 02:23 PM
+                  - cell "View →" [ref=e206]:
+                    - button "View →" [ref=e207] [cursor=pointer]
+                - row "✅ Approved Unknown Branch UM Unknown Manager Oct 5, 03:35 AM View →" [ref=e208]:
+                  - cell "✅ Approved" [ref=e209]:
+                    - generic [ref=e211]: ✅ Approved
+                  - cell "Unknown Branch" [ref=e212]:
+                    - generic [ref=e213]: Unknown Branch
+                  - cell "UM Unknown Manager" [ref=e214]:
+                    - generic [ref=e215]:
+                      - generic [ref=e216]: UM
+                      - generic [ref=e217]: Unknown Manager
+                  - cell "Oct 5, 03:35 AM" [ref=e218]:
+                    - generic [ref=e219]: Oct 5, 03:35 AM
+                  - cell "View →" [ref=e220]:
+                    - button "View →" [ref=e221] [cursor=pointer]
+                - row "✅ Approved Unknown Branch UM Unknown Manager Oct 5, 03:19 AM View →" [ref=e222]:
+                  - cell "✅ Approved" [ref=e223]:
+                    - generic [ref=e225]: ✅ Approved
+                  - cell "Unknown Branch" [ref=e226]:
+                    - generic [ref=e227]: Unknown Branch
+                  - cell "UM Unknown Manager" [ref=e228]:
+                    - generic [ref=e229]:
+                      - generic [ref=e230]: UM
+                      - generic [ref=e231]: Unknown Manager
+                  - cell "Oct 5, 03:19 AM" [ref=e232]:
+                    - generic [ref=e233]: Oct 5, 03:19 AM
+                  - cell "View →" [ref=e234]:
+                    - button "View →" [ref=e235] [cursor=pointer]
+                - row "✅ Approved Unknown Branch UM Unknown Manager Oct 5, 03:13 AM View →" [ref=e236]:
+                  - cell "✅ Approved" [ref=e237]:
+                    - generic [ref=e239]: ✅ Approved
+                  - cell "Unknown Branch" [ref=e240]:
+                    - generic [ref=e241]: Unknown Branch
+                  - cell "UM Unknown Manager" [ref=e242]:
+                    - generic [ref=e243]:
+                      - generic [ref=e244]: UM
+                      - generic [ref=e245]: Unknown Manager
+                  - cell "Oct 5, 03:13 AM" [ref=e246]:
+                    - generic [ref=e247]: Oct 5, 03:13 AM
+                  - cell "View →" [ref=e248]:
+                    - button "View →" [ref=e249] [cursor=pointer]
+                - row "✅ Approved Unknown Branch UM Unknown Manager Oct 5, 02:46 AM View →" [ref=e250]:
+                  - cell "✅ Approved" [ref=e251]:
+                    - generic [ref=e253]: ✅ Approved
+                  - cell "Unknown Branch" [ref=e254]:
+                    - generic [ref=e255]: Unknown Branch
+                  - cell "UM Unknown Manager" [ref=e256]:
+                    - generic [ref=e257]:
+                      - generic [ref=e258]: UM
+                      - generic [ref=e259]: Unknown Manager
+                  - cell "Oct 5, 02:46 AM" [ref=e260]:
+                    - generic [ref=e261]: Oct 5, 02:46 AM
+                  - cell "View →" [ref=e262]:
+                    - button "View →" [ref=e263] [cursor=pointer]
+                - row "✅ Approved Unknown Branch UM Unknown Manager Oct 4, 09:52 PM View →" [ref=e264]:
+                  - cell "✅ Approved" [ref=e265]:
+                    - generic [ref=e267]: ✅ Approved
+                  - cell "Unknown Branch" [ref=e268]:
+                    - generic [ref=e269]: Unknown Branch
+                  - cell "UM Unknown Manager" [ref=e270]:
+                    - generic [ref=e271]:
+                      - generic [ref=e272]: UM
+                      - generic [ref=e273]: Unknown Manager
+                  - cell "Oct 4, 09:52 PM" [ref=e274]:
+                    - generic [ref=e275]: Oct 4, 09:52 PM
+                  - cell "View →" [ref=e276]:
+                    - button "View →" [ref=e277] [cursor=pointer]
+                - row "✅ Approved Unknown Branch UM Unknown Manager Oct 4, 04:09 AM View →" [ref=e278]:
+                  - cell "✅ Approved" [ref=e279]:
+                    - generic [ref=e281]: ✅ Approved
+                  - cell "Unknown Branch" [ref=e282]:
+                    - generic [ref=e283]: Unknown Branch
+                  - cell "UM Unknown Manager" [ref=e284]:
+                    - generic [ref=e285]:
+                      - generic [ref=e286]: UM
+                      - generic [ref=e287]: Unknown Manager
+                  - cell "Oct 4, 04:09 AM" [ref=e288]:
+                    - generic [ref=e289]: Oct 4, 04:09 AM
+                  - cell "View →" [ref=e290]:
+                    - button "View →" [ref=e291] [cursor=pointer]
+                - row "✅ Approved Unknown Branch UM Unknown Manager Oct 4, 04:09 AM View →" [ref=e292]:
+                  - cell "✅ Approved" [ref=e293]:
+                    - generic [ref=e295]: ✅ Approved
+                  - cell "Unknown Branch" [ref=e296]:
+                    - generic [ref=e297]: Unknown Branch
+                  - cell "UM Unknown Manager" [ref=e298]:
+                    - generic [ref=e299]:
+                      - generic [ref=e300]: UM
+                      - generic [ref=e301]: Unknown Manager
+                  - cell "Oct 4, 04:09 AM" [ref=e302]:
+                    - generic [ref=e303]: Oct 4, 04:09 AM
+                  - cell "View →" [ref=e304]:
+                    - button "View →" [ref=e305] [cursor=pointer]
+                - row "✅ Approved Unknown Branch UM Unknown Manager Oct 3, 10:11 PM View →" [ref=e306]:
+                  - cell "✅ Approved" [ref=e307]:
+                    - generic [ref=e309]: ✅ Approved
+                  - cell "Unknown Branch" [ref=e310]:
+                    - generic [ref=e311]: Unknown Branch
+                  - cell "UM Unknown Manager" [ref=e312]:
+                    - generic [ref=e313]:
+                      - generic [ref=e314]: UM
+                      - generic [ref=e315]: Unknown Manager
+                  - cell "Oct 3, 10:11 PM" [ref=e316]:
+                    - generic [ref=e317]: Oct 3, 10:11 PM
+                  - cell "View →" [ref=e318]:
+                    - button "View →" [ref=e319] [cursor=pointer]
+        - generic [ref=e320]:
+          - generic [ref=e322]:
+            - heading "This Week's Audits" [level=3] [ref=e323]
+            - generic [ref=e324]:
+              - button "This Week" [ref=e325] [cursor=pointer]
+              - button "All Audits" [ref=e326] [cursor=pointer]
+          - generic [ref=e327]:
+            - generic [ref=e328]:
+              - generic [ref=e329]:
+                - generic:
+                  - img
+                - textbox "Search audit, branch, auditor..." [ref=e330]
+              - generic [ref=e331]:
+                - generic [ref=e332]:
+                  - generic [ref=e333]: "Filter:"
+                  - combobox [ref=e334]:
+                    - option "All" [selected]
+                    - option "🚨 Overdue"
+                    - option "⏰ Due This Week"
+                    - option "📅 Due Next Week"
+                    - option "📤 Submitted"
+                    - option "⏳ Pending"
+                    - option "✅ Completed"
+                    - option "👍 Approved"
+                    - option "🎯 Finalized"
+                - generic [ref=e335]:
+                  - generic [ref=e336]: "Sort:"
+                  - combobox [ref=e337]:
+                    - option "Due Date"
+                    - option "Updated" [selected]
+                    - option "Status"
+                    - option "Branch"
+                    - option "Auditor"
+                  - button "↓" [ref=e338] [cursor=pointer]
+              - generic [ref=e339]:
+                - generic [ref=e340]:
+                  - button "Advanced Filters" [ref=e341] [cursor=pointer]:
+                    - img [ref=e342] [cursor=pointer]
+                    - generic [ref=e344] [cursor=pointer]: Advanced Filters
+                  - generic [ref=e345]: 9 results
+                - button "Clear All" [disabled] [ref=e346]:
+                  - img [ref=e347]
+                  - generic [ref=e349]: Clear All
+            - table [ref=e351]:
+              - rowgroup [ref=e352]:
+                - row "Audit Branch Auditor Status Due Date Archived Updated ↓" [ref=e353]:
+                  - cell "Audit" [ref=e354]
+                  - cell "Branch" [ref=e355]:
+                    - button "Branch" [ref=e356] [cursor=pointer]
+                  - cell "Auditor" [ref=e357]:
+                    - button "Auditor" [ref=e358] [cursor=pointer]
+                  - cell "Status" [ref=e359]:
+                    - button "Status" [ref=e360] [cursor=pointer]
+                  - cell "Due Date" [ref=e361]:
+                    - button "Due Date" [ref=e362] [cursor=pointer]
+                  - cell "Archived" [ref=e363]
+                  - cell "Updated ↓" [ref=e364]:
+                    - button "Updated ↓" [ref=e365] [cursor=pointer]
+                  - cell [ref=e366]
+              - rowgroup [ref=e367]:
+                - 'row "75b4c2a3-a109-44fe-9a2d-8aed7950ad2c 06924839-5ab9-49e3-b16f-38565354e137 685d451f-1be0-4b3c-986d-a5719931f9dc Audit status: Draft 11/1/2025 No 10/5/2025 View Edit" [ref=e368]':
+                  - cell "75b4c2a3-a109-44fe-9a2d-8aed7950ad2c" [ref=e369]
+                  - cell "06924839-5ab9-49e3-b16f-38565354e137" [ref=e370]
+                  - cell "685d451f-1be0-4b3c-986d-a5719931f9dc" [ref=e371]
+                  - 'cell "Audit status: Draft" [ref=e372]':
+                    - 'generic "Audit status: Draft" [ref=e373]':
+                      - img [ref=e374]
+                      - generic [ref=e377]: Draft
+                  - cell "11/1/2025" [ref=e378]
+                  - cell "No" [ref=e379]
+                  - cell "10/5/2025" [ref=e380]
+                  - cell "View Edit" [ref=e381]:
+                    - generic [ref=e382]:
+                      - button "View" [ref=e383] [cursor=pointer]
+                      - button "Edit" [ref=e384] [cursor=pointer]
+                - 'row "f60eede7-bcd2-4a19-a5f8-80e04311d89a 06924839-5ab9-49e3-b16f-38565354e137 685d451f-1be0-4b3c-986d-a5719931f9dc Audit status: Approved 11/1/2025 No 10/5/2025 View" [ref=e385]':
+                  - cell "f60eede7-bcd2-4a19-a5f8-80e04311d89a" [ref=e386]
+                  - cell "06924839-5ab9-49e3-b16f-38565354e137" [ref=e387]
+                  - cell "685d451f-1be0-4b3c-986d-a5719931f9dc" [ref=e388]
+                  - 'cell "Audit status: Approved" [ref=e389]':
+                    - 'generic "Audit status: Approved" [ref=e390]':
+                      - img [ref=e391]
+                      - generic [ref=e393]: Approved
+                  - cell "11/1/2025" [ref=e394]
+                  - cell "No" [ref=e395]
+                  - cell "10/5/2025" [ref=e396]
+                  - cell "View" [ref=e397]:
+                    - button "View" [ref=e399] [cursor=pointer]
+                - 'row "268056bc-5558-46c0-9418-e2612c882ac4 46e396a0-ef75-43ea-9ce5-9c931f2d5282 685d451f-1be0-4b3c-986d-a5719931f9dc Audit status: Approved 11/1/2025 No 10/5/2025 View" [ref=e400]':
+                  - cell "268056bc-5558-46c0-9418-e2612c882ac4" [ref=e401]
+                  - cell "46e396a0-ef75-43ea-9ce5-9c931f2d5282" [ref=e402]
+                  - cell "685d451f-1be0-4b3c-986d-a5719931f9dc" [ref=e403]
+                  - 'cell "Audit status: Approved" [ref=e404]':
+                    - 'generic "Audit status: Approved" [ref=e405]':
+                      - img [ref=e406]
+                      - generic [ref=e408]: Approved
+                  - cell "11/1/2025" [ref=e409]
+                  - cell "No" [ref=e410]
+                  - cell "10/5/2025" [ref=e411]
+                  - cell "View" [ref=e412]:
+                    - button "View" [ref=e414] [cursor=pointer]
+                - 'row "27ff9b19-2c80-493a-8a13-a22d8dc31c3f 13675608-0ec8-4c08-a1dc-35d4712d1d68 685d451f-1be0-4b3c-986d-a5719931f9dc Audit status: Approved 11/1/2025 No 10/5/2025 View" [ref=e415]':
+                  - cell "27ff9b19-2c80-493a-8a13-a22d8dc31c3f" [ref=e416]
+                  - cell "13675608-0ec8-4c08-a1dc-35d4712d1d68" [ref=e417]
+                  - cell "685d451f-1be0-4b3c-986d-a5719931f9dc" [ref=e418]
+                  - 'cell "Audit status: Approved" [ref=e419]':
+                    - 'generic "Audit status: Approved" [ref=e420]':
+                      - img [ref=e421]
+                      - generic [ref=e423]: Approved
+                  - cell "11/1/2025" [ref=e424]
+                  - cell "No" [ref=e425]
+                  - cell "10/5/2025" [ref=e426]
+                  - cell "View" [ref=e427]:
+                    - button "View" [ref=e429] [cursor=pointer]
+                - 'row "4439a97f-de3f-4d00-bda1-a5f0f45e170c 13675608-0ec8-4c08-a1dc-35d4712d1d68 685d451f-1be0-4b3c-986d-a5719931f9dc Audit status: Approved 11/1/2025 No 10/4/2025 View" [ref=e430]':
+                  - cell "4439a97f-de3f-4d00-bda1-a5f0f45e170c" [ref=e431]
+                  - cell "13675608-0ec8-4c08-a1dc-35d4712d1d68" [ref=e432]
+                  - cell "685d451f-1be0-4b3c-986d-a5719931f9dc" [ref=e433]
+                  - 'cell "Audit status: Approved" [ref=e434]':
+                    - 'generic "Audit status: Approved" [ref=e435]':
+                      - img [ref=e436]
+                      - generic [ref=e438]: Approved
+                  - cell "11/1/2025" [ref=e439]
+                  - cell "No" [ref=e440]
+                  - cell "10/4/2025" [ref=e441]
+                  - cell "View" [ref=e442]:
+                    - button "View" [ref=e444] [cursor=pointer]
+                - 'row "51cf572e-ceb2-49ca-a677-915fa5e6f49d 5251b122-ee38-43d0-b807-d496b33281f5 685d451f-1be0-4b3c-986d-a5719931f9dc Audit status: Approved 11/1/2025 No 10/4/2025 View" [ref=e445]':
+                  - cell "51cf572e-ceb2-49ca-a677-915fa5e6f49d" [ref=e446]
+                  - cell "5251b122-ee38-43d0-b807-d496b33281f5" [ref=e447]
+                  - cell "685d451f-1be0-4b3c-986d-a5719931f9dc" [ref=e448]
+                  - 'cell "Audit status: Approved" [ref=e449]':
+                    - 'generic "Audit status: Approved" [ref=e450]':
+                      - img [ref=e451]
+                      - generic [ref=e453]: Approved
+                  - cell "11/1/2025" [ref=e454]
+                  - cell "No" [ref=e455]
+                  - cell "10/4/2025" [ref=e456]
+                  - cell "View" [ref=e457]:
+                    - button "View" [ref=e459] [cursor=pointer]
+                - 'row "4ff9e388-a294-4521-99cd-38dafc337e8c 5251b122-ee38-43d0-b807-d496b33281f5 685d451f-1be0-4b3c-986d-a5719931f9dc Audit status: Approved 11/1/2025 No 10/4/2025 View" [ref=e460]':
+                  - cell "4ff9e388-a294-4521-99cd-38dafc337e8c" [ref=e461]
+                  - cell "5251b122-ee38-43d0-b807-d496b33281f5" [ref=e462]
+                  - cell "685d451f-1be0-4b3c-986d-a5719931f9dc" [ref=e463]
+                  - 'cell "Audit status: Approved" [ref=e464]':
+                    - 'generic "Audit status: Approved" [ref=e465]':
+                      - img [ref=e466]
+                      - generic [ref=e468]: Approved
+                  - cell "11/1/2025" [ref=e469]
+                  - cell "No" [ref=e470]
+                  - cell "10/4/2025" [ref=e471]
+                  - cell "View" [ref=e472]:
+                    - button "View" [ref=e474] [cursor=pointer]
+                - 'row "19875641-c3c7-49a0-9a9d-f7f4b144af1a e268b409-28a8-414d-9804-b8f37c74751f 685d451f-1be0-4b3c-986d-a5719931f9dc Audit status: Approved 11/1/2025 No 10/3/2025 View" [ref=e475]':
+                  - cell "19875641-c3c7-49a0-9a9d-f7f4b144af1a" [ref=e476]
+                  - cell "e268b409-28a8-414d-9804-b8f37c74751f" [ref=e477]
+                  - cell "685d451f-1be0-4b3c-986d-a5719931f9dc" [ref=e478]
+                  - 'cell "Audit status: Approved" [ref=e479]':
+                    - 'generic "Audit status: Approved" [ref=e480]':
+                      - img [ref=e481]
+                      - generic [ref=e483]: Approved
+                  - cell "11/1/2025" [ref=e484]
+                  - cell "No" [ref=e485]
+                  - cell "10/3/2025" [ref=e486]
+                  - cell "View" [ref=e487]:
+                    - button "View" [ref=e489] [cursor=pointer]
 ```

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuthStore } from '../stores/auth'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
 import { api } from '../utils/api'
-import { UserRole } from '@trakr/shared'
 
 type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password'
 type AuthStatus = 'idle' | 'submitting' | 'success' | 'error'
@@ -32,8 +31,6 @@ interface SuccessMessage {
 }
 
 const LoginScreen: React.FC = () => {
-  const { signIn } = useAuthStore()
-  
   // Form state
   const [authMode, setAuthMode] = useState<AuthMode>('login')
   const [email, setEmail] = useState('')
@@ -957,68 +954,6 @@ const LoginScreen: React.FC = () => {
                 )}
               </div>
 
-              {/* Quick Access Role Buttons - Dev/Test Only */}
-              {(import.meta.env.DEV || import.meta.env.VITE_BACKEND === 'mock' || import.meta.env.VITE_BACKEND === 'supabase') && authMode === 'login' && (
-                <div className="mt-6 pt-6 border-t border-white/20">
-                  <p className="text-xs text-white/60 mb-3 text-center font-medium">Quick Access (Dev/Test Only)</p>
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      onClick={async (e) => {
-                        e.preventDefault()
-                        setAuthStatus('submitting')
-                        try {
-                          await signIn(UserRole.ADMIN)
-                          setAuthStatus('success')
-                        } catch (error: any) {
-                          console.error('Role login failed:', error)
-                          setAuthStatus('error')
-                        }
-                      }}
-                      disabled={authStatus === 'submitting'}
-                      className="w-full bg-white/10 hover:bg-white/20 text-white text-sm py-2 px-4 rounded-lg transition-all border border-white/20 disabled:opacity-50"
-                    >
-                      Login as Admin
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async (e) => {
-                        e.preventDefault()
-                        setAuthStatus('submitting')
-                        try {
-                          await signIn(UserRole.BRANCH_MANAGER)
-                          setAuthStatus('success')
-                        } catch (error: any) {
-                          console.error('Role login failed:', error)
-                          setAuthStatus('error')
-                        }
-                      }}
-                      disabled={authStatus === 'submitting'}
-                      className="w-full bg-white/10 hover:bg-white/20 text-white text-sm py-2 px-4 rounded-lg transition-all border border-white/20 disabled:opacity-50"
-                    >
-                      Login as Branch Manager
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async (e) => {
-                        e.preventDefault()
-                        setAuthStatus('submitting')
-                        try {
-                          await signIn(UserRole.AUDITOR)
-                          setAuthStatus('success')
-                        } catch (error: any) {
-                          console.error('Role login failed:', error)
-                          setAuthStatus('error')
-                        }
-                      }}
-                      disabled={authStatus === 'submitting'}
-                      className="w-full bg-white/10 hover:bg-white/20 text-white text-sm py-2 px-4 rounded-lg transition-all border border-white/20 disabled:opacity-50"
-                    >
-                      Login as Auditor
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
           </div>

@@ -1,7 +1,18 @@
 import { test, expect } from '@playwright/test'
 
-// Smoke test: Profile update flow (UI role login)
-// - Login as Admin via role button
+// Helper function to login with email/password
+async function loginWithCredentials(page: any, email: string, password: string = 'Password123!') {
+  await page.goto('/login')
+  await page.evaluate(() => localStorage.clear())
+  await page.goto('/login')
+  await page.fill('input[type="email"]', email)
+  await page.fill('input[type="password"]', password)
+  await page.getByRole('button', { name: /sign in/i }).click()
+  await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 60_000 })
+}
+
+// Smoke test: Profile update flow (email/password login)
+// - Login as Admin with credentials
 // - Navigate to Profile from user menu
 // - Update Full Name
 // - Save and verify "Saved." toast
@@ -9,9 +20,8 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Profile smoke', () => {
   test('admin can interact with Profile form (enable save, reset back)', async ({ page }) => {
-    // Login as Admin via role button
-    await page.goto('/login')
-    await page.getByRole('button', { name: /Login as Admin/i }).click()
+    // Login as Admin with credentials
+    await loginWithCredentials(page, 'admin@trakr.com')
     await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 60_000 })
 
     // Open user menu and go to Profile

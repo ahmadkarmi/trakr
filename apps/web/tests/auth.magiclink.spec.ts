@@ -3,6 +3,17 @@ import { test, signInWithMagicLink } from './helpers/supabaseAuth'
 
 const MISSING_ENV = !process.env.E2E_SUPABASE_SERVICE_KEY || !process.env.E2E_SUPABASE_URL
 
+// Helper function to login with email/password as fallback
+async function loginWithCredentials(page: any, email: string, password: string = 'Password123!') {
+  await page.goto('/login')
+  await page.evaluate(() => localStorage.clear())
+  await page.goto('/login')
+  await page.fill('input[type="email"]', email)
+  await page.fill('input[type="password"]', password)
+  await page.getByRole('button', { name: /sign in/i }).click()
+  await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 60_000 })
+}
+
 test.describe('Auth via Supabase magic link (real session)', () => {
   test.setTimeout(120_000)
   test.skip(MISSING_ENV, 'Requires E2E_SUPABASE_URL and E2E_SUPABASE_SERVICE_KEY')
@@ -17,24 +28,11 @@ test.describe('Auth via Supabase magic link (real session)', () => {
     
     try {
       await signInWithMagicLink(page, { email: 'admin@trakr.com' })
-      // Prefer exact admin landing heading; fallback to role button if hydration lags or admin profile missing
-      try {
-        await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 12_000 })
-      } catch {
-        // Fallback: use UI role button to ensure admin navigation is available
-        await page.goto('/login')
-        const btn = page.getByRole('button', { name: /Login as Admin/i })
-        await expect(btn).toBeVisible({ timeout: 20_000 })
-        await btn.click()
-        await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
-      }
+      await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 60_000 })
     } catch (error) {
-      console.log('Magic link failed, falling back to UI role button:', error)
-      // If magic link fails completely, fall back to UI role button
-      await page.goto('/login')
-      const btn = page.getByRole('button', { name: /Login as Admin/i })
-      await expect(btn).toBeVisible({ timeout: 20_000 })
-      await btn.click()
+      console.log('Magic link failed, falling back to email/password login:', error)
+      // If magic link fails, fall back to email/password login
+      await loginWithCredentials(page, 'admin@trakr.com')
       await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
     }
   })
@@ -51,12 +49,9 @@ test.describe('Auth via Supabase magic link (real session)', () => {
       await signInWithMagicLink(page, { email: 'branchmanager@trakr.com' })
       await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i })).toBeVisible({ timeout: 60_000 })
     } catch (error) {
-      console.log('Magic link failed, falling back to UI role button:', error)
-      // If magic link fails completely, fall back to UI role button
-      await page.goto('/login')
-      const btn = page.getByRole('button', { name: /Login as Branch Manager/i })
-      await expect(btn).toBeVisible({ timeout: 20_000 })
-      await btn.click()
+      console.log('Magic link failed, falling back to email/password login:', error)
+      // If magic link fails, fall back to email/password login
+      await loginWithCredentials(page, 'branchmanager@trakr.com')
       await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i })).toBeVisible({ timeout: 30_000 })
     }
   })
@@ -72,12 +67,9 @@ test.describe('Auth via Supabase magic link (real session)', () => {
       await signInWithMagicLink(page, { email: 'auditor@trakr.com' })
       await expect(page.getByRole('heading', { name: /Auditor Dashboard/i })).toBeVisible({ timeout: 60_000 })
     } catch (error) {
-      console.log('Magic link failed, falling back to UI role button:', error)
-      // If magic link fails completely, fall back to UI role button
-      await page.goto('/login')
-      const btn = page.getByRole('button', { name: /Login as Auditor/i })
-      await expect(btn).toBeVisible({ timeout: 20_000 })
-      await btn.click()
+      console.log('Magic link failed, falling back to email/password login:', error)
+      // If magic link fails, fall back to email/password login
+      await loginWithCredentials(page, 'auditor@trakr.com')
       await expect(page.getByRole('heading', { name: /Auditor Dashboard/i })).toBeVisible({ timeout: 30_000 })
     }
   })

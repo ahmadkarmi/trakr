@@ -1,29 +1,246 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e4]:
-  - generic [ref=e155]:
-    - generic [ref=e156]:
-      - generic [ref=e158]: T
-      - generic [ref=e159]: Trakr
-    - generic [ref=e160]:
-      - heading "Welcome back!" [level=1] [ref=e161]
-      - paragraph [ref=e162]: Sign in to continue to Trakr
-    - generic [ref=e163]:
-      - generic [ref=e164]:
-        - generic [ref=e165]: Email
-        - textbox "Email" [ref=e166]
-      - generic [ref=e167]:
-        - generic [ref=e168]:
-          - generic [ref=e169]: Password
-          - button "Forgot?" [ref=e170] [cursor=pointer]
-        - generic [ref=e171]:
-          - textbox "Password" [ref=e172]
-          - button [ref=e173] [cursor=pointer]:
-            - img [ref=e174] [cursor=pointer]
-      - button "Sign in" [ref=e177] [cursor=pointer]
-    - generic [ref=e178]:
-      - text: Don't have an account?
-      - button "Sign up" [ref=e179] [cursor=pointer]
-  - paragraph [ref=e181]: LET'S MAKE THE WORLD MORE PRODUCTIVE, TOGETHER.
+- generic [ref=e5]:
+  - complementary [ref=e6]:
+    - link "T Trakr" [ref=e8] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e10] [cursor=pointer]: T
+      - generic [ref=e11] [cursor=pointer]: Trakr
+    - generic [ref=e13]:
+      - img [ref=e14]
+      - textbox "Search" [ref=e16]
+    - navigation [ref=e17]:
+      - link "My Dashboard" [ref=e18] [cursor=pointer]:
+        - /url: /dashboard/branch-manager
+        - img [ref=e19] [cursor=pointer]
+        - generic [ref=e21] [cursor=pointer]: My Dashboard
+      - link "Notifications" [ref=e22] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e23] [cursor=pointer]
+        - generic [ref=e25] [cursor=pointer]: Notifications
+      - link "Analytics" [ref=e26] [cursor=pointer]:
+        - /url: /analytics
+        - img [ref=e27] [cursor=pointer]
+        - generic [ref=e29] [cursor=pointer]: Analytics
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: B
+        - generic [ref=e33]:
+          - generic [ref=e34]: Branch Manager User
+          - generic [ref=e35]: Branch Manager
+      - generic [ref=e36]:
+        - link "Profile" [ref=e37] [cursor=pointer]:
+          - /url: /profile
+        - link "Signature" [ref=e38] [cursor=pointer]:
+          - /url: /profile/signature
+      - button "Sign Out" [ref=e39] [cursor=pointer]:
+        - img [ref=e40] [cursor=pointer]
+        - text: Sign Out
+  - generic [ref=e42]:
+    - banner [ref=e43]:
+      - generic [ref=e44]:
+        - generic [ref=e46]:
+          - heading "Branch Manager Dashboard" [level=1] [ref=e47]
+          - paragraph [ref=e48]: Welcome back, Branch
+        - generic [ref=e50]:
+          - img [ref=e51]
+          - textbox "Search..." [ref=e53]
+        - generic [ref=e54]:
+          - button "Notifications" [ref=e56] [cursor=pointer]:
+            - img [ref=e57] [cursor=pointer]
+          - link "Help" [ref=e59] [cursor=pointer]:
+            - /url: /help
+            - img [ref=e60] [cursor=pointer]
+          - button "User menu" [ref=e64] [cursor=pointer]:
+            - generic [ref=e65] [cursor=pointer]: B
+            - generic [ref=e66] [cursor=pointer]:
+              - generic [ref=e67] [cursor=pointer]: Branch Manager User
+              - generic [ref=e68] [cursor=pointer]: Branch Manager
+            - img [ref=e69] [cursor=pointer]
+    - main [ref=e71]:
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - generic [ref=e74]:
+            - heading "Branch Manager Dashboard" [level=1] [ref=e75]
+            - paragraph [ref=e76]: Manage 5 branches • Branch Manager User
+          - combobox [ref=e77]:
+            - option "All Branches (5)" [selected]
+            - option "Downtown Store"
+            - option "Jahra Branch"
+            - option "Mall Location"
+            - option "Salmiya"
+            - option "Salwa Branch"
+        - generic [ref=e78]:
+          - generic [ref=e80] [cursor=pointer]:
+            - generic [ref=e81] [cursor=pointer]:
+              - paragraph [ref=e82] [cursor=pointer]: Needs Approval
+              - paragraph [ref=e83] [cursor=pointer]: "0"
+              - paragraph [ref=e84] [cursor=pointer]: audits pending
+            - img [ref=e86] [cursor=pointer]
+          - generic [ref=e88]:
+            - img [ref=e91]
+            - paragraph [ref=e93]: "1"
+            - paragraph [ref=e94]: Active Audits
+            - paragraph [ref=e95]: Not yet submitted
+          - generic [ref=e96]:
+            - img [ref=e99]
+            - paragraph [ref=e101]: 92%
+            - paragraph [ref=e102]: Finalized
+            - paragraph [ref=e103]: Approved or rejected
+        - generic [ref=e104]:
+          - generic [ref=e107]:
+            - heading "Pending Approval" [level=2] [ref=e108]
+            - paragraph [ref=e109]: 0 audits waiting for your review
+          - generic [ref=e111]:
+            - generic [ref=e112]: ✅
+            - paragraph [ref=e113]: All caught up!
+            - paragraph [ref=e114]: No audits pending approval
+        - generic [ref=e115]:
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - heading "Audit History" [level=2] [ref=e119]
+              - paragraph [ref=e120]: 11 completed audits
+            - generic [ref=e121]: Page 1 of 2
+          - generic [ref=e122]:
+            - table [ref=e124]:
+              - rowgroup [ref=e125]:
+                - row "Date Audit ID Branch Survey Submitted By Status Actions" [ref=e126]:
+                  - cell "Date" [ref=e127]
+                  - cell "Audit ID" [ref=e128]
+                  - cell "Branch" [ref=e129]
+                  - cell "Survey" [ref=e130]
+                  - cell "Submitted By" [ref=e131]
+                  - cell "Status" [ref=e132]
+                  - cell "Actions" [ref=e133]
+              - rowgroup [ref=e134]:
+                - 'row "Oct 5, 2025 f60eede7... Salwa Branch Unknown Survey Unknown Audit status: Approved View Summary" [ref=e135]':
+                  - cell "Oct 5, 2025" [ref=e136]
+                  - cell "f60eede7..." [ref=e137]
+                  - cell "Salwa Branch" [ref=e138]
+                  - cell "Unknown Survey" [ref=e139]
+                  - cell "Unknown" [ref=e140]
+                  - 'cell "Audit status: Approved" [ref=e141]':
+                    - 'generic "Audit status: Approved" [ref=e142]':
+                      - img [ref=e143]
+                      - generic [ref=e145]: Approved
+                  - cell "View Summary" [ref=e146]:
+                    - button "View Summary" [ref=e147] [cursor=pointer]
+                - 'row "Oct 5, 2025 268056bc... Salmiya Unknown Survey Unknown Audit status: Approved View Summary" [ref=e148]':
+                  - cell "Oct 5, 2025" [ref=e149]
+                  - cell "268056bc..." [ref=e150]
+                  - cell "Salmiya" [ref=e151]
+                  - cell "Unknown Survey" [ref=e152]
+                  - cell "Unknown" [ref=e153]
+                  - 'cell "Audit status: Approved" [ref=e154]':
+                    - 'generic "Audit status: Approved" [ref=e155]':
+                      - img [ref=e156]
+                      - generic [ref=e158]: Approved
+                  - cell "View Summary" [ref=e159]:
+                    - button "View Summary" [ref=e160] [cursor=pointer]
+                - 'row "Oct 5, 2025 27ff9b19... Jahra Branch Unknown Survey Unknown Audit status: Approved View Summary" [ref=e161]':
+                  - cell "Oct 5, 2025" [ref=e162]
+                  - cell "27ff9b19..." [ref=e163]
+                  - cell "Jahra Branch" [ref=e164]
+                  - cell "Unknown Survey" [ref=e165]
+                  - cell "Unknown" [ref=e166]
+                  - 'cell "Audit status: Approved" [ref=e167]':
+                    - 'generic "Audit status: Approved" [ref=e168]':
+                      - img [ref=e169]
+                      - generic [ref=e171]: Approved
+                  - cell "View Summary" [ref=e172]:
+                    - button "View Summary" [ref=e173] [cursor=pointer]
+                - 'row "Oct 5, 2025 00e151e6... Downtown Store Unknown Survey Unknown Audit status: Approved View Summary" [ref=e174]':
+                  - cell "Oct 5, 2025" [ref=e175]
+                  - cell "00e151e6..." [ref=e176]
+                  - cell "Downtown Store" [ref=e177]
+                  - cell "Unknown Survey" [ref=e178]
+                  - cell "Unknown" [ref=e179]
+                  - 'cell "Audit status: Approved" [ref=e180]':
+                    - 'generic "Audit status: Approved" [ref=e181]':
+                      - img [ref=e182]
+                      - generic [ref=e184]: Approved
+                  - cell "View Summary" [ref=e185]:
+                    - button "View Summary" [ref=e186] [cursor=pointer]
+                - 'row "Oct 5, 2025 fdfb5d80... Mall Location Unknown Survey Unknown Audit status: Approved View Summary" [ref=e187]':
+                  - cell "Oct 5, 2025" [ref=e188]
+                  - cell "fdfb5d80..." [ref=e189]
+                  - cell "Mall Location" [ref=e190]
+                  - cell "Unknown Survey" [ref=e191]
+                  - cell "Unknown" [ref=e192]
+                  - 'cell "Audit status: Approved" [ref=e193]':
+                    - 'generic "Audit status: Approved" [ref=e194]':
+                      - img [ref=e195]
+                      - generic [ref=e197]: Approved
+                  - cell "View Summary" [ref=e198]:
+                    - button "View Summary" [ref=e199] [cursor=pointer]
+                - 'row "Oct 4, 2025 4439a97f... Jahra Branch Unknown Survey Unknown Audit status: Approved View Summary" [ref=e200]':
+                  - cell "Oct 4, 2025" [ref=e201]
+                  - cell "4439a97f..." [ref=e202]
+                  - cell "Jahra Branch" [ref=e203]
+                  - cell "Unknown Survey" [ref=e204]
+                  - cell "Unknown" [ref=e205]
+                  - 'cell "Audit status: Approved" [ref=e206]':
+                    - 'generic "Audit status: Approved" [ref=e207]':
+                      - img [ref=e208]
+                      - generic [ref=e210]: Approved
+                  - cell "View Summary" [ref=e211]:
+                    - button "View Summary" [ref=e212] [cursor=pointer]
+                - 'row "Oct 4, 2025 51cf572e... Downtown Store Unknown Survey Unknown Audit status: Approved View Summary" [ref=e213]':
+                  - cell "Oct 4, 2025" [ref=e214]
+                  - cell "51cf572e..." [ref=e215]
+                  - cell "Downtown Store" [ref=e216]
+                  - cell "Unknown Survey" [ref=e217]
+                  - cell "Unknown" [ref=e218]
+                  - 'cell "Audit status: Approved" [ref=e219]':
+                    - 'generic "Audit status: Approved" [ref=e220]':
+                      - img [ref=e221]
+                      - generic [ref=e223]: Approved
+                  - cell "View Summary" [ref=e224]:
+                    - button "View Summary" [ref=e225] [cursor=pointer]
+                - 'row "Oct 4, 2025 4ff9e388... Downtown Store Unknown Survey Unknown Audit status: Approved View Summary" [ref=e226]':
+                  - cell "Oct 4, 2025" [ref=e227]
+                  - cell "4ff9e388..." [ref=e228]
+                  - cell "Downtown Store" [ref=e229]
+                  - cell "Unknown Survey" [ref=e230]
+                  - cell "Unknown" [ref=e231]
+                  - 'cell "Audit status: Approved" [ref=e232]':
+                    - 'generic "Audit status: Approved" [ref=e233]':
+                      - img [ref=e234]
+                      - generic [ref=e236]: Approved
+                  - cell "View Summary" [ref=e237]:
+                    - button "View Summary" [ref=e238] [cursor=pointer]
+                - 'row "Oct 3, 2025 19875641... Mall Location Unknown Survey Unknown Audit status: Approved View Summary" [ref=e239]':
+                  - cell "Oct 3, 2025" [ref=e240]
+                  - cell "19875641..." [ref=e241]
+                  - cell "Mall Location" [ref=e242]
+                  - cell "Unknown Survey" [ref=e243]
+                  - cell "Unknown" [ref=e244]
+                  - 'cell "Audit status: Approved" [ref=e245]':
+                    - 'generic "Audit status: Approved" [ref=e246]':
+                      - img [ref=e247]
+                      - generic [ref=e249]: Approved
+                  - cell "View Summary" [ref=e250]:
+                    - button "View Summary" [ref=e251] [cursor=pointer]
+                - 'row "Oct 3, 2025 bfbb6ea1... Mall Location Unknown Survey Unknown Audit status: Approved View Summary" [ref=e252]':
+                  - cell "Oct 3, 2025" [ref=e253]
+                  - cell "bfbb6ea1..." [ref=e254]
+                  - cell "Mall Location" [ref=e255]
+                  - cell "Unknown Survey" [ref=e256]
+                  - cell "Unknown" [ref=e257]
+                  - 'cell "Audit status: Approved" [ref=e258]':
+                    - 'generic "Audit status: Approved" [ref=e259]':
+                      - img [ref=e260]
+                      - generic [ref=e262]: Approved
+                  - cell "View Summary" [ref=e263]:
+                    - button "View Summary" [ref=e264] [cursor=pointer]
+            - generic [ref=e265]:
+              - generic [ref=e266]:
+                - button "← Previous" [disabled] [ref=e267]
+                - button "Next →" [ref=e268] [cursor=pointer]
+              - generic [ref=e269]:
+                - text: Page
+                - generic [ref=e270]: "1"
+                - text: of
+                - generic [ref=e271]: "2"
 ```

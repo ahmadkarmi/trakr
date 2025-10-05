@@ -5,15 +5,23 @@ function tsId(prefix: string) {
   return `${prefix}-${Date.now()}`
 }
 
+// Helper function to login with email/password
+async function loginWithCredentials(page: any, email: string, password: string = 'Password123!') {
+  await page.goto('/login')
+  await page.evaluate(() => localStorage.clear())
+  await page.goto('/login')
+  await page.fill('input[type="email"]', email)
+  await page.fill('input[type="password"]', password)
+  await page.getByRole('button', { name: /sign in/i }).click()
+  await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 60_000 })
+}
+
 test.describe('Branches CRUD (UI-based)', () => {
   test.setTimeout(60_000) // Reduced timeout
 
   test('create, (optionally assign manager), delete', async ({ page }) => {
-    // Sign in as Admin via UI role button
-    await page.goto('/login')
-    const adminBtn = page.getByRole('button', { name: /Login as Admin/i })
-    await expect(adminBtn).toBeVisible({ timeout: 20_000 })
-    await adminBtn.click()
+    // Sign in as Admin with credentials
+    await loginWithCredentials(page, 'admin@trakr.com')
     await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
 
     // Test branches functionality - simplified approach
