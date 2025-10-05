@@ -958,7 +958,7 @@ const LoginScreen: React.FC = () => {
               </div>
 
               {/* Quick Access Role Buttons - Dev/Test Only */}
-              {(import.meta.env.DEV || import.meta.env.VITE_BACKEND === 'mock') && authMode === 'login' && (
+              {(import.meta.env.DEV || import.meta.env.VITE_BACKEND === 'mock' || import.meta.env.VITE_BACKEND === 'supabase') && authMode === 'login' && (
                 <div className="mt-6 pt-6 border-t border-white/20">
                   <p className="text-xs text-white/60 mb-3 text-center font-medium">Quick Access (Dev/Test Only)</p>
                   <div className="space-y-2">
