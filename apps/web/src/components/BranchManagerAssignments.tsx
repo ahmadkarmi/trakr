@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { User, UserRole, BranchManagerAssignment } from '@trakr/shared'
 import { api } from '../utils/api'
 import { useAuthStore } from '../stores/auth'
-import { PlusIcon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 
 interface BranchManagerAssignmentsProps {
   branchId: string
@@ -15,6 +15,18 @@ export function BranchManagerAssignments({ branchId, branchName }: BranchManager
   const queryClient = useQueryClient()
   const [showAddManager, setShowAddManager] = useState(false)
   const [selectedManagerId, setSelectedManagerId] = useState('')
+  
+  // Listen for custom event from sticky footer button
+  useEffect(() => {
+    const handleOpenAddManager = (event: CustomEvent) => {
+      if (event.detail?.branchId === branchId) {
+        setShowAddManager(true)
+      }
+    }
+    
+    window.addEventListener('openAddManager' as any, handleOpenAddManager as any)
+    return () => window.removeEventListener('openAddManager' as any, handleOpenAddManager as any)
+  }, [branchId])
 
   // Get current assignments for this branch
   const { data: assignments = [] } = useQuery<BranchManagerAssignment[]>({
@@ -64,28 +76,20 @@ export function BranchManagerAssignments({ branchId, branchName }: BranchManager
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-900">
-          Branch Managers - {branchName}
-        </h3>
-        <button
-          onClick={() => setShowAddManager(true)}
-          disabled={availableManagers.length === 0}
-          className="btn-primary btn-sm flex items-center gap-2"
-        >
-          <PlusIcon className="w-4 h-4" />
-          Add Manager
-        </button>
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">Assigned Managers</h3>
+        <p className="text-sm text-gray-500 mt-1">Managers who can approve audits for {branchName}</p>
       </div>
 
       {/* Current Assignments */}
       <div className="space-y-3">
         {assignedManagers.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
             <UserIcon className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-            <p>No managers assigned to this branch</p>
-            <p className="text-sm">Admins can approve audits for unassigned branches</p>
+            <p className="text-gray-600 font-medium">No managers assigned to this branch</p>
+            <p className="text-sm text-gray-500">Use the button at the bottom to assign managers</p>
+            <p className="text-xs text-gray-400 mt-2">Admins can approve audits for unassigned branches</p>
           </div>
         ) : (
           assignedManagers.map(manager => (
@@ -154,19 +158,26 @@ export function BranchManagerAssignments({ branchId, branchName }: BranchManager
                 </p>
               )}
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
                 <button
                   onClick={() => setShowAddManager(false)}
-                  className="flex-1 btn-outline"
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAssignManager}
                   disabled={!selectedManagerId || assignMutation.isPending}
-                  className="flex-1 btn-primary"
+                  className="flex-1 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {assignMutation.isPending ? 'Assigning...' : 'Assign Manager'}
+                  {assignMutation.isPending ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Assigning...</span>
+                    </div>
+                  ) : (
+                    'Assign Manager'
+                  )}
                 </button>
               </div>
             </div>

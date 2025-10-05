@@ -1,5 +1,5 @@
 import React from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Audit, Survey, calculateAuditScore, calculateWeightedAuditScore, calculateSectionWeightedCompliance, calculateSectionWeightedWeightedCompliance, AuditStatus, UserRole, Branch, LogEntry } from '@trakr/shared'
@@ -14,12 +14,14 @@ import { formatInTimeZone } from '../utils/datetime'
 import { QK } from '../utils/queryKeys'
 import { useOrgTimeZone } from '../hooks/useOrg'
 import { api } from '../utils/api'
+import { notificationHelpers } from '../utils/notifications'
 
 const AuditSummary: React.FC = () => {
   const { auditId } = useParams<{ auditId: string }>()
   const { user } = useAuthStore()
   const { showToast } = useToast()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const { data: audit, isLoading: loadingAudit } = useQuery<Audit | null>({
     queryKey: QK.AUDIT(auditId),
@@ -87,12 +89,30 @@ const AuditSummary: React.FC = () => {
       }
       return api.setAuditApproval(audit.id, { status: 'approved', note: payload.note, userId: user.id, signatureUrl: payload.signatureUrl, signatureType: payload.signatureType, approvalName: payload.approvalName })
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: QK.AUDIT(auditId) })
       queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
+      queryClient.invalidateQueries({ queryKey: QK.LOGS('audit', auditId) })
       setApproveOpen(false)
       setSignatureDataUrl(null)
       setTypedName('')
+      if (audit && user && branch) {
+        // Complete the actionable notification for this audit
+        try {
+          await api.completeNotificationAction(audit.id, 'REVIEW_AUDIT')
+          console.log('✅ Notification action completed (approved)')
+        } catch (error) {
+          console.error('Failed to complete notification action:', error)
+        }
+        
+        // Notify auditor about approval
+        await notificationHelpers.notifyAuditApproved({
+          auditorId: audit.assignedTo,
+          auditId: audit.id,
+          branchName: branch.name || 'Unknown Branch',
+          approverName: user.name || user.email,
+        })
+      }
     },
   })
 
@@ -101,12 +121,32 @@ const AuditSummary: React.FC = () => {
       if (!audit || !user) return null
       return api.setAuditApproval(audit.id, { status: 'rejected', note, userId: user.id })
     },
-    onSuccess: () => {
+    onSuccess: async (_, note) => {
       queryClient.invalidateQueries({ queryKey: QK.AUDIT(auditId) })
       queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
+      queryClient.invalidateQueries({ queryKey: QK.LOGS('audit', auditId) })
       setRejectOpen(false)
+      const rejectReason = note
       setRejectNote('')
       showToast({ message: 'Audit rejected.', variant: 'success' })
+      if (audit && user && branch) {
+        // Complete the actionable notification for this audit
+        try {
+          await api.completeNotificationAction(audit.id, 'REVIEW_AUDIT')
+          console.log('✅ Notification action completed (rejected)')
+        } catch (error) {
+          console.error('Failed to complete notification action:', error)
+        }
+        
+        // Notify auditor about rejection
+        await notificationHelpers.notifyAuditRejected({
+          auditorId: audit.assignedTo,
+          auditId: audit.id,
+          branchName: branch.name || 'Unknown Branch',
+          rejectorName: user.name || user.email,
+          reason: rejectReason,
+        })
+      }
     },
     onError: () => {
       showToast({ message: 'Failed to reject audit.', variant: 'error' })
@@ -125,9 +165,65 @@ const AuditSummary: React.FC = () => {
     queryFn: () => (auditId ? api.getActivityLogs(auditId) : Promise.resolve([])),
     enabled: !!auditId,
   })
-  const keyEvents = React.useMemo(() => auditLogs
-    .filter(l => ['audit_submitted', 'audit_approved', 'audit_rejected'].includes(l.action))
-    .slice(0, 5), [auditLogs])
+  
+  // Generate key events from actual logs OR derive from audit status if no logs exist
+  const keyEvents = React.useMemo(() => {
+    // Filter and sort logs by timestamp (most recent first)
+    const logsFiltered = auditLogs
+      .filter(l => ['audit_submitted', 'audit_approved', 'audit_rejected'].includes(l.action))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    
+    // If we have logs, use them (show ALL relevant logs, not just 5)
+    if (logsFiltered.length > 0) return logsFiltered
+    
+    // Otherwise, derive from audit status (for audits without activity logs)
+    if (!audit) return []
+    
+    const derivedEvents: LogEntry[] = []
+    
+    // Build complete history from audit timestamps
+    // Note: If an audit was rejected then approved, we need to show both events
+    // We'll check all timestamp fields and create events accordingly
+    
+    if (audit.submittedAt) {
+      derivedEvents.push({
+        id: `${audit.id}-submitted`,
+        userId: audit.submittedBy || audit.assignedTo || 'Unknown',
+        action: 'audit_submitted',
+        details: 'Audit submitted for approval',
+        entityType: 'audit',
+        entityId: audit.id,
+        timestamp: audit.submittedAt
+      })
+    }
+    
+    if (audit.rejectedAt) {
+      derivedEvents.push({
+        id: `${audit.id}-rejected`,
+        userId: audit.rejectedBy || 'Manager',
+        action: 'audit_rejected',
+        details: audit.rejectionNote || 'Audit rejected',
+        entityType: 'audit',
+        entityId: audit.id,
+        timestamp: audit.rejectedAt
+      })
+    }
+    
+    if (audit.approvedAt) {
+      derivedEvents.push({
+        id: `${audit.id}-approved`,
+        userId: audit.approvedBy || 'Manager',
+        action: 'audit_approved',
+        details: audit.approvalNote || 'Audit approved',
+        entityType: 'audit',
+        entityId: audit.id,
+        timestamp: audit.approvedAt
+      })
+    }
+    
+    // Sort derived events by timestamp (most recent first)
+    return derivedEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  }, [auditLogs, audit])
 
   const [submitIssues, setSubmitIssues] = React.useState<Array<{ sectionId: string; sectionTitle: string; questions: Array<{ id: string; text: string }> }>>([])
 
@@ -135,17 +231,52 @@ const AuditSummary: React.FC = () => {
     mutationFn: async () => {
       if (!auditId || !user) return null
       if (!audit) return null
-      // Only auto-complete when in draft/in_progress states. Do nothing for submitted/approved/rejected.
-      if (audit.status === AuditStatus.DRAFT || audit.status === AuditStatus.IN_PROGRESS) {
-        await api.setAuditStatus(auditId, AuditStatus.COMPLETED)
-      } else if (audit.status === AuditStatus.SUBMITTED || audit.status === AuditStatus.APPROVED || audit.status === AuditStatus.REJECTED) {
+      // Block submission if already submitted or approved
+      if (audit.status === AuditStatus.SUBMITTED || audit.status === AuditStatus.APPROVED) {
         return null
       }
+      
+      // For REJECTED audits, move to IN_PROGRESS first
+      if (audit.status === AuditStatus.REJECTED) {
+        await api.saveAuditProgress(auditId, {})
+        // After saving progress, the status changes to IN_PROGRESS, so we complete it
+        await api.setAuditStatus(auditId, AuditStatus.COMPLETED)
+      }
+      // Auto-complete when in draft/in_progress states
+      else if (audit.status === AuditStatus.DRAFT || audit.status === AuditStatus.IN_PROGRESS) {
+        await api.setAuditStatus(auditId, AuditStatus.COMPLETED)
+      }
+      
       return api.submitAuditForApproval(auditId, user.id)
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: QK.AUDIT(auditId) })
       queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
+      queryClient.invalidateQueries({ queryKey: QK.LOGS('audit', auditId) })
+      
+      // Notify branch manager about submission
+      if (audit && user && branch) {
+        // Find the branch managers for this branch
+        try {
+          const assignments = await api.getBranchManagerAssignments(branch.id)
+          if (assignments && assignments.length > 0) {
+            // Notify all branch managers assigned to this branch
+            for (const assignment of assignments) {
+              await notificationHelpers.notifyAuditSubmitted({
+                managerId: assignment.managerId,
+                auditId: audit.id,
+                branchName: branch.name || 'Unknown Branch',
+                auditorName: user.name || user.email,
+              })
+              // Invalidate notification queries for this manager
+              queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(assignment.managerId) })
+              queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(assignment.managerId) })
+            }
+          }
+        } catch (error) {
+          console.error('Failed to notify branch managers:', error)
+        }
+      }
     },
   })
 
@@ -169,7 +300,7 @@ const AuditSummary: React.FC = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
-    } else if (audit.status === AuditStatus.SUBMITTED || audit.status === AuditStatus.APPROVED || audit.status === AuditStatus.REJECTED) {
+    } else if (audit.status === AuditStatus.SUBMITTED || audit.status === AuditStatus.APPROVED) {
       return
     }
     setSubmitIssues([])
@@ -178,16 +309,55 @@ const AuditSummary: React.FC = () => {
 
   
 
+  const isAuditor = user?.role === UserRole.AUDITOR
+  const isManager = user?.role === UserRole.BRANCH_MANAGER || user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
+
   return (
     <DashboardLayout title="Audit Summary">
-      <div className="space-y-6">
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-semibold text-gray-900">Audit Summary - {auditId}</h2>
-              {audit && (<StatusBadge status={audit.status} className="rounded-full" />)}
+      <div className="space-y-4 sm:space-y-6">
+        <div className="card p-5 sm:p-6">
+          {/* Title Section */}
+          <div className="mb-5">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Audit Summary</h2>
+            {branch && (
+              <div className="text-sm sm:text-base text-gray-700 mb-3 flex items-center gap-2">
+                <span className="text-gray-400">📍</span>
+                <span className="font-medium break-words">{branch.name}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              {audit && (<StatusBadge status={audit.status} />)}
+              {audit && (
+                <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+                  ID: <span className="font-mono text-gray-700">{auditId?.slice(0, 8)}</span>
+                </span>
+              )}
             </div>
-            <div className="flex gap-2">
+          </div>
+
+          {/* Actions Section */}
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2">
+              {isAuditor && (
+                <>
+                  {(() => {
+                    const canSubmit = !!audit && (audit.status === AuditStatus.DRAFT || audit.status === AuditStatus.IN_PROGRESS || audit.status === AuditStatus.COMPLETED || audit.status === AuditStatus.REJECTED)
+                    return (
+                      <button
+                        data-testid="submit-for-approval"
+                        className={`btn-primary btn-sm whitespace-nowrap ${!canSubmit ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => canSubmit && handleSubmitForApproval()}
+                        disabled={!canSubmit || submitMutation.isPending}
+                      >
+                        {submitMutation.isPending ? '⏳ Submitting...' : '✓ Submit for Approval'}
+                      </button>
+                    )
+                  })()}
+                  <button className="btn-outline btn-sm whitespace-nowrap" onClick={() => navigate(-1)}>← Back</button>
+                </>
+              )}
+              {isManager && (
+                <div className="flex items-center gap-2 flex-wrap">
               <button className="btn-outline btn-sm" onClick={() => {
                 if (!audit || !survey) return;
                 // Build CSV rows
@@ -214,75 +384,68 @@ const AuditSummary: React.FC = () => {
                 a.download = `audit_${auditId}_summary.csv`;
                 a.click();
                 URL.revokeObjectURL(url);
-              }}><DocumentArrowDownIcon className="w-4 h-4 mr-2" /> Export CSV</button>
-              {(() => {
-                const canExportPdf = !!audit && (!!user && (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN || audit.status === AuditStatus.APPROVED))
-                return (
-                  <button
-                    className={`btn-primary btn-sm ${!canExportPdf ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    onClick={() => canExportPdf && window.print()}
-                    title={!canExportPdf ? 'Branch Managers can export after approval' : 'Export PDF'}
-                  >
-                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" /> Export PDF
-                  </button>
-                )
-              })()}
-              {(() => {
-                const canApproveHere = canManagerApprove
-                return (
-                  <>
-                    <button
-                      className={`btn-secondary btn-sm ${!canApproveHere ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      onClick={() => canApproveHere && setApproveOpen(true)}
-                      title={!canApproveHere ? 'Approval available for Branch Managers after submission' : 'Approve with signature'}
-                      disabled={!canApproveHere}
-                    >
-                      Approve
-                    </button>
-                    <button
-                    className={`btn-outline btn-sm ${!canApproveHere ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    onClick={() => canApproveHere && setRejectOpen(true)}
-                    title={!canApproveHere ? 'Reject available after submission' : 'Reject with reason'}
-                    disabled={!canApproveHere}
-                  >
-                    Reject
-                  </button>
-                  </>
-                )
-              })()}
-              {(() => {
-                const canSubmit = !!audit && !!user && user.role === UserRole.AUDITOR && (audit.status === AuditStatus.DRAFT || audit.status === AuditStatus.IN_PROGRESS || audit.status === AuditStatus.COMPLETED)
-                return (
-                  <button
-                    data-testid="submit-for-approval"
-                    className={`btn-secondary btn-sm ${!canSubmit ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    onClick={() => canSubmit && handleSubmitForApproval()}
-                    title={!canSubmit ? 'Only auditors can submit for approval. If already submitted/approved, this action is disabled.' : 'Submit for approval'}
-                    disabled={!canSubmit || submitMutation.isPending}
-                  >
-                    {submitMutation.isPending ? 'Submitting…' : 'Submit for approval'}
-                  </button>
-                )
-              })()}
+              }}><DocumentArrowDownIcon className="w-4 h-4 mr-1" /> CSV</button>
+                  {(() => {
+                    const canExportPdf = !!audit && (user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN || audit.status === AuditStatus.APPROVED)
+                    return (
+                      <button
+                        className={`btn-outline btn-sm whitespace-nowrap ${!canExportPdf ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => canExportPdf && window.print()}
+                        disabled={!canExportPdf}
+                      >
+                        <ArrowDownTrayIcon className="w-4 h-4 mr-1" /> PDF
+                      </button>
+                    )
+                  })()}
+                  {user?.role === UserRole.BRANCH_MANAGER && canManagerApprove && (
+                    <>
+                      <button 
+                        className="btn-primary whitespace-nowrap px-4 py-2.5 text-sm sm:text-base font-medium rounded-lg shadow-sm hover:shadow transition-shadow"
+                        onClick={() => setApproveOpen(true)}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span>✓</span>
+                          <span>Approve</span>
+                        </span>
+                      </button>
+                      <button 
+                        className="btn-outline whitespace-nowrap px-4 py-2.5 text-sm sm:text-base font-medium rounded-lg text-red-600 border-red-300 hover:bg-red-50 transition-colors"
+                        onClick={() => setRejectOpen(true)}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span>✕</span>
+                          <span>Reject</span>
+                        </span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Recent Activity */}
           {keyEvents.length > 0 && (
-            <div className="mt-2 p-3 border rounded bg-gray-50">
-              <h4 className="text-sm font-medium text-gray-900">Recent Activity</h4>
-              <ul className="mt-2 flex flex-wrap gap-3 text-xs text-gray-700">
+            <div className="mt-5 pt-5 border-t border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Recent Activity</h4>
+              <ul className="flex flex-wrap gap-3 text-xs text-gray-700">
                 {keyEvents.map(ev => (
                   <li key={ev.id} className="inline-flex items-center gap-2">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full ring-1 ring-inset ${ev.action === 'audit_approved' ? 'bg-green-50 text-green-700 ring-green-600/20' : ev.action === 'audit_rejected' ? 'bg-red-50 text-red-700 ring-red-600/20' : 'bg-amber-50 text-amber-800 ring-amber-600/20' }`}>
-                      {ev.action === 'audit_approved' ? 'Approved' : ev.action === 'audit_rejected' ? 'Rejected' : 'Submitted'}
+                      {ev.action === 'audit_approved' ? '\u2713 Approved' : ev.action === 'audit_rejected' ? '\u2715 Rejected' : '\u2192 Submitted'}
                     </span>
-                    <span>{formatInTimeZone(ev.timestamp, orgTimeZone)}</span>
-                    <span className="text-gray-500">•</span>
-                    <span className="text-gray-600">{ev.details}</span>
+                    <span className="text-gray-600">{formatInTimeZone(ev.timestamp, orgTimeZone)}</span>
+                    <span className="text-gray-400">\u2022</span>
+                    <span className="text-gray-700">{ev.details}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
-          <Modal
+        </div>
+
+        {/* Modals */}
+        <Modal
             open={approveOpen}
             onClose={() => setApproveOpen(false)}
             title="Approve Audit"
@@ -380,7 +543,9 @@ const AuditSummary: React.FC = () => {
               )}
             </div>
           </Modal>
-          </div>
+
+        {/* Main Content with Audit Details */}
+        <div className="card p-6">
           {submitIssues.length > 0 && (
             <div className="mb-4 p-4 border border-danger-300 bg-danger-50 rounded">
               <h4 className="font-medium text-danger-800">Required questions remaining</h4>
@@ -586,6 +751,81 @@ const AuditSummary: React.FC = () => {
                   </>
                 )
               })()}
+
+              {/* Audit History Section - Always at the end */}
+              {keyEvents.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-6">
+                  <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 className="text-lg font-semibold text-gray-900">📋 Audit History</h3>
+                    <p className="text-sm text-gray-600 mt-1">Timeline of key events for this audit</p>
+                  </div>
+                  <div className="p-6">
+                    <div className="flow-root">
+                      <ul className="-mb-8">
+                        {keyEvents.map((log, idx) => (
+                          <li key={log.id}>
+                            <div className="relative pb-8">
+                              {idx !== keyEvents.length - 1 && (
+                                <span className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
+                              )}
+                              <div className="relative flex space-x-3">
+                                <div>
+                                  <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${
+                                    log.action === 'audit_submitted' ? 'bg-blue-500' :
+                                    log.action === 'audit_approved' ? 'bg-green-500' :
+                                    log.action === 'audit_rejected' ? 'bg-red-500' :
+                                    'bg-gray-400'
+                                  }`}>
+                                    {log.action === 'audit_submitted' && (
+                                      <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    )}
+                                    {log.action === 'audit_approved' && (
+                                      <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                      </svg>
+                                    )}
+                                    {log.action === 'audit_rejected' && (
+                                      <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                      </svg>
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {log.action === 'audit_submitted' && 'Audit Submitted'}
+                                      {log.action === 'audit_approved' && 'Audit Approved'}
+                                      {log.action === 'audit_rejected' && 'Audit Rejected'}
+                                    </p>
+                                    {log.userId && (
+                                      <p className="mt-0.5 text-sm text-gray-500">
+                                        by {log.userId}
+                                      </p>
+                                    )}
+                                    {log.details && (
+                                      <p className="mt-1 text-sm text-gray-600 bg-gray-50 rounded p-2">
+                                        {log.details}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                                    <time dateTime={new Date(log.timestamp).toISOString()}>
+                                      {formatInTimeZone(log.timestamp, orgTimeZone)}
+                                    </time>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

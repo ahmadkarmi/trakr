@@ -29,13 +29,37 @@
   "css.lint.unknownAtRules": "ignore",
   "scss.lint.unknownAtRules": "ignore",
   "less.lint.unknownAtRules": "ignore",
+  "json.schemaDownload.enable": true,
+  "json.validate.enable": true,
   "json.schemas": [
     {
       "fileMatch": [
-        "/packages/shared/package.json",
-        "packages/shared/package.json"
+        "/package.json",
+        "package.json",
+        "/packages/*/package.json",
+        "packages/*/package.json"
       ],
       "url": "https://json.schemastore.org/package.json"
+    },
+    {
+      "fileMatch": [
+        "/.vscode/*.json",
+        ".vscode/*.json"
+      ],
+      "url": "https://json.schemastore.org/base.json"
+    },
+    {
+      "fileMatch": [
+        "**/mcp_config.json"
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mcpServers": {
+            "type": "object"
+          }
+        }
+      }
     }
   ]
 }

@@ -17,6 +17,7 @@ export interface Audit {
   status: AuditStatus;
   responses: Record<string, string>; // questionId -> yes/no/na
   naReasons: Record<string, string>; // questionId -> reason
+  score?: number; // calculated score (0-100) based on responses
   // Optional, per-section notes and photos captured by auditors
   sectionComments?: Record<string, string>; // sectionId -> comment
   sectionPhotos?: AuditPhoto[]; // section photos

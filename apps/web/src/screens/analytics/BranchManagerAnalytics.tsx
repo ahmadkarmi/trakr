@@ -3,31 +3,59 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth'
 import { api } from '../../utils/api'
 import { QK } from '../../utils/queryKeys'
-import { Audit, Branch, User, AuditStatus, UserRole } from '@trakr/shared'
-import AnalyticsKPICard from '../../components/analytics/AnalyticsKPICard'
+import { Audit, Branch, User, AuditStatus, UserRole, BranchManagerAssignment, Survey, calculateAuditScore, calculateWeightedAuditScore } from '@trakr/shared'
 import AnalyticsChart from '../../components/analytics/AnalyticsChart'
 import TeamPerformanceTable from '../../components/analytics/TeamPerformanceTable'
+import AnalyticsKPICard from '../../components/analytics/AnalyticsKPICard'
+import { useOrganization } from '../../contexts/OrganizationContext'
 
 const BranchManagerAnalytics: React.FC = () => {
   const { user } = useAuthStore()
-  
-  // Fetch data scoped to branch manager's branch
-  const { data: audits = [] } = useQuery<Audit[]>({ 
-    queryKey: QK.AUDITS('branch-manager'), 
-    queryFn: () => api.getAudits() 
-  })
-  const { data: branches = [] } = useQuery<Branch[]>({ queryKey: QK.BRANCHES, queryFn: api.getBranches })
-  const { data: users = [] } = useQuery<User[]>({ queryKey: QK.USERS, queryFn: api.getUsers })
+  const { currentOrg } = useOrganization()
+  const orgId = currentOrg?.id || user?.orgId
 
-  // Get current user's branch
-  const userBranch = branches.find(b => b.managerId === user?.id)
+  // Fetch data scoped to current organization
+  const { data: audits = [] } = useQuery<Audit[]>({
+    queryKey: ['audits', orgId],
+    queryFn: () => api.getAudits(orgId ? { orgId } : undefined),
+    enabled: !!orgId,
+  })
+  const { data: branches = [] } = useQuery<Branch[]>({
+    queryKey: QK.BRANCHES(orgId),
+    queryFn: () => api.getBranches(orgId),
+    enabled: !!orgId,
+  })
+  const { data: users = [] } = useQuery<User[]>({ queryKey: QK.USERS, queryFn: api.getUsers })
+  const { data: surveys = [] } = useQuery<Survey[]>({ queryKey: QK.SURVEYS, queryFn: () => api.getSurveys() })
   
-  // Filter data to branch manager's scope
-  const branchAudits = audits.filter(a => a.branchId === userBranch?.id)
+  // Get branch manager assignments for current user
+  const { data: myAssignments = [] } = useQuery<BranchManagerAssignment[]>({
+    queryKey: ['manager-branch-assignments', user?.id],
+    queryFn: () => user?.id ? api.getManagerBranchAssignments(user.id) : Promise.resolve([]),
+    enabled: !!user?.id,
+  })
+
+  // Get all branches this manager is assigned to
+  const myBranchIds = React.useMemo(() => 
+    myAssignments.map((a: BranchManagerAssignment) => a.branchId),
+    [myAssignments]
+  )
+  
+  const myBranches = React.useMemo(() => 
+    branches.filter(b => myBranchIds.includes(b.id)),
+    [branches, myBranchIds]
+  )
+  
+  // Filter data to branch manager's scope (all assigned branches)
+  const branchAudits = audits.filter(a => myBranchIds.includes(a.branchId))
   const teamMembers = users.filter(u => 
     u.role === UserRole.AUDITOR && 
     branchAudits.some(audit => audit.assignedTo === u.id)
   )
+  
+  console.log('[Branch Manager Analytics] My Branch IDs:', myBranchIds)
+  console.log('[Branch Manager Analytics] Branch Audits:', branchAudits.length)
+  console.log('[Branch Manager Analytics] All Audits:', audits.length)
 
   // Calculate branch-specific KPIs
   const totalBranchAudits = branchAudits.length
@@ -42,19 +70,88 @@ const BranchManagerAnalytics: React.FC = () => {
     return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED
   }).length
   
-  // Calculate a mock quality score based on completion rate and responses
-  // In a real implementation, this would use calculateAuditScore with Survey data
-  const branchAverageScore = branchAudits.length > 0 ? 
-    Math.round(branchAudits.reduce((sum, audit) => {
-      // Mock score calculation based on completion and status
-      const responseCount = Object.keys(audit.responses || {}).length
-      const mockScore = responseCount > 0 ? Math.min(100, responseCount * 10 + Math.random() * 20 + 60) : 0
-      return sum + mockScore
-    }, 0) / branchAudits.length) : 0
+  // Calculate average quality score using actual survey data
+  const branchAverageScore = React.useMemo(() => {
+    if (branchAudits.length === 0 || surveys.length === 0) return 0
+    
+    const scoresWithData = branchAudits
+      .filter(audit => audit.responses && Object.keys(audit.responses).length > 0)
+      .map(audit => {
+        const survey = surveys.find(s => s.id === audit.surveyId)
+        if (!survey) return null
+        // Try weighted score first, fall back to compliance if no weighted questions
+        const weightedScore = calculateWeightedAuditScore(audit, survey)
+        if (weightedScore.weightedPossiblePoints > 0) {
+          return weightedScore.weightedCompliancePercentage
+        }
+        const basicScore = calculateAuditScore(audit, survey)
+        return basicScore.compliancePercentage
+      })
+      .filter((score): score is number => score !== null)
+    
+    if (scoresWithData.length === 0) return 0
+    return Math.round(scoresWithData.reduce((sum, score) => sum + score, 0) / scoresWithData.length)
+  }, [branchAudits, surveys])
 
   // Calculate system average for comparison (anonymized)
   const systemCompletionRate = audits.length > 0 ? 
     Math.round((audits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length / audits.length) * 100) : 0
+
+  // Calculate real monthly trends from audit data
+  const monthlyTrends = React.useMemo(() => {
+    const now = new Date()
+    const months = []
+    
+    // Get last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthName = monthDate.toLocaleString('default', { month: 'short' })
+      const monthYear = monthDate.getFullYear()
+      const monthNum = monthDate.getMonth()
+      
+      // Filter audits for this month
+      const monthAudits = branchAudits.filter(a => {
+        const auditDate = new Date(a.createdAt)
+        return auditDate.getFullYear() === monthYear && auditDate.getMonth() === monthNum
+      })
+      
+      // Calculate metrics
+      const total = monthAudits.length
+      const completed = monthAudits.filter(a => 
+        a.status === AuditStatus.COMPLETED || 
+        a.status === AuditStatus.APPROVED
+      ).length
+      const completion = total > 0 ? Math.round((completed / total) * 100) : 0
+      
+      // Calculate quality score using actual survey data
+      const qualityScores = monthAudits
+        .filter(audit => audit.responses && Object.keys(audit.responses).length > 0)
+        .map(audit => {
+          const survey = surveys.find(s => s.id === audit.surveyId)
+          if (!survey) return null
+          // Try weighted score first, fall back to compliance if no weighted questions
+          const weightedScore = calculateWeightedAuditScore(audit, survey)
+          if (weightedScore.weightedPossiblePoints > 0) {
+            return weightedScore.weightedCompliancePercentage
+          }
+          const basicScore = calculateAuditScore(audit, survey)
+          return basicScore.compliancePercentage
+        })
+        .filter((score): score is number => score !== null)
+      
+      const quality = qualityScores.length > 0 ?
+        Math.round(qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length) : 0
+      
+      months.push({
+        name: monthName,
+        completion,
+        quality,
+        audits: total
+      })
+    }
+    
+    return months
+  }, [branchAudits, surveys])
 
   return (
     <div className="mobile-container breathing-room">
@@ -64,7 +161,7 @@ const BranchManagerAnalytics: React.FC = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Branch Analytics</h2>
             <p className="text-gray-600">
-              Performance insights for {userBranch?.name || 'your branch'}
+              Performance insights for {myBranches.length === 1 ? myBranches[0]?.name : `${myBranches.length} branches`}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -149,20 +246,25 @@ const BranchManagerAnalytics: React.FC = () => {
             <p className="text-sm text-gray-500">Monthly completion and quality trends</p>
           </div>
           <div className="p-6">
-            <AnalyticsChart
-              type="line"
-              data={[
-                { name: 'Jan', completion: 85, quality: 78 },
-                { name: 'Feb', completion: 88, quality: 82 },
-                { name: 'Mar', completion: 82, quality: 79 },
-                { name: 'Apr', completion: 91, quality: 85 },
-                { name: 'May', completion: 89, quality: 83 },
-                { name: 'Jun', completion: 93, quality: 87 },
-              ]}
-              xKey="name"
-              yKeys={['completion', 'quality']}
-              colors={['#10B981', '#3B82F6']}
-            />
+            {branchAudits.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <p className="text-lg font-medium">No data available</p>
+                <p className="text-sm mt-2">Audit data will appear here once audits are assigned to your branches.</p>
+              </div>
+            ) : monthlyTrends.every(m => m.audits === 0) ? (
+              <div className="text-center py-12 text-gray-500">
+                <p className="text-lg font-medium">No trend data yet</p>
+                <p className="text-sm mt-2">Monthly trends will appear as audits are completed over time.</p>
+              </div>
+            ) : (
+              <AnalyticsChart
+                type="line"
+                data={monthlyTrends}
+                xKey="name"
+                yKeys={['completion', 'quality']}
+                colors={['#10B981', '#3B82F6']}
+              />
+            )}
           </div>
         </div>
 
@@ -173,16 +275,25 @@ const BranchManagerAnalytics: React.FC = () => {
             <p className="text-sm text-gray-500">Current audit status distribution</p>
           </div>
           <div className="p-6">
-            <AnalyticsChart
-              type="pie"
-              data={[
-                { name: 'Completed', value: branchAudits.filter(a => a.status === AuditStatus.COMPLETED).length },
-                { name: 'In Progress', value: branchAudits.filter(a => a.status === AuditStatus.IN_PROGRESS).length },
-                { name: 'Draft', value: branchAudits.filter(a => a.status === AuditStatus.DRAFT).length },
-                { name: 'Submitted', value: branchAudits.filter(a => a.status === AuditStatus.SUBMITTED).length },
-              ]}
-              colors={['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6']}
-            />
+            {branchAudits.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <p className="text-lg font-medium">No audits to display</p>
+                <p className="text-sm mt-2">Audit status breakdown will appear here once audits are created.</p>
+              </div>
+            ) : (
+              <AnalyticsChart
+                type="pie"
+                data={[
+                  { name: 'Approved', value: branchAudits.filter(a => a.status === AuditStatus.APPROVED).length },
+                  { name: 'Submitted', value: branchAudits.filter(a => a.status === AuditStatus.SUBMITTED).length },
+                  { name: 'Completed', value: branchAudits.filter(a => a.status === AuditStatus.COMPLETED).length },
+                  { name: 'In Progress', value: branchAudits.filter(a => a.status === AuditStatus.IN_PROGRESS).length },
+                  { name: 'Draft', value: branchAudits.filter(a => a.status === AuditStatus.DRAFT).length },
+                  { name: 'Rejected', value: branchAudits.filter(a => a.status === AuditStatus.REJECTED).length },
+                ]}
+                colors={['#10B981', '#8B5CF6', '#3B82F6', '#F59E0B', '#6B7280', '#EF4444']}
+              />
+            )}
           </div>
         </div>
       </div>

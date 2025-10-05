@@ -6,11 +6,13 @@ import { Survey, SurveySection, SurveyQuestion, QuestionType, QUESTION_TYPE_LABE
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon, ChevronUpIcon, ChevronDownIcon, PencilSquareIcon, XMarkIcon, InformationCircleIcon, TrophyIcon, ListBulletIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { useToast } from '../hooks/useToast'
 
 const SurveyTemplateEditor: React.FC = () => {
   const { surveyId } = useParams<{ surveyId: string }>()
   const isEditing = !!surveyId
   const queryClient = useQueryClient()
+  const { showToast } = useToast()
 
   const { data: survey, isLoading } = useQuery<Survey | null>({
     queryKey: QK.SURVEY(surveyId),
@@ -26,6 +28,13 @@ const SurveyTemplateEditor: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
       if (surveyId) queryClient.invalidateQueries({ queryKey: QK.SURVEY(surveyId) })
+      showToast({ message: 'Survey updated successfully!', variant: 'success' })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to update survey.', 
+        variant: 'error' 
+      })
     },
   })
 
@@ -466,101 +475,146 @@ const SurveyTemplateEditor: React.FC = () => {
 
   return (
     <DashboardLayout title={isEditing ? 'Edit Survey Template' : 'Create Survey Template'}>
-      <div className="bg-white rounded-lg shadow p-6 space-y-6">
+      <div className="mobile-container breathing-room">
         {isLoading ? (
           <p className="text-gray-500">Loading template…</p>
         ) : !isEditing || !survey ? (
           <p className="text-gray-500">Template not found.</p>
         ) : (
           <>
-            <h2 className="text-xl font-semibold text-gray-900">Template Settings</h2>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div>
-                <label className="label" htmlFor="title">Title</label>
-                <input id="title" className="input mt-1" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <div className="card-spacious">
+              <div className="card-header">
+                <h2 className="text-xl font-semibold text-gray-900">Template Settings</h2>
+                <p className="text-sm text-gray-600 mt-1">Configure survey details and frequency</p>
               </div>
-              <div>
-                <label className="label" htmlFor="active">Active</label>
-                <div className="mt-2">
-                  <button
-                    className="btn btn-outline btn-md"
-                    onClick={() => setActive(v => !v)}
+              
+              <div className="card-body">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="content-section">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="title">Title</label>
+                    <input id="title" className="input rounded-xl border-gray-300 bg-white w-full" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter survey title" />
+                  </div>
+                  <div className="content-section">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="active">Status</label>
+                    <button
+                      className={`btn btn-responsive-sm w-full ${
+                        active 
+                          ? 'bg-green-50 border-2 border-green-600 text-green-700 hover:bg-green-100' 
+                          : 'bg-gray-50 border-2 border-gray-400 text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={() => setActive(v => !v)}
+                    >
+                      {active ? '✓ Active' : '○ Inactive'}
+                    </button>
+                  </div>
+                  <div className="content-section">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="frequency">Frequency</label>
+                    <select
+                      id="frequency"
+                      className="input rounded-xl border-gray-300 bg-white w-full"
+                      value={frequency}
+                      onChange={(e) => setFrequency(e.target.value as AuditFrequency)}
+                      title="How often this survey can be conducted per branch"
+                    >
+                      <option value={AuditFrequency.UNLIMITED}>Unlimited</option>
+                      <option value={AuditFrequency.DAILY}>Daily</option>
+                      <option value={AuditFrequency.WEEKLY}>Weekly</option>
+                      <option value={AuditFrequency.MONTHLY}>Monthly</option>
+                      <option value={AuditFrequency.QUARTERLY}>Quarterly</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="content-section">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="desc">Description</label>
+                  <textarea
+                    id="desc"
+                    className="input rounded-xl border-gray-300 bg-white w-full"
+                    rows={4}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe the purpose of this survey"
+                  />
+                </div>
+              </div>
+
+              <div className="card-footer">
+                <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                  <button 
+                    className="btn btn-outline btn-responsive-sm" 
+                    onClick={() => { setTitle(survey.title); setDescription(survey.description); setActive(!!survey.isActive); setFrequency(survey.frequency || AuditFrequency.UNLIMITED); setSections(survey.sections || []); }}
                   >
-                    {active ? 'Deactivate' : 'Activate'}
+                    Reset Changes
+                  </button>
+                  <button 
+                    className="btn btn-primary btn-responsive-sm" 
+                    onClick={onSave} 
+                    disabled={updateMutation.isPending}
+                  >
+                    {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </div>
-              <div>
-                <label className="label" htmlFor="frequency">Frequency</label>
-                <select
-                  id="frequency"
-                  className="input mt-1"
-                  value={frequency}
-                  onChange={(e) => setFrequency(e.target.value as AuditFrequency)}
-                  title="How often this survey can be conducted per branch"
-                >
-                  <option value={AuditFrequency.UNLIMITED}>Unlimited</option>
-                  <option value={AuditFrequency.DAILY}>Daily</option>
-                  <option value={AuditFrequency.WEEKLY}>Weekly</option>
-                  <option value={AuditFrequency.MONTHLY}>Monthly</option>
-                  <option value={AuditFrequency.QUARTERLY}>Quarterly</option>
-                </select>
-              </div>
             </div>
-
-            <div>
-              <label className="label" htmlFor="desc">Description</label>
-              <textarea
-                id="desc"
-                className="input mt-1"
-                rows={4}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button className="btn btn-outline btn-md" onClick={() => { setTitle(survey.title); setDescription(survey.description); setActive(!!survey.isActive); setFrequency(survey.frequency || AuditFrequency.UNLIMITED); setSections(survey.sections || []); }}>Reset</button>
-              <button className="btn btn-primary btn-md" onClick={onSave} disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
-              </button>
-            </div>
-
-            <hr className="my-6" />
 
             {/* Pages as tabs */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex flex-wrap gap-2">
+            <div className="card-spacious">
+              <div className="card-header">
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Survey Pages</h3>
+                    <p className="text-sm text-gray-600 mt-1">Organize questions into sections</p>
+                  </div>
+                  <button 
+                    className="btn btn-primary btn-sm rounded-xl" 
+                    title="Add Page" 
+                    onClick={addSection}
+                  >
+                    <PlusIcon className="w-4 h-4 mr-1" />
+                    Add Page
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
                   {[...sections].sort((a,b) => (a.order ?? 0) - (b.order ?? 0)).map(sec => (
                     <button
                       key={sec.id}
-                      className={`px-3 py-1 rounded-t border ${selectedSectionId===sec.id ? 'bg-white border-gray-300 border-b-white' : 'bg-gray-100 border-transparent'} text-sm`}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                        selectedSectionId===sec.id 
+                          ? 'bg-primary-50 border-2 border-primary-600 text-primary-700 shadow-sm' 
+                          : 'bg-gray-50 border border-gray-300 text-gray-700 hover:bg-gray-100'
+                      }`}
                       onClick={() => setSelectedSectionId(sec.id)}
                     >
                       {sec.title || 'Untitled Page'}
                     </button>
                   ))}
                 </div>
-                <div className="flex gap-2 items-center">
-                  <button className="btn btn-ghost btn-sm" title="Add Page" onClick={addSection}>
-                    <PlusIcon className="w-5 h-5" />
-                  </button>
-                  {selectedSectionId && (
-                    <>
-                      <button className="btn btn-ghost btn-sm" title="Move Left" onClick={() => moveSection(selectedSectionId, 'up')}>
-                        <ChevronLeftIcon className="w-5 h-5" />
-                      </button>
-                      <button className="btn btn-ghost btn-sm" title="Move Right" onClick={() => moveSection(selectedSectionId, 'down')}>
-                        <ChevronRightIcon className="w-5 h-5" />
-                      </button>
-                      <button className="btn btn-ghost btn-sm text-danger-600" title="Remove Page" onClick={() => removeSection(selectedSectionId)}>
-                        <TrashIcon className="w-5 h-5" />
-                      </button>
-                    </>
-                  )}
-                </div>
+                {selectedSectionId && (
+                  <div className="flex gap-2 items-center mt-3 pt-3 border-t border-gray-200">
+                    <span className="text-xs text-gray-500 font-medium mr-2">Page Actions:</span>
+                    <button 
+                      className="btn btn-outline btn-xs rounded-lg" 
+                      title="Move Left" 
+                      onClick={() => moveSection(selectedSectionId, 'up')}
+                    >
+                      <ChevronLeftIcon className="w-4 h-4" />
+                    </button>
+                    <button 
+                      className="btn btn-outline btn-xs rounded-lg" 
+                      title="Move Right" 
+                      onClick={() => moveSection(selectedSectionId, 'down')}
+                    >
+                      <ChevronRightIcon className="w-4 h-4" />
+                    </button>
+                    <button 
+                      className="btn btn-xs rounded-lg bg-red-50 border border-red-300 text-red-700 hover:bg-red-100" 
+                      title="Remove Page" 
+                      onClick={() => removeSection(selectedSectionId)}
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Selected page editor */}
@@ -570,21 +624,37 @@ const SurveyTemplateEditor: React.FC = () => {
                 (() => {
                   const sec = sections.find(s => s.id === selectedSectionId)!;
                   return (
-                    <div className="border border-gray-200 rounded-md p-4">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label className="label">Page Title</label>
-                          <input className="input mt-1" value={sec.title} onChange={(e) => updateSectionField(sec.id, 'title', e.target.value)} />
+                    <div className="card-body">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div className="content-section">
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Page Title</label>
+                          <input 
+                            className="input rounded-xl border-gray-300 bg-white w-full" 
+                            value={sec.title} 
+                            onChange={(e) => updateSectionField(sec.id, 'title', e.target.value)} 
+                            placeholder="Enter page title"
+                          />
                         </div>
-                        <div>
-                          <label className="label">Page Description</label>
-                          <input className="input mt-1" value={sec.description || ''} onChange={(e) => updateSectionField(sec.id, 'description', e.target.value)} />
+                        <div className="content-section">
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Page Description</label>
+                          <input 
+                            className="input rounded-xl border-gray-300 bg-white w-full" 
+                            value={sec.description || ''} 
+                            onChange={(e) => updateSectionField(sec.id, 'description', e.target.value)} 
+                            placeholder="Describe this page"
+                          />
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-md font-semibold text-gray-900">Questions</h4>
-                        <button className="btn btn-secondary btn-sm" onClick={() => addQuestion(sec.id)}>Add Question</button>
+                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                        <h4 className="text-base font-semibold text-gray-900">Questions</h4>
+                        <button 
+                          className="btn btn-primary btn-sm rounded-xl" 
+                          onClick={() => addQuestion(sec.id)}
+                        >
+                          <PlusIcon className="w-4 h-4 mr-1" />
+                          Add Question
+                        </button>
                       </div>
 
                       {sec.questions.length === 0 ? (

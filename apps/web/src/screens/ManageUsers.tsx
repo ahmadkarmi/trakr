@@ -2,31 +2,22 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import DashboardLayout from '../components/DashboardLayout'
 import ResponsiveTable from '../components/ResponsiveTable'
-import StatCard from '../components/StatCard'
 import { api } from '../utils/api'
 import { User, UserRole, USER_ROLE_LABELS } from '@trakr/shared'
-import { 
-  UserPlusIcon, 
-  UserGroupIcon, 
-  CheckCircleIcon, 
-  XCircleIcon,
-  PencilSquareIcon,
-  TrashIcon,
-  EnvelopeIcon,
-  ShieldCheckIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/react/24/outline'
+import { PlusIcon, PencilIcon, TrashIcon, EnvelopeIcon, ShieldCheckIcon, UserIcon, UserPlusIcon, UserGroupIcon, CheckCircleIcon, PencilSquareIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import StatCard from '../components/StatCard'
+import { useToast } from '../hooks/useToast'
 
 const ManageUsers: React.FC = () => {
   const queryClient = useQueryClient()
+  const { showToast } = useToast()
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
   const [inviteForm, setInviteForm] = useState({
     email: '',
     name: '',
     role: UserRole.AUDITOR
   })
-  const [editingUser, setEditingUser] = useState<User | null>(null)
-
   // Fetch users
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
@@ -40,10 +31,20 @@ const ManageUsers: React.FC = () => {
       console.log('Inviting user:', data)
       return Promise.resolve({} as User)
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       setShowInviteModal(false)
       setInviteForm({ email: '', name: '', role: UserRole.AUDITOR })
+      showToast({ 
+        message: `Invitation sent to ${variables.email}!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to send invitation.', 
+        variant: 'error' 
+      })
     }
   })
 
@@ -51,9 +52,20 @@ const ManageUsers: React.FC = () => {
   const updateUserMutation = useMutation({
     mutationFn: (data: { userId: string; updates: Partial<User> }) =>
       api.updateUser(data.userId, data.updates),
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       setEditingUser(null)
+      const user = users.find((u: User) => u.id === variables.userId)
+      showToast({ 
+        message: `User "${user?.name || 'User'}" updated successfully!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to update user.', 
+        variant: 'error' 
+      })
     }
   })
 
@@ -64,8 +76,19 @@ const ManageUsers: React.FC = () => {
       console.log('Deleting user:', userId)
       return Promise.resolve()
     },
-    onSuccess: () => {
+    onSuccess: (_result, userId) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
+      const user = users.find((u: User) => u.id === userId)
+      showToast({ 
+        message: `User "${user?.name || 'User'}" deleted successfully!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to delete user.', 
+        variant: 'error' 
+      })
     }
   })
 
@@ -76,8 +99,19 @@ const ManageUsers: React.FC = () => {
       console.log('Resending invitation for user:', userId)
       return Promise.resolve()
     },
-    onSuccess: () => {
+    onSuccess: (_result, userId) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
+      const user = users.find((u: User) => u.id === userId)
+      showToast({ 
+        message: `Invitation resent to ${user?.email || 'user'}!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to resend invitation.', 
+        variant: 'error' 
+      })
     }
   })
 
@@ -119,58 +153,59 @@ const ManageUsers: React.FC = () => {
 
   return (
     <DashboardLayout title="Manage Users">
-      <div className="space-y-6">
-        {/* Header + actions */}
-        <div className="card p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">User Management</h2>
-              <p className="text-gray-600">Invite new users and manage existing team members.</p>
-            </div>
-            <button 
-              className="btn btn-primary btn-md"
-              onClick={() => setShowInviteModal(true)}
-            >
-              <UserPlusIcon className="w-5 h-5 mr-2" />
-              Invite User
-            </button>
+      <div className="mobile-container breathing-room">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Manage Users</h1>
+            <p className="text-gray-600 mt-1">{users.length} team members</p>
           </div>
+          <button 
+            className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors inline-flex items-center gap-2"
+            onClick={() => setShowInviteModal(true)}
+          >
+            <UserPlusIcon className="w-5 h-5" />
+            Invite User
+          </button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <StatCard 
-            title="Total Users" 
-            value={users.length} 
-            subtitle="All team members" 
-            variant="primary" 
-            icon={<UserGroupIcon className="w-6 h-6 text-primary-700" />} 
-          />
-          <StatCard 
-            title="Active Users" 
-            value={activeUsers} 
-            subtitle="Currently active" 
-            variant="success" 
-            icon={<CheckCircleIcon className="w-6 h-6 text-success-700" />} 
-          />
-          <StatCard 
-            title="Pending Invites" 
-            value={pendingInvites} 
-            subtitle="Awaiting acceptance" 
-            variant="warning" 
-            icon={<EnvelopeIcon className="w-6 h-6 text-warning-700" />} 
-          />
-          <StatCard 
-            title="Administrators" 
-            value={adminUsers} 
-            subtitle="Admin access" 
-            variant="neutral" 
-            icon={<ShieldCheckIcon className="w-6 h-6 text-gray-700" />} 
-          />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mb-2">
+              <UserGroupIcon className="w-5 h-5 text-primary-600" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+            <p className="text-xs text-gray-600 mt-1">Total Users</p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mb-2">
+              <CheckCircleIcon className="w-5 h-5 text-green-600" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{activeUsers}</p>
+            <p className="text-xs text-gray-600 mt-1">Active</p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mb-2">
+              <EnvelopeIcon className="w-5 h-5 text-orange-600" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{pendingInvites}</p>
+            <p className="text-xs text-gray-600 mt-1">Pending</p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+              <ShieldCheckIcon className="w-5 h-5 text-gray-600" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{adminUsers}</p>
+            <p className="text-xs text-gray-600 mt-1">Admins</p>
+          </div>
         </div>
 
         {/* Users table */}
-        <div className="card">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Team Members</h3>
             <p className="text-sm text-gray-600 mt-1">Manage user roles, permissions, and account status.</p>

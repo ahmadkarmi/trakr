@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth'
 import { api } from '../../utils/api'
 import { QK } from '../../utils/queryKeys'
-import { Audit, AuditStatus, UserRole } from '@trakr/shared'
+import { Audit, AuditStatus, Survey, calculateAuditScore, calculateWeightedAuditScore } from '@trakr/shared'
 import AnalyticsKPICard from '../../components/analytics/AnalyticsKPICard'
 import AnalyticsChart from '../../components/analytics/AnalyticsChart'
 import PersonalGoalsWidget from '../../components/analytics/PersonalGoalsWidget'
@@ -16,6 +16,7 @@ const AuditorAnalytics: React.FC = () => {
     queryKey: QK.AUDITS('auditor'), 
     queryFn: () => api.getAudits() 
   })
+  const { data: surveys = [] } = useQuery<Survey[]>({ queryKey: QK.SURVEYS, queryFn: () => api.getSurveys() })
 
   // Filter to only current user's audits
   const myAudits = audits.filter(a => a.assignedTo === user?.id)
@@ -33,28 +34,55 @@ const AuditorAnalytics: React.FC = () => {
     return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED
   }).length
   
-  // Calculate a mock quality score based on completion rate and responses
-  // In a real implementation, this would use calculateAuditScore with Survey data
-  const myAverageScore = myAudits.length > 0 ? 
-    Math.round(myAudits.reduce((sum, audit) => {
-      // Mock score calculation based on completion and status
-      const responseCount = Object.keys(audit.responses || {}).length
-      const mockScore = responseCount > 0 ? Math.min(100, responseCount * 10 + Math.random() * 20 + 60) : 0
-      return sum + mockScore
-    }, 0) / myAudits.length) : 0
+  // Calculate average quality score using actual survey data
+  const myAverageScore = React.useMemo(() => {
+    if (myAudits.length === 0 || surveys.length === 0) return 0
+    
+    const scoresWithData = myAudits
+      .filter(audit => audit.responses && Object.keys(audit.responses).length > 0)
+      .map(audit => {
+        const survey = surveys.find(s => s.id === audit.surveyId)
+        if (!survey) return null
+        // Try weighted score first, fall back to compliance if no weighted questions
+        const weightedScore = calculateWeightedAuditScore(audit, survey)
+        if (weightedScore.weightedPossiblePoints > 0) {
+          return weightedScore.weightedCompliancePercentage
+        }
+        const basicScore = calculateAuditScore(audit, survey)
+        return basicScore.compliancePercentage
+      })
+      .filter((score): score is number => score !== null)
+    
+    if (scoresWithData.length === 0) return 0
+    return Math.round(scoresWithData.reduce((sum, score) => sum + score, 0) / scoresWithData.length)
+  }, [myAudits, surveys])
 
   // Calculate team average for anonymous comparison
   const teamAudits = audits.filter(a => a.assignedTo !== user?.id) // Other auditors' audits
   const teamCompletionRate = teamAudits.length > 0 ? 
     Math.round((teamAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length / teamAudits.length) * 100) : 0
   
-  const teamAverageScore = teamAudits.length > 0 ? 
-    Math.round(teamAudits.reduce((sum, audit) => {
-      // Mock score calculation based on completion and status
-      const responseCount = Object.keys(audit.responses || {}).length
-      const mockScore = responseCount > 0 ? Math.min(100, responseCount * 10 + Math.random() * 20 + 60) : 0
-      return sum + mockScore
-    }, 0) / teamAudits.length) : 0
+  const teamAverageScore = React.useMemo(() => {
+    if (teamAudits.length === 0 || surveys.length === 0) return 0
+    
+    const scoresWithData = teamAudits
+      .filter(audit => audit.responses && Object.keys(audit.responses).length > 0)
+      .map(audit => {
+        const survey = surveys.find(s => s.id === audit.surveyId)
+        if (!survey) return null
+        // Try weighted score first, fall back to compliance if no weighted questions
+        const weightedScore = calculateWeightedAuditScore(audit, survey)
+        if (weightedScore.weightedPossiblePoints > 0) {
+          return weightedScore.weightedCompliancePercentage
+        }
+        const basicScore = calculateAuditScore(audit, survey)
+        return basicScore.compliancePercentage
+      })
+      .filter((score): score is number => score !== null)
+    
+    if (scoresWithData.length === 0) return 0
+    return Math.round(scoresWithData.reduce((sum, score) => sum + score, 0) / scoresWithData.length)
+  }, [teamAudits, surveys])
 
   // Calculate average time per audit (mock data for now)
   const avgTimePerAudit = "2.3h"

@@ -2,21 +2,33 @@ import React, { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Audit, Survey, QuestionType, AuditStatus } from '@trakr/shared'
+import { Audit, Survey, QuestionType, AuditStatus, UserRole } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
-import { InformationCircleIcon, PhotoIcon, CheckIcon, XMarkIcon, ExclamationTriangleIcon, XCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { PhotoIcon, CheckIcon, XMarkIcon, ExclamationTriangleIcon, XCircleIcon, CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import { useAuthStore } from '../stores/auth'
 
 const AuditWizard: React.FC = () => {
   const { auditId } = useParams<{ auditId: string }>()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { user } = useAuthStore()
 
   const { data: audit, isLoading: loadingAudit } = useQuery<Audit | null>({
     queryKey: QK.AUDIT(auditId),
     queryFn: () => (auditId ? api.getAuditById(auditId) : Promise.resolve(null)),
     enabled: !!auditId,
   })
+
+  // Redirect auditors away from submitted audits (unless rejected)
+  React.useEffect(() => {
+    if (audit && user?.role === UserRole.AUDITOR) {
+      // If audit is submitted or approved, auditor cannot edit it
+      if (audit.status === AuditStatus.SUBMITTED || audit.status === AuditStatus.APPROVED) {
+        navigate(`/audits/${auditId}/summary`, { replace: true })
+      }
+    }
+  }, [audit, user, auditId, navigate])
 
   const { data: survey, isLoading: loadingSurvey } = useQuery<Survey | null>({
     queryKey: QK.SURVEY(audit?.surveyId),
@@ -305,7 +317,7 @@ const AuditWizard: React.FC = () => {
 
   return (
     <DashboardLayout title="Audit Wizard">
-      <div className="mobile-container breathing-room max-w-3xl 2xl:max-w-4xl mx-auto pb-24">
+      <div className="mobile-container breathing-room pb-24">
         <div className="card-spacious">
           <div className="card-header">
             <div className="text-center sm:text-left">
@@ -437,15 +449,15 @@ const AuditWizard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="card p-4">
-                <h4 className="text-md font-semibold text-gray-900 mb-1">{currentSection?.title}</h4>
-                <p className="text-sm text-gray-500 mb-4">{currentSection?.description}</p>
+              <div className="card p-4 sm:p-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">{currentSection?.title}</h4>
+                <p className="text-sm text-gray-600 mb-6">{currentSection?.description}</p>
 
                 {/* Utility bar: progress + filter */}
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm text-gray-500">Answered {answeredCount}/{currentSection?.questions.length || 0}</p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-4 border-b border-gray-200">
+                  <p className="text-sm font-medium text-gray-700">Answered {answeredCount}/{currentSection?.questions.length || 0}</p>
                   <button
-                    className={"btn-outline btn-xs " + ((currentSection && showUnansweredOnlyBySection[currentSection.id]) ? 'bg-gray-50' : '')}
+                    className={"btn btn-outline btn-xs " + ((currentSection && showUnansweredOnlyBySection[currentSection.id]) ? 'bg-primary-50 border-primary-600' : '')}
                     onClick={() => { if (currentSection) setShowUnansweredOnlyBySection(prev => ({ ...prev, [currentSection.id]: !prev[currentSection.id] })) }}
                   >
                     {(currentSection && showUnansweredOnlyBySection[currentSection.id]) ? 'Showing Unanswered' : 'Show Unanswered Only'}
@@ -453,60 +465,64 @@ const AuditWizard: React.FC = () => {
                 </div>
 
                 {/* All questions in this section */}
-                <fieldset role="group" className="space-y-4">
-                  <legend className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                    <InformationCircleIcon className="w-4 h-4" />
-                    Questions
-                  </legend>
+                <fieldset role="group" className="space-y-6 sm:space-y-8">
                   {displayQuestions.map((q, idx) => {
                     const answer = responses[q.id]
                     const needsReason = q.isWeighted && q.type === QuestionType.YES_NO && answer === 'na'
                     const missingReason = needsReason && !(naReasons[q.id] || '').trim()
                     return (
-                      <div key={q.id} ref={el => (questionRefs.current[q.id] = el)} className={`p-4 border rounded-lg bg-white ${highlightedQuestionId === q.id ? 'ring-2 ring-primary-400' : ''} ${(q.required && !responses[q.id]) ? 'border-danger-300' : 'border-gray-200'}`}>
+                      <div key={q.id} ref={el => (questionRefs.current[q.id] = el)} className={`space-y-4 pb-6 sm:pb-8 border-b border-gray-200 last:border-0 ${highlightedQuestionId === q.id ? 'ring-2 ring-primary-400 rounded-lg p-4 -m-4' : ''}`}>
                         <div>
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="font-medium text-sm sm:text-base">Q{idx + 1}. {q.text}</p>
+                          <div className="flex items-start justify-between gap-3 mb-4">
+                            <p className="font-semibold text-base sm:text-lg text-gray-900 leading-relaxed">Q{idx + 1}. {q.text}</p>
                             {q.required && (
                               <span className="shrink-0 inline-flex items-center rounded-full border border-danger-200 bg-danger-50 text-danger-700 px-2 py-0.5 text-[11px] font-medium">Required</span>
                             )}
                           </div>
-                          <div className="mt-3">
-                            <label className="label">Answer</label>
-                            <div className="mt-2 grid grid-cols-3 gap-2">
+                          <div className="mt-4">
+                            <label className="block text-sm font-semibold text-gray-700 mb-3">Answer</label>
+                            <div className="grid grid-cols-3 gap-2 sm:gap-3">
                               {([
-                                { k: 'yes', label: 'Yes' },
-                                { k: 'no', label: 'No' },
-                                { k: 'na', label: 'N/A' },
-                              ] as const).map(({ k, label }) => (
+                                { k: 'yes', label: 'Yes', icon: CheckIcon, color: 'success' },
+                                { k: 'no', label: 'No', icon: XMarkIcon, color: 'danger' },
+                                { k: 'na', label: 'N/A', icon: null, color: 'gray' },
+                              ] as const).map(({ k, label, icon: Icon, color }) => (
                                 <button
                                   key={k}
                                   type="button"
                                   data-testid={`answer-${q.id}-${k}`}
                                   aria-pressed={answer === k}
-                                  className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm border rounded-md transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 ${
-                                    answer === k ? (k === 'yes' ? 'bg-primary-50 border-primary-600' : k === 'no' ? 'bg-danger-50 border-danger-600' : 'bg-gray-50 border-gray-400') : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                                  className={`btn touch-target inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border-2 rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 ${
+                                    answer === k 
+                                      ? (color === 'success' ? 'bg-green-50 border-green-600 text-green-700 shadow-sm' 
+                                        : color === 'danger' ? 'bg-red-50 border-red-600 text-red-700 shadow-sm' 
+                                        : 'bg-gray-100 border-gray-500 text-gray-700 shadow-sm')
+                                      : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-gray-400'
                                   }`}
                                   onClick={() => setAnswer(q.id, k as 'yes' | 'no' | 'na')}
                                 >
-                                  {k === 'yes' && <CheckIcon className="w-4 h-4" />}
-                                  {k === 'no' && <XMarkIcon className="w-4 h-4" />}
-                                  <span>{label}</span>
+                                  {Icon && <Icon className="w-5 h-5" />}
+                                  <span className="font-semibold">{label}</span>
                                 </button>
                               ))}
                             </div>
                           </div>
                           {answer === 'na' && (
-                            <div className="mt-3">
-                              <label className="label">N/A Reason {needsReason ? '(required)' : '(optional)'}:</label>
-                              <input
-                                className="input mt-1"
+                            <div className="mt-5 p-5 bg-amber-50 border border-amber-200 rounded-2xl">
+                              <label className="block text-sm font-semibold text-amber-900 mb-3">
+                                📝 N/A Justification{needsReason ? ' (Required)' : ' (Optional)'}
+                              </label>
+                              <textarea
+                                className={`input rounded-xl w-full text-base min-h-[140px] sm:min-h-[90px] ${missingReason ? 'border-red-500 ring-2 ring-red-200' : 'border-amber-300'}`}
                                 value={naReasons[q.id] || ''}
                                 onChange={(e) => { setNaReasons(prev => ({ ...prev, [q.id]: e.target.value })); setUnsavedChanges(true) }}
-                                placeholder="Reason for N/A"
+                                placeholder="Explain why this question is Not Applicable"
                               />
                               {missingReason && (
-                                <p className="text-danger-600 text-xs mt-1">Reason is required for N/A on weighted questions.</p>
+                                <p className="flex items-center gap-2 text-sm text-red-600 font-medium mt-3">
+                                  <ExclamationTriangleIcon className="w-5 h-5" />
+                                  N/A justification is required for weighted questions.
+                                </p>
                               )}
                             </div>
                           )}
@@ -548,13 +564,12 @@ const AuditWizard: React.FC = () => {
                         )}
                         <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={onFilesSelected} />
                       </div>
-                      <label className="label">Additional comments (optional)</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">Additional comments (optional)</label>
                       <textarea
-                        className="input mt-1"
-                        rows={3}
+                        className="input rounded-xl border-gray-300 text-base min-h-[140px] sm:min-h-[90px]"
                         value={sectionComments[currentSection!.id] || ''}
                         onChange={(e) => { setSectionComments(prev => ({ ...prev, [currentSection!.id]: e.target.value })); setUnsavedChanges(true) }}
-                        placeholder="Add comments for this section"
+                        placeholder="Add any additional comments for this section"
                       />
                     </div>
                   )}
@@ -569,16 +584,108 @@ const AuditWizard: React.FC = () => {
 
       {/* Full-width bottom navigation bar */}
       {audit && survey && (
-        <div className="fixed bottom-0 right-0 left-0 md:left-64 lg:left-72 border-t bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 z-40">
-          <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-[calc(env(safe-area-inset-bottom)+2.25rem)] flex items-center justify-between gap-3">
-            <button className="btn-outline" onClick={goPrev} disabled={sectionIndex === 0}>Previous</button>
+        <div className="fixed bottom-0 right-0 left-0 md:left-64 lg:left-72 border-t bg-white border-gray-200 shadow-lg z-40">
+          <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex items-center gap-2">
+              <button 
+                className="btn btn-outline btn-responsive-sm sm:min-w-[90px]" 
+                onClick={goPrev} 
+                disabled={sectionIndex === 0}
+                title="Previous section"
+              >
+                <ChevronLeftIcon className="w-5 h-5 sm:hidden" />
+                <span className="hidden sm:inline">Previous</span>
+              </button>
+              
+              <button
+                className="btn btn-secondary btn-responsive-sm"
+                onClick={async () => {
+                  if (auditId) {
+                    try {
+                      await saveProgress.mutateAsync({ responses, naReasons, sectionComments })
+                      navigate('/dashboard/auditor')
+                    } catch (err) {
+                      console.error('Save error:', err)
+                    }
+                  }
+                }}
+                disabled={saveProgress.isPending}
+                title="Save your progress and return to dashboard"
+              >
+                {saveProgress.isPending ? (
+                  <span className="text-sm">...</span>
+                ) : (
+                  <>
+                    <ArrowRightOnRectangleIcon className="w-5 h-5 sm:hidden" />
+                    <span className="hidden sm:inline">💾 Save & Exit</span>
+                  </>
+                )}
+              </button>
+            </div>
+            
+            {/* Progress Indicator */}
             <div className="flex items-center gap-3">
-              <div className="text-sm text-gray-600">Section: {answeredCount}/{currentSection?.questions.length || 0}</div>
-              <div className="w-24 h-1.5 rounded bg-gray-200 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentSection && currentSection.questions.length ? Math.round((answeredCount/(currentSection.questions.length))*100) : 0}>
-                <div className="h-1.5 bg-primary-600" style={{ width: `${currentSection && currentSection.questions.length ? Math.round((answeredCount/(currentSection.questions.length))*100) : 0}%` }} />
+              {/* Mobile: Animated Counter Badge */}
+              <div className="sm:hidden">
+                <div className="relative inline-flex items-center" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentSection && currentSection.questions.length ? Math.round((answeredCount/(currentSection.questions.length))*100) : 0}>
+                  {/* Background circle */}
+                  <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-primary-700">{answeredCount}</div>
+                      <div className="text-[10px] text-primary-600 -mt-1 leading-tight">of {currentSection?.questions.length || 0}</div>
+                    </div>
+                  </div>
+                  {/* Progress ring overlay */}
+                  <svg className="absolute inset-0 w-14 h-14 -rotate-90" aria-hidden="true">
+                    <circle
+                      cx="28"
+                      cy="28"
+                      r="26"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      className="text-primary-600"
+                      strokeDasharray={`${2 * Math.PI * 26}`}
+                      strokeDashoffset={`${2 * Math.PI * 26 * (1 - (answeredCount / (currentSection?.questions.length || 1)))}`}
+                      style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                    />
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Desktop: Linear Progress Bar */}
+              <div className="hidden sm:flex items-center gap-3">
+                <div className="text-sm font-medium text-gray-700">
+                  Section {sectionIndex + 1}/{survey.sections.length}
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="text-xs text-gray-500">{answeredCount}/{currentSection?.questions.length || 0}</div>
+                  <div className="w-24 h-2 rounded-full bg-gray-200 overflow-hidden">
+                    <div className="h-2 bg-primary-600 transition-all duration-300" style={{ width: `${currentSection && currentSection.questions.length ? Math.round((answeredCount/(currentSection.questions.length))*100) : 0}%` }} />
+                  </div>
+                </div>
               </div>
             </div>
-            <button data-testid="finish-audit" className="btn-primary" onClick={goNext} disabled={!canAdvance}>{sectionIndex === survey.sections.length - 1 ? 'Finish' : 'Next'}</button>
+            
+            <button 
+              data-testid="finish-audit" 
+              className="btn btn-primary btn-responsive-sm sm:min-w-[100px]" 
+              onClick={goNext} 
+              disabled={!canAdvance}
+              title={sectionIndex === survey.sections.length - 1 ? 'Finish audit' : 'Next section'}
+            >
+              {sectionIndex === survey.sections.length - 1 ? (
+                <>
+                  <CheckIcon className="w-5 h-5 sm:hidden" />
+                  <span className="hidden sm:inline">Finish</span>
+                </>
+              ) : (
+                <>
+                  <ChevronRightIcon className="w-5 h-5 sm:hidden" />
+                  <span className="hidden sm:inline">Next</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}

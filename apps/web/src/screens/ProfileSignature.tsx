@@ -5,10 +5,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { User } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
+import { useToast } from '../hooks/useToast'
 
 const ProfileSignature: React.FC = () => {
   const { user, updateUser } = useAuthStore()
   const queryClient = useQueryClient()
+  const { showToast } = useToast()
 
   const [uploading, setUploading] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
@@ -23,12 +25,22 @@ const ProfileSignature: React.FC = () => {
       if (!user) throw new Error('Not signed in')
       return api.setUserSignature(user.id, signatureUrl)
     },
-    onSuccess: (updated) => {
+    onSuccess: (updated, variables) => {
       updateUser(updated)
       queryClient.invalidateQueries({ queryKey: QK.USER(user!.id) })
       setUploading(false)
+      showToast({ 
+        message: variables.signatureUrl ? 'Signature saved successfully!' : 'Signature cleared successfully!', 
+        variant: 'success' 
+      })
     },
-    onError: () => setUploading(false),
+    onError: (error) => {
+      setUploading(false)
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to save signature.', 
+        variant: 'error' 
+      })
+    },
   })
 
   if (!user) {

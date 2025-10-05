@@ -7,6 +7,7 @@ const toDate = (s?: string | null) => (s ? new Date(s) : undefined)
 
 const mapUserRole = (role: Enums<'user_role'>): UserRole => {
   switch (role) {
+    case 'SUPER_ADMIN': return UserRole.SUPER_ADMIN
     case 'ADMIN': return UserRole.ADMIN
     case 'BRANCH_MANAGER': return UserRole.BRANCH_MANAGER
     case 'AUDITOR': return UserRole.AUDITOR
@@ -221,6 +222,7 @@ export const supabaseApi = {
     if (error) throw error
     return (data || []).map(mapUser)
   },
+
   async getUserById(id: string): Promise<User | null> {
     const supabase = await getSupabase()
     const { data, error } = await supabase.from('users').select('*').eq('id', id).maybeSingle()
@@ -289,44 +291,100 @@ export const supabaseApi = {
   },
   async getAuditorAssignments(): Promise<AuditorAssignment[]> {
     const supabase = await getSupabase()
-    // Build from current period manual assignments + zone assignments
-    const nowIso = new Date().toISOString()
-    const { data: usersRes, error: uerr } = await supabase.from('users').select('*').eq('role', 'AUDITOR')
-    if (uerr) throw uerr
-    const auditors = usersRes || []
-
-    // Manual assignments active in current period
-    const { data: assignRows, error: aerr } = await supabase
-      .from('auditor_branch_assignments')
+    const { data, error} = await supabase
+      .from('auditor_assignments')
       .select('*')
-      .lte('period_start', nowIso)
-      .gte('period_end', nowIso)
-    if (aerr) throw aerr
-
-    // Zone assignments (not cycle-bound)
-    const { data: zoneAssigns, error: zerr } = await supabase.from('zone_assignments').select('*')
-    if (zerr) throw zerr
-
-    const map = new Map<string, AuditorAssignment>()
-    auditors.forEach((u: Tables<'users'>) => map.set(u.id, { userId: u.id, branchIds: [], zoneIds: [] }))
-    ;(assignRows || []).forEach((r: Tables<'auditor_branch_assignments'>) => {
-      const item = map.get(r.user_id) || { userId: r.user_id, branchIds: [], zoneIds: [] }
-      item.branchIds = Array.from(new Set([...(item.branchIds || []), r.branch_id]))
-      map.set(r.user_id, item)
-    })
-    ;(zoneAssigns || []).forEach((r: Tables<'zone_assignments'>) => {
-      const item = map.get(r.user_id) || { userId: r.user_id, branchIds: [], zoneIds: [] }
-      item.zoneIds = Array.from(new Set([...(item.zoneIds || []), r.zone_id]))
-      map.set(r.user_id, item)
-    })
-    return Array.from(map.values())
+      .order('updated_at', { ascending: false })
+    
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      userId: row.user_id,
+      branchIds: row.branch_ids || [],
+      zoneIds: row.zone_ids || [],
+    }))
   },
 
   // Mutations (partial; extend as we migrate screens)
   async setAuditorAssignment(userId: string, payload: { branchIds: string[]; zoneIds: string[] }): Promise<void> {
     const supabase = await getSupabase()
-    const { error } = await supabase.rpc('set_auditor_assignment', { p_user_id: userId, p_branch_ids: payload.branchIds, p_zone_ids: payload.zoneIds })
+    
+    // Check if assignment exists
+    const { data: existing } = await supabase
+      .from('auditor_assignments')
+      .select('id')
+      .eq('user_id', userId)
+      .single()
+    
+    if (existing) {
+      // Update existing assignment
+      const { error } = await supabase
+        .from('auditor_assignments')
+        .update({
+          branch_ids: payload.branchIds,
+          zone_ids: payload.zoneIds,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', userId)
+      
+      if (error) throw error
+    } else {
+      // Create new assignment
+      const { error } = await supabase
+        .from('auditor_assignments')
+        .insert({
+          user_id: userId,
+          branch_ids: payload.branchIds,
+          zone_ids: payload.zoneIds,
+        })
+      
+      if (error) throw error
+    }
+  },
+
+  // Auditor assignment helper methods for UI components
+  async getAuditorAssignment(auditorId: string): Promise<AuditorAssignment | null> {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+      .from('auditor_assignments')
+      .select('*')
+      .eq('user_id', auditorId)
+      .single()
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned, return null
+        return null
+      }
+      throw error
+    }
+    
+    if (!data) return null
+    
+    return {
+      userId: data.user_id,
+      branchIds: data.branch_ids || [],
+      zoneIds: data.zone_ids || [],
+    }
+  },
+
+  async getAuditorAssignmentsByBranch(branchId: string): Promise<AuditorAssignment[]> {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+      .from('auditor_assignments')
+      .select('*')
+      .contains('branch_ids', [branchId])
+    
     if (error) throw error
+    return (data || []).map((row: any) => ({
+      userId: row.user_id,
+      branchIds: row.branch_ids || [],
+      zoneIds: row.zone_ids || [],
+    }))
+  },
+
+  async assignAuditor(auditorId: string, branchIds: string[], zoneIds: string[]): Promise<AuditorAssignment> {
+    await this.setAuditorAssignment(auditorId, { branchIds, zoneIds })
+    return { userId: auditorId, branchIds, zoneIds }
   },
 
   // Branch CRUD + settings
@@ -489,6 +547,37 @@ export const supabaseApi = {
     if (!org) throw new Error('Organization not found')
     const now = new Date()
     const { start, end } = getPeriodRangeForOrg((s as any).frequency, now, org as Tables<'organizations'>)
+    
+    // CYCLE VALIDATION: Check for existing active audits in the current cycle
+    const { data: existingAudits, error: existErr } = await supabase
+      .from('audits')
+      .select('id, status, due_at, period_start, period_end, is_archived')
+      .eq('org_id', payload.orgId)
+      .eq('branch_id', payload.branchId)
+      .eq('survey_id', payload.surveyId)
+      .eq('is_archived', false)
+      .gte('period_end', start.toISOString()) // Overlaps with current cycle
+      .lte('period_start', end.toISOString())
+    
+    if (existErr) throw existErr
+    
+    if (existingAudits && existingAudits.length > 0) {
+      // Check if any existing audit blocks creation
+      for (const existing of existingAudits) {
+        const isDueInFuture = existing.due_at && new Date(existing.due_at) > now
+        const isNotOverdue = isDueInFuture
+        
+        // Block if there's an active, non-overdue audit in this cycle
+        // Allow if: audit is overdue (past due date) OR rejected (needs rework)
+        if (isNotOverdue && existing.status !== 'REJECTED') {
+          throw new Error(
+            `An audit for this survey and branch already exists for the current ${(s as any).frequency.toLowerCase()} cycle. ` +
+            `You cannot create another until the existing audit is overdue or the next cycle begins.`
+          )
+        }
+      }
+    }
+    
     const { data, error } = await supabase
       .from('audits')
       .insert({
@@ -679,18 +768,62 @@ export const supabaseApi = {
     const supabase = await getSupabase()
     const { data, error } = await supabase.from('surveys').select('*').order('updated_at', { ascending: false })
     if (error) throw error
-    return (data || []).map((s: Tables<'surveys'>) => ({
-      id: s.id,
-      title: s.title,
-      description: s.description || '',
-      version: s.version,
-      sections: [],
-      createdBy: '',
-      createdAt: new Date(s.created_at),
-      updatedAt: new Date(s.updated_at),
-      isActive: s.is_active,
-      frequency: (s.frequency?.toLowerCase() as any) ?? 'weekly',
+    
+    // Load sections and questions for all surveys
+    const surveys = await Promise.all((data || []).map(async (s: Tables<'surveys'>) => {
+      // Load sections
+      const { data: sections, error: secError } = await supabase
+        .from('survey_sections')
+        .select('*')
+        .eq('survey_id', s.id)
+        .order('order_num', { ascending: true })
+      if (secError) throw secError
+      
+      // Load questions
+      const { data: questions, error: qError } = await supabase
+        .from('survey_questions')
+        .select('*')
+        .eq('survey_id', s.id)
+        .order('order_num', { ascending: true })
+      if (qError) throw qError
+      
+      // Group questions by section
+      const bySection: Record<string, any[]> = {}
+      ;(questions || []).forEach((q: Tables<'survey_questions'>) => {
+        const arr = bySection[q.section_id] || (bySection[q.section_id] = [])
+        arr.push({
+          id: q.id,
+          text: q.question_text,
+          type: (q.question_type?.toLowerCase() || 'yes_no') as any,
+          required: q.required,
+          order: q.order_num,
+          isWeighted: q.is_weighted,
+          yesWeight: q.yes_weight ?? undefined,
+          noWeight: q.no_weight ?? undefined,
+        })
+      })
+      
+      return {
+        id: s.id,
+        title: s.title,
+        description: s.description || '',
+        version: s.version,
+        sections: (sections || []).map((sec: Tables<'survey_sections'>) => ({
+          id: sec.id,
+          title: sec.title,
+          description: sec.description || undefined,
+          questions: bySection[sec.id] || [],
+          order: sec.order_num,
+        })),
+        createdBy: '',
+        createdAt: new Date(s.created_at),
+        updatedAt: new Date(s.updated_at),
+        isActive: s.is_active,
+        frequency: (s.frequency?.toLowerCase() as any) ?? 'weekly',
+      }
     }))
+    
+    return surveys
   },
 
   // Activity logs
@@ -698,7 +831,7 @@ export const supabaseApi = {
     const supabase = await getSupabase()
     let q = supabase.from('activity_logs').select('*')
     if (entityId) q = q.eq('entity_id', entityId)
-    const { data, error } = await q.order('created_at', { ascending: false })
+    const { data, error } = await q.order('created_at', { ascending: false }).limit(50)
     if (error) throw error
     return (data || []).map((r: Tables<'activity_logs'>) => ({
       id: r.id,
@@ -709,6 +842,20 @@ export const supabaseApi = {
       entityId: r.entity_id || '',
       timestamp: new Date(r.created_at),
     }))
+  },
+
+  async createActivityLog(userId: string, action: string, details: string, entityType: string, entityId: string) {
+    const supabase = await getSupabase()
+    const { error } = await supabase
+      .from('activity_logs')
+      .insert({
+        user_id: userId,
+        action,
+        details,
+        entity_type: entityType,
+        entity_id: entityId,
+      } as any)
+    if (error) console.error('Failed to create activity log:', error)
   },
 
   // Zones CRUD
@@ -960,8 +1107,18 @@ export const supabaseApi = {
     if (error) throw error
     return mapUser(data as any)
   },
-  async updateUser(id: string, updates: Partial<{ name: string; email: string; role: UserRole; isActive: boolean }>) {
+    async updateUser(id: string, updates: Partial<{ name: string; email: string; role: UserRole; isActive: boolean }>) {
     const supabase = await getSupabase()
+
+    // If email is being changed, update it in auth.users as well
+    if (updates.email) {
+      const { error: authError } = await supabase.auth.updateUser({ email: updates.email })
+      if (authError) {
+        console.error('Failed to update auth user email:', authError)
+        // Do not proceed with DB update if auth update fails
+        throw authError
+      }
+    }
     const base: any = { updated_at: new Date().toISOString() }
     if (updates.name != null) base.full_name = updates.name
     if (updates.email != null) base.email = updates.email
@@ -1027,4 +1184,256 @@ export const supabaseApi = {
     // This would typically involve sending another invitation email
     console.log('Resending invitation for user:', userId)
   },
+
+  // ===================================
+  // Branch Manager Assignments
+  // ===================================
+  async getAllBranchManagerAssignments() {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+      .from('branch_manager_assignments')
+      .select('*')
+      .order('assigned_at', { ascending: false })
+    
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      branchId: row.branch_id,
+      managerId: row.manager_id,
+      assignedBy: row.assigned_by,
+      assignedAt: new Date(row.assigned_at),
+    }))
+  },
+
+  async getBranchManagerAssignments(branchId: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+      .from('branch_manager_assignments')
+      .select('*')
+      .eq('branch_id', branchId)
+      .order('assigned_at', { ascending: false })
+    
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      branchId: row.branch_id,
+      managerId: row.manager_id,
+      assignedBy: row.assigned_by,
+      assignedAt: new Date(row.assigned_at),
+    }))
+  },
+
+  async getManagerBranchAssignments(managerId: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+      .from('branch_manager_assignments')
+      .select('*')
+      .eq('manager_id', managerId)
+      .order('assigned_at', { ascending: false})
+    
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      branchId: row.branch_id,
+      managerId: row.manager_id,
+      assignedBy: row.assigned_by,
+      assignedAt: new Date(row.assigned_at),
+    }))
+  },
+
+  async assignBranchManager(branchId: string, managerId: string, assignedBy: string): Promise<void> {
+    const supabase = await getSupabase()
+    
+    // Check if assignment already exists
+    const { data: existing } = await supabase
+      .from('branch_manager_assignments')
+      .select('id')
+      .eq('branch_id', branchId)
+      .eq('manager_id', managerId)
+      .single()
+    
+    if (existing) {
+      // Assignment already exists, no need to create
+      return
+    }
+    
+    const { error } = await supabase
+      .from('branch_manager_assignments')
+      .insert({
+        branch_id: branchId,
+        manager_id: managerId,
+        assigned_by: assignedBy,
+      })
+    
+    if (error) throw error
+  },
+
+  async unassignBranchManager(branchId: string, managerId: string, _unassignedBy: string): Promise<void> {
+    const supabase = await getSupabase()
+    const { error } = await supabase
+      .from('branch_manager_assignments')
+      .delete()
+      .eq('branch_id', branchId)
+      .eq('manager_id', managerId)
+    
+    if (error) throw error
+  },
+
+  async getBranchesForManager(managerId: string): Promise<Branch[]> {
+    const supabase = await getSupabase()
+    // Get all branch assignments for this manager
+    const { data: assignments, error: assignmentError } = await supabase
+      .from('branch_manager_assignments')
+      .select('branch_id')
+      .eq('manager_id', managerId)
+    
+    if (assignmentError) throw assignmentError
+    
+    if (!assignments || assignments.length === 0) {
+      return []
+    }
+    
+    // Get the actual branch objects
+    const branchIds = assignments.map((a: {branch_id: string}) => a.branch_id)
+    const { data: branches, error: branchError } = await supabase
+      .from('branches')
+      .select('*')
+      .in('id', branchIds)
+    
+    if (branchError) throw branchError
+    return (branches || []).map(mapBranch)
+  },
+
+  // Notifications
+  async getNotifications(userId: string) {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      userId: row.user_id,
+      type: row.type,
+      title: row.title,
+      message: row.message,
+      link: row.link,
+      relatedId: row.related_id,
+      isRead: row.is_read,
+      createdAt: new Date(row.created_at),
+      readAt: row.read_at ? new Date(row.read_at) : undefined,
+      requiresAction: row.requires_action || false,
+      actionType: row.action_type,
+      actionCompletedAt: row.action_completed_at ? new Date(row.action_completed_at) : undefined,
+    }))
+  },
+
+  async getUnreadNotificationCount(userId: string): Promise<number> {
+    const supabase = await getSupabase()
+    // Count notifications that are either:
+    // 1. Not read (is_read = false), OR
+    // 2. Require action and action not completed yet
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('id, is_read, requires_action, action_completed_at')
+      .eq('user_id', userId)
+      .or('is_read.eq.false,and(requires_action.eq.true,action_completed_at.is.null)')
+    
+    if (error) throw error
+    return data?.length || 0
+  },
+
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    const supabase = await getSupabase()
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true, read_at: new Date().toISOString() })
+      .eq('id', notificationId)
+    
+    if (error) throw error
+  },
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    const supabase = await getSupabase()
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true, read_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('is_read', false)
+    
+    if (error) throw error
+  },
+
+  async deleteNotification(notificationId: string): Promise<void> {
+    const supabase = await getSupabase()
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', notificationId)
+    
+    if (error) throw error
+  },
+
+  async createNotification(notification: {
+    userId: string
+    type: string
+    title: string
+    message: string
+    link?: string
+    relatedId?: string
+    requiresAction?: boolean
+    actionType?: string
+  }): Promise<void> {
+    console.log('📤 [Supabase] Creating notification:', {
+      userId: notification.userId,
+      type: notification.type,
+      title: notification.title,
+      requiresAction: notification.requiresAction
+    })
+    
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: notification.userId,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        link: notification.link,
+        related_id: notification.relatedId,
+        requires_action: notification.requiresAction || false,
+        action_type: notification.actionType,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      })
+      .select()
+    
+    if (error) {
+      console.error('❌ [Supabase] Failed to create notification:', error)
+      throw error
+    }
+    
+    console.log('✅ [Supabase] Notification created successfully:', data)
+  },
+
+  async completeNotificationAction(relatedId: string, actionType: string): Promise<void> {
+    const supabase = await getSupabase()
+    const { error } = await supabase
+      .from('notifications')
+      .update({ 
+        action_completed_at: new Date().toISOString(),
+        is_read: true,
+        read_at: new Date().toISOString()
+      })
+      .eq('related_id', relatedId)
+      .eq('action_type', actionType)
+      .is('action_completed_at', null)
+    
+    if (error) throw error
+  },
+
 }

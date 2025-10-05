@@ -1,18 +1,18 @@
 import React from 'react'
 import { useAuthStore } from '../stores/auth'
-import DashboardLayout from '../components/DashboardLayout'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Audit, AuditStatus, Branch } from '@trakr/shared'
+import { useQuery } from '@tanstack/react-query'
+import { Audit, AuditStatus, Branch, User, Survey } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useNavigate } from 'react-router-dom'
-import StatusBadge from '@/components/StatusBadge'
-import { ClipboardDocumentListIcon, ClockIcon, CheckCircleIcon, ChartBarIcon } from '@heroicons/react/24/outline'
+import DashboardLayout from '../components/DashboardLayout'
+import StatusBadge from '../components/StatusBadge'
+import ResponsiveTable, { Column } from '../components/ResponsiveTable'
+import { ClockIcon, ChartBarIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 
 const DashboardBranchManager: React.FC = () => {
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
 
   const { data: allAudits = [], isLoading } = useQuery<Audit[]>({
     queryKey: QK.AUDITS('branch-manager'),
@@ -22,492 +22,377 @@ const DashboardBranchManager: React.FC = () => {
     queryKey: QK.BRANCHES(),
     queryFn: () => api.getBranches(),
   })
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: QK.USERS,
+    queryFn: () => api.getUsers(),
+  })
+  const { data: surveys = [] } = useQuery<Survey[]>({
+    queryKey: QK.SURVEYS,
+    queryFn: () => api.getSurveys(),
+  })
 
   // Get branches assigned to current manager using new assignment system
   const { data: assignedBranches = [] } = useQuery<Branch[]>({
     queryKey: ['branches-for-manager', user?.id],
-    queryFn: () => user?.id ? api.getBranchesForManager(user.id) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.id) return []
+      
+      // Get all branches
+      const allBranches = await api.getBranches()
+      
+      // Get branch manager assignments for this manager
+      const assignments = await api.getManagerBranchAssignments(user.id)
+      
+      // Return branches that this manager is assigned to
+      const assignedBranchIds = assignments.map(a => a.branchId)
+      return allBranches.filter(b => assignedBranchIds.includes(b.id))
+    },
     enabled: !!user?.id,
   })
 
   const managedBranchIds = React.useMemo(() => assignedBranches.map(b => b.id), [assignedBranches])
-  const audits = allAudits.filter(a => managedBranchIds.includes(a.branchId))
+  
+  // Filter audits by managed branches ONLY
+  const audits = managedBranchIds.length > 0 
+    ? allAudits.filter(a => managedBranchIds.includes(a.branchId))
+    : allAudits
+    
   const total = audits.length
-  const inProgress = audits.filter(a => a.status === AuditStatus.IN_PROGRESS).length
-  const completed = audits.filter(a => a.status === AuditStatus.COMPLETED).length
-  const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
+  
+  // Audits actively being worked on (not yet submitted)
+  const inProgress = audits.filter(a => 
+    a.status === AuditStatus.DRAFT || 
+    a.status === AuditStatus.IN_PROGRESS || 
+    a.status === AuditStatus.COMPLETED
+  ).length
+  
+  // Audits that have been finalized (approved or rejected)
+  const finalized = audits.filter(a => 
+    a.status === AuditStatus.APPROVED || 
+    a.status === AuditStatus.REJECTED
+  ).length
+  const completionRate = total > 0 ? Math.round((finalized / total) * 100) : 0
+  
+  // Audits pending approval (submitted status)
+  const pendingApproval = audits.filter(a => a.status === AuditStatus.SUBMITTED)
 
-  const recent = [...audits]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 6)
-
-  const approveMutation = useMutation({
-    mutationFn: async (payload: { auditId: string; note?: string; signatureUrl?: string; signatureType?: 'image' | 'typed' | 'drawn'; approvalName?: string }) =>
-      api.setAuditApproval(payload.auditId, {
-        status: 'approved',
-        note: payload.note,
-        userId: user!.id,
-        signatureUrl: payload.signatureUrl,
-        signatureType: payload.signatureType,
-        approvalName: payload.approvalName,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
-    },
-  })
-
-  const rejectMutation = useMutation({
-    mutationFn: async (payload: { auditId: string; note?: string }) => api.setAuditApproval(payload.auditId, { status: 'rejected', note: payload.note, userId: user!.id }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
-    },
-  })
-
-  // Approval modal state
-  const [approveOpen, setApproveOpen] = React.useState(false)
-  const [approveAuditId, setApproveAuditId] = React.useState<string | null>(null)
-  const [approveNote, setApproveNote] = React.useState('')
-  const [approveMode, setApproveMode] = React.useState<'image' | 'typed' | 'drawn'>(user?.signatureUrl ? 'image' : 'typed')
-  const [typedName, setTypedName] = React.useState('')
-  const [signatureDataUrl, setSignatureDataUrl] = React.useState<string | null>(null)
-
-  // Simple signature canvas for touch devices
-  const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
-  const drawingRef = React.useRef(false)
-  const lastPosRef = React.useRef<{ x: number; y: number } | null>(null)
-  const startDraw = (x: number, y: number) => {
-    drawingRef.current = true
-    lastPosRef.current = { x, y }
-  }
-  const drawTo = (x: number, y: number) => {
-    if (!drawingRef.current || !canvasRef.current) return
-    const ctx = canvasRef.current.getContext('2d')
-    if (!ctx || !lastPosRef.current) return
-    ctx.strokeStyle = '#111827'
-    ctx.lineWidth = 2
-    ctx.lineCap = 'round'
-    ctx.beginPath()
-    ctx.moveTo(lastPosRef.current.x, lastPosRef.current.y)
-    ctx.lineTo(x, y)
-    ctx.stroke()
-    lastPosRef.current = { x, y }
-  }
-  const endDraw = () => {
-    drawingRef.current = false
-    lastPosRef.current = null
-    if (canvasRef.current) setSignatureDataUrl(canvasRef.current.toDataURL('image/png'))
-  }
-  const clearCanvas = () => {
-    const c = canvasRef.current
-    if (!c) return
-    const ctx = c.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, c.width, c.height)
-    setSignatureDataUrl(null)
-  }
+  // Audit history - completed audits only (approved, rejected, finalized)
+  const [historyPage, setHistoryPage] = React.useState(1)
+  const pageSize = 10
+  const completedAudits = audits.filter(a => 
+    a.status === AuditStatus.APPROVED || 
+    a.status === AuditStatus.REJECTED || 
+    a.status === AuditStatus.COMPLETED
+  ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  
+  const totalHistoryPages = Math.ceil(completedAudits.length / pageSize)
+  const paginatedHistory = completedAudits.slice((historyPage - 1) * pageSize, historyPage * pageSize)
 
   return (
     <DashboardLayout title="Branch Manager Dashboard">
       <div className="mobile-container breathing-room">
-        {/* Mobile-First Header Layout */}
-        <div className="mb-6 lg:mb-8">
-          {/* Welcome Area - Full Width on Mobile */}
-          <div className="flex items-center gap-3 mb-4 sm:mb-0 lg:mb-6">
-            <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-              <span className="text-xl">🏬</span>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}</h2>
-              <p className="text-sm text-gray-500">
-                {assignedBranches.length} branches • {completed} pending approvals
-              </p>
-            </div>
+        {/* Header with Branch Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Branch Manager Dashboard</h1>
+            <p className="text-gray-600 mt-1">Manage {assignedBranches.length} branch{assignedBranches.length !== 1 ? 'es' : ''} • {user?.name}</p>
           </div>
           
-          {/* Branch Selector - Below Welcome on Mobile, Inline on Desktop */}
           {assignedBranches.length > 1 && (
-            <div className="sm:flex sm:items-center sm:justify-between sm:-mt-16">
-              <div className="hidden sm:block sm:flex-1"></div>
-              <select className="w-full sm:w-auto text-sm border border-gray-300 rounded-xl sm:rounded-lg px-4 py-3 sm:py-2 bg-white touch-target">
-                <option value="">All Branches</option>
-                {assignedBranches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{branch.name}</option>
-                ))}
-              </select>
-            </div>
+            <select className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-sm font-medium">
+              <option value="">All Branches ({assignedBranches.length})</option>
+              {assignedBranches.map(branch => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
+            </select>
           )}
         </div>
 
-        {/* Approval Queue Alert */}
-        {completed > 0 && (
-          <div className="card-spacious bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">🔔</span>
-                  <h3 className="text-lg font-semibold text-orange-900">Pending Approvals</h3>
-                </div>
-                <p className="text-orange-700 mb-1">{completed} audits waiting for your approval</p>
-                <p className="text-sm text-orange-600">Review and approve completed audits</p>
+        {/* Key Metrics - Responsive Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div 
+            className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-5 text-white cursor-pointer hover:shadow-lg transition-shadow sm:col-span-3 lg:col-span-1"
+            onClick={() => pendingApproval.length > 0 && document.getElementById('pending-approvals')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-yellow-100 text-sm font-medium uppercase tracking-wide">Needs Approval</p>
+                <p className="text-4xl font-bold mt-2">{pendingApproval.length}</p>
+                <p className="text-yellow-100 text-sm mt-1">{pendingApproval.length === 1 ? 'audit' : 'audits'} pending</p>
               </div>
-              <button
-                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:shadow-lg touch-target"
-                onClick={() => {/* Scroll to approval section */}}
-              >
-                Review ({completed})
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Enhanced Actionable Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="card-compact card-interactive bg-gradient-to-br from-primary-50 to-blue-50 border-primary-200">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center shadow-sm">
-                <ClipboardDocumentListIcon className="w-7 h-7 text-primary-600" />
-              </div>
-              <div className="flex-1">
-                <div className="text-3xl font-bold text-primary-600 mb-1">{total}</div>
-                <div className="text-sm font-medium text-gray-700">Total Audits</div>
-                <div className="text-xs text-gray-500 mt-1">All branches</div>
+              <div className="w-14 h-14 bg-white/20 rounded-lg flex items-center justify-center">
+                <ExclamationCircleIcon className="w-8 h-8" />
               </div>
             </div>
           </div>
           
-          <div className="card-compact card-interactive bg-gradient-to-br from-warning-50 to-orange-50 border-warning-200">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-warning-100 rounded-2xl flex items-center justify-center shadow-sm">
-                <ClockIcon className="w-7 h-7 text-warning-600" />
-              </div>
-              <div className="flex-1">
-                <div className="text-3xl font-bold text-warning-600 mb-1">{inProgress}</div>
-                <div className="text-sm font-medium text-gray-700">In Progress</div>
-                <div className="text-xs text-gray-500 mt-1">Currently active</div>
+          <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <ClockIcon className="w-6 h-6 text-blue-600" />
               </div>
             </div>
+            <p className="text-3xl font-bold text-gray-900">{inProgress}</p>
+            <p className="text-sm text-gray-600 mt-1 uppercase tracking-wide">Active Audits</p>
+            <p className="text-xs text-gray-500 mt-0.5">Not yet submitted</p>
           </div>
           
-          <div className="card-compact card-interactive bg-gradient-to-br from-success-50 to-green-50 border-success-200">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-success-100 rounded-2xl flex items-center justify-center shadow-sm">
-                <CheckCircleIcon className="w-7 h-7 text-success-600" />
-              </div>
-              <div className="flex-1">
-                <div className="text-3xl font-bold text-success-600 mb-1">{completed}</div>
-                <div className="text-sm font-medium text-gray-700">Need Approval</div>
-                <div className="text-xs text-gray-500 mt-1">Awaiting review</div>
+          <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <ChartBarIcon className="w-6 h-6 text-green-600" />
               </div>
             </div>
-          </div>
-          
-          <div className="card-compact card-interactive bg-gradient-to-br from-gray-50 to-slate-50 border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center shadow-sm">
-                <ChartBarIcon className="w-7 h-7 text-gray-600" />
-              </div>
-              <div className="flex-1">
-                <div className="text-3xl font-bold text-gray-600 mb-1">{completionRate}%</div>
-                <div className="text-sm font-medium text-gray-700">Completion Rate</div>
-                <div className="text-xs text-gray-500 mt-1">Overall progress</div>
-              </div>
-            </div>
+            <p className="text-3xl font-bold text-gray-900">{completionRate}%</p>
+            <p className="text-sm text-gray-600 mt-1 uppercase tracking-wide">Finalized</p>
+            <p className="text-xs text-gray-500 mt-0.5">Approved or rejected</p>
           </div>
         </div>
 
-        {/* Mobile-First Recent Audits Section */}
-        <div className="card-spacious">
-          <div className="space-y-4">
-            {/* Header - Mobile Optimized */}
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900">Recent Audits</h3>
-              <p className="text-gray-600 mt-1">Review and approve completed audits</p>
-            </div>
-            
-            {/* Sort Controls - Mobile First */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full w-fit">
-                {recent.length} audits
+        {/* Pending Approval Section */}
+        <div id="pending-approvals" className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Pending Approval</h2>
+                <p className="text-sm text-gray-600 mt-1">{pendingApproval.length} audit{pendingApproval.length !== 1 ? 's' : ''} waiting for your review</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500 font-medium">Sort by:</span>
-                <select className="flex-1 sm:flex-none px-4 py-2 sm:py-1.5 border border-gray-300 rounded-xl sm:rounded-lg bg-white text-sm font-medium min-w-[140px] touch-target">
-                  <option value="recent">Most Recent</option>
-                  <option value="pending">Pending Approval</option>
-                  <option value="branch">By Branch</option>
-                </select>
-              </div>
+              {pendingApproval.length > 0 && (
+                <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                  🔔 Action Required
+                </span>
+              )}
             </div>
           </div>
-          <div className="p-6">
-            {isLoading ? (
-              <p className="text-gray-500 py-8">Loading audits...</p>
-            ) : recent.length === 0 ? (
-              <p className="text-gray-500 py-8">No audits found for this branch.</p>
+          
+          <div className="p-4 sm:p-6">
+            {pendingApproval.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-4xl mb-2">✅</div>
+                <p className="text-gray-600 font-medium">All caught up!</p>
+                <p className="text-sm text-gray-500 mt-1">No audits pending approval</p>
+              </div>
             ) : (
-              <>
-                {/* Modern Mobile Audit Cards */}
-                <div className="space-y-4 md:hidden">
-                  {recent.map((a) => {
-                    const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
-                    const isOverdue = a.dueAt && new Date(a.dueAt) < new Date()
-                    const isDueToday = a.dueAt && new Date(a.dueAt).toDateString() === new Date().toDateString()
-                    
-                    return (
-                      <div key={a.id} className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-300">
-                        {/* Card Header - Mobile Optimized */}
-                        <div className="mb-4">
-                          {/* Title Row - Single Line */}
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                              <span className="text-lg font-bold text-primary-600">
-                                {a.id.slice(-2)}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 text-lg truncate whitespace-nowrap">
-                                Audit {a.id}
-                              </h4>
-                              <p className="text-gray-600 text-sm truncate">{branchName}</p>
-                            </div>
-                          </div>
-                          
-                          {/* Status Labels Row - Below Title */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <StatusBadge status={a.status} />
-                            {isOverdue && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                Overdue
-                              </span>
-                            )}
-                            {isDueToday && !isOverdue && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                Due Today
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Audit Details */}
-                          <div className="mt-3 space-y-2 text-sm">
-                            <div className="flex items-center justify-between">
-                              <span className="text-gray-500">Updated:</span>
-                              <span className="text-gray-900">{new Date(a.updatedAt).toLocaleDateString()}</span>
-                            </div>
-                            {a.dueAt && (
-                              <div className="flex items-center justify-between">
-                                <span className="text-gray-500">Due Date:</span>
-                                <span className="text-gray-900">{new Date(a.dueAt).toLocaleDateString()}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="pt-4 border-t border-gray-100">
-                          <div className="grid grid-cols-2 gap-3">
-                            <button 
-                              className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
-                              onClick={() => navigate(`/audit/${a.id}`)}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              <span>View</span>
-                            </button>
-                            <button 
-                              className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
-                              onClick={() => navigate(`/audit/${a.id}/summary`)}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                              <span>Summary</span>
-                            </button>
-                          </div>
-                        </div>
-                        
-                        {/* Approval Actions */}
-                        {a.status === AuditStatus.SUBMITTED && (
-                          <div className="pt-4 border-t border-gray-100 mt-4">
-                            <div className="grid grid-cols-2 gap-3">
-                              <button
-                                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
-                                onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span>Approve</span>
-                              </button>
-                              <button
-                                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
-                                onClick={() => {
-                                  const note = window.prompt('Rejection reason (optional):') || ''
-                                  rejectMutation.mutate({ auditId: a.id, note })
-                                }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                <span>Reject</span>
-                              </button>
-                            </div>
-                          </div>
-                        )}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {pendingApproval.map((audit) => {
+                  const branch = branches.find(b => b.id === audit.branchId)
+                  const submittedByUser = users.find(u => u.id === audit.submittedBy)
+                  const survey = surveys.find(s => s.id === audit.surveyId)
+                  
+                  return (
+                    <div key={audit.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="mb-3">
+                        <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                        <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
                       </div>
-                    )
-                  })}
-                </div>
-
-                {/* Desktop table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full min-w-[960px] divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-1.5 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Audit</th>
-                        <th className="px-3 py-1.5 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Branch</th>
-                        <th className="px-3 py-1.5 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-3 py-1.5 text-left text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wider">Updated</th>
-                        <th className="px-3 py-1.5" />
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {recent.map((a) => {
-                        const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
-                        return (
-                          <tr key={a.id}>
-                            <td className="px-3 py-1.5">{a.id}</td>
-                            <td className="px-3 py-1.5">{branchName}</td>
-                            <td className="px-3 py-1.5"><StatusBadge status={a.status} /></td>
-                            <td className="px-3 py-1.5">{new Date(a.updatedAt).toLocaleDateString()}</td>
-                            <td className="px-3 py-1.5 text-right space-x-2">
-                              <button className="btn-outline btn-sm md:h-10 md:px-4" onClick={() => navigate(`/audit/${a.id}`)}>Details</button>
-                              <button className="btn-primary btn-sm md:h-10 md:px-4" onClick={() => navigate(`/audit/${a.id}/summary`)}>Summary</button>
-                              <button
-                                className="btn-secondary btn-sm md:h-10 md:px-4 disabled:opacity-60"
-                                onClick={() => { setApproveAuditId(a.id); setApproveNote(''); setApproveOpen(true) }}
-                                disabled={a.status !== AuditStatus.SUBMITTED}
-                                title={a.status !== AuditStatus.SUBMITTED ? 'Approval available after submission' : 'Approve with signature'}
-                              >
-                                {a.status === AuditStatus.APPROVED ? 'Approved' : 'Approve'}
-                              </button>
-                              <button
-                                className="btn-outline btn-sm md:h-10 md:px-4 disabled:opacity-60"
-                                onClick={() => {
-                                  const note = window.prompt('Rejection reason (optional):') || ''
-                                  rejectMutation.mutate({ auditId: a.id, note })
-                                }}
-                                disabled={a.status === AuditStatus.REJECTED}
-                                title={a.status === AuditStatus.REJECTED ? 'Already rejected' : 'Reject with optional reason'}
-                              >
-                                Reject
-                              </button>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+                      
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <StatusBadge status={audit.status} />
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-200 text-yellow-900">
+                          ⏰ Awaiting Review
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                        <div>
+                          <p className="text-gray-500 text-xs mb-0.5">Submitted</p>
+                          <p className="font-medium text-gray-900">{audit.submittedAt ? new Date(audit.submittedAt).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-xs mb-0.5">By</p>
+                          <p className="font-medium text-gray-900 truncate">{submittedByUser?.name || 'Unknown'}</p>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => navigate(`/audit/${audit.id}/review`)}
+                        className="w-full flex items-center justify-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
+                      >
+                        <span>📋</span>
+                        <span>Review Audit</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
             )}
           </div>
         </div>
 
-        {/* Approval Modal */}
-        {approveOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setApproveOpen(false)} />
-            <div className="relative bg-white rounded-lg shadow-xl w-[92vw] max-w-lg mx-auto p-5" role="dialog" aria-modal="true" aria-labelledby="approve-title">
-              <h3 id="approve-title" className="text-lg font-semibold mb-2">Approve Audit</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="label">Approval note (optional)</label>
-                  <input className="input mt-1" value={approveNote} onChange={(e) => setApproveNote(e.target.value)} />
-                </div>
-                <div>
-                  <label className="label">Signature method</label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {user?.signatureUrl && (
-                      <button className={`btn-outline btn-xs ${approveMode === 'image' ? 'bg-gray-50' : ''}`} onClick={() => setApproveMode('image')}>Use saved image</button>
-                    )}
-                    <button className={`btn-outline btn-xs ${approveMode === 'typed' ? 'bg-gray-50' : ''}`} onClick={() => setApproveMode('typed')}>Type name</button>
-                    <button className={`btn-outline btn-xs ${approveMode === 'drawn' ? 'bg-gray-50' : ''}`} onClick={() => setApproveMode('drawn')}>Draw signature</button>
-                  </div>
-                </div>
-                {approveMode === 'image' && (
-                  <div className="mt-1">
-                    {user?.signatureUrl ? (
-                      <div>
-                        <img src={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded p-2 bg-gray-50" />
-                        <p className="text-xs text-gray-500 mt-1">Using saved signature image</p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">No saved signature found. Choose another method.</p>
-                    )}
-                  </div>
-                )}
-                {approveMode === 'typed' && (
-                  <div>
-                    <label className="label">Full name</label>
-                    <input className="input mt-1" placeholder="e.g., Jane Manager" value={typedName} onChange={(e) => setTypedName(e.target.value)} />
-                    <p className="text-xs text-gray-500 mt-1">Your typed full name will be recorded as your signature.</p>
-                  </div>
-                )}
-                {approveMode === 'drawn' && (
-                  <div>
-                    <label className="label">Draw signature</label>
-                    <div className="mt-1 border rounded p-2 bg-gray-50">
-                      <canvas
-                        ref={canvasRef}
-                        width={600}
-                        height={160}
-                        className="w-full h-40 bg-white rounded border"
-                        onPointerDown={(e) => {
-                          const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
-                          startDraw(e.clientX - rect.left, e.clientY - rect.top)
-                        }}
-                        onPointerMove={(e) => {
-                          if (!drawingRef.current) return
-                          const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
-                          drawTo(e.clientX - rect.left, e.clientY - rect.top)
-                        }}
-                        onPointerUp={endDraw}
-                        onPointerLeave={endDraw}
-                      />
-                      <div className="mt-2 flex items-center gap-2">
-                        <button className="btn-outline btn-xs" onClick={clearCanvas}>Clear</button>
-                        {signatureDataUrl && <span className="text-xs text-gray-500">Signature captured</span>}
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Use a mouse, finger or stylus to sign.</p>
-                  </div>
-                )}
+        {/* Audit History Section */}
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Audit History</h2>
+                <p className="text-sm text-gray-600 mt-1">{completedAudits.length} completed audit{completedAudits.length !== 1 ? 's' : ''}</p>
               </div>
-              <div className="mt-4 flex justify-end gap-2">
-                <button className="btn-ghost" onClick={() => setApproveOpen(false)}>Cancel</button>
-                <button
-                  className="btn-primary"
-                  disabled={approveMutation.isPending || !approveAuditId || (approveMode === 'image' && !user?.signatureUrl) || (approveMode === 'typed' && typedName.trim().length === 0) || (approveMode === 'drawn' && !signatureDataUrl)}
-                  onClick={() => {
-                    if (!approveAuditId) return
-                    const payload = {
-                      auditId: approveAuditId,
-                      note: approveNote,
-                      signatureUrl: approveMode === 'image' ? (user?.signatureUrl || undefined) : (approveMode === 'drawn' ? signatureDataUrl || undefined : undefined),
-                      signatureType: approveMode,
-                      approvalName: approveMode === 'typed' ? typedName.trim() : undefined,
-                    }
-                    approveMutation.mutate(payload, { onSuccess: () => { setApproveOpen(false); setSignatureDataUrl(null); setTypedName('') } })
-                  }}
-                >
-                  {approveMutation.isPending ? 'Approving…' : 'Approve'}
-                </button>
-              </div>
+              {totalHistoryPages > 1 && (
+                <span className="hidden sm:inline-flex text-sm text-gray-500">
+                  Page {historyPage} of {totalHistoryPages}
+                </span>
+              )}
             </div>
           </div>
-        )}
+          
+          <div className="p-4 sm:p-6">
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
+                <p className="text-gray-500">Loading audits...</p>
+              </div>
+            ) : paginatedHistory.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-4xl mb-2">📋</div>
+                <p className="text-gray-600 font-medium">No completed audits</p>
+                <p className="text-sm text-gray-500 mt-1">Completed audits will appear here</p>
+              </div>
+            ) : (
+              <>
+                <ResponsiveTable
+                  items={paginatedHistory}
+                  keyField={(a) => a.id}
+                  columns={[
+                    {
+                      key: 'date',
+                      header: 'Date',
+                      className: 'px-6 py-4',
+                      render: (a) => {
+                        const updatedAt = new Date(a.updatedAt)
+                        return updatedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                      }
+                    },
+                    {
+                      key: 'auditId',
+                      header: 'Audit ID',
+                      className: 'px-6 py-4 font-mono text-gray-600',
+                      render: (a) => `${a.id.slice(0, 8)}...`
+                    },
+                    {
+                      key: 'branch',
+                      header: 'Branch',
+                      className: 'px-6 py-4 font-medium',
+                      render: (a) => branches.find(b => b.id === a.branchId)?.name || 'Unknown Branch'
+                    },
+                    {
+                      key: 'survey',
+                      header: 'Survey',
+                      className: 'px-6 py-4 text-gray-600',
+                      render: (a) => surveys.find(s => s.id === a.surveyId)?.title || 'Unknown Survey'
+                    },
+                    {
+                      key: 'submittedBy',
+                      header: 'Submitted By',
+                      className: 'px-6 py-4 text-gray-600',
+                      render: (a) => users.find(u => u.id === a.submittedBy)?.name || 'Unknown'
+                    },
+                    {
+                      key: 'status',
+                      header: 'Status',
+                      className: 'px-6 py-4',
+                      render: (a) => <StatusBadge status={a.status} />
+                    },
+                    {
+                      key: 'actions',
+                      header: 'Actions',
+                      className: 'px-6 py-4 text-right',
+                      render: (a) => (
+                        <button
+                          onClick={() => navigate(`/audit/${a.id}/summary`)}
+                          className="text-primary-600 hover:text-primary-900 font-medium"
+                        >
+                          View Summary
+                        </button>
+                      )
+                    },
+                  ] as Column<Audit>[]}
+                  mobileItem={(a) => {
+                    const branch = branches.find(b => b.id === a.branchId)
+                    const submittedByUser = users.find(u => u.id === a.submittedBy)
+                    const survey = surveys.find(s => s.id === a.surveyId)
+                    const updatedAt = new Date(a.updatedAt)
+                    
+                    // Color based on status
+                    const cardStyle = a.status === AuditStatus.APPROVED 
+                      ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200'
+                      : a.status === AuditStatus.REJECTED
+                      ? 'bg-gradient-to-br from-red-50 to-pink-50 border-red-200'
+                      : 'bg-white border-gray-200'
+                    
+                    const buttonStyle = a.status === AuditStatus.APPROVED
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : a.status === AuditStatus.REJECTED
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : 'bg-primary-600 hover:bg-primary-700'
+                    
+                    return (
+                      <div className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${cardStyle}`}>
+                        <div className="mb-3">
+                          <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                          <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <StatusBadge status={a.status} />
+                          {a.status === AuditStatus.APPROVED && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              ✅ Approved
+                            </span>
+                          )}
+                          {a.status === AuditStatus.REJECTED && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              ❌ Rejected
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+                          <span>{updatedAt.toLocaleDateString()}</span>
+                          {submittedByUser && (
+                            <span className="truncate ml-2">By: {submittedByUser.name}</span>
+                          )}
+                        </div>
+                        
+                        <button 
+                          onClick={() => navigate(`/audit/${a.id}/summary`)}
+                          className={`w-full flex items-center justify-center gap-2 ${buttonStyle} text-white px-4 py-2.5 rounded-lg font-medium transition-colors`}
+                        >
+                          <span>📊</span>
+                          <span>View Summary</span>
+                        </button>
+                      </div>
+                    )
+                  }}
+                />
+                
+                {/* Pagination */}
+                {totalHistoryPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                        disabled={historyPage === 1}
+                        className="px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                      >
+                        ← Previous
+                      </button>
+                      <button
+                        onClick={() => setHistoryPage(p => Math.min(totalHistoryPages, p + 1))}
+                        disabled={historyPage === totalHistoryPages}
+                        className="px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                      >
+                        Next →
+                      </button>
+                    </div>
+                    <span className="text-sm text-gray-600">
+                      Page <span className="font-medium text-gray-900">{historyPage}</span> of <span className="font-medium text-gray-900">{totalHistoryPages}</span>
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   )

@@ -29,8 +29,14 @@ export function usePWA() {
 
     checkInstalled()
 
-    // Register service worker
+    // Register service worker (disabled in development to prevent caching issues)
     const registerSW = async () => {
+      // Skip service worker registration in development
+      if (import.meta.env.DEV) {
+        console.log('Service Worker skipped in development mode')
+        return
+      }
+
       if ('serviceWorker' in navigator) {
         try {
           const registration = await navigator.serviceWorker.register('/sw.js')

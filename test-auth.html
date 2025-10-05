@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Trakr Authentication</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover { background: #45a049; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background: #e3f2fd;
+            color: #1976d2;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { background: #c8e6c9; color: #2e7d32; }
+        .error { background: #ffcdd2; color: #c62828; }
+        code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test Trakr Authentication</h1>
+        <p>This page tests if your Supabase authentication is working correctly.</p>
+        
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" id="email" value="admin@trakr.com" />
+        </div>
+        
+        <div class="form-group">
+            <label>Password:</label>
+            <input type="password" id="password" value="Password@123" />
+        </div>
+        
+        <button onclick="testLogin()" id="loginBtn">Test Login</button>
+        <button onclick="testRoleLogin('admin@trakr.com')" id="roleBtn">Test Role Login (Admin)</button>
+        <button onclick="checkSession()">Check Current Session</button>
+        <button onclick="signOut()">Sign Out</button>
+        
+        <div id="result"></div>
+        
+        <hr style="margin: 30px 0;">
+        
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li><strong>Test Login:</strong> Should successfully authenticate with email/password</li>
+            <li><strong>Test Role Login:</strong> Should simulate role-based login</li>
+            <li><strong>Check Session:</strong> Should show current auth session</li>
+            <li><strong>Sign Out:</strong> Should clear the session</li>
+        </ul>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://prxvzfrjpzoguwqbpchj.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByeHZ6ZnJqcHpvZ3V3cWJwY2hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2NjYwMDYsImV4cCI6MjA3NDI0MjAwNn0.7ImQGlRWARq6Am9gfO4rsOXzRgM4Ew4AbY5eQSkEE4o'
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        
+        function showResult(message, isError = false) {
+            const resultDiv = document.getElementById('result')
+            resultDiv.className = 'result ' + (isError ? 'error' : 'success')
+            resultDiv.innerHTML = message
+        }
+        
+        async function testLogin() {
+            const email = document.getElementById('email').value
+            const password = document.getElementById('password').value
+            const loginBtn = document.getElementById('loginBtn')
+            
+            loginBtn.disabled = true
+            loginBtn.textContent = 'Testing...'
+            
+            try {
+                showResult('🔄 Attempting to sign in...')
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                })
+                
+                if (error) {
+                    throw error
+                }
+                
+                const result = `✅ LOGIN SUCCESSFUL!
+
+User ID: ${data.user.id}
+Email: ${data.user.email}
+Role: ${data.user.role || 'N/A'}
+Created: ${new Date(data.user.created_at).toLocaleString()}
+
+Access Token: ${data.session.access_token.substring(0, 50)}...
+
+Session expires: ${new Date(data.session.expires_at * 1000).toLocaleString()}
+
+✅ Authentication is working correctly!
+You can now use this account to log in to the app.`
+                
+                showResult(result, false)
+                
+            } catch (error) {
+                const errorMsg = `❌ LOGIN FAILED
+
+Error: ${error.message}
+
+Possible causes:
+1. User doesn't exist in Supabase Auth
+2. Password is incorrect
+3. Email confirmation required
+4. RLS policies blocking access
+
+To fix:
+- Run: npm run set-passwords
+- Or set password manually in Supabase dashboard`
+                
+                showResult(errorMsg, true)
+            } finally {
+                loginBtn.disabled = false
+                loginBtn.textContent = 'Test Login'
+            }
+        }
+        
+        async function testRoleLogin(email) {
+            const roleBtn = document.getElementById('roleBtn')
+            roleBtn.disabled = true
+            roleBtn.textContent = 'Testing...'
+            
+            try {
+                showResult('🔄 Testing role-based login...')
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: 'Password@123'
+                })
+                
+                if (error) {
+                    throw error
+                }
+                
+                const result = `✅ ROLE LOGIN SUCCESSFUL!
+
+This simulates what happens when you click "Login as Admin"
+
+User: ${data.user.email}
+ID: ${data.user.id}
+
+✅ Role-based login is working!`
+                
+                showResult(result, false)
+                
+            } catch (error) {
+                showResult(`❌ Role login failed: ${error.message}`, true)
+            } finally {
+                roleBtn.disabled = false
+                roleBtn.textContent = 'Test Role Login (Admin)'
+            }
+        }
+        
+        async function checkSession() {
+            try {
+                const { data, error } = await supabase.auth.getSession()
+                
+                if (error) throw error
+                
+                if (data.session) {
+                    const result = `✅ ACTIVE SESSION FOUND
+
+User: ${data.session.user.email}
+Expires: ${new Date(data.session.expires_at * 1000).toLocaleString()}
+
+You are currently logged in!`
+                    showResult(result, false)
+                } else {
+                    showResult('ℹ️ No active session found. Please log in.', false)
+                }
+            } catch (error) {
+                showResult(`❌ Error checking session: ${error.message}`, true)
+            }
+        }
+        
+        async function signOut() {
+            try {
+                await supabase.auth.signOut()
+                showResult('✅ Signed out successfully', false)
+            } catch (error) {
+                showResult(`❌ Error signing out: ${error.message}`, true)
+            }
+        }
+    </script>
+</body>
+</html>

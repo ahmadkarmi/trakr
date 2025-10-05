@@ -13,4 +13,6 @@ export const QK = {
   SURVEYS: ['surveys'] as const,
   SURVEY: (id?: string) => ['survey', id] as const,
   ACTIVITY: (scope?: string) => (scope ? (['activity-logs', scope] as const) : (['activity-logs'] as const)),
+  NOTIFICATIONS: (userId?: string) => ['notifications', userId] as const,
+  UNREAD_NOTIFICATIONS: (userId?: string) => ['unread-notifications', userId] as const,
 }

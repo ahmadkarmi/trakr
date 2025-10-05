@@ -1,8 +1,8 @@
 export enum UserRole {
-  SUPER_ADMIN = 'super_admin',
-  ADMIN = 'admin',
-  AUDITOR = 'auditor',
-  BRANCH_MANAGER = 'branch_manager',
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ADMIN = 'ADMIN',
+  AUDITOR = 'AUDITOR',
+  BRANCH_MANAGER = 'BRANCH_MANAGER',
 }
 
 export interface User {

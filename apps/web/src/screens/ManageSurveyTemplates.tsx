@@ -9,11 +9,13 @@ import { useAuthStore } from '../stores/auth'
 import StatCard from '../components/StatCard'
 import ResponsiveTable from '../components/ResponsiveTable'
 import { ClipboardDocumentListIcon, CheckCircleIcon, FolderIcon } from '@heroicons/react/24/outline'
+import { useToast } from '../hooks/useToast'
 
 const ManageSurveyTemplates: React.FC = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user } = useAuthStore()
+  const { showToast } = useToast()
 
   const { data: surveys = [], isLoading } = useQuery<Survey[]>({
     queryKey: QK.SURVEYS,
@@ -31,27 +33,85 @@ const ManageSurveyTemplates: React.FC = () => {
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
       if (created?.id) navigate(`/manage/surveys/${created.id}/edit`)
+      showToast({ message: 'New survey created!', variant: 'success' })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to create survey.', 
+        variant: 'error' 
+      })
     },
   })
 
   const duplicateMutation = useMutation({
     mutationFn: (id: string) => api.duplicateSurvey(id, user?.id || 'user-3'),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.SURVEYS }),
+    onSuccess: (_result, id) => {
+      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      const survey = surveys.find(s => s.id === id)
+      showToast({ 
+        message: `Survey "${survey?.title || 'Survey'}" duplicated successfully!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to duplicate survey.', 
+        variant: 'error' 
+      })
+    },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteSurvey(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.SURVEYS }),
+    onSuccess: (_result, id) => {
+      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      const survey = surveys.find(s => s.id === id)
+      showToast({ 
+        message: `Survey "${survey?.title || 'Survey'}" deleted successfully!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to delete survey.', 
+        variant: 'error' 
+      })
+    },
   })
 
   const toggleActiveMutation = useMutation({
     mutationFn: (s: Survey) => api.updateSurvey(s.id, { isActive: !s.isActive }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.SURVEYS }),
+    onSuccess: (_result, survey) => {
+      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      showToast({ 
+        message: `Survey "${survey.title}" ${!survey.isActive ? 'activated' : 'deactivated'}!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to update survey status.', 
+        variant: 'error' 
+      })
+    },
   })
 
   const updateFrequencyMutation = useMutation({
     mutationFn: (payload: { id: string; frequency: AuditFrequency }) => api.updateSurvey(payload.id, { frequency: payload.frequency }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.SURVEYS }),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      const survey = surveys.find(s => s.id === variables.id)
+      showToast({ 
+        message: `Survey "${survey?.title || 'Survey'}" frequency updated!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to update survey frequency.', 
+        variant: 'error' 
+      })
+    },
   })
 
   return (

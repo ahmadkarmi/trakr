@@ -17,7 +17,9 @@
     "type-check": "npm run type-check --workspaces",
     "clean": "npm run clean --workspaces && rimraf node_modules",
     "install:all": "npm install",
-    "seed:db": "node -r dotenv/config scripts/seed-with-credentials.js"
+    "seed:db": "node -r dotenv/config scripts/seed-with-credentials.js",
+    "set-passwords": "node -r dotenv/config scripts/set-user-passwords.js",
+    "sync-auth": "node -r dotenv/config scripts/sync-auth-ids.js"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
@@ -48,5 +50,8 @@
     "monorepo"
   ],
   "author": "Your Organization",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@tanstack/react-query-persist-client": "^5.90.2"
+  }
 }

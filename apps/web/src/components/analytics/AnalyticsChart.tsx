@@ -1,4 +1,5 @@
 import React from 'react'
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface AnalyticsChartProps {
   type: 'line' | 'bar' | 'pie'
@@ -14,73 +15,100 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
   data,
   xKey = 'name',
   yKeys = ['value'],
-  colors = ['#3B82F6'],
+  colors = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#6B7280'],
   height = 300
 }) => {
-  // This is a placeholder component for charts
-  // In a real implementation, you would use a charting library like Recharts, Chart.js, or D3
-  
-  const renderPlaceholderChart = () => {
+  const renderChart = () => {
     switch (type) {
       case 'line':
         return (
-          <div className="flex items-end justify-between h-full px-4">
-            {data.map((item, index) => (
-              <div key={index} className="flex flex-col items-center gap-2">
-                <div 
-                  className="w-8 bg-blue-500 rounded-t"
-                  style={{ 
-                    height: `${Math.random() * 80 + 20}%`,
-                    backgroundColor: colors[0] 
-                  }}
+          <ResponsiveContainer width="100%" height={height}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey={xKey} stroke="#6b7280" style={{ fontSize: '12px' }} />
+              <YAxis stroke="#6b7280" style={{ fontSize: '12px' }} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px' }}
+                labelStyle={{ color: '#374151', fontWeight: 600 }}
+              />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              {yKeys.map((key, index) => (
+                <Line 
+                  key={key}
+                  type="monotone" 
+                  dataKey={key} 
+                  stroke={colors[index % colors.length]}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
                 />
-                <span className="text-xs text-gray-600">{item[xKey]}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
         )
       case 'bar':
         return (
-          <div className="flex items-end justify-between h-full px-4">
-            {data.map((item, index) => (
-              <div key={index} className="flex flex-col items-center gap-2">
-                <div 
-                  className="w-12 bg-blue-500 rounded-t"
-                  style={{ 
-                    height: `${(item[yKeys[0]] / Math.max(...data.map(d => d[yKeys[0]]))) * 80 + 10}%`,
-                    backgroundColor: colors[0] 
-                  }}
+          <ResponsiveContainer width="100%" height={height}>
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey={xKey} stroke="#6b7280" style={{ fontSize: '12px' }} />
+              <YAxis stroke="#6b7280" style={{ fontSize: '12px' }} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px' }}
+                labelStyle={{ color: '#374151', fontWeight: 600 }}
+              />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              {yKeys.map((key, index) => (
+                <Bar 
+                  key={key}
+                  dataKey={key} 
+                  fill={colors[index % colors.length]}
+                  radius={[4, 4, 0, 0]}
                 />
-                <span className="text-xs text-gray-600 text-center">{item[xKey]}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
         )
       case 'pie':
+        // Filter out zero values for cleaner pie chart
+        const pieData = data.filter(item => item.value > 0)
+        
         return (
-          <div className="flex items-center justify-center h-full">
-            <div className="w-32 h-32 rounded-full border-8 border-blue-500 flex items-center justify-center">
-              <span className="text-sm font-medium text-gray-700">Pie Chart</span>
-            </div>
-          </div>
+          <ResponsiveContainer width="100%" height={height}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {pieData.map((_entry, index) => (
+                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                ))}
+              </Pie>
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px' }}
+              />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+            </PieChart>
+          </ResponsiveContainer>
         )
       default:
         return (
           <div className="flex items-center justify-center h-full">
-            <span className="text-gray-500">Chart placeholder</span>
+            <span className="text-gray-500">Unsupported chart type</span>
           </div>
         )
     }
   }
 
   return (
-    <div style={{ height: `${height}px` }} className="w-full">
-      {renderPlaceholderChart()}
-      <div className="mt-4 text-center">
-        <p className="text-xs text-gray-500">
-          Chart visualization ({type}) - {data.length} data points
-        </p>
-      </div>
+    <div style={{ minHeight: `${height}px` }} className="w-full">
+      {renderChart()}
     </div>
   )
 }

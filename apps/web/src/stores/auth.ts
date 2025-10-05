@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { User, UserRole } from '@trakr/shared'
 import { api } from '../utils/api'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
+import { preloadDashboardChunk } from '../hooks/useDashboardPrefetch'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 interface AuthState {
@@ -32,7 +33,7 @@ const mockUsers: Record<UserRole, User> = {
   [UserRole.BRANCH_MANAGER]: {
     id: 'user-2',
     name: 'Jane Manager',
-    email: 'manager@trakr.com',
+    email: 'branchmanager@trakr.com',
     role: UserRole.BRANCH_MANAGER,
     orgId: 'org-1',
     branchId: 'branch-1',
@@ -69,11 +70,60 @@ export const useAuthStore = create<AuthState>()(
       signIn: async (role: UserRole) => {
         set({ isLoading: true })
         try {
-          // Prefer real users from the active backend (Supabase when VITE_BACKEND=supabase)
+          // If Supabase is configured, authenticate properly with real auth session
+          if (hasSupabaseEnv()) {
+            const emailByRole: Record<UserRole, string> = {
+              [UserRole.ADMIN]: 'admin@trakr.com',
+              [UserRole.BRANCH_MANAGER]: 'branchmanager@trakr.com',
+              [UserRole.AUDITOR]: 'auditor@trakr.com',
+              [UserRole.SUPER_ADMIN]: 'admin@trakr.com',
+            }
+            const email = emailByRole[role]
+            const password = 'Password@123' // Default password set by our script
+            
+            // Use the credentials login flow to create a real Supabase session
+            const supabase = getSupabase()
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+            if (error) throw error
+            const authUser = data.user
+            if (!authUser) throw new Error('No auth user returned')
+
+            // Hydrate application user from DB (parallel lookup for speed)
+            let appUser: User | null = null
+            try {
+              const [userById, allUsers] = await Promise.allSettled([
+                api.getUserById(authUser.id),
+                api.getUsers()
+              ])
+              
+              if (userById.status === 'fulfilled' && userById.value) {
+                appUser = userById.value
+              } else if (allUsers.status === 'fulfilled' && allUsers.value) {
+                appUser = allUsers.value.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
+              }
+            } catch (parallelError) {
+              console.warn('[Auth] Parallel lookup failed, trying sequential', parallelError)
+              // Fallback to sequential lookup
+              try {
+                appUser = await api.getUserById(authUser.id)
+              } catch {
+                const users = await api.getUsers()
+                appUser = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
+              }
+            }
+            
+            if (!appUser) throw new Error('User profile not found in database')
+
+            // Preload dashboard chunk for faster navigation
+            preloadDashboardChunk(appUser.role)
+            
+            set({ user: appUser, isAuthenticated: true, isLoading: false })
+            return
+          }
+          
+          // Fallback for non-Supabase environments (mock/CI)
           const users = await api.getUsers()
-          // Primary: match by role
           let user = users.find(u => u.role === role)
-          // Secondary: match by seeded email for reliability
           if (!user) {
             const emailByRole: Record<UserRole, string> = {
               [UserRole.ADMIN]: 'admin@trakr.com',
@@ -84,15 +134,19 @@ export const useAuthStore = create<AuthState>()(
             const target = emailByRole[role]?.toLowerCase()
             user = users.find(u => (u.email || '').toLowerCase() === target)
           }
-          // Fallback: first available
           if (!user) user = users[0]
           if (!user) throw new Error('No users available from backend')
 
+          // Preload dashboard chunk for faster navigation
+          preloadDashboardChunk(user.role)
+          
           set({ user, isAuthenticated: true, isLoading: false })
-        } catch (_e) {
+        } catch (e) {
           // Last-resort fallback to local mock identity (keeps demo usable)
           const fallback = mockUsers[role]
+          preloadDashboardChunk(fallback.role)
           set({ user: fallback, isAuthenticated: true, isLoading: false })
+          console.error('Role-based login failed, using mock fallback:', e)
         }
       },
 
@@ -110,18 +164,37 @@ export const useAuthStore = create<AuthState>()(
           const authUser = data.user
           if (!authUser) throw new Error('No auth user returned')
 
-          // Hydrate application user from DB (id matches auth uid in our schema)
+          // Hydrate application user from DB (parallel lookup for speed)
           let appUser: User | null = null
           try {
-            const maybe = await api.getUserById(authUser.id)
-            appUser = maybe
-          } catch {}
-          if (!appUser) {
-            const byEmail = (await api.getUsers()).find(u => (u.email || '').toLowerCase() === email.toLowerCase())
-            if (byEmail) appUser = byEmail
+            const [userById, allUsers] = await Promise.allSettled([
+              api.getUserById(authUser.id),
+              api.getUsers()
+            ])
+            
+            if (userById.status === 'fulfilled' && userById.value) {
+              appUser = userById.value
+            } else if (allUsers.status === 'fulfilled' && allUsers.value) {
+              appUser = allUsers.value.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
+            }
+          } catch (parallelError) {
+            console.warn('[Auth] Parallel lookup failed, trying sequential', parallelError)
+            // Fallback to sequential lookup
+            try {
+              appUser = await api.getUserById(authUser.id)
+            } catch {
+              const users = await api.getUsers()
+              appUser = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
+            }
           }
-          if (!appUser) throw new Error('User profile not found. Ensure seed created users in the database.')
+          
+          if (!appUser) {
+            throw new Error('User profile not found. Ensure seed created users in the database.')
+          }
 
+          // Preload dashboard chunk for faster navigation
+          preloadDashboardChunk(appUser.role)
+          
           set({ user: appUser, isAuthenticated: true, isLoading: false })
         } catch (e) {
           set({ isLoading: false })
@@ -169,17 +242,31 @@ export const useAuthStore = create<AuthState>()(
           const sessUser = sessionRes?.session?.user
           if (sessUser) {
             // If we already have a user persisted and IDs match, keep it
-            // Regardless, try to hydrate to ensure consistency
+            // Regardless, try to hydrate to ensure consistency (parallel for speed)
             let appUser: User | null = null
             try {
-              const maybe = await api.getUserById(sessUser.id)
-              appUser = maybe
-            } catch {}
-            if (!appUser) {
-              const email = sessUser.email || ''
-              const byEmail = (await api.getUsers()).find(u => (u.email || '').toLowerCase() === email.toLowerCase())
-              if (byEmail) appUser = byEmail
+              const [userById, allUsers] = await Promise.allSettled([
+                api.getUserById(sessUser.id),
+                api.getUsers()
+              ])
+              
+              if (userById.status === 'fulfilled' && userById.value) {
+                appUser = userById.value
+              } else if (allUsers.status === 'fulfilled' && allUsers.value) {
+                const email = sessUser.email || ''
+                appUser = allUsers.value.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
+              }
+            } catch (parallelError) {
+              console.warn('[Auth] Parallel init lookup failed, trying sequential', parallelError)
+              try {
+                appUser = await api.getUserById(sessUser.id)
+              } catch {
+                const email = sessUser.email || ''
+                const users = await api.getUsers()
+                appUser = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
+              }
             }
+            
             if (appUser) {
               set({ user: appUser, isAuthenticated: true })
             }
@@ -191,12 +278,19 @@ export const useAuthStore = create<AuthState>()(
               set({ user: null, isAuthenticated: false })
               return
             }
+            // Parallel user lookup for speed
             let appUser: User | null = null
-            try { appUser = await api.getUserById(u.id) } catch {}
-            if (!appUser && u.email) {
-              const byEmail = (await api.getUsers()).find(x => (x.email || '').toLowerCase() === u.email!.toLowerCase())
-              if (byEmail) appUser = byEmail
+            const [userById, allUsers] = await Promise.allSettled([
+              api.getUserById(u.id),
+              api.getUsers()
+            ])
+            
+            if (userById.status === 'fulfilled') {
+              appUser = userById.value
+            } else if (allUsers.status === 'fulfilled' && u.email) {
+              appUser = allUsers.value.find(x => (x.email || '').toLowerCase() === u.email!.toLowerCase()) || null
             }
+            
             if (appUser) set({ user: appUser, isAuthenticated: true })
           })
         } finally {

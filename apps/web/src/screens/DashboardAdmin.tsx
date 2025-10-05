@@ -3,7 +3,7 @@ import React from 'react'
 import { useAuthStore } from '../stores/auth'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Audit, Branch, Organization, LogEntry, AuditStatus, UserRole, Zone } from '@trakr/shared'
+import { Audit, Branch, Organization, AuditStatus, UserRole, Zone } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -40,10 +40,6 @@ const DashboardAdmin: React.FC = () => {
     queryKey: QK.AUDITS('admin'),
     queryFn: () => api.getAudits(),
   })
-  const { data: activity = [] } = useQuery<LogEntry[]>({
-    queryKey: QK.ACTIVITY('admin'),
-    queryFn: () => api.getActivityLogs(),
-  })
 
   // TODO: Get branches without assigned managers (admin needs to approve these)
   // const { data: branchManagerAssignments = [] } = useQuery({
@@ -73,8 +69,8 @@ const DashboardAdmin: React.FC = () => {
   const [searchInput, setSearchInput] = React.useState<string>('')
   const [searchQuery, setSearchQuery] = React.useState<string>('')
   const [showAdvanced, setShowAdvanced] = React.useState<boolean>(false)
-  const [sortField, setSortField] = React.useState<'due' | 'updated' | 'status' | 'branch' | 'auditor'>('due')
-  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc')
+  const [sortField, setSortField] = React.useState<'due' | 'updated' | 'status' | 'branch' | 'auditor'>('updated')
+  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc')
   const [viewScope, setViewScope] = React.useState<'week' | 'all'>('week')
   const [searchParams, setSearchParams] = useSearchParams()
   const filtersInitialized = React.useRef(false)
@@ -224,8 +220,6 @@ const DashboardAdmin: React.FC = () => {
 
   const completedCount = weeklyAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
   const inProgressCount = weeklyAudits.filter(a => a.status === AuditStatus.IN_PROGRESS).length
-  const draftCount = weeklyAudits.filter(a => a.status === AuditStatus.DRAFT).length
-  const submittedCount = weeklyAudits.filter(a => a.status === AuditStatus.SUBMITTED).length
   
   // Real-time priorities (not period-filtered)
   const dueThisWeekCount = weeklyAudits.filter(a => a.dueAt && !isOverdue(a)).length
@@ -324,232 +318,142 @@ const DashboardAdmin: React.FC = () => {
   return (
     <DashboardLayout title="Admin Dashboard">
       <div className="mobile-container breathing-room">
-        {/* Mobile-First Header Layout */}
-        <div className="mb-6 lg:mb-8">
-          {/* Welcome Area - Full Width on Mobile */}
-          <div className="flex items-center gap-3 mb-4 sm:mb-0 lg:mb-6">
-            <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-              <span className="text-xl">🛠️</span>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}</h2>
-              <p className="text-sm text-gray-500">
-                {branches.length} branches • {audits.length} audits • {overdueCountAll} overdue
-              </p>
-            </div>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p className="text-gray-600 mt-1">{branches.length} branches • {audits.length} audits • {user?.name}</p>
           </div>
           
-          {/* Actions - Below Welcome on Mobile, Inline on Desktop */}
-          <div className="sm:flex sm:items-center sm:justify-between sm:-mt-16">
-            <div className="hidden sm:block sm:flex-1"></div>
-            <button 
-              className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium transition-colors touch-target"
-              onClick={() => navigate('/manage/surveys')}
-            >
-              + Create Survey Template
-            </button>
-          </div>
+          <button 
+            className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+            onClick={() => navigate('/manage/surveys')}
+          >
+            + Create Survey Template
+          </button>
         </div>
 
-        {/* Smart Quick Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <button 
-            className="card-compact card-interactive text-left bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200"
+            className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
             onClick={() => navigate('/manage/branches')}
           >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center shadow-sm">
-                <span className="text-xl">🏢</span>
-              </div>
-              <div className="flex-1">
-                <div className="font-semibold text-gray-900 mb-1">Branches</div>
-                <div className="text-sm text-gray-600">{branches.length} total</div>
-              </div>
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+              <span className="text-xl">🏢</span>
             </div>
+            <p className="text-2xl font-bold text-gray-900">{branches.length}</p>
+            <p className="text-sm text-gray-600 mt-1">Branches</p>
           </button>
           
           <button 
-            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
             onClick={() => navigate('/manage/zones')}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm">🗺️</span>
-              </div>
-              <div>
-                <div className="font-medium text-gray-900">Zones</div>
-                <div className="text-xs text-gray-500">{zones.length} total</div>
-              </div>
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+              <span className="text-xl">🗺️</span>
             </div>
+            <p className="text-2xl font-bold text-gray-900">{zones.length}</p>
+            <p className="text-sm text-gray-600 mt-1">Zones</p>
           </button>
           
           <button 
-            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
             onClick={() => navigate('/manage/users')}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm">👥</span>
-              </div>
-              <div>
-                <div className="font-medium text-gray-900">Users</div>
-                <div className="text-xs text-gray-500">{activeUsersCount} active</div>
-              </div>
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
+              <span className="text-xl">👥</span>
             </div>
+            <p className="text-2xl font-bold text-gray-900">{activeUsersCount}</p>
+            <p className="text-sm text-gray-600 mt-1">Active Users</p>
           </button>
           
           <button 
-            className="card-mobile hover:shadow-lg transition-shadow text-left"
+            className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
             onClick={() => navigate('/manage/users')}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <span className="text-sm">✉️</span>
-              </div>
-              <div>
-                <div className="font-medium text-gray-900">Invites</div>
-                <div className="text-xs text-gray-500">{pendingInvitesCount} pending</div>
-              </div>
+            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mb-3">
+              <span className="text-xl">✉️</span>
             </div>
+            <p className="text-2xl font-bold text-gray-900">{pendingInvitesCount}</p>
+            <p className="text-sm text-gray-600 mt-1">Pending Invites</p>
           </button>
         </div>
 
         {/* Weekly Insights - Fixed to Current Week */}
-        <div className="card-mobile">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Weekly Insights</h3>
-            <span className="text-xs text-gray-500">Current week performance</span>
-          </div>
-          
-          {/* Horizontal Scrolling Stats Cards */}
-          <div className="overflow-x-auto pb-2">
-            <div className="flex gap-4 min-w-max">
-              {/* Priority KPIs First - Overdue is most critical */}
-              <div className={`card-compact min-w-[200px] ${overdueCountAll > 0 ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${overdueCountAll > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
-                    <span className="text-lg">🚨</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className={`text-2xl font-bold ${overdueCountAll > 0 ? 'text-red-600' : 'text-gray-600'}`}>{overdueCountAll}</div>
-                    <div className="text-sm text-gray-600">Overdue</div>
-                    <div className="text-xs text-gray-500">Urgent action</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className={`card-compact min-w-[200px] ${dueThisWeekCount > 0 ? 'bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${dueThisWeekCount > 0 ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                    <span className="text-lg">⏰</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className={`text-2xl font-bold ${dueThisWeekCount > 0 ? 'text-orange-600' : 'text-gray-600'}`}>{dueThisWeekCount}</div>
-                    <div className="text-sm text-gray-600">Due This Week</div>
-                    <div className="text-xs text-gray-500">Weekly deadlines</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-compact min-w-[200px] bg-gradient-to-r from-success-50 to-green-50 border-success-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
-                    <ClipboardDocumentCheckIcon className="w-6 h-6 text-success-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-success-600">{completionRate}%</div>
-                    <div className="text-sm text-gray-600">Completion Rate</div>
-                    <div className="text-xs text-gray-500">{completedCount} of {weeklyAudits.length}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-compact min-w-[200px] bg-gradient-to-r from-primary-50 to-blue-50 border-primary-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <ClipboardDocumentListIcon className="w-6 h-6 text-primary-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-primary-600">{onTimeRate}%</div>
-                    <div className="text-sm text-gray-600">On-time Rate</div>
-                    <div className="text-xs text-gray-500">Meeting deadlines</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Weekly Operational Insights */}
-              <div className="card-compact min-w-[200px] bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-lg">⚡</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-blue-600">{inProgressCount}</div>
-                    <div className="text-sm text-gray-600">In Progress</div>
-                    <div className="text-xs text-gray-500">This week</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-compact min-w-[200px] bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <span className="text-lg">🏢</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-indigo-600">{coverageBranches.size}</div>
-                    <div className="text-sm text-gray-600">Branches to Audit</div>
-                    <div className="text-xs text-gray-500">This week</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-compact min-w-[200px] bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <span className="text-lg">📤</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-yellow-600">{submittedCount}</div>
-                    <div className="text-sm text-gray-600">Awaiting Review</div>
-                    <div className="text-xs text-gray-500">This week</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-compact min-w-[200px] bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <span className="text-lg">📝</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-purple-600">{draftCount}</div>
-                    <div className="text-sm text-gray-600">Draft Audits</div>
-                    <div className="text-xs text-gray-500">Need completion</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-compact min-w-[200px] bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <span className="text-lg">👥</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-emerald-600">{weeklyAudits.length}</div>
-                    <div className="text-sm text-gray-600">Total Scheduled</div>
-                    <div className="text-xs text-gray-500">This week</div>
-                  </div>
-                </div>
-              </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Weekly Insights</h2>
+              <p className="text-sm text-gray-600 mt-1">Current week performance</p>
             </div>
           </div>
           
-          {org?.timeZone && (
-            <div className="mt-4 text-center">
-              <span className="text-xs text-gray-500">Timezone: {org.timeZone} • Current week insights</span>
+          {/* Metrics Grid - Unified Layout */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {/* Overdue Priority */}
+            {overdueCountAll > 0 ? (
+              <div className="col-span-2 sm:col-span-3 lg:col-span-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg p-5 text-white">
+                <p className="text-sm font-medium opacity-90">Overdue</p>
+                <p className="text-4xl font-bold mt-2">{overdueCountAll}</p>
+                <p className="text-sm mt-1 opacity-90">Urgent action required</p>
+              </div>
+            ) : (
+              <div className="bg-white border border-gray-200 rounded-lg p-5">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+                  <span className="text-xl">✅</span>
+                </div>
+                <p className="text-3xl font-bold text-gray-900">0</p>
+                <p className="text-sm text-gray-600 mt-1">Overdue</p>
+              </div>
+            )}
+            
+            {/* Due This Week */}
+            <div className="bg-white border border-gray-200 rounded-lg p-5">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-xl">⏰</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{dueThisWeekCount}</p>
+              <p className="text-sm text-gray-600 mt-1">Due This Week</p>
             </div>
-          )}
+
+            {/* Completion Rate */}
+            <div className="bg-white border border-gray-200 rounded-lg p-5">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+                <ClipboardDocumentCheckIcon className="w-6 h-6 text-green-600" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{completionRate}%</p>
+              <p className="text-sm text-gray-600 mt-1">Completion</p>
+              <p className="text-xs text-gray-500 mt-1">{completedCount} of {weeklyAudits.length}</p>
+            </div>
+
+            {/* In Progress */}
+            <div className="bg-white border border-gray-200 rounded-lg p-5">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-xl">⚡</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{inProgressCount}</p>
+              <p className="text-sm text-gray-600 mt-1">In Progress</p>
+            </div>
+
+            {/* On-time Rate */}
+            <div className="bg-white border border-gray-200 rounded-lg p-5">
+              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center mb-3">
+                <ClipboardDocumentListIcon className="w-6 h-6 text-primary-600" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{onTimeRate}%</p>
+              <p className="text-sm text-gray-600 mt-1">On-time</p>
+            </div>
+
+            {/* Branches Coverage */}
+            <div className="bg-white border border-gray-200 rounded-lg p-5">
+              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-xl">🏢</span>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{coverageBranches.size}</p>
+              <p className="text-sm text-gray-600 mt-1">Branches</p>
+            </div>
+          </div>
         </div>
 
         {/* Organization Settings moved to the Settings (cogwheel) screen for admins */}
@@ -557,32 +461,36 @@ const DashboardAdmin: React.FC = () => {
         {/* Zone coverage + Recent activity row */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
           {/* Zone coverage */}
-          <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <h3 className="text-lg font-medium text-gray-900">Weekly Zone Coverage</h3>
               <span className="text-xs text-gray-500">This week • Top 5</span>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {zoneRows.length === 0 ? (
-                <p className="text-gray-500">No zones or audits this period.</p>
+                <p className="text-gray-500 text-center py-8">No zones or audits this period.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-3 py-1.5 text-left">Zone</th>
-                        <th className="px-3 py-1.5 text-right">Scheduled</th>
-                        <th className="px-3 py-1.5 text-right">Completed</th>
-                        <th className="px-3 py-1.5 text-right">Overdue</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zone</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Overdue</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {zoneRows.map(r => (
-                        <tr key={r.id}>
-                          <td className="px-3 py-1.5">{r.name}</td>
-                          <td className="px-3 py-1.5 text-right">{r.scheduled}</td>
-                          <td className="px-3 py-1.5 text-right">{r.completed}</td>
-                          <td className="px-3 py-1.5 text-right">{r.overdue}</td>
+                        <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{r.scheduled}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{r.completed}</td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            <span className={r.overdue > 0 ? 'text-red-600 font-medium' : 'text-gray-900'}>
+                              {r.overdue}
+                            </span>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -593,56 +501,207 @@ const DashboardAdmin: React.FC = () => {
           </div>
 
           {/* Recent Activity */}
-          <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
             </div>
-            <div className="p-6">
-              {activity.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No recent activity.</p>
-              ) : (
-                <ul className="space-y-3 text-sm">
-                  {activity.slice(0, 6).map((log) => (
-                    <li key={log.id} className="flex justify-between">
-                      <span className="text-gray-700">{log.action} – {log.details}</span>
-                      <span className="text-gray-400">{new Date(log.timestamp).toLocaleDateString()}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <div className="p-4 sm:p-6">
+              {(() => {
+                // Derive activity from recent audits with detailed information
+                const recentAudits = [...audits]
+                  .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+                  .slice(0, 10)
+                
+                if (recentAudits.length === 0) {
+                  return <p className="text-gray-500 text-center py-8">No recent activity.</p>
+                }
+
+                // Build activity items with detailed info
+                const activityItems = recentAudits.map((audit) => {
+                  const branch = branches.find(b => b.id === audit.branchId)
+                  const auditor = users.find(u => u.id === audit.assignedTo)
+                  
+                  let action = ''
+                  let actor = ''
+                  let timestamp = new Date(audit.updatedAt)
+                  
+                  if (audit.status === AuditStatus.APPROVED && audit.approvedBy) {
+                    const approver = users.find(u => u.id === audit.approvedBy)
+                    action = '✅ Approved'
+                    actor = approver?.name || 'Unknown Manager'
+                    timestamp = audit.approvedAt ? new Date(audit.approvedAt) : timestamp
+                  } else if (audit.status === AuditStatus.REJECTED && audit.rejectedBy) {
+                    const rejecter = users.find(u => u.id === audit.rejectedBy)
+                    action = '❌ Rejected'
+                    actor = rejecter?.name || 'Unknown Manager'
+                    timestamp = audit.rejectedAt ? new Date(audit.rejectedAt) : timestamp
+                  } else if (audit.status === AuditStatus.SUBMITTED && audit.submittedBy) {
+                    const submitter = users.find(u => u.id === audit.submittedBy)
+                    action = '📤 Submitted for Approval'
+                    actor = submitter?.name || auditor?.name || 'Unknown'
+                    timestamp = audit.submittedAt ? new Date(audit.submittedAt) : timestamp
+                  } else if (audit.status === AuditStatus.COMPLETED) {
+                    action = '✔️ Completed'
+                    actor = auditor?.name || 'Unknown Auditor'
+                  } else if (audit.status === AuditStatus.IN_PROGRESS) {
+                    action = '🔄 In Progress'
+                    actor = auditor?.name || 'Unknown Auditor'
+                  } else if (audit.status === AuditStatus.DRAFT) {
+                    action = '📝 Draft Created'
+                    actor = auditor?.name || 'Unassigned'
+                  } else {
+                    action = '📋 Updated'
+                    actor = auditor?.name || 'Unknown'
+                  }
+                  
+                  return {
+                    id: audit.id,
+                    action,
+                    actor,
+                    branch: branch?.name || 'Unknown Branch',
+                    timestamp,
+                    audit,
+                  }
+                })
+                
+                return (
+                  <ResponsiveTable
+                    items={activityItems}
+                    keyField={(item) => item.id}
+                    mobileItem={(item) => {
+                      const user = users.find(u => u.name === item.actor)
+                      const initials = item.actor.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                      
+                      return (
+                        <div className="p-4 space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-semibold text-gray-900">{item.action}</div>
+                              <div className="text-sm text-gray-600 mt-1">{item.branch}</div>
+                            </div>
+                            <div className="text-xs text-gray-500 whitespace-nowrap">
+                              {item.timestamp.toLocaleDateString()}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {user?.avatarUrl ? (
+                              <img src={user.avatarUrl} alt={item.actor} className="w-6 h-6 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-medium">
+                                {initials}
+                              </div>
+                            )}
+                            <span className="text-xs text-gray-500 font-medium">{item.actor}</span>
+                          </div>
+                          <button
+                            className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                            onClick={() => navigate(`/audits/${item.audit.id}/summary`)}
+                          >
+                            View Details →
+                          </button>
+                        </div>
+                      )
+                    }}
+                    columns={[
+                      {
+                        key: 'action',
+                        header: 'Action',
+                        render: (item) => (
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">{item.action}</span>
+                          </div>
+                        ),
+                      },
+                      {
+                        key: 'branch',
+                        header: 'Branch',
+                        render: (item) => (
+                          <div className="text-sm text-gray-900">{item.branch}</div>
+                        ),
+                      },
+                      {
+                        key: 'actor',
+                        header: 'By',
+                        render: (item) => {
+                          const user = users.find(u => u.name === item.actor)
+                          const initials = item.actor.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                          
+                          return (
+                            <div className="flex items-center gap-2">
+                              {user?.avatarUrl ? (
+                                <img src={user.avatarUrl} alt={item.actor} className="w-7 h-7 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-medium">
+                                  {initials}
+                                </div>
+                              )}
+                              <span className="text-sm text-gray-600">{item.actor}</span>
+                            </div>
+                          )
+                        },
+                      },
+                      {
+                        key: 'timestamp',
+                        header: 'When',
+                        render: (item) => (
+                          <div className="text-xs text-gray-500">
+                            {item.timestamp.toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        ),
+                      },
+                      {
+                        key: 'actions',
+                        header: '',
+                        className: 'text-right',
+                        render: (item) => (
+                          <button
+                            className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                            onClick={() => navigate(`/audits/${item.audit.id}/summary`)}
+                          >
+                            View →
+                          </button>
+                        ),
+                      },
+                    ]}
+                  />
+                )
+              })()}
             </div>
           </div>
         </div>
 
         {/* This Week's Audits - Full width row */}
-        <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <h3 className="text-lg font-medium text-gray-900">
                   {viewScope === 'week' ? 'This Week\'s Audits' : 'All Audits'}
                 </h3>
-                <div className="flex items-center gap-3">
-                  {/* View Scope Toggle */}
-                  <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
-                    <button 
-                      className={`px-3 py-1.5 text-sm font-medium ${viewScope === 'week' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
-                      onClick={() => setViewScope('week')}
-                    >
-                      This Week
-                    </button>
-                    <button 
-                      className={`px-3 py-1.5 text-sm font-medium ${viewScope === 'all' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
-                      onClick={() => setViewScope('all')}
-                    >
-                      All Audits
-                    </button>
-                  </div>
+                {/* View Scope Toggle */}
+                <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+                  <button 
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${viewScope === 'week' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
+                    onClick={() => setViewScope('week')}
+                  >
+                    This Week
+                  </button>
+                  <button 
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${viewScope === 'all' ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`} 
+                    onClick={() => setViewScope('all')}
+                  >
+                    All Audits
+                  </button>
                 </div>
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {/* Professional Search & Filter Bar */}
-              <div className="mb-6 lg:mb-4 space-y-4 lg:space-y-3">
+              <div className="mb-4 space-y-3">
                 {/* Search Bar */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -652,17 +711,17 @@ const DashboardAdmin: React.FC = () => {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder="Search audit, branch, auditor..."
-                    className="w-full pl-12 pr-4 py-3 lg:py-2 border border-gray-300 rounded-xl lg:rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white transition-all duration-200"
+                    className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white transition-all"
                   />
                 </div>
                 
                 {/* Compact Filter & Sort Controls */}
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   {/* Quick Filter Dropdown */}
                   <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">Filter:</label>
+                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter:</label>
                     <select 
-                      className="input h-9 min-w-[140px]" 
+                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[140px]" 
                       value={quickChip} 
                       onChange={(e) => setQuickChip(e.target.value as typeof quickChip)}
                     >
@@ -680,9 +739,9 @@ const DashboardAdmin: React.FC = () => {
                   
                   {/* Sort Controls */}
                   <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">Sort:</label>
+                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort:</label>
                     <select 
-                      className="input h-9 min-w-[100px]" 
+                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[100px]" 
                       value={sortField} 
                       onChange={(e) => setSortField(e.target.value as typeof sortField)}
                     >
@@ -693,7 +752,7 @@ const DashboardAdmin: React.FC = () => {
                       <option value="auditor">Auditor</option>
                     </select>
                     <button 
-                      className="btn btn-ghost btn-sm px-2 py-1 h-9"
+                      className="px-3 py-2 border border-gray-300 bg-white hover:bg-gray-50 rounded-lg transition-colors"
                       onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
                       title={`Sort ${sortDirection === 'asc' ? 'Descending' : 'Ascending'}`}
                     >
@@ -703,28 +762,26 @@ const DashboardAdmin: React.FC = () => {
                 </div>
                 
                 {/* Filter Controls */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <button 
-                      className="flex items-center gap-2 px-4 py-2 sm:px-3 sm:py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl sm:rounded-lg font-medium transition-colors touch-target whitespace-nowrap"
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
                       onClick={() => setShowAdvanced((v) => !v)}
                     >
                       <FunnelIcon className="w-4 h-4" />
-                      <span className="hidden sm:inline">Advanced Filters</span>
-                      <span className="sm:hidden">Filters</span>
+                      <span>Advanced Filters</span>
                     </button>
-                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
                       {filteredAudits.length} results
                     </div>
                   </div>
                   <button 
-                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors whitespace-nowrap"
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors px-3 py-2"
                     onClick={clearAllFilters} 
                     disabled={!hasFilters}
                   >
                     <XMarkIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline">Clear All</span>
-                    <span className="sm:hidden">Clear</span>
+                    <span>Clear All</span>
                   </button>
                 </div>
                 
@@ -809,26 +866,26 @@ const DashboardAdmin: React.FC = () => {
                   const canManualArchive = !a.isArchived && pastDue && (a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS || a.status === AuditStatus.SUBMITTED)
                   
                   return (
-                    <div className="bg-white rounded-xl lg:rounded-lg border border-gray-200 p-4 lg:p-3 hover:shadow-lg lg:hover:shadow-md transition-all duration-300">
+                    <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow">
                       {/* Card Header */}
-                      <div className="mb-4 lg:mb-3">
-                        {/* Title Row - Single Line */}
-                        <div className="flex items-center gap-3 mb-3 lg:mb-2">
-                          <div className="w-10 h-10 lg:w-8 lg:h-8 bg-primary-100 rounded-xl lg:rounded-lg flex items-center justify-center flex-shrink-0">
-                            <span className="text-lg lg:text-sm font-bold text-primary-600">
+                      <div className="mb-4">
+                        {/* Title Row */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span className="text-base font-bold text-primary-600">
                               {a.id.slice(-2)}
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 text-lg lg:text-base truncate whitespace-nowrap">
+                            <h4 className="font-semibold text-gray-900 text-base truncate">
                               {highlightMatch(a.id)}
                             </h4>
-                            <p className="text-gray-600 text-sm lg:text-xs truncate">{highlightMatch(branchName)}</p>
+                            <p className="text-gray-600 text-sm truncate">{highlightMatch(branchName)}</p>
                           </div>
                         </div>
                         
-                        {/* Status Labels Row - Below Title */}
-                        <div className="flex items-center gap-2 lg:gap-1.5 flex-wrap mb-3 lg:mb-2">
+                        {/* Status Labels Row */}
+                        <div className="flex items-center gap-2 flex-wrap mb-3">
                             <StatusBadge status={a.status} />
                             {isOverdue && (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -844,7 +901,7 @@ const DashboardAdmin: React.FC = () => {
                         </div>
                         
                         {/* Audit Details */}
-                        <div className="mt-3 space-y-2 lg:space-y-1 text-sm lg:text-xs">
+                        <div className="mt-3 space-y-2 text-sm">
                           <div className="flex items-center justify-between">
                             <span className="text-gray-500">Auditor:</span>
                             <span className="font-medium text-gray-900">{highlightMatch(auditorName)}</span>
@@ -861,25 +918,25 @@ const DashboardAdmin: React.FC = () => {
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="pt-4 lg:pt-3 border-t border-gray-100">
-                        <div className="flex gap-2">
+                      <div className="pt-4 border-t border-gray-200">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <button 
-                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target"
-                            onClick={() => navigate(`/audits/${a.id}`)}
+                            className="w-full sm:flex-1 bg-white border-2 border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium transition-colors"
+                            onClick={() => navigate(`/audits/${a.id}/summary`)}
                           >
-                            View Details
+                            View Summary
                           </button>
                           {(a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS) && (
                             <button 
-                              className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target"
-                              onClick={() => navigate(`/audits/${a.id}/edit`)}
+                              className="w-full sm:flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
+                              onClick={() => navigate(`/audit/${a.id}/wizard`)}
                             >
                               Edit
                             </button>
                           )}
                           {canManualArchive && (
                             <button 
-                              className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 lg:py-2 rounded-xl lg:rounded-lg font-medium lg:text-sm transition-colors touch-target"
+                              className="w-full sm:flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
                               onClick={() => manualArchive.mutate({ auditId: a.id, userId: user!.id })} 
                               disabled={manualArchive.isPending}
                             >
@@ -998,15 +1055,15 @@ const DashboardAdmin: React.FC = () => {
                       <div className="flex items-center gap-1 justify-end">
                         <button 
                           className="btn btn-ghost btn-sm text-xs px-2 py-1"
-                          onClick={() => navigate(`/audits/${a.id}`)}
-                          title="View audit details"
+                          onClick={() => navigate(`/audits/${a.id}/summary`)}
+                          title="View audit summary"
                         >
                           View
                         </button>
                         {canEdit && (
                           <button 
                             className="btn btn-primary btn-sm text-xs px-2 py-1"
-                            onClick={() => navigate(`/audits/${a.id}/edit`)}
+                            onClick={() => navigate(`/audit/${a.id}/wizard`)}
                             title="Edit audit"
                           >
                             Edit

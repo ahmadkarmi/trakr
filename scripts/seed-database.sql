@@ -12,19 +12,32 @@ DELETE FROM zones;
 DELETE FROM surveys;
 DELETE FROM organizations;
 
+-- Create a temporary function to generate consistent UUIDs for seeding
+DO $$
+DECLARE
+    org_retail_id UUID := gen_random_uuid();
+    org_manufacturing_id UUID := gen_random_uuid();
+    zone_north_id UUID := gen_random_uuid();
+    zone_south_id UUID := gen_random_uuid();
+    zone_west_id UUID := gen_random_uuid();
+    zone_central_id UUID := gen_random_uuid();
+    zone_east_mfg_id UUID := gen_random_uuid();
+    zone_west_mfg_id UUID := gen_random_uuid();
+BEGIN
+
 -- Insert Organizations
 INSERT INTO organizations (id, name, created_at, updated_at) VALUES
-('org_001', 'Global Retail Chain', NOW(), NOW()),
-('org_002', 'Manufacturing Corp', NOW(), NOW());
+(org_retail_id, 'Global Retail Chain', NOW(), NOW()),
+(org_manufacturing_id, 'Manufacturing Corp', NOW(), NOW());
 
 -- Insert Zones
 INSERT INTO zones (id, org_id, name, description, created_at, updated_at) VALUES
-('zone_001', 'org_001', 'North Region', 'Northern region covering states NY, NJ, CT', NOW(), NOW()),
-('zone_002', 'org_001', 'South Region', 'Southern region covering states FL, GA, SC', NOW(), NOW()),
-('zone_003', 'org_001', 'West Region', 'Western region covering states CA, NV, AZ', NOW(), NOW()),
-('zone_004', 'org_001', 'Central Region', 'Central region covering states TX, OK, KS', NOW(), NOW()),
-('zone_005', 'org_002', 'East Manufacturing', 'Eastern manufacturing facilities', NOW(), NOW()),
-('zone_006', 'org_002', 'West Manufacturing', 'Western manufacturing facilities', NOW(), NOW());
+(zone_north_id, org_retail_id, 'North Region', 'Northern region covering states NY, NJ, CT', NOW(), NOW()),
+(zone_south_id, org_retail_id, 'South Region', 'Southern region covering states FL, GA, SC', NOW(), NOW()),
+(zone_west_id, org_retail_id, 'West Region', 'Western region covering states CA, NV, AZ', NOW(), NOW()),
+(zone_central_id, org_retail_id, 'Central Region', 'Central region covering states TX, OK, KS', NOW(), NOW()),
+(zone_east_mfg_id, org_manufacturing_id, 'East Manufacturing', 'Eastern manufacturing facilities', NOW(), NOW()),
+(zone_west_mfg_id, org_manufacturing_id, 'West Manufacturing', 'Western manufacturing facilities', NOW(), NOW());
 
 -- Insert Branches
 INSERT INTO branches (id, org_id, zone_id, name, address, city, state, zip_code, phone, email, manager_id, created_at, updated_at) VALUES

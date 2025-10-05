@@ -34,28 +34,65 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.log('  SUPABASE_URL=https://your-project-id.supabase.co')
   console.log('  SUPABASE_SERVICE_KEY=your-service-role-key')
   console.log('')
-  console.log('You can find these in your Supabase project settings > API')
   process.exit(1)
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 async function seedDatabase() {
+  // Test connection and check schema
+  console.log('🔌 Testing connection...')
+  const { data, error } = await supabase.from('organizations').select('count').limit(1)
+  if (error && !error.message.includes('does not exist')) {
+    throw error
+  }
+  console.log('✅ Connection successful')
+  
+  // Check what columns exist in key tables
+  console.log('🔍 Checking table schemas...')
   try {
-    console.log('🔌 Testing connection...')
-    const { error: testError } = await supabase.from('organizations').select('count').limit(1)
-    if (testError && !testError.message.includes('does not exist')) {
-      throw testError
+    const { data: sampleBranch } = await supabase.from('branches').select('*').limit(1)
+    if (sampleBranch && sampleBranch.length > 0) {
+      console.log('📋 Branches columns:', Object.keys(sampleBranch[0]).join(', '))
     }
-    console.log('✅ Connection successful')
+  } catch (err) {
+    console.log('⚠️  Could not check branches schema:', err.message)
+  }
+  
+  try {
+    const { data: sampleUser } = await supabase.from('users').select('*').limit(1)
+    if (sampleUser && sampleUser.length > 0) {
+      console.log('👤 Users columns:', Object.keys(sampleUser[0]).join(', '))
+    }
+  } catch (err) {
+    console.log('⚠️  Could not check users schema:', err.message)
+  }
 
-    // Clear existing data
+  try {
+    // Clear existing data more thoroughly
     console.log('🧹 Clearing existing data...')
-    const tables = ['audits', 'auditor_assignments', 'users', 'branches', 'zones', 'surveys', 'organizations']
-    for (const table of tables) {
+    
+    // Clear in correct order to handle foreign key constraints
+    const clearOrder = [
+      'audit_photos',
+      'audit_comments', 
+      'audits',
+      'auditor_assignments',
+      'users',
+      'branches', 
+      'zones',
+      'surveys',
+      'organizations'
+    ]
+    
+    for (const table of clearOrder) {
       try {
-        await supabase.from(table).delete().neq('id', '')
-        console.log(`  ✅ Cleared ${table}`)
+        const { error } = await supabase.from(table).delete().gte('created_at', '1900-01-01')
+        if (error) {
+          console.log(`  ⚠️  ${table}: ${error.message}`)
+        } else {
+          console.log(`  ✅ Cleared ${table}`)
+        }
       } catch (err) {
         console.log(`  ⚠️  ${table}: ${err.message}`)
       }
@@ -63,59 +100,90 @@ async function seedDatabase() {
 
     // Seed organizations
     console.log('🏢 Seeding organizations...')
-    const { error: orgError } = await supabase.from('organizations').insert([
-      { id: 'org_001', name: 'Global Retail Chain' },
-      { id: 'org_002', name: 'Manufacturing Corp' }
-    ])
+    const { data: orgData, error: orgError } = await supabase.from('organizations').insert([
+      { name: 'Global Retail Chain' },
+      { name: 'Manufacturing Corp' }
+    ]).select()
     if (orgError) throw orgError
+    
+    const retailOrg = orgData.find(org => org.name === 'Global Retail Chain')
+    const manufacturingOrg = orgData.find(org => org.name === 'Manufacturing Corp')
 
     // Seed zones
     console.log('🗺️ Seeding zones...')
-    const { error: zoneError } = await supabase.from('zones').insert([
-      { id: 'zone_001', org_id: 'org_001', name: 'North Region', description: 'Northern region covering NY, NJ, CT' },
-      { id: 'zone_002', org_id: 'org_001', name: 'South Region', description: 'Southern region covering FL, GA, SC' },
-      { id: 'zone_003', org_id: 'org_001', name: 'West Region', description: 'Western region covering CA, NV, AZ' },
-      { id: 'zone_004', org_id: 'org_001', name: 'Central Region', description: 'Central region covering TX, OK, KS' }
-    ])
+    const { data: zoneData, error: zoneError } = await supabase.from('zones').insert([
+      { org_id: retailOrg.id, name: 'North Region', description: 'Northern region covering NY, NJ, CT' },
+      { org_id: retailOrg.id, name: 'South Region', description: 'Southern region covering FL, GA, SC' },
+      { org_id: retailOrg.id, name: 'West Region', description: 'Western region covering CA, NV, AZ' },
+      { org_id: retailOrg.id, name: 'Central Region', description: 'Central region covering TX, OK, KS' }
+    ]).select()
     if (zoneError) throw zoneError
+    
+    const northZone = zoneData.find(z => z.name === 'North Region')
+    const southZone = zoneData.find(z => z.name === 'South Region')
+    const westZone = zoneData.find(z => z.name === 'West Region')
+    const centralZone = zoneData.find(z => z.name === 'Central Region')
 
-    // Seed branches
+    // Seed branches (ultra minimal - just org_id and name)
     console.log('🏪 Seeding branches...')
-    const { error: branchError } = await supabase.from('branches').insert([
-      { id: 'branch_001', org_id: 'org_001', zone_id: 'zone_001', name: 'Manhattan Store', address: '123 Broadway Ave', city: 'New York', state: 'NY', zip_code: '10001', phone: '(212) 555-0101', email: 'manhattan@retailchain.com' },
-      { id: 'branch_002', org_id: 'org_001', zone_id: 'zone_001', name: 'Brooklyn Store', address: '456 Atlantic Ave', city: 'Brooklyn', state: 'NY', zip_code: '11201', phone: '(718) 555-0102', email: 'brooklyn@retailchain.com' },
-      { id: 'branch_003', org_id: 'org_001', zone_id: 'zone_002', name: 'Miami Store', address: '321 Ocean Drive', city: 'Miami', state: 'FL', zip_code: '33139', phone: '(305) 555-0104', email: 'miami@retailchain.com' },
-      { id: 'branch_004', org_id: 'org_001', zone_id: 'zone_002', name: 'Atlanta Store', address: '654 Peachtree St', city: 'Atlanta', state: 'GA', zip_code: '30309', phone: '(404) 555-0105', email: 'atlanta@retailchain.com' },
-      { id: 'branch_005', org_id: 'org_001', zone_id: 'zone_003', name: 'Los Angeles Store', address: '147 Sunset Blvd', city: 'Los Angeles', state: 'CA', zip_code: '90028', phone: '(323) 555-0107', email: 'la@retailchain.com' },
-      { id: 'branch_006', org_id: 'org_001', zone_id: 'zone_003', name: 'San Francisco Store', address: '258 Market St', city: 'San Francisco', state: 'CA', zip_code: '94102', phone: '(415) 555-0108', email: 'sf@retailchain.com' },
-      { id: 'branch_007', org_id: 'org_001', zone_id: 'zone_004', name: 'Dallas Store', address: '741 Main St', city: 'Dallas', state: 'TX', zip_code: '75201', phone: '(214) 555-0110', email: 'dallas@retailchain.com' },
-      { id: 'branch_008', org_id: 'org_001', zone_id: 'zone_004', name: 'Houston Store', address: '852 Commerce St', city: 'Houston', state: 'TX', zip_code: '77002', phone: '(713) 555-0111', email: 'houston@retailchain.com' }
-    ])
+    const { data: branchData, error: branchError } = await supabase.from('branches').insert([
+      { org_id: retailOrg.id, name: 'Manhattan Store' },
+      { org_id: retailOrg.id, name: 'Brooklyn Store' },
+      { org_id: retailOrg.id, name: 'Miami Store' },
+      { org_id: retailOrg.id, name: 'Atlanta Store' },
+      { org_id: retailOrg.id, name: 'Los Angeles Store' },
+      { org_id: retailOrg.id, name: 'San Francisco Store' },
+      { org_id: retailOrg.id, name: 'Dallas Store' },
+      { org_id: retailOrg.id, name: 'Houston Store' }
+    ]).select()
     if (branchError) throw branchError
 
-    // Seed users
+    // Seed users (ultra minimal - just email and role) with upsert
     console.log('👥 Seeding users...')
-    const { error: userError } = await supabase.from('users').insert([
-      { id: 'user_001', org_id: 'org_001', email: 'admin@retailchain.com', name: 'Admin User', role: 'ADMIN', is_active: true },
-      { id: 'user_002', org_id: 'org_001', email: 'manager.manhattan@retailchain.com', name: 'Jennifer Lee', role: 'BRANCH_MANAGER', is_active: true },
-      { id: 'user_003', org_id: 'org_001', email: 'manager.miami@retailchain.com', name: 'Maria Garcia', role: 'BRANCH_MANAGER', is_active: true },
-      { id: 'user_004', org_id: 'org_001', email: 'manager.la@retailchain.com', name: 'James Anderson', role: 'BRANCH_MANAGER', is_active: true },
-      { id: 'user_005', org_id: 'org_001', email: 'auditor1@retailchain.com', name: 'Amanda White', role: 'AUDITOR', is_active: true },
-      { id: 'user_006', org_id: 'org_001', email: 'auditor2@retailchain.com', name: 'Christopher Davis', role: 'AUDITOR', is_active: true },
-      { id: 'user_007', org_id: 'org_001', email: 'auditor3@retailchain.com', name: 'Jessica Miller', role: 'AUDITOR', is_active: true }
-    ])
+    const { data: userData, error: userError } = await supabase.from('users').upsert([
+      // Main test accounts (trakr.com domain)
+      { org_id: retailOrg.id, email: 'admin@trakr.com', role: 'ADMIN' },
+      { org_id: retailOrg.id, email: 'branchmanager@trakr.com', role: 'BRANCH_MANAGER' },
+      { org_id: retailOrg.id, email: 'auditor@trakr.com', role: 'AUDITOR' },
+      
+      // Additional test accounts (retailchain.com domain)
+      { org_id: retailOrg.id, email: 'admin@retailchain.com', role: 'ADMIN' },
+      { org_id: retailOrg.id, email: 'manager.manhattan@retailchain.com', role: 'BRANCH_MANAGER' },
+      { org_id: retailOrg.id, email: 'manager.miami@retailchain.com', role: 'BRANCH_MANAGER' },
+      { org_id: retailOrg.id, email: 'manager.la@retailchain.com', role: 'BRANCH_MANAGER' },
+      { org_id: retailOrg.id, email: 'auditor1@retailchain.com', role: 'AUDITOR' },
+      { org_id: retailOrg.id, email: 'auditor2@retailchain.com', role: 'AUDITOR' },
+      { org_id: retailOrg.id, email: 'auditor3@retailchain.com', role: 'AUDITOR' }
+    ], { 
+      onConflict: 'email',
+      ignoreDuplicates: false 
+    }).select()
     if (userError) throw userError
+    
+    const mainBranchManager = userData.find(u => u.email === 'branchmanager@trakr.com')
+    const jenniferManager = userData.find(u => u.email === 'manager.manhattan@retailchain.com')
+    const mariaManager = userData.find(u => u.email === 'manager.miami@retailchain.com')
+    const jamesManager = userData.find(u => u.email === 'manager.la@retailchain.com')
 
     // Update branch managers
     console.log('🔄 Assigning branch managers...')
-    await supabase.from('branches').update({ manager_id: 'user_002' }).eq('id', 'branch_001') // Jennifer - Manhattan
-    await supabase.from('branches').update({ manager_id: 'user_002' }).eq('id', 'branch_002') // Jennifer - Brooklyn (2 branches)
-    await supabase.from('branches').update({ manager_id: 'user_003' }).eq('id', 'branch_003') // Maria - Miami
-    await supabase.from('branches').update({ manager_id: 'user_003' }).eq('id', 'branch_004') // Maria - Atlanta (2 branches)
-    await supabase.from('branches').update({ manager_id: 'user_004' }).eq('id', 'branch_005') // James - LA
-    await supabase.from('branches').update({ manager_id: 'user_004' }).eq('id', 'branch_006') // James - SF (2 branches)
-    await supabase.from('branches').update({ manager_id: 'user_004' }).eq('id', 'branch_007') // James - Dallas (3 branches)
-    await supabase.from('branches').update({ manager_id: 'user_004' }).eq('id', 'branch_008') // James - Houston (4 branches)
+    const manhattanBranch = branchData.find(b => b.name === 'Manhattan Store')
+    const brooklynBranch = branchData.find(b => b.name === 'Brooklyn Store')
+    const miamiBranch = branchData.find(b => b.name === 'Miami Store')
+    const atlantaBranch = branchData.find(b => b.name === 'Atlanta Store')
+    const laBranch = branchData.find(b => b.name === 'Los Angeles Store')
+    const sfBranch = branchData.find(b => b.name === 'San Francisco Store')
+    const dallasBranch = branchData.find(b => b.name === 'Dallas Store')
+    const houstonBranch = branchData.find(b => b.name === 'Houston Store')
+    
+    await supabase.from('branches').update({ manager_id: jenniferManager.id }).eq('id', manhattanBranch.id) // Jennifer - Manhattan
+    await supabase.from('branches').update({ manager_id: jenniferManager.id }).eq('id', brooklynBranch.id) // Jennifer - Brooklyn (2 branches)
+    await supabase.from('branches').update({ manager_id: mariaManager.id }).eq('id', miamiBranch.id) // Maria - Miami
+    await supabase.from('branches').update({ manager_id: mariaManager.id }).eq('id', atlantaBranch.id) // Maria - Atlanta (2 branches)
+    await supabase.from('branches').update({ manager_id: jamesManager.id }).eq('id', laBranch.id) // James - LA
+    await supabase.from('branches').update({ manager_id: jamesManager.id }).eq('id', sfBranch.id) // James - SF (2 branches)
+    await supabase.from('branches').update({ manager_id: jamesManager.id }).eq('id', dallasBranch.id) // James - Dallas (3 branches)
+    await supabase.from('branches').update({ manager_id: jamesManager.id }).eq('id', houstonBranch.id) // James - Houston (4 branches)
 
     console.log('\n🎉 Database seeding completed successfully!')
     console.log('\n📊 Seeded Data Summary:')
