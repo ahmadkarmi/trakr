@@ -52,27 +52,47 @@ const Profile: React.FC = () => {
 
   return (
     <DashboardLayout title="Profile">
-      <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-        <div className="card flex flex-col items-center gap-3">
-          {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt={user.name} className="w-32 h-32 rounded-full object-cover border" />
-          ) : (
-            <div className="w-32 h-32 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-4xl font-medium border">
-              {user.name?.charAt(0) || '?'}
-            </div>
-          )}
-          <div className="flex gap-2">
-            <button className="btn-secondary btn-sm" onClick={onPickFile} disabled={isUploading}>{isUploading ? 'Uploading…' : (user.avatarUrl ? 'Change' : 'Upload')} Photo</button>
-            {user.avatarUrl && (
-              <button className="btn-outline btn-sm" onClick={onRemoveAvatar} disabled={isUploading}>Remove</button>
-            )}
-          </div>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
+      <div className="mobile-container breathing-room">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+          <p className="text-gray-600 mt-1">Manage your account information and preferences</p>
         </div>
 
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900">Account</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-[280px_1fr]">
+          <div className="bg-white border border-gray-200 rounded-lg p-5 sm:p-6 flex flex-col items-center">
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt={user.name} className="w-32 h-32 rounded-full object-cover border-2 border-gray-200" />
+            ) : (
+              <div className="w-32 h-32 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-4xl font-medium border-2 border-gray-200">
+                {user.name?.charAt(0) || '?'}
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row gap-2 mt-4 w-full">
+              <button 
+                className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors" 
+                onClick={onPickFile} 
+                disabled={isUploading}
+              >
+                {isUploading ? 'Uploading…' : (user.avatarUrl ? 'Change' : 'Upload')}
+              </button>
+              {user.avatarUrl && (
+                <button 
+                  className="w-full sm:w-auto bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg text-sm transition-colors" 
+                  onClick={onRemoveAvatar} 
+                  disabled={isUploading}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-5 sm:p-6 space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Account Information</h2>
+            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Full Name</label>
               <input
@@ -102,9 +122,9 @@ const Profile: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 flex gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-6 border-t border-gray-200">
             <button
-              className="btn-primary btn-sm"
+              className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50"
               onClick={async () => {
                 setSaving(true)
                 try {
@@ -123,22 +143,25 @@ const Profile: React.FC = () => {
                 !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
               }
             >
-              {saving ? 'Saving…' : 'Save changes'}
+              {saving ? 'Saving…' : 'Save Changes'}
             </button>
             <button
-              className="btn-outline btn-sm"
+              className="w-full sm:w-auto bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50"
               onClick={() => { setName(user.name || ''); setEmail(user.email || '') }}
               disabled={saving}
             >
               Reset
             </button>
-            {showSaved && <span className="text-xs text-success-700">Saved.</span>}
+            {showSaved && <span className="text-sm text-green-600 font-medium text-center sm:text-left">✓ Saved</span>}
           </div>
 
-          <div className="mt-6">
-            <label className="label">Signature</label>
-            <p className="text-sm text-gray-600 mt-1">Manage your approval signature from the dedicated Signature page.</p>
-            <a href="/profile/signature" className="inline-flex items-center gap-2 btn-outline btn-sm mt-2">Go to Signature</a>
+          <div className="pt-6 border-t border-gray-200">
+            <h3 className="text-base font-semibold text-gray-900 mb-2">Signature</h3>
+            <p className="text-sm text-gray-600 mb-3">Manage your approval signature for audit reviews</p>
+            <a href="/profile/signature" className="inline-flex bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-4 rounded-lg transition-colors">
+              Go to Signature Settings
+            </a>
+          </div>
           </div>
         </div>
       </div>

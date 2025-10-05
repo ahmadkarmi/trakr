@@ -1,0 +1,122 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e5]:
+  - complementary [ref=e6]:
+    - link "T Trakr" [ref=e8] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e10] [cursor=pointer]: T
+      - generic [ref=e11] [cursor=pointer]: Trakr
+    - generic [ref=e13]:
+      - img [ref=e14]
+      - textbox "Search" [ref=e16]
+    - navigation [ref=e17]:
+      - link "My Dashboard" [ref=e18] [cursor=pointer]:
+        - /url: /dashboard/auditor
+        - img [ref=e19] [cursor=pointer]
+        - generic [ref=e21] [cursor=pointer]: My Dashboard
+      - link "Notifications" [ref=e22] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e23] [cursor=pointer]
+        - generic [ref=e25] [cursor=pointer]: Notifications
+      - link "Analytics" [ref=e26] [cursor=pointer]:
+        - /url: /analytics
+        - img [ref=e27] [cursor=pointer]
+        - generic [ref=e29] [cursor=pointer]: Analytics
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: A
+        - generic [ref=e33]:
+          - generic [ref=e34]: Auditor User
+          - generic [ref=e35]: Auditor
+      - generic [ref=e36]:
+        - link "Profile" [ref=e37] [cursor=pointer]:
+          - /url: /profile
+        - link "Signature" [ref=e38] [cursor=pointer]:
+          - /url: /profile/signature
+      - button "Sign Out" [ref=e39] [cursor=pointer]:
+        - img [ref=e40] [cursor=pointer]
+        - text: Sign Out
+  - generic [ref=e42]:
+    - banner [ref=e43]:
+      - generic [ref=e44]:
+        - generic [ref=e46]:
+          - heading "Auditor Dashboard" [level=1] [ref=e47]
+          - paragraph [ref=e48]: Welcome back, Auditor
+        - generic [ref=e50]:
+          - img [ref=e51]
+          - textbox "Search..." [ref=e53]
+        - generic [ref=e54]:
+          - button "Notifications" [ref=e56] [cursor=pointer]:
+            - img [ref=e57] [cursor=pointer]
+            - generic [ref=e59] [cursor=pointer]: 9+
+          - link "Help" [ref=e60] [cursor=pointer]:
+            - /url: /help
+            - img [ref=e61] [cursor=pointer]
+          - button "User menu" [ref=e65] [cursor=pointer]:
+            - generic [ref=e66] [cursor=pointer]: A
+            - generic [ref=e67] [cursor=pointer]:
+              - generic [ref=e68] [cursor=pointer]: Auditor User
+              - generic [ref=e69] [cursor=pointer]: Auditor
+            - img [ref=e70] [cursor=pointer]
+    - main [ref=e72]:
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - heading "Auditor Dashboard" [level=1] [ref=e75]
+          - paragraph [ref=e76]: 0 branches • 12 this cycle • 12 total audits • Auditor User
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - img [ref=e80]
+            - paragraph [ref=e82]: "1"
+            - paragraph [ref=e83]: Draft
+          - generic [ref=e84]:
+            - img [ref=e86]
+            - paragraph [ref=e88]: "0"
+            - paragraph [ref=e89]: In Progress
+          - generic [ref=e90]:
+            - generic [ref=e92]: 📤
+            - paragraph [ref=e93]: "0"
+            - paragraph [ref=e94]: Submitted
+          - generic [ref=e95]:
+            - img [ref=e97]
+            - paragraph [ref=e99]: "0"
+            - paragraph [ref=e100]: Completed
+          - generic [ref=e101]:
+            - generic [ref=e103]: ✅
+            - paragraph [ref=e104]: "11"
+            - paragraph [ref=e105]: Approved
+        - generic [ref=e106]:
+          - heading "Continue Your Audit" [level=3] [ref=e107]
+          - paragraph [ref=e108]: "Resume audit #75b4c2a3 • Pick up where you left off"
+          - button "Resume Audit" [ref=e109] [cursor=pointer]
+        - generic [ref=e110]:
+          - navigation "Tabs" [ref=e112]:
+            - button "📋 This Cycle12" [ref=e113] [cursor=pointer]:
+              - text: 📋 This Cycle
+              - generic [ref=e114] [cursor=pointer]: "12"
+            - button "Rejected Audits 0" [ref=e115] [cursor=pointer]:
+              - text: Rejected Audits
+              - generic [ref=e116] [cursor=pointer]: "0"
+            - button "📚 Audit History12" [ref=e117] [cursor=pointer]:
+              - text: 📚 Audit History
+              - generic [ref=e118] [cursor=pointer]: "12"
+          - generic [ref=e120]:
+            - button "Open (1)" [ref=e121] [cursor=pointer]
+            - button "Completed (11)" [ref=e122] [cursor=pointer]
+          - generic [ref=e125]:
+            - generic [ref=e127]:
+              - heading "Unknown Branch" [level=3] [ref=e128]
+              - paragraph [ref=e129]: Unknown Survey
+            - generic [ref=e130]:
+              - 'generic "Audit status: Draft" [ref=e131]':
+                - img [ref=e132]
+                - generic [ref=e135]: Draft
+              - generic [ref=e136]: Due 11/1/2025
+            - button "▶ Start" [ref=e137] [cursor=pointer]:
+              - generic [ref=e138] [cursor=pointer]: ▶
+              - generic [ref=e139] [cursor=pointer]: Start
+        - generic [ref=e141]:
+          - img [ref=e143]
+          - heading "No Survey Templates" [level=3] [ref=e145]
+          - paragraph [ref=e146]: Ask an admin to create survey templates to get started
+```

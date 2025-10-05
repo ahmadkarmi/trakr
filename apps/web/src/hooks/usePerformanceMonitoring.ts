@@ -187,23 +187,30 @@ export function usePerformanceMonitoring() {
   }, [metrics])
 
   const logMetrics = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
+    // Only log if we have meaningful metrics (at least one metric is available)
+    const hasMetrics = metrics.fcp || metrics.lcp || metrics.fid !== null || metrics.cls !== null || metrics.ttfb || metrics.loadTime
+    
+    if (process.env.NODE_ENV === 'development' && hasMetrics) {
       console.group('🚀 Performance Metrics')
-      console.log('First Contentful Paint:', metrics.fcp ? `${metrics.fcp.toFixed(2)}ms` : 'N/A')
-      console.log('Largest Contentful Paint:', metrics.lcp ? `${metrics.lcp.toFixed(2)}ms` : 'N/A')
-      console.log('First Input Delay:', metrics.fid !== null ? `${metrics.fid.toFixed(2)}ms` : 'N/A')
-      console.log('Cumulative Layout Shift:', metrics.cls !== null ? metrics.cls.toFixed(4) : 'N/A')
-      console.log('Time to First Byte:', metrics.ttfb ? `${metrics.ttfb.toFixed(2)}ms` : 'N/A')
-      console.log('Load Time:', metrics.loadTime ? `${metrics.loadTime.toFixed(2)}ms` : 'N/A')
-      console.log('Memory Usage:', metrics.memoryUsage ? `${(metrics.memoryUsage / 1024 / 1024).toFixed(2)}MB` : 'N/A')
-      console.log('Connection Type:', metrics.connectionType || 'N/A')
-      console.log('Performance Score:', getPerformanceScore() || 'N/A')
+      if (metrics.fcp) console.log('First Contentful Paint:', `${metrics.fcp.toFixed(2)}ms`)
+      if (metrics.lcp) console.log('Largest Contentful Paint:', `${metrics.lcp.toFixed(2)}ms`)
+      if (metrics.fid !== null) console.log('First Input Delay:', `${metrics.fid.toFixed(2)}ms`)
+      if (metrics.cls !== null) console.log('Cumulative Layout Shift:', metrics.cls.toFixed(4))
+      if (metrics.ttfb) console.log('Time to First Byte:', `${metrics.ttfb.toFixed(2)}ms`)
+      if (metrics.loadTime) console.log('Load Time:', `${metrics.loadTime.toFixed(2)}ms`)
+      if (metrics.memoryUsage) console.log('Memory Usage:', `${(metrics.memoryUsage / 1024 / 1024).toFixed(2)}MB`)
+      if (metrics.connectionType) console.log('Connection Type:', metrics.connectionType)
+      const score = getPerformanceScore()
+      if (score) console.log('Performance Score:', score)
       console.groupEnd()
     }
   }, [metrics, getPerformanceScore])
 
   const sendMetricsToAnalytics = useCallback(async (customData?: Record<string, any>) => {
-    // In a real app, you'd send this to your analytics service
+    // Only send if we have meaningful metrics
+    const hasMetrics = metrics.fcp || metrics.lcp || metrics.fid !== null || metrics.cls !== null
+    if (!hasMetrics) return
+
     const payload = {
       ...metrics,
       performanceScore: getPerformanceScore(),
@@ -213,9 +220,10 @@ export function usePerformanceMonitoring() {
       ...customData
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📊 Would send metrics to analytics:', payload)
-    }
+    // Disabled in development to reduce console noise
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('📊 Would send metrics to analytics:', payload)
+    // }
 
     // Example: Send to your analytics endpoint
     // try {

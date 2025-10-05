@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@eva-design/eva": "^2.2.0",
-    "@expo/webpack-config": "~19.0.1",
+    "@expo/webpack-config": "^19.0.1",
     "@react-native-async-storage/async-storage": "1.21.0",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.9.23",
@@ -23,7 +23,7 @@
     "@trakr/shared": "file:../../packages/shared",
     "@ui-kitten/components": "^5.3.1",
     "date-fns": "^3.0.0",
-    "expo": "~50.0.0",
+    "expo": "^54.0.12",
     "expo-document-picker": "~11.10.0",
     "expo-file-system": "~16.0.0",
     "expo-image-picker": "~14.7.0",

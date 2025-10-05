@@ -12,7 +12,7 @@
   "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
-      "src": "/vite.svg",
+      "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
@@ -30,14 +30,14 @@
       "short_name": "Dashboard",
       "description": "Go to your dashboard",
       "url": "/",
-      "icons": [{ "src": "/vite.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
     },
     {
       "name": "New Audit",
       "short_name": "New Audit",
       "description": "Start a new audit",
       "url": "/audit/new",
-      "icons": [{ "src": "/vite.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
     }
   ]
 }

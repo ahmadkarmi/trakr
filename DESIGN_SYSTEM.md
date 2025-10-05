@@ -69,27 +69,134 @@ Gray 900: #111827 (Text Primary)
 
 ## 💻 Web Components (Tailwind CSS)
 
-### Typography
+### Modern Design System (2025)
+
+#### Typography Hierarchy
 ```tsx
-<h1 className="text-4xl font-bold text-primary-600">Main Heading</h1>
-<h2 className="text-xl font-semibold text-gray-900">Section Heading</h2>
-<p className="text-gray-600">Body Text</p>
-<span className="text-sm text-gray-500">Caption</span>
+{/* Page Titles */}
+<h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+
+{/* Section Titles */}
+<h2 className="text-lg font-semibold text-gray-900">Section Title</h2>
+
+{/* Subsection Titles */}
+<h3 className="text-base font-semibold text-gray-900">Subsection</h3>
+
+{/* Body Text */}
+<p className="text-sm text-gray-600">Regular body text</p>
+
+{/* Labels - Uppercase with tracking */}
+<p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Label</p>
+
+{/* Captions */}
+<span className="text-xs text-gray-600">Caption or helper text</span>
 ```
 
-### Buttons
+#### Buttons
 ```tsx
-<button className="btn-primary">Primary Action</button>
-<button className="btn-outline">Secondary Action</button>
-<button className="btn-danger">Destructive Action</button>
+{/* Primary Action */}
+<button className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors">
+  Primary
+</button>
+
+{/* Secondary Action */}
+<button className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-4 rounded-lg transition-colors">
+  Secondary
+</button>
+
+{/* Destructive Action */}
+<button className="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors">
+  Delete
+</button>
+
+{/* Alert Action (Yellow/Orange) */}
+<button className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors">
+  Review
+</button>
 ```
 
-### Cards
+#### Cards - Modern Design
 ```tsx
-<div className="card p-6">
-  <h3 className="text-lg font-medium text-gray-900">Card Title</h3>
-  <p className="text-gray-600">Card content</p>
+{/* Standard Card */}
+<div className="bg-white border border-gray-200 rounded-lg p-4">
+  <h3 className="font-semibold text-gray-900 mb-2">Card Title</h3>
+  <p className="text-sm text-gray-600">Card content</p>
 </div>
+
+{/* Elevated Card (with hover) */}
+<div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+  <h3 className="font-semibold text-gray-900 mb-2">Hoverable Card</h3>
+</div>
+
+{/* Alert Card (Warning/Pending) */}
+<div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4">
+  <h3 className="font-semibold text-gray-900 mb-2">Alert Card</h3>
+</div>
+
+{/* List Item Card (no spacing between) */}
+<div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+  <div className="divide-y divide-gray-200">
+    <div className="p-4 hover:bg-gray-50 transition-colors">Item 1</div>
+    <div className="p-4 hover:bg-gray-50 transition-colors">Item 2</div>
+  </div>
+</div>
+```
+
+#### Tables - Desktop
+```tsx
+<table className="w-full">
+  <thead className="bg-gray-50">
+    <tr>
+      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        Column
+      </th>
+    </tr>
+  </thead>
+  <tbody className="bg-white divide-y divide-gray-200">
+    <tr className="hover:bg-gray-50">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        Cell
+      </td>
+    </tr>
+  </tbody>
+</table>
+```
+
+#### Forms
+```tsx
+{/* Input Field */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Label
+  </label>
+  <input 
+    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+    type="text"
+  />
+</div>
+
+{/* Select Dropdown */}
+<select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-sm font-medium">
+  <option>Option 1</option>
+</select>
+```
+
+#### Badges & Status
+```tsx
+{/* Success */}
+<span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 ring-1 ring-green-600/20">
+  Approved
+</span>
+
+{/* Warning */}
+<span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 ring-1 ring-yellow-600/20">
+  Pending
+</span>
+
+{/* Error */}
+<span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 ring-1 ring-red-600/20">
+  Rejected
+</span>
 ```
 
 ## 🔧 Shared Components
@@ -112,23 +219,57 @@ Gray 900: #111827 (Text Primary)
 - `elevated`: Card with shadow
 - `outlined`: Card with border
 
-## 📐 Spacing System
+## 📐 Spacing System (2025 Modern)
 
-### Mobile (React Native)
+### Web Layout Spacing
 ```tsx
-style={{
-  margin: 16,        // Standard margin
-  padding: 20,       // Standard padding
-  gap: 12,          // Standard gap
-}}
+{/* Page Container */}
+<div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+  
+  {/* Section Spacing */}
+  <div className="space-y-4">
+    
+    {/* Card Grid */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      
+      {/* Card Padding */}
+      <div className="p-4 sm:p-5">
+        
+        {/* Internal Content Spacing */}
+        <div className="space-y-3">
+          {/* Content */}
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
 ```
 
-### Web (Tailwind CSS)
+### Standard Spacing Values
 ```css
-.spacing-sm { margin: 0.5rem; }    /* 8px */
-.spacing-md { margin: 1rem; }      /* 16px */
-.spacing-lg { margin: 1.5rem; }    /* 24px */
-.spacing-xl { margin: 2rem; }      /* 32px */
+gap-3     /* 12px - Between items in grids/lists */
+gap-4     /* 16px - Between cards in grids */
+space-y-3 /* 12px - Between list items */
+space-y-4 /* 16px - Between sections */
+space-y-6 /* 24px - Between major sections */
+p-4       /* 16px - Card padding (mobile) */
+p-5       /* 20px - Card padding (desktop) */
+px-6 py-4 /* 24px x 16px - Table cell padding */
+mb-3      /* 12px - Below headers */
+mb-4      /* 16px - Below major elements */
+```
+
+### Responsive Patterns
+```tsx
+{/* Mobile-first spacing */}
+<div className="space-y-3 sm:space-y-4 lg:space-y-6">
+
+{/* Responsive padding */}
+<div className="p-4 sm:p-5 lg:p-6">
+
+{/* Responsive grid gaps */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 ```
 
 ## 🎯 Usage Guidelines

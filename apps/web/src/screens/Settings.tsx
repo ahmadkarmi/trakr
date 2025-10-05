@@ -3,14 +3,17 @@ import DashboardLayout from '../components/DashboardLayout'
 import { useAuthStore } from '../stores/auth'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Organization, UserRole } from '@trakr/shared'
+import { Organization, User, UserRole } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
+import { useToast } from '../hooks/useToast'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const Settings: React.FC = () => {
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
-  
+  const { showToast } = useToast()
+  const { currentOrg, availableOrgs, switchOrganization, isSuperAdmin, globalView, setGlobalView } = useOrganization()
 
   // Admin: Organization settings (timezone, week start, gating)
   const { data: orgs = [] } = useQuery<Organization[]>({ queryKey: QK.ORGANIZATIONS, queryFn: api.getOrganizations })
@@ -121,8 +124,51 @@ const Settings: React.FC = () => {
     }
   }, [org, deviceTz])
   const updateOrg = useMutation({
-    mutationFn: () => api.updateOrganization(org!.id, { timeZone: tz, weekStartsOn: weekStart, gatingPolicy: gating }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.ORGANIZATIONS }),
+    mutationFn: async () => {
+      const targetOrgId = currentOrg?.id || org?.id
+      if (!targetOrgId) throw new Error('No organization selected')
+      return api.updateOrganization(targetOrgId, { timeZone: tz, weekStartsOn: weekStart, gatingPolicy: gating })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QK.ORGANIZATIONS })
+      showToast({ message: 'Organization settings updated successfully!', variant: 'success' })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to update organization settings.', 
+        variant: 'error' 
+      })
+    },
+  })
+
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({ name: '', email: '' })
+
+  React.useEffect(() => {
+    if (user) {
+      setProfileForm({ name: user.name || '', email: user.email || '' })
+    }
+  }, [user])
+
+  const updateProfile = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error('User not authenticated')
+      return api.updateUser(user.id, { name: profileForm.name, email: profileForm.email })
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.invalidateQueries({ queryKey: QK.USERS })
+      if (updatedUser) {
+        // Note: Supabase email changes require verification. This updates local state optimistically.
+        useAuthStore.getState().updateUser({ ...user, ...updatedUser } as User)
+      }
+      showToast({ message: 'Profile updated successfully!', variant: 'success' })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to update profile.', 
+        variant: 'error' 
+      })
+    },
   })
 
   if (!user) {
@@ -135,13 +181,96 @@ const Settings: React.FC = () => {
     )
   }
 
-  // Signature management moved to dedicated Profile page
-
   return (
     <DashboardLayout title="Settings">
-      <div className="space-y-6 max-w-3xl mx-auto">
-        {/* Admin-only: Organization Settings */}
-        {user?.role === UserRole.ADMIN && (
+      <div className="mobile-container breathing-room">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600 mt-1">Manage your organization preferences</p>
+        </div>
+
+        {/* Organization Switcher (Super Admin only) */}
+        {isSuperAdmin ? (
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-5 text-white">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl">⚙️</span>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-lg font-semibold text-white">Organization Context</h2>
+                <span className="px-2 py-0.5 bg-white/20 text-white text-xs font-bold rounded-full">SUPER ADMIN</span>
+              </div>
+              <p className="text-sm text-white/90 mb-4">
+                Switch between organizations for management and support.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Current Organization:
+                  </label>
+                  <select
+                    value={currentOrg?.id || ''}
+                    onChange={(e) => switchOrganization(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-white/30 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-white/50 disabled:opacity-60"
+                    disabled={globalView}
+                  >
+                    <option value="">{globalView ? 'Global view enabled' : (availableOrgs.length === 0 ? 'No organizations available' : 'Select Organization...')}</option>
+                    {availableOrgs.map(org => (
+                      <option key={org.id} value={org.id}>
+                        {org.name} ({(org as any).subscription_status || 'active'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {currentOrg && (
+                  <div className="text-sm text-white bg-white/10 rounded-lg px-3 py-2">
+                    <strong className="font-semibold">{globalView ? 'All Organizations' : currentOrg.name}</strong>
+                    {availableOrgs.length > 0 && (
+                      <span className="ml-2 opacity-75">({availableOrgs.length} total)</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {(
+                <div className="mt-4 flex items-center gap-3">
+                  <input
+                    id="toggle-global-view"
+                    type="checkbox"
+                    className="w-4 h-4 text-white rounded focus:ring-white/50 bg-white/20 border-white/30"
+                    checked={globalView}
+                    onChange={(e) => setGlobalView(e.target.checked)}
+                  />
+                  <label htmlFor="toggle-global-view" className="text-sm text-white cursor-pointer">
+                    View as Super Admin (All organizations)
+                  </label>
+                </div>
+              )}
+
+              {/* Dev override removed */}
+            </div>
+          </div>
+        </div>
+        ) : null}
+
+        {/* Super Admin: Fallback when no organizations found */}
+        {(isSuperAdmin && availableOrgs.length === 0) ? (
+          <div className="card p-6 bg-yellow-50 border border-yellow-200">
+            <h2 className="text-lg font-semibold text-yellow-900">No Organizations Found</h2>
+            <p className="text-sm text-yellow-800 mt-1">
+              You are in Super Admin mode but there are no organizations available yet.
+            </p>
+            <ul className="text-sm text-yellow-800 list-disc ml-5 mt-2 space-y-1">
+              <li>Create an organization in the database (SQL) or via onboarding.</li>
+              <li>Or switch your role to ADMIN to manage your own org settings.</li>
+            </ul>
+          </div>
+        ) : null}
+
+        {/* Admin-only: Organization Settings (Super Admin acts as Admin when not in global view and an org is selected) */}
+        {(user?.role === UserRole.ADMIN || (isSuperAdmin && !globalView && currentOrg)) ? (
           <div className="card p-6">
             <h2 className="text-lg font-semibold text-gray-900">Organization Settings</h2>
             <p className="text-gray-600 mt-1">Timezone and scheduling policies affect due dates and period boundaries. Gating controls whether starting a new audit is blocked by any audit in the period or only by Completed/Approved.</p>
@@ -215,17 +344,53 @@ const Settings: React.FC = () => {
               </div>
             </div>
             <div className="mt-4">
-              <button className="btn-primary" disabled={!org || updateOrg.isPending} onClick={() => updateOrg.mutate()}>
+              <button className="btn btn-primary btn-md" disabled={!(currentOrg?.id || org?.id) || updateOrg.isPending} onClick={() => updateOrg.mutate()}>
                 {updateOrg.isPending ? 'Saving…' : 'Save Settings'}
               </button>
             </div>
           </div>
-        )}
+        ) : null}
+
+        {/* Profile Settings */}
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-gray-900">Profile Settings</h2>
+          <p className="text-gray-600 mt-1">Update your name and email address.</p>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="label">Full Name</label>
+              <input
+                className="input mt-1"
+                value={profileForm.name}
+                onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">Email Address</label>
+              <input
+                type="email"
+                className="input mt-1"
+                value={profileForm.email}
+                onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              className="btn btn-primary btn-md"
+              disabled={updateProfile.isPending || !profileForm.name || !profileForm.email}
+              onClick={() => updateProfile.mutate()}
+            >
+              {updateProfile.isPending ? 'Saving Profile…' : 'Save Profile'}
+            </button>
+          </div>
+        </div>
+
+        {/* Signature quick access */}
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900">Signature</h2>
           <p className="text-sm text-gray-600 mt-1">Manage your saved signature for approvals in your profile.</p>
           <div className="mt-3">
-            <Link to="/profile/signature" className="btn-outline btn-sm">Open Profile · Signature</Link>
+            <Link to="/profile/signature" className="btn btn-outline btn-sm">Open Profile · Signature</Link>
           </div>
         </div>
       </div>

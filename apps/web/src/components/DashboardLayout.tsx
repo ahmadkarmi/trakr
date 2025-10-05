@@ -1,8 +1,11 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
 import { USER_ROLE_LABELS, UserRole } from '@trakr/shared'
-import { MagnifyingGlassIcon, BellIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, HomeIcon, ClipboardDocumentListIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, ClipboardDocumentCheckIcon, PencilSquareIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, PencilSquareIcon, MapIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon, UsersIcon, PresentationChartLineIcon, BellIcon } from '@heroicons/react/24/outline'
+import { useOrganization } from '../contexts/OrganizationContext'
+import { Toaster } from 'react-hot-toast'
+import NotificationDropdown from './NotificationDropdown'
 
 interface DashboardLayoutProps {
   title: string
@@ -12,6 +15,7 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) => {
   const { user, signOut } = useAuthStore()
   const location = useLocation()
+  const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -42,27 +46,42 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
     return () => document.removeEventListener('click', onDocClick)
   }, [userMenuOpen])
 
-  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
+  const { isSuperAdmin } = useOrganization()
+  const isAdmin = !!user && (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN || isSuperAdmin)
+  const isBranchManager = !!user && user.role === UserRole.BRANCH_MANAGER
+  const isAuditor = !!user && user.role === UserRole.AUDITOR
 
   const nav = [
-    { to: '/dashboard/admin', label: 'My Dashboard', icon: <HomeIcon className="w-5 h-5" />, show: isAdmin },
-    { to: '/manage/surveys', label: 'Survey Templates', icon: <ClipboardDocumentListIcon className="w-5 h-5" />, show: isAdmin },
+    // Dashboard links - role specific
+    { to: '/dashboard/admin', label: 'My Dashboard', icon: <ChartBarIcon className="w-5 h-5" />, show: isAdmin },
+    { to: '/dashboard/branch-manager', label: 'My Dashboard', icon: <ChartBarIcon className="w-5 h-5" />, show: isBranchManager },
+    { to: '/dashboard/auditor', label: 'My Dashboard', icon: <ChartBarIcon className="w-5 h-5" />, show: isAuditor },
+    
+    // Notifications - everyone can see
+    { to: '/notifications', label: 'Notifications', icon: <BellIcon className="w-5 h-5" />, show: true },
+    
+    // Analytics - everyone can see
+    { to: '/analytics', label: 'Analytics', icon: <PresentationChartLineIcon className="w-5 h-5" />, show: true },
+    
+    // Admin-only management sections
+    { to: '/manage/surveys', label: 'Survey Templates', icon: <DocumentTextIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/manage/branches', label: 'Manage Branches', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: isAdmin },
-    { to: '/manage/zones', label: 'Manage Zones', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: isAdmin },
+    { to: '/manage/zones', label: 'Manage Zones', icon: <MapIcon className="w-5 h-5" />, show: isAdmin },
+    { to: '/manage/users', label: 'Manage Users', icon: <UsersIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/activity/logs', label: 'Activity Logs', icon: <ClockIcon className="w-5 h-5" />, show: isAdmin },
-    { to: '/dashboard/branch-manager', label: 'Branch', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: true },
-    { to: '/dashboard/auditor', label: 'Auditor', icon: <ClipboardDocumentCheckIcon className="w-5 h-5" />, show: true },
   ].filter(i => i.show)
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50 flex">
+    <div className="h-screen overflow-hidden bg-gray-50 flex flex-col">
+      <Toaster position="bottom-center" toastOptions={{ className: 'text-sm rounded-full px-4 py-2' }} />
+      <div className="flex flex-1 overflow-hidden">
       {/* Mobile Drawer */}
       <div className={`${mobileOpen ? '' : 'pointer-events-none'} md:hidden`}>
         <div
           className={`fixed inset-0 z-40 bg-black/30 transition-opacity ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => setMobileOpen(false)}
         />
-        <aside className={`fixed inset-y-0 left-0 z-50 w-80 text-white bg-gradient-to-b from-primary-700 to-primary-600 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col pb-9`}>
+        <aside className={`fixed inset-y-0 left-0 z-50 w-80 text-white bg-gradient-to-b from-primary-700 to-primary-600 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col max-h-screen overflow-hidden`}>
           {/* Enhanced mobile header */}
           <div className="h-20 px-6 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -76,36 +95,51 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
             </button>
           </div>
           
-          {/* Mobile-optimized search */}
-          <div className="px-6 py-4">
-            <div className="bg-white/10 rounded-xl flex items-center px-4 py-3">
-              <MagnifyingGlassIcon className="w-5 h-5 text-white/80" />
-              <input placeholder="Search" className="ml-3 bg-transparent placeholder-white/70 text-white text-base outline-none flex-1" />
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            {/* Mobile-optimized search */}
+            <div className="px-6 py-4">
+              <div className="bg-white/10 rounded-xl flex items-center px-4 py-3">
+                <MagnifyingGlassIcon className="w-5 h-5 text-white/80" />
+                <input 
+                  placeholder="Search" 
+                  className="ml-3 bg-transparent placeholder-white/70 text-white text-base outline-none flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const query = e.currentTarget.value.trim()
+                      if (query) {
+                        navigate(`/search?q=${encodeURIComponent(query)}`)
+                        setMobileOpen(false)
+                      }
+                    }
+                  }}
+                />
+              </div>
             </div>
+            
+            {/* Enhanced navigation with better touch targets */}
+            <nav className="px-4 space-y-2 pb-4">
+              {nav.map(item => {
+                const active = location.pathname.startsWith(item.to)
+                return (
+                  <Link 
+                    key={item.to} 
+                    to={item.to} 
+                    onClick={() => setMobileOpen(false)} 
+                    className={`flex items-center gap-4 px-4 py-4 rounded-xl transition touch-target ${active ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      {item.icon}
+                    </div>
+                    <span className="text-base font-medium">{item.label}</span>
+                  </Link>
+                )
+              })}
+            </nav>
           </div>
           
-          {/* Enhanced navigation with better touch targets */}
-          <nav className="px-4 space-y-2">
-            {nav.map(item => {
-              const active = location.pathname.startsWith(item.to)
-              return (
-                <Link 
-                  key={item.to} 
-                  to={item.to} 
-                  onClick={() => setMobileOpen(false)} 
-                  className={`flex items-center gap-4 px-4 py-4 rounded-xl transition touch-target ${active ? 'bg-white/20' : 'hover:bg-white/10'}`}
-                >
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    {item.icon}
-                  </div>
-                  <span className="text-base font-medium">{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
-          
-          {/* Enhanced user section */}
-          <div className="mt-auto p-6 border-t border-white/10 space-y-4">
+          {/* Enhanced user section - Fixed at bottom */}
+          <div className="flex-shrink-0 p-6 pb-8 border-t border-white/10 space-y-4">
             <div className="flex items-center gap-4">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-white/20" />
@@ -120,29 +154,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
               </div>
             </div>
             
-            {/* Mobile-optimized action buttons */}
-            <div className="space-y-2">
+            {/* Mobile-optimized action buttons - Compact layout */}
+            <div className="space-y-1">
               <Link 
                 to="/profile" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
               >
-                <span className="text-base">Profile</span>
+                <span>Profile</span>
               </Link>
               <Link 
                 to="/profile/signature" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
               >
-                <PencilSquareIcon className="w-5 h-5" />
-                <span className="text-base">Signature</span>
+                <PencilSquareIcon className="w-4 h-4" />
+                <span>Signature</span>
+              </Link>
+              <Link 
+                to="/settings" 
+                onClick={() => setMobileOpen(false)} 
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
+              >
+                <Cog6ToothIcon className="w-4 h-4" />
+                <span>Settings</span>
               </Link>
               <button 
                 onClick={signOut} 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 touch-target w-full"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
               >
-                <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                <span className="text-base">Sign Out</span>
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                <span>Sign Out</span>
               </button>
             </div>
           </div>
@@ -161,7 +203,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
         <div className="px-4">
           <div className="bg-white/10 rounded-md flex items-center px-3 py-2">
             <MagnifyingGlassIcon className="w-5 h-5 text-white/80" />
-            <input placeholder="Search" className="ml-2 bg-transparent placeholder-white/70 text-white text-sm outline-none flex-1" />
+            <input 
+              placeholder="Search" 
+              className="ml-2 bg-transparent placeholder-white/70 text-white text-sm outline-none flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const query = e.currentTarget.value.trim()
+                  if (query) {
+                    navigate(`/search?q=${encodeURIComponent(query)}`)
+                  }
+                }
+              }}
+            />
           </div>
         </div>
         <nav className="mt-4 px-2 space-y-1">
@@ -201,78 +254,166 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Enhanced mobile-first topbar */}
-        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200 pt-[env(safe-area-inset-top)]">
-          <div className="mobile-container py-2 sm:py-3 flex items-center justify-between gap-3">
-            {/* Left: menu + title (shrinkable) */}
-            <div className="flex items-center gap-3 min-w-0">
-              <button className="md:hidden touch-target p-2 hover:bg-gray-100 rounded-xl" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
-                <Bars3Icon className="w-6 h-6" />
+        {/* Modern Enhanced Header */}
+        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)]">
+          <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
+            {/* Left: Menu Button (Mobile) + Title */}
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <button 
+                className="md:hidden p-2 -ml-2 hover:bg-gray-100 rounded-lg transition-colors" 
+                onClick={() => setMobileOpen(true)} 
+                aria-label="Open navigation"
+              >
+                <Bars3Icon className="w-6 h-6 text-gray-700" />
               </button>
-              <h1 className="heading-mobile-lg truncate xl:whitespace-normal xl:break-words xl:leading-snug xl:line-clamp-2" title={title}>{title}</h1>
-            </div>
-
-            {/* Middle: inline search (only on large screens) */}
-            <div className="hidden lg:flex items-center gap-3 flex-1 min-w-0">
-              <div className="relative flex-1 min-w-0">
-                <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
-                <input className="input pl-10" placeholder="Search across audits, users, templates…" />
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{title}</h1>
+                <p className="hidden sm:block text-sm text-gray-500 mt-0.5">Welcome back, {user?.name?.split(' ')[0]}</p>
               </div>
             </div>
 
-            {/* Right: mobile-optimized actions */}
-            <div className="flex items-center gap-1 shrink-0">
-              <button className="lg:hidden touch-target p-2 hover:bg-gray-100 rounded-xl" aria-label="Search" onClick={() => setMobileSearchOpen(true)}>
-                <MagnifyingGlassIcon className="w-6 h-6" />
+            {/* Center: Search (Desktop) */}
+            <div className="hidden lg:flex items-center flex-1 max-w-md">
+              <div className="relative w-full">
+                <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input 
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all" 
+                  placeholder="Search..." 
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const query = e.currentTarget.value.trim()
+                      if (query) {
+                        navigate(`/search?q=${encodeURIComponent(query)}`)
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Search (Mobile) */}
+              <button 
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors" 
+                aria-label="Search" 
+                onClick={() => setMobileSearchOpen(true)}
+              >
+                <MagnifyingGlassIcon className="w-5 h-5 text-gray-600" />
               </button>
-              <button className="touch-target p-2 hover:bg-gray-100 rounded-xl" aria-label="Notifications">
-                <BellIcon className="w-6 h-6" />
-              </button>
-              <Link to="/help" className="hidden lg:inline-flex touch-target p-2 hover:bg-gray-100 rounded-xl" aria-label="Help">
-                <QuestionMarkCircleIcon className="w-6 h-6" />
+
+              {/* Notifications */}
+              <NotificationDropdown />
+
+              {/* Help (Desktop) */}
+              <Link 
+                to="/help" 
+                className="hidden lg:inline-flex p-2 hover:bg-gray-100 rounded-lg transition-colors" 
+                aria-label="Help"
+              >
+                <QuestionMarkCircleIcon className="w-5 h-5 text-gray-600" />
               </Link>
-              
-              {/* Mobile overflow menu */}
-              <div ref={moreRef} className="relative lg:hidden">
-                <button className="touch-target p-2 hover:bg-gray-100 rounded-xl" aria-haspopup="menu" aria-expanded={moreOpen} aria-label="More actions" onClick={() => setMoreOpen(v => !v)}>
-                  <EllipsisVerticalIcon className="w-6 h-6" />
-                </button>
-                {moreOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-xl border border-gray-200 bg-white shadow-lg py-2 z-50" role="menu">
-                    <Link to="/help" className="w-full text-left flex items-center gap-3 px-4 py-3 text-base hover:bg-gray-50 touch-target" role="menuitem" onClick={() => setMoreOpen(false)}>
-                      <QuestionMarkCircleIcon className="w-5 h-5 text-gray-600" /> 
-                      <span>Help</span>
-                    </Link>
-                  </div>
-                )}
-              </div>
 
-              {/* User avatar menu */}
+              {/* Divider */}
+              <div className="hidden sm:block w-px h-8 bg-gray-200"></div>
+
+              {/* User Menu */}
               <div ref={userMenuRef} className="relative">
-                <button className="inline-flex items-center gap-2 px-2 py-1 rounded-md hover:bg-gray-50" onClick={() => setUserMenuOpen(v => !v)} aria-haspopup="menu" aria-expanded={userMenuOpen} aria-label="User menu">
+                <button 
+                  className="flex items-center gap-2 sm:gap-3 p-1 sm:px-3 sm:py-2 hover:bg-gray-100 rounded-lg transition-colors" 
+                  onClick={() => setUserMenuOpen(v => !v)} 
+                  aria-haspopup="menu" 
+                  aria-expanded={userMenuOpen} 
+                  aria-label="User menu"
+                >
                   {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover border" />
+                    <img src={user.avatarUrl} alt={user.name} className="w-9 h-9 rounded-full object-cover ring-2 ring-gray-200" />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-sm font-medium border">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-sm font-semibold ring-2 ring-gray-200">
                       {user?.name?.charAt(0) || '?'}
                     </div>
                   )}
-                  <span className="hidden sm:inline text-sm text-gray-900 max-w-[10rem] truncate">{user?.name}</span>
+                  <div className="hidden sm:block text-left">
+                    <div className="text-sm font-medium text-gray-900 leading-tight">{user?.name}</div>
+                    <div className="text-xs text-gray-500">{user?.role && USER_ROLE_LABELS[user.role]}</div>
+                  </div>
+                  <svg className="hidden sm:block w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
+                
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-md border border-gray-200 bg-white shadow-lg py-1 z-50" role="menu">
-                    <div className="px-3 py-2">
-                      <div className="text-sm font-medium text-gray-900 truncate">{user?.name}</div>
-                      <div className="text-xs text-gray-500 truncate">{user?.email}</div>
+                  <div className="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200" role="menu">
+                    {/* User Info */}
+                    <div className="px-4 py-3 bg-gradient-to-br from-gray-50 to-gray-100 border-b border-gray-200">
+                      <div className="flex items-center gap-3">
+                        {user?.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-base font-semibold ring-2 ring-white">
+                            {user?.name?.charAt(0) || '?'}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-900 truncate">{user?.name}</div>
+                          <div className="text-xs text-gray-600 truncate">{user?.email}</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="my-1 border-t" />
-                    <Link to="/profile" className="block px-3 py-2 text-sm hover:bg-gray-50" role="menuitem" onClick={() => setUserMenuOpen(false)}>Profile</Link>
-                    <Link to="/profile/signature" className="block px-3 py-2 text-sm hover:bg-gray-50" role="menuitem" onClick={() => setUserMenuOpen(false)}>Signature</Link>
-                    <Link to="/settings" className="block px-3 py-2 text-sm hover:bg-gray-50" role="menuitem" onClick={() => setUserMenuOpen(false)}>Settings</Link>
-                    <div className="my-1 border-t" />
-                    <button className="block w-full text-left px-3 py-2 text-sm text-danger-700 hover:bg-danger-50" role="menuitem" onClick={() => { setUserMenuOpen(false); signOut() }}>
-                      Sign Out
-                    </button>
+                    
+                    {/* Menu Items */}
+                    <div className="py-1">
+                      <Link 
+                        to="/profile" 
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" 
+                        role="menuitem" 
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>Profile</span>
+                      </Link>
+                      <Link 
+                        to="/profile/signature" 
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" 
+                        role="menuitem" 
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <PencilSquareIcon className="w-4 h-4 text-gray-500" />
+                        <span>Signature</span>
+                      </Link>
+                      <Link 
+                        to="/settings" 
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" 
+                        role="menuitem" 
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Cog6ToothIcon className="w-4 h-4 text-gray-500" />
+                        <span>Settings</span>
+                      </Link>
+                      <Link 
+                        to="/help" 
+                        className="lg:hidden flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" 
+                        role="menuitem" 
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <QuestionMarkCircleIcon className="w-4 h-4 text-gray-500" />
+                        <span>Help & Support</span>
+                      </Link>
+                    </div>
+                    
+                    {/* Sign Out */}
+                    <div className="border-t border-gray-200 py-1">
+                      <button 
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 w-full transition-colors" 
+                        role="menuitem" 
+                        onClick={() => { setUserMenuOpen(false); signOut() }}
+                      >
+                        <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -297,14 +438,28 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
             <div className="p-4">
               <div className="relative">
                 <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
-                <input className="input pl-10" placeholder="Search across audits, users, templates…" autoFocus />
+                <input 
+                  className="input pl-10" 
+                  placeholder="Search across audits, users, templates…" 
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const query = e.currentTarget.value.trim()
+                      if (query) {
+                        navigate(`/search?q=${encodeURIComponent(query)}`)
+                        setMobileSearchOpen(false)
+                      }
+                    }
+                  }}
+                />
               </div>
               <div className="mt-4 text-xs text-gray-500">
-                <p>Tip: Try filters like <span className="font-mono">status:in_progress</span>, <span className="font-mono">user:alex</span>, or <span className="font-mono">survey:"Safety Check"</span>.</p>
+                <p>Tip: Press Enter to search or use filters in results page</p>
               </div>
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   )

@@ -8,7 +8,10 @@ import { QK } from '../utils/queryKeys'
 import { useNavigate } from 'react-router-dom'
 import StatusBadge from '@/components/StatusBadge'
 import InfoBadge from '@/components/InfoBadge'
-import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import MobileAuditCard from '@/components/MobileAuditCard'
+import ResponsiveTable, { Column } from '@/components/ResponsiveTable'
+import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
+import toast from 'react-hot-toast'
 
 const DashboardAuditor: React.FC = () => {
   const { user } = useAuthStore()
@@ -39,18 +42,17 @@ const DashboardAuditor: React.FC = () => {
   })
 
   const [selectedSurveyId, setSelectedSurveyId] = React.useState<string | null>(null)
+  const [branchSearch, setBranchSearch] = React.useState('')
+  const [showAvailableOnly, setShowAvailableOnly] = React.useState(true)
+  const [mainTab, setMainTab] = React.useState<'cycle' | 'rejected' | 'history'>('cycle')
+  const [cycleTab, setCycleTab] = React.useState<'open' | 'completed'>('open')
   React.useEffect(() => {
     if (!selectedSurveyId && surveys.length > 0) setSelectedSurveyId(surveys[0].id)
   }, [surveys, selectedSurveyId])
   const selectedSurvey = React.useMemo(() => surveys.find(s => s.id === selectedSurveyId) || null, [surveys, selectedSurveyId])
 
-  const pending = audits.filter(a => a.status === AuditStatus.DRAFT).length
-  const inProgress = audits.filter(a => a.status === AuditStatus.IN_PROGRESS).length
-  const completed = audits.filter(a => a.status === AuditStatus.COMPLETED).length
-
   const recent = [...audits]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 5)
 
   const createAudit = useMutation({
     mutationFn: (payload: { surveyId: string; branchId: string }) =>
@@ -60,15 +62,63 @@ const DashboardAuditor: React.FC = () => {
         surveyId: payload.surveyId,
         assignedTo: user?.id || 'user-1',
       }),
-    onSuccess: (created) => {
+    onSuccess: async (created, variables) => {
       queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
       if (created?.id) navigate(`/audit/${created.id}/wizard`)
+      
+      // Note: No notification needed here since auditor is creating their own audit
+      // Notifications are sent when admin/manager assigns audits to auditors
     },
   })
 
   const latestEditable = [...audits]
     .filter(a => a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS)
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
+
+  // This cycle groupings for the signed-in auditor
+  const nowTs = Date.now()
+  const myCycleAudits = React.useMemo(() => {
+    return allAudits.filter(a => (
+      a.assignedTo === (user?.id || '') &&
+      !!a.periodStart && !!a.dueAt &&
+      new Date(a.periodStart).getTime() <= nowTs && nowTs <= new Date(a.dueAt).getTime()
+    ))
+  }, [allAudits, user?.id, nowTs])
+  
+  // Count from myCycleAudits for consistency with "This Cycle" section
+  const statusCounts = React.useMemo(() => {
+    return {
+      draft: myCycleAudits.filter(a => a.status === AuditStatus.DRAFT).length,
+      inProgress: myCycleAudits.filter(a => a.status === AuditStatus.IN_PROGRESS).length,
+      submitted: myCycleAudits.filter(a => a.status === AuditStatus.SUBMITTED).length,
+      completed: myCycleAudits.filter(a => a.status === AuditStatus.COMPLETED).length,
+      approved: myCycleAudits.filter(a => a.status === AuditStatus.APPROVED).length,
+    }
+  }, [myCycleAudits])
+  
+  // Aggregate counts for display
+  const pending = statusCounts.draft
+  const inProgress = statusCounts.inProgress
+  const completed = statusCounts.completed + statusCounts.approved
+  const openCycleAudits = React.useMemo(() => {
+    const openStatuses = new Set<AuditStatus>([AuditStatus.DRAFT, AuditStatus.IN_PROGRESS, AuditStatus.SUBMITTED])
+    return myCycleAudits
+      .filter(a => openStatuses.has(a.status))
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  }, [myCycleAudits])
+  const completedCycleAudits = React.useMemo(() => {
+    const done = new Set<AuditStatus>([AuditStatus.COMPLETED, AuditStatus.APPROVED])
+    return myCycleAudits
+      .filter(a => done.has(a.status))
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  }, [myCycleAudits])
+  
+  // Rejected audits that need attention
+  const rejectedAudits = React.useMemo(() => {
+    return audits
+      .filter(a => a.status === AuditStatus.REJECTED)
+      .sort((a, b) => new Date(b.rejectedAt || b.updatedAt).getTime() - new Date(a.rejectedAt || a.updatedAt).getTime())
+  }, [audits])
 
   // Compute effective assigned branches (direct + via zones)
   const myAssignment = React.useMemo(() => assignments.find(a => a.userId === user?.id), [assignments, user?.id])
@@ -108,10 +158,59 @@ const DashboardAuditor: React.FC = () => {
       const periodAudits = allAudits.filter(a => a.branchId === b.id && a.surveyId === surveyId && a.periodStart && a.dueAt && new Date(a.periodStart).getTime() <= now && now <= new Date(a.dueAt).getTime())
       if (gating === 'any') return periodAudits.length === 0
       // completed_approved gating
-      return !periodAudits.some(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED)
+      return !periodAudits.some(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED || a.status === AuditStatus.SUBMITTED)
     })
   }, [assignedBranches, allAudits, selectedSurvey?.id, selectedSurvey?.frequency, orgs])
   const firstAllowedBranchId = allowedBranches[0]?.id
+  const assignedBranchesSorted = React.useMemo(() => {
+    const allowedSet = new Set(allowedBranches.map(b => b.id))
+    return [...assignedBranches].sort((a, b) => {
+      const aRank = allowedSet.has(a.id) ? 0 : 1
+      const bRank = allowedSet.has(b.id) ? 0 : 1
+      if (aRank !== bRank) return aRank - bRank
+      return a.name.localeCompare(b.name)
+    })
+  }, [assignedBranches, allowedBranches])
+
+  const assignedBranchesView = React.useMemo(() => {
+    const lower = branchSearch.trim().toLowerCase()
+    const base = assignedBranchesSorted.filter(b => (lower ? b.name.toLowerCase().includes(lower) : true))
+    if (showAvailableOnly) {
+      const allowedSet = new Set(allowedBranches.map(ab => ab.id))
+      return base.filter(b => allowedSet.has(b.id))
+    }
+    return base
+  }, [assignedBranchesSorted, branchSearch, showAvailableOnly, allowedBranches])
+
+  // Get blocking reason for a branch
+  const getBlockingReason = React.useCallback((branchId: string): string | null => {
+    if (!selectedSurvey) return null
+    const freq = selectedSurvey.frequency || AuditFrequency.UNLIMITED
+    if (freq === AuditFrequency.UNLIMITED) return null
+    
+    const now = new Date().getTime()
+    const periodAudits = allAudits.filter(a => 
+      a.branchId === branchId && 
+      a.surveyId === selectedSurvey.id && 
+      a.periodStart && 
+      a.dueAt && 
+      new Date(a.periodStart).getTime() <= now && 
+      now <= new Date(a.dueAt).getTime()
+    )
+    
+    if (periodAudits.length === 0) return null
+    const submitted = periodAudits.find(a => a.status === AuditStatus.SUBMITTED)
+    const approved = periodAudits.find(a => a.status === AuditStatus.APPROVED)
+    const completed = periodAudits.find(a => a.status === AuditStatus.COMPLETED)
+
+    if (submitted) return `Awaiting approval this ${frequencyLabel[freq].toLowerCase()} period`
+    if (approved) return `Already approved this ${frequencyLabel[freq].toLowerCase()} period`
+    if (completed) return `Already completed this ${frequencyLabel[freq].toLowerCase()} period`
+    // If org gating policy is 'any', any audit (including draft/in-progress) blocks new starts
+    const gating = orgs[0]?.gatingPolicy || 'completed_approved'
+    if (gating === 'any') return `An audit already exists this ${frequencyLabel[freq].toLowerCase()} period`
+    return null
+  }, [selectedSurvey, allAudits, orgs, frequencyLabel])
 
   // Filter surveys to only show those with available branches
   const availableSurveys = React.useMemo(() => {
@@ -125,7 +224,7 @@ const DashboardAuditor: React.FC = () => {
       const surveyAllowedBranches = assignedBranches.filter(b => {
         const periodAudits = allAudits.filter(a => a.branchId === b.id && a.surveyId === survey.id && a.periodStart && a.dueAt && new Date(a.periodStart).getTime() <= now && now <= new Date(a.dueAt).getTime())
         if (gating === 'any') return periodAudits.length === 0
-        return !periodAudits.some(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED)
+        return !periodAudits.some(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED || a.status === AuditStatus.SUBMITTED)
       })
       
       return surveyAllowedBranches.length > 0
@@ -144,105 +243,613 @@ const DashboardAuditor: React.FC = () => {
   return (
     <DashboardLayout title="Auditor Dashboard">
       <div className="mobile-container breathing-room">
-        {/* Compact Header with Avatar */}
-        <div className="flex items-center gap-3 mb-6 lg:mb-8">
-          <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-            <span className="text-xl">🕵️‍♂️</span>
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Auditor Dashboard</h1>
+          <p className="text-gray-600 mt-1">{assignedBranches.length} branches • {myCycleAudits.length} this cycle • {audits.length} total audits • {user?.name}</p>
+        </div>
+
+        {/* Quick Metrics - Comprehensive Status Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+              <ClipboardDocumentCheckIcon className="w-5 h-5 text-blue-600" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{statusCounts.draft}</p>
+            <p className="text-xs text-gray-600 mt-1">Draft</p>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Welcome back, {user?.name}</h2>
-            <p className="text-sm text-gray-500">{assignedBranches.length} branches • {pending + inProgress} active audits</p>
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mb-2">
+              <ClockIcon className="w-5 h-5 text-orange-600" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{statusCounts.inProgress}</p>
+            <p className="text-xs text-gray-600 mt-1">In Progress</p>
+          </div>
+          
+          <div className="bg-white border border-yellow-200 rounded-lg p-4">
+            <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mb-2">
+              <span className="text-lg">📤</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{statusCounts.submitted}</p>
+            <p className="text-xs text-gray-600 mt-1">Submitted</p>
+          </div>
+          
+          <div className="bg-white border border-green-200 rounded-lg p-4">
+            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mb-2">
+              <CheckCircleIcon className="w-5 h-5 text-green-600" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{statusCounts.completed}</p>
+            <p className="text-xs text-gray-600 mt-1">Completed</p>
+          </div>
+          
+          <div className="bg-white border border-emerald-200 rounded-lg p-4">
+            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mb-2">
+              <span className="text-lg">✅</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{statusCounts.approved}</p>
+            <p className="text-xs text-gray-600 mt-1">Approved</p>
           </div>
         </div>
 
-        {/* Action-First Quick Actions */}
+        {/* Resume Audit Card */}
         {latestEditable && (
-          <div className="card-spacious bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">Continue Your Audit</h3>
-                <p className="text-blue-700">Resume audit {latestEditable.id}</p>
-                <p className="text-sm text-blue-600 mt-1">Pick up where you left off</p>
-              </div>
-              <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:shadow-lg touch-target"
-                onClick={() => navigate(`/audit/${latestEditable.id}/wizard`)}
-              >
-                Resume
-              </button>
-            </div>
+          <div className="bg-gradient-to-r from-blue-500 to-primary-600 rounded-lg p-5 text-white">
+            <h3 className="text-lg font-semibold mb-2">Continue Your Audit</h3>
+            <p className="text-sm opacity-90 mb-4">Resume audit #{latestEditable.id.slice(0, 8)} • Pick up where you left off</p>
+            <button
+              className="bg-white text-primary-600 hover:bg-gray-100 font-medium py-2.5 px-4 rounded-lg transition-colors"
+              onClick={() => navigate(`/audit/${latestEditable.id}/wizard`)}
+            >
+              Resume Audit
+            </button>
           </div>
         )}
 
+        {/* Main Tabbed Section: This Cycle | Rejected Audits | Audit History */}
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          {/* Main Tabs */}
+          <div className="border-b border-gray-200 px-4 sm:px-6 overflow-x-auto">
+            <nav className="flex gap-8 min-w-max" aria-label="Tabs">
+              <button
+                onClick={() => setMainTab('cycle')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                  mainTab === 'cycle'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                📋 This Cycle
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">
+                  {openCycleAudits.length + completedCycleAudits.length}
+                </span>
+              </button>
+              <button
+                onClick={() => setMainTab('rejected')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-1 whitespace-nowrap ${
+                  mainTab === 'rejected'
+                    ? 'border-red-600 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {rejectedAudits.length > 0 && <ExclamationTriangleIcon className="w-4 h-4" />}
+                Rejected Audits
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                  rejectedAudits.length > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                }`}>
+                  {rejectedAudits.length}
+                </span>
+              </button>
+              <button
+                onClick={() => setMainTab('history')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                  mainTab === 'history'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                📚 Audit History
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">
+                  {audits.length}
+                </span>
+              </button>
+            </nav>
+          </div>
+          
+          {/* Cycle Tab Sub-tabs */}
+          {mainTab === 'cycle' && (
+            <div className="px-4 sm:px-6 py-3 border-b border-gray-200 bg-gray-50">
+              <div className="inline-flex items-center bg-white border border-gray-200 rounded-lg p-1">
+                <button
+                  className={`${cycleTab === 'open' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
+                  onClick={() => setCycleTab('open')}
+                >
+                  Open ({openCycleAudits.length})
+                </button>
+                <button
+                  className={`${cycleTab === 'completed' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
+                  onClick={() => setCycleTab('completed')}
+                >
+                  Completed ({completedCycleAudits.length})
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <div className="p-4 sm:p-6">
+            {/* This Cycle Content */}
+            {mainTab === 'cycle' && (cycleTab === 'open' ? (
+              openCycleAudits.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-4xl mb-2">📋</div>
+                  <p className="text-gray-600 font-medium">No open audits</p>
+                  <p className="text-sm text-gray-500 mt-1">All audits for this cycle are completed</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {openCycleAudits.map(a => {
+                    const branch = branches.find(b => b.id === a.branchId)
+                    const survey = surveys.find(s => s.id === a.surveyId)
+                    const dueAt = a.dueAt ? new Date(a.dueAt) : null
+                    const isOverdue = !!dueAt && dueAt < new Date()
+                    const isDueToday = !!dueAt && dueAt.toDateString() === new Date().toDateString()
+                    
+                    // Button config based on status
+                    const getButtonConfig = () => {
+                      if (a.status === AuditStatus.DRAFT) return { label: 'Start', color: 'bg-blue-600 hover:bg-blue-700', icon: '▶' }
+                      if (a.status === AuditStatus.IN_PROGRESS) return { label: 'Continue', color: 'bg-orange-600 hover:bg-orange-700', icon: '▶' }
+                      if (a.status === AuditStatus.SUBMITTED) return { label: 'View Submission', color: 'bg-yellow-600 hover:bg-yellow-700', icon: '📋' }
+                      return { label: 'Open', color: 'bg-primary-600 hover:bg-primary-700', icon: '▶' }
+                    }
+                    
+                    const btnConfig = getButtonConfig()
+                    
+                    return (
+                      <div key={a.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                            <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <StatusBadge status={a.status} />
+                          {isOverdue && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              🚨 Overdue
+                            </span>
+                          )}
+                          {isDueToday && !isOverdue && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              ⏰ Due Today
+                            </span>
+                          )}
+                          {dueAt && !isOverdue && !isDueToday && (
+                            <span className="text-xs text-gray-500">Due {dueAt.toLocaleDateString()}</span>
+                          )}
+                        </div>
+                        
+                        <button
+                          onClick={() => {
+                            if (a.status === AuditStatus.SUBMITTED) {
+                              navigate(`/audits/${a.id}/summary`)
+                            } else {
+                              navigate(`/audit/${a.id}/wizard`)
+                            }
+                          }}
+                          className={`w-full flex items-center justify-center gap-2 ${btnConfig.color} text-white px-4 py-2.5 rounded-lg font-medium transition-colors`}
+                        >
+                          <span>{btnConfig.icon}</span>
+                          <span>{btnConfig.label}</span>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            ) : (
+              completedCycleAudits.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-4xl mb-2">✅</div>
+                  <p className="text-gray-600 font-medium">No completed audits yet</p>
+                  <p className="text-sm text-gray-500 mt-1">Complete audits will appear here</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {completedCycleAudits.map(a => {
+                    const branch = branches.find(b => b.id === a.branchId)
+                    const survey = surveys.find(s => s.id === a.surveyId)
+                    const completedAt = new Date(a.updatedAt)
+                    
+                    return (
+                      <div key={a.id} className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                            <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                            <p className="text-xs text-gray-500 mt-1">Completed {completedAt.toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <StatusBadge status={a.status} />
+                          {a.status === AuditStatus.APPROVED && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              ✅ Approved
+                            </span>
+                          )}
+                        </div>
+                        
+                        <button
+                          onClick={() => navigate(`/audits/${a.id}/summary`)}
+                          className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
+                        >
+                          <span>📊</span>
+                          <span>View Results</span>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            ))}
+            
+            {/* Rejected Audits Content */}
+            {mainTab === 'rejected' && (
+              rejectedAudits.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-4xl mb-2">✅</div>
+                  <p className="text-gray-600 font-medium">No rejected audits</p>
+                  <p className="text-sm text-gray-500 mt-1">All your audits have been approved!</p>
+                </div>
+              ) : (
+                <ResponsiveTable
+                  items={rejectedAudits}
+                  keyField={(a) => a.id}
+                  columns={[
+                    {
+                      key: 'date',
+                      header: 'Rejected Date',
+                      className: 'px-6 py-4',
+                      render: (a) => {
+                        const rejectedAt = a.rejectedAt ? new Date(a.rejectedAt) : new Date(a.updatedAt)
+                        return rejectedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                      }
+                    },
+                    {
+                      key: 'branch',
+                      header: 'Branch',
+                      className: 'px-6 py-4 font-medium',
+                      render: (a) => branches.find(b => b.id === a.branchId)?.name || 'Unknown Branch'
+                    },
+                    {
+                      key: 'survey',
+                      header: 'Survey',
+                      className: 'px-6 py-4 text-gray-600',
+                      render: (a) => surveys.find(s => s.id === a.surveyId)?.title || 'Unknown Survey'
+                    },
+                    {
+                      key: 'reason',
+                      header: 'Rejection Reason',
+                      className: 'px-6 py-4 text-gray-600 max-w-md',
+                      render: (a) => a.rejectionNote ? (
+                        <span className="block truncate" title={a.rejectionNote}>{a.rejectionNote}</span>
+                      ) : (
+                        <span className="text-gray-400">No reason provided</span>
+                      )
+                    },
+                    {
+                      key: 'actions',
+                      header: 'Actions',
+                      className: 'px-6 py-4 text-right',
+                      render: (a) => (
+                        <button
+                          onClick={() => navigate(`/audit/${a.id}/wizard`)}
+                          className="text-red-600 hover:text-red-900 font-medium"
+                        >
+                          Reopen & Fix
+                        </button>
+                      )
+                    },
+                  ] as Column<Audit>[]}
+                  mobileItem={(a) => {
+                    const branch = branches.find(b => b.id === a.branchId)
+                    const survey = surveys.find(s => s.id === a.surveyId)
+                    const rejectedAt = a.rejectedAt ? new Date(a.rejectedAt) : new Date(a.updatedAt)
+                    
+                    return (
+                      <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="mb-3">
+                          <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                          <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 ring-1 ring-inset ring-red-600/20">
+                            ❌ Rejected
+                          </span>
+                          <span className="text-xs text-gray-600">
+                            {rejectedAt.toLocaleDateString()}
+                          </span>
+                        </div>
+                        
+                        {a.rejectionNote && (
+                          <div className="mb-3 p-3 bg-white rounded-lg border border-red-200">
+                            <p className="text-xs font-medium text-gray-700 mb-1">Rejection Reason:</p>
+                            <p className="text-sm text-gray-900">{a.rejectionNote}</p>
+                          </div>
+                        )}
+                        
+                        <button 
+                          onClick={() => navigate(`/audit/${a.id}/wizard`)}
+                          className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
+                        >
+                          <span>🔄</span>
+                          <span>Reopen & Fix</span>
+                        </button>
+                      </div>
+                    )
+                  }}
+                />
+              )
+            )}
+            
+            {/* Audit History Content */}
+            {mainTab === 'history' && (
+              recent.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-4xl mb-2">📋</div>
+                  <p className="text-gray-600 font-medium">No audit history</p>
+                  <p className="text-sm text-gray-500 mt-1">Your audit history will appear here</p>
+                </div>
+              ) : (
+                <ResponsiveTable
+                  items={recent}
+                  keyField={(a) => a.id}
+                  columns={[
+                    {
+                      key: 'date',
+                      header: 'Last Updated',
+                      className: 'px-6 py-4',
+                      render: (a) => new Date(a.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    },
+                    {
+                      key: 'branch',
+                      header: 'Branch',
+                      className: 'px-6 py-4 font-medium',
+                      render: (a) => branches.find(b => b.id === a.branchId)?.name || 'Unknown Branch'
+                    },
+                    {
+                      key: 'survey',
+                      header: 'Survey',
+                      className: 'px-6 py-4 text-gray-600',
+                      render: (a) => surveys.find(s => s.id === a.surveyId)?.title || 'Unknown Survey'
+                    },
+                    {
+                      key: 'status',
+                      header: 'Status',
+                      className: 'px-6 py-4',
+                      render: (a) => <StatusBadge status={a.status} />
+                    },
+                    {
+                      key: 'completion',
+                      header: 'Completion',
+                      className: 'px-6 py-4 text-gray-900 font-semibold',
+                      render: (a) => {
+                        const s = surveys.find(su => su.id === a.surveyId)
+                        if (!s) return '0%'
+                        // For completed/approved audits, show 100% regardless of calculated score
+                        if (a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED) {
+                          return '100%'
+                        }
+                        const comp = Math.round(calculateAuditScore(a, s).completionPercentage)
+                        return `${comp}%`
+                      }
+                    },
+                    {
+                      key: 'actions',
+                      header: 'Actions',
+                      className: 'px-6 py-4 text-right',
+                      render: (a) => (
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => navigate(`/audit/${a.id}/summary`)}
+                            className="text-gray-600 hover:text-gray-900 font-medium text-sm"
+                          >
+                            View
+                          </button>
+                          {(a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS) && (
+                            <button
+                              onClick={() => navigate(`/audit/${a.id}/wizard`)}
+                              className="text-primary-600 hover:text-primary-900 font-medium text-sm"
+                            >
+                              Continue
+                            </button>
+                          )}
+                        </div>
+                      )
+                    },
+                  ] as Column<Audit>[]}
+                  mobileItem={(a) => {
+                    const branch = branches.find(b => b.id === a.branchId)
+                    const survey = surveys.find(s => s.id === a.surveyId)
+                    const s = surveys.find(su => su.id === a.surveyId)
+                    // For completed/approved audits, show 100% regardless of calculated score
+                    const comp = !s ? 0 : 
+                      (a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED) ? 100 :
+                      Math.round(calculateAuditScore(a, s).completionPercentage)
+                    
+                    return (
+                      <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                            <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900 ml-4">{comp}%</div>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <StatusBadge status={a.status} />
+                          <span className="text-xs text-gray-600">
+                            Updated {new Date(a.updatedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => navigate(`/audit/${a.id}/summary`)}
+                            className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
+                          >
+                            <span>📊</span>
+                            <span>View Summary</span>
+                          </button>
+                          {(a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS) && (
+                            <button 
+                              onClick={() => navigate(`/audit/${a.id}/wizard`)}
+                              className="flex-1 flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                            >
+                              <span>▶</span>
+                              <span>Continue</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  }}
+                />
+              )
+            )}
+          </div>
+        </div>
+
         {/* Smart Survey Selection - Only Available Surveys */}
         {availableSurveys.length > 0 && (
-          <div className="card-spacious">
-            <div className="card-header">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Start New Audit</h3>
-                  <p className="text-gray-600">
-                    {selectedSurvey?.title || 'Select survey template'}
-                  </p>
-                  {firstAllowedBranchId && (
-                    <p className="text-sm text-green-600 mt-1">
-                      ✓ {allowedBranches.length} branches available for this period
-                    </p>
-                  )}
-                  {availableSurveys.length < surveys.length && (
-                    <p className="text-sm text-amber-600 mt-1">
-                      📅 {surveys.length - availableSurveys.length} surveys not available due to frequency policy
-                    </p>
-                  )}
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            {/* Header */}
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-blue-50">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Start New Audit</h3>
+              
+              {/* Survey Selection */}
+              {availableSurveys.length > 1 ? (
+                <div className="space-y-2">
+                  <label htmlFor="survey-select" className="block text-sm font-medium text-gray-700">Select Survey Template</label>
+                  <select 
+                    id="survey-select"
+                    className="input w-full sm:max-w-md"
+                    value={selectedSurveyId || ''} 
+                    onChange={(e) => setSelectedSurveyId(e.target.value)}
+                  >
+                    {availableSurveys.map(s => (
+                      <option key={s.id} value={s.id}>{s.title}</option>
+                    ))}
+                  </select>
                 </div>
-                {availableSurveys.length > 1 && (
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="survey-select" className="text-sm font-medium text-gray-700">Survey</label>
-                    <select 
-                      id="survey-select"
-                      className="input rounded-xl border-gray-300 bg-white min-w-[140px]"
-                      value={selectedSurveyId || ''} 
-                      onChange={(e) => setSelectedSurveyId(e.target.value)}
-                    >
-                      {availableSurveys.map(s => (
-                        <option key={s.id} value={s.id}>{s.title}</option>
-                      ))}
-                    </select>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700">Survey:</span>
+                  <span className="text-sm font-semibold text-gray-900">{selectedSurvey?.title}</span>
+                </div>
+              )}
+              
+              {/* Info Badges */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {firstAllowedBranchId && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <CheckCircleIcon className="w-4 h-4" />
+                    <span>{allowedBranches.length} branch{allowedBranches.length !== 1 ? 'es' : ''} available</span>
+                  </div>
+                )}
+                {availableSurveys.length < surveys.length && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
+                    <ExclamationTriangleIcon className="w-4 h-4" />
+                    <span>{surveys.length - availableSurveys.length} survey{surveys.length - availableSurveys.length !== 1 ? 's' : ''} unavailable</span>
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="card-body">
-              <button
-                className="btn-mobile-primary text-lg py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200"
-                disabled={createAudit.isPending || !selectedSurvey || !firstAllowedBranchId}
-                onClick={() => selectedSurvey && firstAllowedBranchId && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: firstAllowedBranchId })}
-              >
-                {createAudit.isPending ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Starting Audit...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-xl">🚀</span>
-                    <span>Start Audit{firstAllowedBranchId ? ` at ${allowedBranches[0]?.name}` : ''}</span>
-                  </div>
-                )}
-              </button>
-              
-              {!firstAllowedBranchId && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                  <div className="flex items-start gap-3">
-                    <span className="text-amber-500 text-lg">⚠️</span>
-                    <div>
-                      <p className="font-medium text-amber-800">No branches available</p>
-                      <p className="text-sm text-amber-700 mt-1">
-                        Current survey frequency policy prevents new audits at this time
-                      </p>
+            {/* Body */}
+            <div className="p-4 sm:p-6 space-y-4">
+              {/* Filters - mobile first */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <input
+                  type="text"
+                  className="input w-full sm:max-w-xs"
+                  placeholder="Search branches…"
+                  aria-label="Search branches"
+                  value={branchSearch}
+                  onChange={(e) => setBranchSearch(e.target.value)}
+                />
+                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-primary-600 rounded"
+                    checked={showAvailableOnly}
+                    onChange={(e) => setShowAvailableOnly(e.target.checked)}
+                  />
+                  <span>Available only</span>
+                </label>
+              </div>
+
+              {assignedBranchesView.length === 0 && (
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-center text-sm text-gray-600">
+                  {showAvailableOnly ? 'No available branches match your filter.' : 'No branches match your filter.'}
+                </div>
+              )}
+
+              {assignedBranchesView.map(branch => {
+                const isAllowed = allowedBranches.some(b => b.id === branch.id)
+                const reason = isAllowed ? null : getBlockingReason(branch.id)
+
+                return (
+                  <div 
+                    key={branch.id} 
+                    className={`flex items-center justify-between p-4 rounded-xl transition-all border-2 ${
+                      isAllowed 
+                        ? 'bg-white border-gray-200 hover:border-primary-300 hover:shadow-sm' 
+                        : 'bg-gray-50 border-gray-200 opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold ${
+                        isAllowed ? 'bg-primary-100 text-primary-700' : 'bg-gray-200 text-gray-500'
+                      }`}>
+                        {branch.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">{branch.name}</div>
+                        {!isAllowed && reason && (
+                          <button 
+                            onClick={() => toast.error(reason)} 
+                            className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 mt-0.5"
+                          >
+                            <InformationCircleIcon className="w-3.5 h-3.5" />
+                            Why unavailable?
+                          </button>
+                        )}
+                      </div>
                     </div>
+                    <button
+                      className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                        isAllowed 
+                          ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow' 
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                      disabled={!isAllowed || createAudit.isPending || !selectedSurvey}
+                      onClick={() => selectedSurvey && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: branch.id })}
+                    >
+                      {createAudit.isPending && createAudit.variables?.branchId === branch.id ? 'Starting...' : 'Start'}
+                    </button>
                   </div>
+                )
+              })}
+
+              {assignedBranches.length === 0 && (
+                <div className="p-4 bg-gray-100 border border-gray-200 rounded-xl text-center">
+                  <p className="font-medium text-gray-700">No branches assigned</p>
+                  <p className="text-sm text-gray-500 mt-1">Ask an admin to assign you to a branch or zone.</p>
                 </div>
               )}
             </div>
@@ -253,7 +860,7 @@ const DashboardAuditor: React.FC = () => {
           <div className="card-spacious border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
             <div className="text-center">
               <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">📅</span>
+                <CalendarDaysIcon className="w-10 h-10 text-amber-500" />
               </div>
               {surveys.length === 0 ? (
                 <>
@@ -274,7 +881,7 @@ const DashboardAuditor: React.FC = () => {
         )}
 
         {/* Actionable Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="hidden">
           <div className="card-compact card-interactive bg-gradient-to-br from-primary-50 to-blue-50 border-primary-200">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center shadow-sm">
@@ -316,62 +923,36 @@ const DashboardAuditor: React.FC = () => {
         </div>
 
         {/* My Scheduled Audits */}
-        <div className="card-spacious">
+        <div className="hidden">
           <div className="card-header">
             <h3 className="text-xl font-semibold text-gray-900">My Scheduled Audits</h3>
             <p className="text-gray-600 mt-1">Recent audit activity and upcoming tasks</p>
           </div>
-          <div className="p-6">
+          <div className="px-0 py-6 md:px-6">
             {(() => {
               const mine = allAudits.filter(a => a.assignedTo === user?.id && a.surveyId && a.periodStart)
               if (mine.length === 0) return <p className="text-gray-500">No scheduled audits.</p>
               const sorted = mine.sort((a,b) => new Date(a.dueAt || a.updatedAt).getTime() - new Date(b.dueAt || b.updatedAt).getTime()).slice(0, 8)
               return (
                 <div>
-                  {/* Enhanced Mobile Audit Cards */}
-                  <div className="grid gap-6 md:hidden">
-                    {sorted.map(a => {
-                      const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
-                      return (
-                        <div key={a.id} className="card-compact card-interactive bg-white border border-gray-200">
-                          <div className="card-header">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-gray-900 text-base mb-1 truncate">
-                                  Audit {a.id}
-                                </h4>
-                                <p className="text-sm text-gray-600 mb-2">{branchName}</p>
-                                <div className="flex items-center gap-2">
-                                  <StatusBadge status={a.status} />
-                                  <span className="text-xs text-gray-500">
-                                    {a.dueAt ? `Due ${new Date(a.dueAt).toLocaleDateString()}` : 'No due date'}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="card-footer">
-                            <div className="flex gap-3">
-                              <button 
-                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-medium transition-colors touch-target"
-                                onClick={() => navigate(`/audit/${a.id}`)}
-                              >
-                                View Details
-                              </button>
-                              <button 
-                                className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-3 rounded-xl font-medium transition-colors touch-target"
-                                onClick={() => navigate(`/audit/${a.id}/wizard`)}
-                              >
-                                Open Audit
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {/* Desktop table */}
+                                    {/* Mobile-First Scheduled Cards */}
+                                    <div className="space-y-4 md:hidden">
+                                      {sorted.map(a => {
+                                        const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
+                                        return (
+                                          <MobileAuditCard
+                                            key={a.id}
+                                            audit={a}
+                                            branchName={branchName}
+                                            surveys={surveys}
+                                            mode="scheduled"
+                                            onSummary={() => navigate('/audits/' + a.id + '/summary')}
+                                            onOpen={() => navigate('/audit/' + a.id + '/wizard')}
+                                          />
+                                        )
+                                      })}
+                                    </div>
+                                    {/* Desktop table */}
                   <div className="hidden md:block overflow-x-auto">
                     <table className="w-full min-w-[720px] divide-y divide-gray-200">
                       <thead className="bg-gray-50">
@@ -394,7 +975,7 @@ const DashboardAuditor: React.FC = () => {
                             <tr key={a.id}>
                               <td className="px-3 py-1.5 text-sm lg:text-base">{a.id}</td>
                               <td className="px-3 py-1.5 text-sm lg:text-base">{branch?.name || a.branchId}</td>
-                              <td className="px-3 py-1.5 text-sm lg:text-base">{a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}</td>
+                              <td className="px-3 py-1.5 text-sm lg:text-base">{a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '\u2014'}</td>
                               <td className="px-3 py-1.5 space-x-2 text-sm lg:text-base">
                                 <StatusBadge status={a.status} />
                                 {isDueToday && !isArchived && <InfoBadge label="Due Today" tone="warning" />}
@@ -402,8 +983,8 @@ const DashboardAuditor: React.FC = () => {
                                 {overdue && !isArchived && <InfoBadge label="Overdue" tone="danger" />}
                               </td>
                               <td className="px-3 py-1.5 text-right space-x-2">
-                                <button className="btn-outline btn-sm md:h-10 md:px-4 xl:h-11 xl:px-5" onClick={() => navigate(`/audit/${a.id}`)}>Details</button>
-                                <button className="btn-primary btn-sm md:h-10 md:px-4 xl:h-11 xl:px-5" onClick={() => navigate(`/audit/${a.id}/wizard`)}>Open</button>
+                                <button className="btn btn-outline btn-responsive-sm" onClick={() => navigate(`/audits/${a.id}/summary`)}>Summary</button>
+                                <button className="btn btn-primary btn-responsive-sm" onClick={() => navigate(`/audit/${a.id}/wizard`)}>Open</button>
                               </td>
                             </tr>
                           )
@@ -418,7 +999,7 @@ const DashboardAuditor: React.FC = () => {
         </div>
 
         {/* Completely Redesigned Recent Audits - Mobile First */}
-        <div className="card-spacious">
+        <div className="hidden">
           <div className="card-header">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div>
@@ -494,7 +1075,7 @@ const DashboardAuditor: React.FC = () => {
           ) : recent.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <span className="text-4xl">📋</span>
+                <ClipboardDocumentCheckIcon className="h-10 w-10 text-gray-400" />
               </div>
               <h4 className="text-lg font-semibold text-gray-900 mb-2">No audits found</h4>
               <p className="text-gray-500 mb-6">Your completed audits will appear here</p>
@@ -657,13 +1238,13 @@ const DashboardAuditor: React.FC = () => {
                           <td className="px-3 py-1.5">{new Date(a.updatedAt).toLocaleDateString()}</td>
                           <td className="px-3 py-1.5 text-right space-x-2">
                             <button
-                              className="btn-outline btn-sm md:h-10 md:px-4 xl:h-11 xl:px-5"
-                              onClick={() => navigate(`/audit/${a.id}`)}
+                              className="btn btn-outline btn-responsive-sm"
+                              onClick={() => navigate(`/audits/${a.id}/summary`)}
                             >
-                              Details
+                              Summary
                             </button>
                             <button
-                              className="btn-primary btn-sm md:h-10 md:px-4 xl:h-11 xl:px-5"
+                              className="btn btn-primary btn-responsive-sm"
                               onClick={() => navigate(`/audit/${a.id}/wizard`)}
                             >
                               Continue
@@ -680,7 +1261,7 @@ const DashboardAuditor: React.FC = () => {
         </div>
 
         {/* Assigned Branches & Frequency */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Assigned Branches</h3>
           </div>
@@ -694,6 +1275,7 @@ const DashboardAuditor: React.FC = () => {
                   {assignedBranches.map(b => {
                     const freq = selectedSurvey?.frequency || AuditFrequency.UNLIMITED
                     const canStart = allowedBranches.some(ab => ab.id === b.id)
+                    const blockingReason = getBlockingReason(b.id)
                     return (
                       <div key={b.id} className="card-compact card-interactive bg-white border border-gray-200">
                         <div className="card-header">
@@ -723,8 +1305,9 @@ const DashboardAuditor: React.FC = () => {
                             }`}
                             disabled={!canStart || !selectedSurvey || createAudit.isPending}
                             onClick={() => selectedSurvey && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: b.id })}
+                            title={blockingReason || undefined}
                           >
-                            {createAudit.isPending ? 'Starting...' : 'Start Audit'}
+                            {createAudit.isPending ? 'Starting...' : blockingReason || 'Start Audit'}
                           </button>
                         </div>
                       </div>
@@ -746,6 +1329,7 @@ const DashboardAuditor: React.FC = () => {
                       {assignedBranches.map(b => {
                         const freq = selectedSurvey?.frequency || AuditFrequency.UNLIMITED
                         const canStart = allowedBranches.some(ab => ab.id === b.id)
+                        const blockingReason = getBlockingReason(b.id)
                         return (
                           <tr key={b.id}>
                             <td className="px-3 py-1.5">{b.name}</td>
@@ -759,11 +1343,12 @@ const DashboardAuditor: React.FC = () => {
                             </td>
                             <td className="px-3 py-1.5 text-right">
                               <button
-                                className="btn-primary btn-sm disabled:opacity-60"
+                                className="btn btn-primary btn-sm disabled:opacity-60"
                                 disabled={!canStart || !selectedSurvey || createAudit.isPending}
                                 onClick={() => selectedSurvey && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: b.id })}
+                                title={blockingReason || undefined}
                               >
-                                Start Audit
+                                {blockingReason || 'Start Audit'}
                               </button>
                             </td>
                           </tr>

@@ -9,11 +9,13 @@ import { useAuthStore } from '../stores/auth'
 import StatCard from '../components/StatCard'
 import ResponsiveTable from '../components/ResponsiveTable'
 import { ClipboardDocumentListIcon, CheckCircleIcon, FolderIcon } from '@heroicons/react/24/outline'
+import { useToast } from '../hooks/useToast'
 
 const ManageSurveyTemplates: React.FC = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user } = useAuthStore()
+  const { showToast } = useToast()
 
   const { data: surveys = [], isLoading } = useQuery<Survey[]>({
     queryKey: QK.SURVEYS,
@@ -31,27 +33,85 @@ const ManageSurveyTemplates: React.FC = () => {
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
       if (created?.id) navigate(`/manage/surveys/${created.id}/edit`)
+      showToast({ message: 'New survey created!', variant: 'success' })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to create survey.', 
+        variant: 'error' 
+      })
     },
   })
 
   const duplicateMutation = useMutation({
     mutationFn: (id: string) => api.duplicateSurvey(id, user?.id || 'user-3'),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.SURVEYS }),
+    onSuccess: (_result, id) => {
+      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      const survey = surveys.find(s => s.id === id)
+      showToast({ 
+        message: `Survey "${survey?.title || 'Survey'}" duplicated successfully!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to duplicate survey.', 
+        variant: 'error' 
+      })
+    },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteSurvey(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.SURVEYS }),
+    onSuccess: (_result, id) => {
+      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      const survey = surveys.find(s => s.id === id)
+      showToast({ 
+        message: `Survey "${survey?.title || 'Survey'}" deleted successfully!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to delete survey.', 
+        variant: 'error' 
+      })
+    },
   })
 
   const toggleActiveMutation = useMutation({
     mutationFn: (s: Survey) => api.updateSurvey(s.id, { isActive: !s.isActive }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.SURVEYS }),
+    onSuccess: (_result, survey) => {
+      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      showToast({ 
+        message: `Survey "${survey.title}" ${!survey.isActive ? 'activated' : 'deactivated'}!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to update survey status.', 
+        variant: 'error' 
+      })
+    },
   })
 
   const updateFrequencyMutation = useMutation({
     mutationFn: (payload: { id: string; frequency: AuditFrequency }) => api.updateSurvey(payload.id, { frequency: payload.frequency }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.SURVEYS }),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      const survey = surveys.find(s => s.id === variables.id)
+      showToast({ 
+        message: `Survey "${survey?.title || 'Survey'}" frequency updated!`, 
+        variant: 'success' 
+      })
+    },
+    onError: (error) => {
+      showToast({ 
+        message: error instanceof Error ? error.message : 'Failed to update survey frequency.', 
+        variant: 'error' 
+      })
+    },
   })
 
   return (
@@ -64,7 +124,7 @@ const ManageSurveyTemplates: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-900">Survey Templates</h2>
               <p className="text-gray-600">Create, duplicate, and manage your audit templates.</p>
             </div>
-            <button data-testid="create-template" className="btn-primary" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+            <button data-testid="create-template" className="btn btn-primary btn-md" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
               {createMutation.isPending ? 'Creating…' : 'Create New Template'}
             </button>
           </div>
@@ -99,10 +159,10 @@ const ManageSurveyTemplates: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <button data-testid="edit-template" data-id={s.id} className="btn-outline btn-sm" onClick={() => navigate(`/manage/surveys/${s.id}/edit`)}>Edit</button>
-                      <button data-testid="duplicate-template" data-id={s.id} className="btn-secondary btn-sm" onClick={() => duplicateMutation.mutate(s.id)} disabled={duplicateMutation.isPending}>Duplicate</button>
-                      <button data-testid="toggle-active-template" data-id={s.id} className="btn-outline btn-sm" onClick={() => toggleActiveMutation.mutate(s)} disabled={toggleActiveMutation.isPending}>{s.isActive ? 'Deactivate' : 'Activate'}</button>
-                      <button data-testid="delete-template" data-id={s.id} className="btn-danger btn-sm" onClick={() => deleteMutation.mutate(s.id)} disabled={deleteMutation.isPending}>Delete</button>
+                      <button data-testid="edit-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => navigate(`/manage/surveys/${s.id}/edit`)}>Edit</button>
+                      <button data-testid="duplicate-template" data-id={s.id} className="btn btn-secondary btn-sm" onClick={() => duplicateMutation.mutate(s.id)} disabled={duplicateMutation.isPending}>Duplicate</button>
+                      <button data-testid="toggle-active-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => toggleActiveMutation.mutate(s)} disabled={toggleActiveMutation.isPending}>{s.isActive ? 'Deactivate' : 'Activate'}</button>
+                      <button data-testid="delete-template" data-id={s.id} className="btn btn-danger btn-sm" onClick={() => deleteMutation.mutate(s.id)} disabled={deleteMutation.isPending}>Delete</button>
                     </div>
                   </div>
                 )}
@@ -132,10 +192,10 @@ const ManageSurveyTemplates: React.FC = () => {
                     className: 'text-right',
                     render: (s) => (
                       <div className="space-x-2">
-                        <button data-testid="edit-template" data-id={s.id} className="btn-outline btn-sm" onClick={() => navigate(`/manage/surveys/${s.id}/edit`)}>Edit</button>
-                        <button data-testid="duplicate-template" data-id={s.id} className="btn-secondary btn-sm" onClick={() => duplicateMutation.mutate(s.id)} disabled={duplicateMutation.isPending}>Duplicate</button>
-                        <button data-testid="toggle-active-template" data-id={s.id} className="btn-outline btn-sm" onClick={() => toggleActiveMutation.mutate(s)} disabled={toggleActiveMutation.isPending}>{s.isActive ? 'Deactivate' : 'Activate'}</button>
-                        <button data-testid="delete-template" data-id={s.id} className="btn-danger btn-sm" onClick={() => deleteMutation.mutate(s.id)} disabled={deleteMutation.isPending}>Delete</button>
+                        <button data-testid="edit-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => navigate(`/manage/surveys/${s.id}/edit`)}>Edit</button>
+                        <button data-testid="duplicate-template" data-id={s.id} className="btn btn-secondary btn-sm" onClick={() => duplicateMutation.mutate(s.id)} disabled={duplicateMutation.isPending}>Duplicate</button>
+                        <button data-testid="toggle-active-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => toggleActiveMutation.mutate(s)} disabled={toggleActiveMutation.isPending}>{s.isActive ? 'Deactivate' : 'Activate'}</button>
+                        <button data-testid="delete-template" data-id={s.id} className="btn btn-danger btn-sm" onClick={() => deleteMutation.mutate(s.id)} disabled={deleteMutation.isPending}>Delete</button>
                       </div>
                     )
                   }

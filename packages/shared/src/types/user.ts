@@ -1,8 +1,8 @@
 export enum UserRole {
-  SUPER_ADMIN = 'super_admin',
-  ADMIN = 'admin',
-  AUDITOR = 'auditor',
-  BRANCH_MANAGER = 'branch_manager',
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ADMIN = 'ADMIN',
+  AUDITOR = 'AUDITOR',
+  BRANCH_MANAGER = 'BRANCH_MANAGER',
 }
 
 export interface User {
@@ -14,6 +14,9 @@ export interface User {
   branchId?: string;
   signatureUrl?: string; // optional pre-uploaded signature image for approvals
   avatarUrl?: string; // optional profile image
+  emailVerified?: boolean; // whether the user has verified their email
+  isActive?: boolean; // whether the user account is active
+  lastSeenAt?: Date; // when the user was last seen
   createdAt: Date;
   updatedAt: Date;
 }

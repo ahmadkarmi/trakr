@@ -1,73 +1,411 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { UserRole, USER_ROLE_LABELS } from '@trakr/shared'
 import { useAuthStore } from '../stores/auth'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
-import { useErrorHandler } from '../hooks/useErrorHandler'
+import { api } from '../utils/api'
+
+type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password'
+type AuthStatus = 'idle' | 'submitting' | 'success' | 'error'
+type ErrorType = 
+  | null
+  | 'invalid_credentials'
+  | 'account_not_found'
+  | 'email_already_exists'
+  | 'weak_password'
+  | 'invalid_email'
+  | 'network_error'
+  | 'server_error'
+  | 'rate_limited'
+  | 'validation_error'
+  | 'unknown_error'
+
+interface AuthError {
+  type: ErrorType
+  title: string
+  message: string
+  action?: string
+}
+
+interface SuccessMessage {
+  title: string
+  message: string
+}
 
 const LoginScreen: React.FC = () => {
-  const { signIn, signInWithCredentials, isLoading } = useAuthStore()
-  const { error: appError, handleSupabaseError, createError, clearError } = useErrorHandler()
+  // Form state
+  const [authMode, setAuthMode] = useState<AuthMode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [resetMessage, setResetMessage] = useState<string | null>(null)
-  const [isResetting, setIsResetting] = useState(false)
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [fullName, setFullName] = useState('') // For registration form
+  const [showPassword, setShowPassword] = useState(false)
+  
+  // Status state
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
+  const [authError, setAuthError] = useState<AuthError | null>(null)
+  const [successMessage, setSuccessMessage] = useState<SuccessMessage | null>(null)
+  const [failedAttempts, setFailedAttempts] = useState(0)
+  const [isLocked, setIsLocked] = useState(false)
+  const [lockUntil, setLockUntil] = useState<Date | null>(null)
+  
+  const formRef = useRef<HTMLFormElement>(null)
   
   // Parallax effect state
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [gyroPos, setGyroPos] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const handleRoleLogin = async (role: UserRole) => {
-    await signIn(role)
+  // Switch between auth modes
+  const switchMode = (mode: AuthMode) => {
+    setAuthMode(mode)
+    setAuthError(null)
+    setSuccessMessage(null)
+    setPassword('')
+    setConfirmPassword('')
   }
 
-  const handlePasswordLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    clearError()
-    setResetMessage(null)
-    try {
-      await signInWithCredentials(email, password)
-    } catch (err: any) {
-      handleSupabaseError(err, { 
-        action: 'password-login',
-        email: email 
-      })
+  // Clear lock after timeout
+  useEffect(() => {
+    if (lockUntil && lockUntil <= new Date()) {
+      setIsLocked(false)
+      setLockUntil(null)
+      setFailedAttempts(0)
+    }
+  }, [lockUntil])
+
+  // Parse Supabase error to user-friendly message
+  const parseSupabaseError = (err: any): AuthError => {
+    const errorMessage = err?.message || err?.error_description || ''
+    const errorCode = err?.code || err?.status
+
+    // Invalid credentials
+    if (errorMessage.includes('Invalid login credentials') || errorMessage.includes('Invalid email or password')) {
+      return {
+        type: 'invalid_credentials',
+        title: 'Invalid credentials',
+        message: 'The email or password you entered is incorrect.',
+        action: 'Please check your credentials and try again'
+      }
+    }
+
+    // Email not found
+    if (errorMessage.includes('User not found') || errorMessage.includes('Email not found')) {
+      return {
+        type: 'account_not_found',
+        title: 'Account not found',
+        message: 'No account exists with this email address.',
+        action: 'Check your email or contact your administrator'
+      }
+    }
+
+    // Network errors
+    if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network') || !navigator.onLine) {
+      return {
+        type: 'network_error',
+        title: 'Connection error',
+        message: 'Unable to connect. Check your internet connection.',
+        action: 'Retry'
+      }
+    }
+
+    // Server errors
+    if (errorCode === 500 || errorCode >= 500) {
+      return {
+        type: 'server_error',
+        title: 'Server error',
+        message: 'Something went wrong on our end. Please try again.',
+        action: 'Retry'
+      }
+    }
+
+    // Rate limiting
+    if (errorCode === 429 || errorMessage.includes('rate limit')) {
+      return {
+        type: 'rate_limited',
+        title: 'Too many requests',
+        message: 'You\'re trying too frequently. Please wait a moment.',
+        action: 'Wait 30 seconds'
+      }
+    }
+
+    // Email already exists (registration)
+    if (errorMessage.includes('already registered') || errorMessage.includes('already exists')) {
+      return {
+        type: 'email_already_exists',
+        title: 'Email already registered',
+        message: 'An account with this email already exists.',
+        action: 'Try logging in instead'
+      }
+    }
+
+    // Weak password
+    if (errorMessage.includes('Password') && (errorMessage.includes('weak') || errorMessage.includes('short'))) {
+      return {
+        type: 'weak_password',
+        title: 'Password too weak',
+        message: 'Password must be at least 8 characters with letters and numbers.',
+        action: 'Choose a stronger password'
+      }
+    }
+
+    // Invalid email format
+    if (errorMessage.includes('Invalid email') || errorMessage.includes('email format')) {
+      return {
+        type: 'invalid_email',
+        title: 'Invalid email',
+        message: 'Please enter a valid email address.',
+        action: 'Check your email format'
+      }
+    }
+
+    // Unknown error
+    return {
+      type: 'unknown_error',
+      title: authMode === 'register' ? 'Registration failed' : 'Authentication failed',
+      message: errorMessage || 'An unexpected error occurred. Please try again.',
+      action: 'Please try again'
     }
   }
 
-  const handleForgotPassword = async () => {
+  // Handle login
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Check if account is locked
+    if (isLocked && lockUntil) {
+      const secondsRemaining = Math.ceil((lockUntil.getTime() - new Date().getTime()) / 1000)
+      setAuthError({
+        type: 'rate_limited',
+        title: 'Account temporarily locked',
+        message: `Too many failed attempts. Try again in ${secondsRemaining} seconds.`,
+        action: 'Please wait before trying again'
+      })
+      return
+    }
+
+    // Validation
+    if (!email || !password) {
+      setAuthError({
+        type: 'validation_error',
+        title: 'Missing information',
+        message: 'Please enter both email and password.',
+        action: undefined
+      })
+      return
+    }
+
+    setAuthStatus('submitting')
+    setAuthError(null)
+    setSuccessMessage(null)
+    
+    try {
+      // Call Supabase directly to avoid auth store re-render issues
+      if (!hasSupabaseEnv()) {
+        throw new Error('Supabase auth is not configured')
+      }
+      const supabase = getSupabase()
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      if (!data.user) throw new Error('No user returned')
+      
+      // Fetch user from database and update auth store
+      const authUser = data.user
+      let appUser = null
+      
+      // Use the api utility with parallel lookup for speed
+      try {
+        const [userById, allUsers] = await Promise.allSettled([
+          api.getUserById(authUser.id),
+          api.getUsers()
+        ])
+        
+        if (userById.status === 'fulfilled' && userById.value) {
+          appUser = userById.value
+        } else if (allUsers.status === 'fulfilled' && allUsers.value) {
+          appUser = allUsers.value.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+        }
+      } catch (apiError) {
+        console.error('[Auth] Parallel lookup failed, trying sequential', apiError)
+        // Fallback to sequential lookup
+        try {
+          appUser = await api.getUserById(authUser.id)
+        } catch {
+          const users = await api.getUsers()
+          appUser = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+        }
+      }
+      
+      if (!appUser) {
+        throw new Error('User profile not found in database. Please ensure the database is seeded.')
+      }
+      
+      // Update auth store manually to trigger navigation
+      useAuthStore.setState({ user: appUser, isAuthenticated: true, isLoading: false })
+      
+      // Success! Reset failed attempts
+      setFailedAttempts(0)
+      setAuthStatus('success')
+      setAuthError(null)
+      
+    } catch (err: any) {
+      // Parse and set error
+      const parsedError = parseSupabaseError(err)
+      setAuthError(parsedError)
+      setAuthStatus('error')
+      
+      // Track failed attempts
+      const newAttempts = failedAttempts + 1
+      setFailedAttempts(newAttempts)
+      
+      // Lock account after 5 failed attempts
+      if (newAttempts >= 5) {
+        const lockDuration = 15 * 60 * 1000 // 15 minutes
+        const until = new Date(Date.now() + lockDuration)
+        setIsLocked(true)
+        setLockUntil(until)
+        setAuthError({
+          type: 'rate_limited',
+          title: 'Account locked',
+          message: 'Too many failed login attempts. Account locked for 15 minutes.',
+          action: 'Please wait before trying again'
+        })
+      }
+      
+      // Shake animation
+      if (formRef.current) {
+        formRef.current.classList.add('animate-shake')
+        setTimeout(() => {
+          formRef.current?.classList.remove('animate-shake')
+        }, 500)
+      }
+    }
+  }
+
+  // Handle registration
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Validation
+    if (!email || !password || !fullName) {
+      setAuthError({
+        type: 'validation_error',
+        title: 'Missing information',
+        message: 'Please fill in all required fields.',
+        action: undefined
+      })
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setAuthError({
+        type: 'validation_error',
+        title: 'Passwords don\'t match',
+        message: 'Please make sure both passwords are identical.',
+        action: undefined
+      })
+      return
+    }
+
+    if (password.length < 8) {
+      setAuthError({
+        type: 'weak_password',
+        title: 'Password too short',
+        message: 'Password must be at least 8 characters long.',
+        action: 'Choose a longer password'
+      })
+      return
+    }
+
+    setAuthStatus('submitting')
+    setAuthError(null)
+
+    try {
+      if (!hasSupabaseEnv()) {
+        throw new Error('Authentication service not configured')
+      }
+
+      const supabase = getSupabase()
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
+      })
+
+      if (error) throw error
+
+      // Check if email confirmation is required
+      if (data.user && !data.session) {
+        setSuccessMessage({
+          title: 'Check your email',
+          message: `We've sent a confirmation link to ${email}. Please verify your email to complete registration.`
+        })
+        setAuthStatus('success')
+      } else {
+        setSuccessMessage({
+          title: 'Account created!',
+          message: 'Your account has been created successfully. Redirecting...'
+        })
+        setAuthStatus('success')
+        // Redirect will happen automatically via auth state change
+      }
+    } catch (err: any) {
+      const parsedError = parseSupabaseError(err)
+      setAuthError(parsedError)
+      setAuthStatus('error')
+      
+      if (formRef.current) {
+        formRef.current.classList.add('animate-shake')
+        setTimeout(() => formRef.current?.classList.remove('animate-shake'), 500)
+      }
+    }
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+
     if (!email) {
-      createError('data/validation-failed', new Error('Email required'), { field: 'email' })
+      setAuthError({
+        type: 'validation_error',
+        title: 'Email required',
+        message: 'Please enter your email address to reset your password.',
+        action: undefined
+      })
       return
     }
 
     if (!hasSupabaseEnv()) {
-      createError('app/feature-unavailable', new Error('Supabase not configured'))
+      setAuthError({
+        type: 'server_error',
+        title: 'Service unavailable',
+        message: 'Password reset is currently unavailable.',
+        action: 'Please try again later'
+      })
       return
     }
 
-    setIsResetting(true)
-    clearError()
-    setResetMessage(null)
+    setAuthStatus('submitting')
+    setAuthError(null)
 
     try {
       const supabase = getSupabase()
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login?type=recovery`,
+        redirectTo: `${window.location.origin}/login?mode=reset-password`,
       })
 
-      if (error) {
-        throw error
-      }
+      if (error) throw error
 
-      setResetMessage(`Password reset email sent to ${email}. Please check your inbox and follow the instructions.`)
+      setSuccessMessage({
+        title: 'Check your email',
+        message: `We've sent password reset instructions to ${email}. Please check your inbox.`
+      })
+      setAuthStatus('success')
     } catch (err: any) {
-      handleSupabaseError(err, { 
-        action: 'password-reset',
-        email: email 
-      })
-    } finally {
-      setIsResetting(false)
+      const parsedError = parseSupabaseError(err)
+      setAuthError(parsedError)
+      setAuthStatus('error')
     }
   }
 
@@ -84,7 +422,7 @@ const LoginScreen: React.FC = () => {
       }
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mousemove', handleMouseMove, { passive: true })
     return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [])
 
@@ -106,26 +444,20 @@ const LoginScreen: React.FC = () => {
         try {
           const permission = await (DeviceOrientationEvent as any).requestPermission()
           if (permission === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation)
+            window.addEventListener('deviceorientation', handleOrientation, { passive: true })
           }
         } catch (error) {
           console.log('Device orientation permission denied')
         }
       } else {
         // For non-iOS devices
-        window.addEventListener('deviceorientation', handleOrientation)
+        window.addEventListener('deviceorientation', handleOrientation, { passive: true })
       }
     }
 
     requestPermission()
     return () => window.removeEventListener('deviceorientation', handleOrientation)
   }, [])
-
-  const roleButtons = [
-    { role: UserRole.ADMIN, icon: '🛠️' },
-    { role: UserRole.BRANCH_MANAGER, icon: '🏬' },
-    { role: UserRole.AUDITOR, icon: '🕵️‍♂️' },
-  ]
 
   // Calculate parallax offset (use gyroscope on mobile, mouse on desktop)
   const parallaxX = window.innerWidth <= 768 ? gyroPos.x : mousePos.x
@@ -376,10 +708,10 @@ const LoginScreen: React.FC = () => {
             </div>
           </div>
 
-          <div className="relative grid lg:grid-cols-2 min-h-[500px]">
+          <div className="relative flex justify-center min-h-[500px]">
             
-            {/* Left Column - Login Form */}
-            <div className="relative p-8 flex flex-col justify-center">
+            {/* Center Column - Auth Form */}
+            <div className="relative p-8 flex flex-col justify-center max-w-md w-full">
               {/* Desktop Logo - Above Welcome Back */}
               <div className="hidden lg:flex items-center justify-center gap-3 mb-8">
                 <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-xl">
@@ -393,8 +725,37 @@ const LoginScreen: React.FC = () => {
                 <p className="text-white/80">Sign in to continue to Trakr</p>
               </div>
 
-              {/* Email/Password Login Form */}
-              <form onSubmit={handlePasswordLogin} className="space-y-4 mb-6">
+              {/* Email/Password Form */}
+              <form 
+                ref={formRef} 
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (authStatus === 'submitting' || isLocked) return
+                  if (authMode === 'login') {
+                    void handleLogin(e)
+                  } else if (authMode === 'register') {
+                    void handleRegister(e)
+                  } else {
+                    void handleForgotPassword(e)
+                  }
+                }} 
+                className="space-y-4 mb-6"
+              >
+                {authMode === 'register' && (
+                  <div>
+                    <label htmlFor="fullName" className="block text-sm font-medium text-white/90 mb-2">Full name</label>
+                    <input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all text-white placeholder-white/60"
+                      placeholder="Enter your full name"
+                      autoComplete="name"
+                      required
+                    />
+                  </div>
+                )}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-2">Email</label>
                   <input
@@ -409,144 +770,190 @@ const LoginScreen: React.FC = () => {
                   />
                 </div>
 
+                {authMode !== 'forgot-password' && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label htmlFor="password" className="block text-sm font-medium text-white/90">Password</label>
+                    {authMode === 'login' && (
+                      <button
+                        type="button"
+                        className="text-sm text-white/80 hover:text-white font-medium transition-colors"
+                        onClick={() => switchMode('forgot-password')}
+                      >
+                        Forgot?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-3 pr-12 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all text-white placeholder-white/60"
+                      placeholder="Enter password"
+                      autoComplete="current-password"
+                      required
+                    />
                     <button
                       type="button"
-                      className="text-sm text-white/80 hover:text-white font-medium transition-colors disabled:opacity-50"
-                      onClick={handleForgotPassword}
-                      disabled={isResetting}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+                      tabIndex={-1}
                     >
-                      {isResetting ? 'Sending...' : 'Forgot?'}
+                      {showPassword ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
                     </button>
                   </div>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all text-white placeholder-white/60"
-                    placeholder="Enter password"
-                    autoComplete="current-password"
-                    required
-                  />
                 </div>
+                )}
 
-                {appError && (
-                  <div className="p-3 bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-lg">
-                    <p className="text-sm text-red-100">{appError.userMessage}</p>
+                {authMode === 'register' && (
+                  <div>
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/90 mb-2">Confirm password</label>
+                    <div className="relative">
+                      <input
+                        id="confirmPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full px-4 py-3 pr-12 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all text-white placeholder-white/60"
+                        placeholder="Re-enter password"
+                        autoComplete="new-password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Display */}
+                {authError && (
+                  <div className="p-4 bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-lg animate-fade-in">
+                    <div className="flex items-start gap-3">
+                      <span className="text-red-100 text-xl flex-shrink-0">❌</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-red-100 mb-1">{authError.title}</p>
+                        <p className="text-xs text-red-200 mb-2">{authError.message}</p>
+                        {authError.action && (
+                          <p className="text-xs text-red-100 font-medium">→ {authError.action}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
                 
-                {resetMessage && (
-                  <div className="p-3 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg">
-                    <p className="text-sm text-green-100">{resetMessage}</p>
+                {/* Success Display */}
+                {successMessage && (
+                  <div className="p-4 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg animate-fade-in">
+                    <div className="flex items-start gap-3">
+                      <span className="text-green-100 text-xl">✅</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-green-100 mb-1">{successMessage.title}</p>
+                        <p className="text-xs text-green-200">{successMessage.message}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-blue-200 hover:bg-blue-300 text-blue-900 font-semibold py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 shadow-xl"
+                  type="button"
+                  onClick={(e) => {
+                    if (authStatus === 'submitting' || isLocked) return
+                    e.preventDefault()
+                    e.stopPropagation()
+                    if (authMode === 'login') {
+                      void handleLogin(e as any)
+                    } else if (authMode === 'register') {
+                      void handleRegister(e as any)
+                    } else {
+                      void handleForgotPassword(e as any)
+                    }
+                  }}
+                  disabled={authStatus === 'submitting' || isLocked}
+                  className="w-full bg-white hover:bg-gray-50 text-gray-900 font-semibold py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 shadow-xl flex items-center justify-center gap-2"
                 >
-                  {isLoading ? 'Signing in...' : 'Log in'}
+                  {authStatus === 'submitting' ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                      <span>
+                        {authMode === 'login' ? 'Signing in...' : 
+                         authMode === 'register' ? 'Creating account...' : 
+                         'Sending...'}  
+                      </span>
+                    </>
+                  ) : isLocked ? (
+                    <>
+                      <span>🔒</span>
+                      <span>Account Locked</span>
+                    </>
+                  ) : (
+                    authMode === 'login' ? 'Sign in' : 
+                    authMode === 'register' ? 'Create account' : 
+                    'Send reset link'
+                  )}
                 </button>
               </form>
 
-              {/* Signup Link */}
+              {/* Mode Switch Links */}
               <div className="text-center text-sm text-white/80">
-                Don't have an account? <span className="text-white font-medium cursor-pointer hover:underline">Sign up</span>
-              </div>
-            </div>
-
-            {/* Right Column - Quick Access & Help */}
-            <div className="relative bg-white/5 backdrop-blur-sm p-8 flex flex-col justify-center lg:block hidden border-l border-white/20">
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-white mb-4 drop-shadow-lg">Quick Access</h3>
-                <p className="text-sm text-white/80 mb-4">Choose your role to get started immediately</p>
-                <div className="space-y-3">
-                  {roleButtons.map(({ role, icon }) => (
-                    <button
-                      key={role}
-                      onClick={() => handleRoleLogin(role)}
-                      disabled={isLoading}
-                      className="w-full flex items-center gap-3 py-3 px-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg hover:bg-white/20 transition-all disabled:opacity-50"
+                {authMode === 'login' ? (
+                  <>
+                    Don't have an account?{' '}
+                    <button 
+                      onClick={() => switchMode('register')}
+                      className="text-white font-medium hover:underline"
+                      type="button"
                     >
-                      {isLoading ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      ) : (
-                        <span className="text-lg">{icon}</span>
-                      )}
-                      <span className="font-medium text-white">Login as {USER_ROLE_LABELS[role]}</span>
+                      Sign up
                     </button>
-                  ))}
-                </div>
+                  </>
+                ) : authMode === 'register' ? (
+                  <>
+                    Already have an account?{' '}
+                    <button 
+                      onClick={() => switchMode('login')}
+                      className="text-white font-medium hover:underline"
+                      type="button"
+                    >
+                      Sign in
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={() => switchMode('login')}
+                    className="text-white font-medium hover:underline"
+                    type="button"
+                  >
+                    ← Back to login
+                  </button>
+                )}
               </div>
 
-              {/* Help Text */}
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
-                <p className="text-xs text-white/90 leading-relaxed">
-                  <span className="block font-medium mb-2 text-white">Default credentials:</span>
-                  <span className="block mb-1">admin@trakr.com</span>
-                  <span className="block mb-1">branchmanager@trakr.com</span>
-                  <span className="block mb-2">auditor@trakr.com</span>
-                  <span className="block font-medium mb-1 text-white">Password: Password@123</span>
-                  <span className="block text-yellow-200 text-xs">
-                    If login fails, passwords may need to be set in Supabase Auth dashboard.
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            {/* Mobile Quick Access - Full Information */}
-            <div className="lg:hidden relative">
-              <div className="p-8 pt-0">
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/30" />
-                  </div>
-                  <div className="relative flex justify-center">
-                    <span className="px-4 bg-white/10 backdrop-blur-sm text-sm text-white/80 rounded-full">or</span>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 text-center drop-shadow-lg">Quick Access</h3>
-                  <p className="text-sm text-white/80 mb-4 text-center">Choose your role to get started immediately</p>
-                  <div className="space-y-3">
-                    {roleButtons.map(({ role, icon }) => (
-                      <button
-                        key={role}
-                        onClick={() => handleRoleLogin(role)}
-                        disabled={isLoading}
-                        className="w-full flex items-center gap-3 py-3 px-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg hover:bg-white/20 transition-all disabled:opacity-50"
-                      >
-                        {isLoading ? (
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        ) : (
-                          <span className="text-lg">{icon}</span>
-                        )}
-                        <span className="font-medium text-white">Login as {USER_ROLE_LABELS[role]}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Mobile Help Text - Full Information */}
-                <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
-                  <p className="text-xs text-white/90 leading-relaxed">
-                    <span className="block font-medium mb-2 text-white text-center">Default credentials:</span>
-                    <span className="block mb-1 text-center">admin@trakr.com</span>
-                    <span className="block mb-1 text-center">branchmanager@trakr.com</span>
-                    <span className="block mb-2 text-center">auditor@trakr.com</span>
-                    <span className="block font-medium mb-1 text-white text-center">Password: Password@123</span>
-                    <span className="block text-yellow-200 text-xs text-center mt-2">
-                      If login fails, passwords may need to be set in Supabase Auth dashboard.
-                    </span>
-                  </p>
-                </div>
-              </div>
             </div>
 
           </div>

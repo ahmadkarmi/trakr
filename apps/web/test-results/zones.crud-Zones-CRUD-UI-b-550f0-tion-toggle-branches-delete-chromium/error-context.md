@@ -1,0 +1,191 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e5]:
+  - complementary [ref=e6]:
+    - link "T Trakr" [ref=e8] [cursor=pointer]:
+      - /url: /dashboard/admin
+      - generic [ref=e10] [cursor=pointer]: T
+      - generic [ref=e11] [cursor=pointer]: Trakr
+    - generic [ref=e13]:
+      - img [ref=e14]
+      - textbox "Search" [ref=e16]
+    - navigation [ref=e17]:
+      - link "My Dashboard" [ref=e18] [cursor=pointer]:
+        - /url: /dashboard/admin
+        - img [ref=e19] [cursor=pointer]
+        - generic [ref=e21] [cursor=pointer]: My Dashboard
+      - link "Notifications" [ref=e22] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e23] [cursor=pointer]
+        - generic [ref=e25] [cursor=pointer]: Notifications
+      - link "Analytics" [ref=e26] [cursor=pointer]:
+        - /url: /analytics
+        - img [ref=e27] [cursor=pointer]
+        - generic [ref=e29] [cursor=pointer]: Analytics
+      - link "Survey Templates" [ref=e30] [cursor=pointer]:
+        - /url: /manage/surveys
+        - img [ref=e31] [cursor=pointer]
+        - generic [ref=e33] [cursor=pointer]: Survey Templates
+      - link "Manage Branches" [ref=e34] [cursor=pointer]:
+        - /url: /manage/branches
+        - img [ref=e35] [cursor=pointer]
+        - generic [ref=e37] [cursor=pointer]: Manage Branches
+      - link "Manage Zones" [ref=e38] [cursor=pointer]:
+        - /url: /manage/zones
+        - img [ref=e39] [cursor=pointer]
+        - generic [ref=e41] [cursor=pointer]: Manage Zones
+      - link "Manage Users" [ref=e42] [cursor=pointer]:
+        - /url: /manage/users
+        - img [ref=e43] [cursor=pointer]
+        - generic [ref=e45] [cursor=pointer]: Manage Users
+      - link "Activity Logs" [ref=e46] [cursor=pointer]:
+        - /url: /activity/logs
+        - img [ref=e47] [cursor=pointer]
+        - generic [ref=e49] [cursor=pointer]: Activity Logs
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - img "Ahmad Admin" [ref=e52]
+        - generic [ref=e53]:
+          - generic [ref=e54]: Ahmad Admin
+          - generic [ref=e55]: Super Admin
+      - generic [ref=e56]:
+        - link "Profile" [ref=e57] [cursor=pointer]:
+          - /url: /profile
+        - link "Signature" [ref=e58] [cursor=pointer]:
+          - /url: /profile/signature
+      - button "Sign Out" [ref=e59] [cursor=pointer]:
+        - img [ref=e60] [cursor=pointer]
+        - text: Sign Out
+  - generic [ref=e62]:
+    - banner [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e66]:
+          - heading "Admin Dashboard" [level=1] [ref=e67]
+          - paragraph [ref=e68]: Welcome back, Ahmad
+        - generic [ref=e70]:
+          - img [ref=e71]
+          - textbox "Search..." [ref=e73]
+        - generic [ref=e74]:
+          - button "Notifications" [ref=e76] [cursor=pointer]:
+            - img [ref=e77] [cursor=pointer]
+          - link "Help" [ref=e79] [cursor=pointer]:
+            - /url: /help
+            - img [ref=e80] [cursor=pointer]
+          - button "User menu" [ref=e84] [cursor=pointer]:
+            - img "Ahmad Admin" [ref=e85] [cursor=pointer]
+            - generic [ref=e86] [cursor=pointer]:
+              - generic [ref=e87] [cursor=pointer]: Ahmad Admin
+              - generic [ref=e88] [cursor=pointer]: Super Admin
+            - img [ref=e89] [cursor=pointer]
+    - main [ref=e91]:
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]:
+            - heading "Admin Dashboard" [level=1] [ref=e95]
+            - paragraph [ref=e96]: 0 branches • 0 audits • Ahmad Admin
+          - button "+ Create Survey Template" [ref=e97] [cursor=pointer]
+        - generic [ref=e98]:
+          - button "🏢 0 Branches" [ref=e99] [cursor=pointer]:
+            - generic [ref=e101] [cursor=pointer]: 🏢
+            - paragraph [ref=e102] [cursor=pointer]: "0"
+            - paragraph [ref=e103] [cursor=pointer]: Branches
+          - button "🗺️ 0 Zones" [ref=e104] [cursor=pointer]:
+            - generic [ref=e106] [cursor=pointer]: 🗺️
+            - paragraph [ref=e107] [cursor=pointer]: "0"
+            - paragraph [ref=e108] [cursor=pointer]: Zones
+          - button "👥 0 Active Users" [ref=e109] [cursor=pointer]:
+            - generic [ref=e111] [cursor=pointer]: 👥
+            - paragraph [ref=e112] [cursor=pointer]: "0"
+            - paragraph [ref=e113] [cursor=pointer]: Active Users
+          - button "✉️ 0 Pending Invites" [ref=e114] [cursor=pointer]:
+            - generic [ref=e116] [cursor=pointer]: ✉️
+            - paragraph [ref=e117] [cursor=pointer]: "0"
+            - paragraph [ref=e118] [cursor=pointer]: Pending Invites
+        - generic [ref=e119]:
+          - generic [ref=e121]:
+            - heading "Weekly Insights" [level=2] [ref=e122]
+            - paragraph [ref=e123]: Current week performance
+          - generic [ref=e124]:
+            - generic [ref=e125]:
+              - generic [ref=e127]: ✅
+              - paragraph [ref=e128]: "0"
+              - paragraph [ref=e129]: Overdue
+            - generic [ref=e130]:
+              - generic [ref=e132]: ⏰
+              - paragraph [ref=e133]: "0"
+              - paragraph [ref=e134]: Due This Week
+            - generic [ref=e135]:
+              - img [ref=e137]
+              - paragraph [ref=e139]: 0%
+              - paragraph [ref=e140]: Completion
+              - paragraph [ref=e141]: 0 of 0
+            - generic [ref=e142]:
+              - generic [ref=e144]: ⚡
+              - paragraph [ref=e145]: "0"
+              - paragraph [ref=e146]: In Progress
+            - generic [ref=e147]:
+              - img [ref=e149]
+              - paragraph [ref=e151]: 100%
+              - paragraph [ref=e152]: On-time
+            - generic [ref=e153]:
+              - generic [ref=e155]: 🏢
+              - paragraph [ref=e156]: "0"
+              - paragraph [ref=e157]: Branches
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - generic [ref=e160]:
+              - heading "Weekly Zone Coverage" [level=3] [ref=e161]
+              - generic [ref=e162]: This week • Top 5
+            - paragraph [ref=e164]: No zones or audits this period.
+          - generic [ref=e165]:
+            - heading "Recent Activity" [level=3] [ref=e167]
+            - paragraph [ref=e169]: No recent activity.
+        - generic [ref=e170]:
+          - generic [ref=e172]:
+            - heading "This Week's Audits" [level=3] [ref=e173]
+            - generic [ref=e174]:
+              - button "This Week" [ref=e175] [cursor=pointer]
+              - button "All Audits" [ref=e176] [cursor=pointer]
+          - generic [ref=e177]:
+            - generic [ref=e178]:
+              - generic [ref=e179]:
+                - generic:
+                  - img
+                - textbox "Search audit, branch, auditor..." [ref=e180]
+              - generic [ref=e181]:
+                - generic [ref=e182]:
+                  - generic [ref=e183]: "Filter:"
+                  - combobox [ref=e184]:
+                    - option "All" [selected]
+                    - option "🚨 Overdue"
+                    - option "⏰ Due This Week"
+                    - option "📅 Due Next Week"
+                    - option "📤 Submitted"
+                    - option "⏳ Pending"
+                    - option "✅ Completed"
+                    - option "👍 Approved"
+                    - option "🎯 Finalized"
+                - generic [ref=e185]:
+                  - generic [ref=e186]: "Sort:"
+                  - combobox [ref=e187]:
+                    - option "Due Date"
+                    - option "Updated" [selected]
+                    - option "Status"
+                    - option "Branch"
+                    - option "Auditor"
+                  - button "↓" [ref=e188] [cursor=pointer]
+              - generic [ref=e189]:
+                - generic [ref=e190]:
+                  - button "Advanced Filters" [ref=e191] [cursor=pointer]:
+                    - img [ref=e192] [cursor=pointer]
+                    - generic [ref=e194] [cursor=pointer]: Advanced Filters
+                  - generic [ref=e195]: 0 results
+                - button "Clear All" [disabled] [ref=e196]:
+                  - img [ref=e197]
+                  - generic [ref=e199]: Clear All
+            - generic [ref=e200]:
+              - img [ref=e202]
+              - paragraph [ref=e204]:
+                - paragraph [ref=e205]: No audits yet.
+```
