@@ -7,6 +7,9 @@ import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { PhotoIcon, CheckIcon, XMarkIcon, ExclamationTriangleIcon, XCircleIcon, CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../stores/auth'
+import { compressImage } from '../utils/imageCompression'
+import { LazyImage } from '../components/LazyImage'
+import toast from 'react-hot-toast'
 
 const AuditWizard: React.FC = () => {
   const { auditId } = useParams<{ auditId: string }>()
@@ -277,20 +280,46 @@ const AuditWizard: React.FC = () => {
     const files = e.target.files
     if (!files || files.length === 0) return
     setUploadingPhotos(true)
+    
+    let successCount = 0
+    let totalSaved = 0
+    
     try {
       for (const file of Array.from(files)) {
         try {
-          const url = URL.createObjectURL(file)
+          // Compress image before upload
+          const result = await compressImage(file, {
+            maxWidth: 1920,
+            maxHeight: 1080,
+            quality: 0.8,
+            maxSizeMB: 2,
+          })
+          
+          totalSaved += (result.originalSize - result.compressedSize)
+          
+          const url = URL.createObjectURL(result.file)
           await api.addSectionPhoto(audit.id, currentSection.id, {
-            filename: file.name,
+            filename: result.file.name,
             url,
             uploadedBy: audit.assignedTo,
           })
+          successCount++
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err)
           addAlert('error', `Failed to add photo ${file.name}: ${message}`)
         }
       }
+      
+      // Show success message with compression stats
+      if (successCount > 0) {
+        const savedMB = (totalSaved / (1024 * 1024)).toFixed(1)
+        if (parseFloat(savedMB) > 0.1) {
+          toast.success(`${successCount} photo(s) uploaded (saved ${savedMB}MB through compression)`)
+        } else {
+          toast.success(`${successCount} photo(s) uploaded successfully`)
+        }
+      }
+      
       if (auditId) {
         queryClient.invalidateQueries({ queryKey: QK.AUDIT(auditId) })
         queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
@@ -547,7 +576,12 @@ const AuditWizard: React.FC = () => {
                       <div className="flex flex-wrap gap-3 mb-2">
                         {audit.sectionPhotos?.filter(p => p.sectionId === currentSection?.id).map((p) => (
                           <div key={p.id} className="flex flex-col items-center">
-                            <img src={p.url} className="w-20 h-20 rounded object-cover border border-gray-200" />
+                            <LazyImage 
+                              src={p.url} 
+                              alt={p.filename || 'Section photo'}
+                              className="w-20 h-20 rounded border border-gray-200" 
+                              aspectRatio="1/1"
+                            />
                             <button className="btn-outline btn-xs mt-1" onClick={() => removePhoto(p.id)}>Remove</button>
                           </div>
                         ))}

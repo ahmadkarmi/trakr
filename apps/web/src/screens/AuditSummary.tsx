@@ -7,6 +7,7 @@ import StatusBadge from '@/components/StatusBadge'
 import StatCard from '../components/StatCard'
 import ProgressDonut from '../components/ProgressDonut'
 import Modal from '../components/Modal'
+import { SkeletonDetailPage } from '@/components/Skeleton'
 import { useToast } from '../hooks/useToast'
 import { ArrowDownTrayIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../stores/auth'
@@ -15,6 +16,7 @@ import { QK } from '../utils/queryKeys'
 import { useOrgTimeZone } from '../hooks/useOrg'
 import { api } from '../utils/api'
 import { notificationHelpers } from '../utils/notifications'
+import { generateAuditPDF } from '../utils/pdfGenerator'
 
 const AuditSummary: React.FC = () => {
   const { auditId } = useParams<{ auditId: string }>()
@@ -386,11 +388,33 @@ const AuditSummary: React.FC = () => {
                 URL.revokeObjectURL(url);
               }}><DocumentArrowDownIcon className="w-4 h-4 mr-1" /> CSV</button>
                   {(() => {
-                    const canExportPdf = !!audit && (user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN || audit.status === AuditStatus.APPROVED)
+                    const canExportPdf = !!audit && !!survey && !!branch && (user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN || audit.status === AuditStatus.APPROVED)
+                    const handlePDFExport = async () => {
+                      if (!canExportPdf || !audit || !survey || !branch || !user) return
+                      
+                      try {
+                        const auditor = await api.getUserById(audit.assignedTo)
+                        const managerData = audit.approvedBy ? await api.getUserById(audit.approvedBy) : null
+                        
+                        await generateAuditPDF({
+                          audit,
+                          branch,
+                          auditor: auditor || user,
+                          survey,
+                          manager: managerData || undefined
+                        })
+                        
+                        showToast({ message: 'PDF exported successfully!', variant: 'success' })
+                      } catch (error) {
+                        console.error('PDF export error:', error)
+                        showToast({ message: 'Failed to export PDF', variant: 'error' })
+                      }
+                    }
+                    
                     return (
                       <button
                         className={`btn-outline btn-sm whitespace-nowrap ${!canExportPdf ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        onClick={() => canExportPdf && window.print()}
+                        onClick={handlePDFExport}
                         disabled={!canExportPdf}
                       >
                         <ArrowDownTrayIcon className="w-4 h-4 mr-1" /> PDF
@@ -560,7 +584,7 @@ const AuditSummary: React.FC = () => {
             </div>
           )}
           {loadingAudit || loadingSurvey ? (
-            <p className="text-gray-500">Loading…</p>
+            <SkeletonDetailPage />
           ) : !audit || !survey ? (
             <p className="text-gray-500">Audit or Survey not found.</p>
           ) : (

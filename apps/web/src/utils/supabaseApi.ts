@@ -1153,24 +1153,25 @@ export const supabaseApi = {
     const { data: userData } = await supabase.from('users').select('org_id').eq('id', currentUser.id).single()
     if (!userData) throw new Error('User not found')
 
-    // Create user record
-    const { data, error } = await supabase.from('users').insert({
-      email,
-      full_name: name,
-      role: role.toUpperCase() as any,
-      org_id: userData.org_id,
-      email_verified: false,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }).select('*').single()
-    
-    if (error) throw error
+    // Check if user already exists
+    const { data: existingUser } = await supabase.from('users').select('email').eq('email', email).single()
+    if (existingUser) throw new Error('User with this email already exists')
 
-    // TODO: Send invitation email via Supabase Auth or email service
-    // For now, we'll just create the user record
+    // Call Edge Function to send invitation
+    // This uses service role key securely on the server side
+    const { data, error } = await supabase.functions.invoke('invite-user', {
+      body: {
+        email,
+        name,
+        role,
+        orgId: userData.org_id
+      }
+    })
+
+    if (error) throw new Error(error.message || 'Failed to send invitation')
+    if (data.error) throw new Error(data.error)
     
-    return mapUser(data as any)
+    return mapUser(data.user)
   },
 
   async deleteUser(userId: string): Promise<void> {
@@ -1180,9 +1181,23 @@ export const supabaseApi = {
   },
 
   async resendInvitation(userId: string): Promise<void> {
-    // TODO: Implement resend invitation logic
-    // This would typically involve sending another invitation email
-    console.log('Resending invitation for user:', userId)
+    const supabase = await getSupabase()
+    
+    // Get user details
+    const { data: user } = await supabase.from('users').select('email, full_name').eq('id', userId).single()
+    if (!user) throw new Error('User not found')
+    
+    // Note: Actual email sending requires either:
+    // 1. Supabase Auth Admin API to resend magic link
+    // 2. Custom email service (SendGrid, Resend, etc.)
+    // 3. Edge Function to handle invitation emails
+    
+    // For now, we'll log this action (can be picked up by monitoring)
+    console.log(`Resend invitation: ${user.email}`)
+    
+    // In production, implement one of:
+    // await supabase.auth.admin.generateLink({ type: 'magiclink', email: user.email })
+    // await sendInvitationEmail(user.email, user.full_name)
   },
 
   // ===================================
@@ -1202,6 +1217,7 @@ export const supabaseApi = {
       managerId: row.manager_id,
       assignedBy: row.assigned_by,
       assignedAt: new Date(row.assigned_at),
+      isActive: row.is_active ?? true, // Default to true if not set
     }))
   },
 
@@ -1220,6 +1236,7 @@ export const supabaseApi = {
       managerId: row.manager_id,
       assignedBy: row.assigned_by,
       assignedAt: new Date(row.assigned_at),
+      isActive: row.is_active ?? true, // Default to true if not set
     }))
   },
 
@@ -1238,6 +1255,7 @@ export const supabaseApi = {
       managerId: row.manager_id,
       assignedBy: row.assigned_by,
       assignedAt: new Date(row.assigned_at),
+      isActive: row.is_active ?? true, // Default to true if not set
     }))
   },
 
@@ -1313,6 +1331,32 @@ export const supabaseApi = {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50)
+    
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      userId: row.user_id,
+      type: row.type,
+      title: row.title,
+      message: row.message,
+      link: row.link,
+      relatedId: row.related_id,
+      isRead: row.is_read,
+      createdAt: new Date(row.created_at),
+      readAt: row.read_at ? new Date(row.read_at) : undefined,
+      requiresAction: row.requires_action || false,
+      actionType: row.action_type,
+      actionCompletedAt: row.action_completed_at ? new Date(row.action_completed_at) : undefined,
+    }))
+  },
+
+  async getAllNotifications() {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100) // Admins can see more
     
     if (error) throw error
     return (data || []).map((row: any) => ({
