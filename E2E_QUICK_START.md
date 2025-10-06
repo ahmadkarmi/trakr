@@ -12,7 +12,7 @@ E2E tests **WILL FAIL** until you set passwords for test accounts!
 
 Set this password for **ALL THREE** accounts:
 ```
-Password123!
+Password@123
 ```
 
 **Accounts that need passwords:**

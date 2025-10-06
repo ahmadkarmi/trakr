@@ -14,15 +14,15 @@ Go to your Supabase project → Authentication → Users, and set passwords for:
 
 | Email | Password | Role |
 |-------|----------|------|
-| `admin@trakr.com` | `Password123!` | Admin |
-| `auditor@trakr.com` | `Password123!` | Auditor |
-| `branchmanager@trakr.com` | `Password123!` | Branch Manager |
+| `admin@trakr.com` | `Password@123` | Admin |
+| `auditor@trakr.com` | `Password@123` | Auditor |
+| `branchmanager@trakr.com` | `Password@123` | Branch Manager |
 
 **Steps:**
 1. Open Supabase Dashboard → Authentication → Users
 2. Find each user
 3. Click the user → "Reset Password"
-4. Set password to `Password123!`
+4. Set password to `Password@123`
 5. Confirm
 
 ---
@@ -42,7 +42,7 @@ await adminBtn.click()
 ```typescript
 // Use real email/password authentication
 await page.fill('input[type="email"]', 'admin@trakr.com')
-await page.fill('input[type="password"]', 'Password123!')
+await page.fill('input[type="password"]', 'Password@123')
 await page.click('button[type="submit"]')
 ```
 
@@ -87,7 +87,7 @@ npx playwright test --ui
 ## 🔐 Security Notes
 
 ### Development
-- Test accounts use simple passwords (`Password123!`)
+- Test accounts use simple passwords (`Password@123`)
 - This is acceptable for development/testing environments
 - **DO NOT** use these passwords in production
 
@@ -122,7 +122,7 @@ These were development helpers that bypassed authentication. They've been remove
 **Solution:**
 1. Go to Supabase Dashboard → Authentication → Users
 2. Set passwords for `admin@trakr.com`, `auditor@trakr.com`, `branchmanager@trakr.com`
-3. Use password: `Password123!`
+3. Use password: `Password@123`
 
 ### Test Failure: "Button not found"
 

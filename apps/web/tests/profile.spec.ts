@@ -7,7 +7,7 @@ async function loginAsAdmin(page: any) {
   await page.goto('/login')
   
   await page.fill('input[type="email"]', 'admin@trakr.com')
-  await page.fill('input[type="password"]', 'Password123!')
+  await page.fill('input[type="password"]', 'Password@123')
   await page.getByRole('button', { name: /Sign in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })

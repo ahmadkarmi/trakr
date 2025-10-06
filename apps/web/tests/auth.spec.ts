@@ -8,7 +8,7 @@ async function loginAsAdmin(page: any) {
   
   // Fill in email and password
   await page.fill('input[type="email"]', 'admin@trakr.com')
-  await page.fill('input[type="password"]', 'Password123!')
+  await page.fill('input[type="password"]', 'Password@123')
   
   // Click login button
   await page.getByRole('button', { name: /Sign in/i }).click()
@@ -24,7 +24,7 @@ async function loginAsAuditor(page: any) {
   
   // Fill in email and password
   await page.fill('input[type="email"]', 'auditor@trakr.com')
-  await page.fill('input[type="password"]', 'Password123!')
+  await page.fill('input[type="password"]', 'Password@123')
   
   // Click login button
   await page.getByRole('button', { name: /Sign in/i }).click()
@@ -40,7 +40,7 @@ async function loginAsBranchManager(page: any) {
   
   // Fill in email and password
   await page.fill('input[type="email"]', 'branchmanager@trakr.com')
-  await page.fill('input[type="password"]', 'Password123!')
+  await page.fill('input[type="password"]', 'Password@123')
   
   // Click login button
   await page.getByRole('button', { name: /Sign in/i }).click()
