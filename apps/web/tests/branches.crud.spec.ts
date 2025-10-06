@@ -9,7 +9,7 @@ async function loginAsAdmin(page: any) {
   
   await page.fill('input[type="email"]', 'admin@trakr.com')
   await page.fill('input[type="password"]', 'Password123!')
-  await page.click('button[type="submit"]')
+  await page.getByRole('button', { name: /Sign in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
   await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
