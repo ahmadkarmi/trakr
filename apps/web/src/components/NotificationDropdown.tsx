@@ -30,8 +30,10 @@ const NotificationDropdown: React.FC = () => {
           console.log(`📊 Backfill result: ${count} notifications created`)
           if (count !== undefined && count > 0) {
             // Invalidate queries to refetch notifications
-            queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user?.id) })
-            queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user?.id) })
+            setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user?.id) })
+              queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user?.id) })
+            }, 500) // Small delay to ensure database writes complete
           }
           console.log('✅ Notification backfill complete')
         })
@@ -54,15 +56,40 @@ const NotificationDropdown: React.FC = () => {
   }, [])
 
   // Fetch notifications from database
-  const { data: allNotifications = [] } = useQuery<Notification[]>({
-    queryKey: QK.NOTIFICATIONS(user?.id),
+  // Admins see ALL notifications (super user), others see only their own
+  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
+  
+  const { data: allNotifications = [], error: notificationsError } = useQuery<Notification[]>({
+    queryKey: isAdmin ? QK.NOTIFICATIONS('all') : QK.NOTIFICATIONS(user?.id),
     queryFn: async () => {
-      if (!user?.id) return []
-      return await api.getNotifications(user.id)
+      if (!user?.id) {
+        console.log('⚠️ No user ID, skipping notification fetch')
+        return []
+      }
+      
+      if (isAdmin) {
+        console.log(`🔍 [ADMIN] Fetching ALL notifications`)
+        // Admin gets all notifications
+        const result = await api.getAllNotifications()
+        console.log(`📧 [ADMIN] Fetched ${result.length} notifications from database`)
+        return result
+      } else {
+        console.log(`🔍 Fetching notifications for user ID: ${user.id}`)
+        const result = await api.getNotifications(user.id)
+        console.log(`📧 Fetched ${result.length} notifications from database`)
+        return result
+      }
     },
     enabled: !!user?.id,
     refetchInterval: 30000, // Refetch every 30 seconds
   })
+  
+  // Log any errors
+  React.useEffect(() => {
+    if (notificationsError) {
+      console.error('❌ Error fetching notifications:', notificationsError)
+    }
+  }, [notificationsError])
 
   // Fetch audits, branches, and users to derive notifications if empty
   const { data: audits = [] } = useQuery<Audit[]>({
@@ -84,8 +111,15 @@ const NotificationDropdown: React.FC = () => {
   })
 
   // Derive notifications from audits if database is empty
+  // Only use derived notifications as fallback when NO database notifications exist
   const notifications = React.useMemo((): Notification[] => {
-    if (allNotifications.length > 0 || !user) return allNotifications
+    // Always prefer database notifications if they exist
+    if (allNotifications.length > 0 || !user) {
+      console.log(`📧 Using ${allNotifications.length} database notifications`)
+      return allNotifications
+    }
+    
+    console.log('⚠️ No database notifications found, deriving from audit data...')
 
     const derived: Notification[] = []
     const userRole = user.role
@@ -185,29 +219,55 @@ const NotificationDropdown: React.FC = () => {
 
   // Mark as read mutation
   const markAsReadMutation = useMutation({
-    mutationFn: (notificationId: string) => api.markNotificationAsRead(notificationId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user?.id) })
+    mutationFn: (notificationId: string) => {
+      console.log(`🔄 markAsReadMutation called for: ${notificationId}`)
+      // Only mark as read if it's a real database notification (valid UUID)
+      // Derived notifications have composite IDs like "audit-id-approved-admin"
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(notificationId)
+      if (!isUUID) {
+        console.log(`⚠️ Skipping derived notification: ${notificationId}`)
+        // Skip derived notifications
+        return Promise.resolve()
+      }
+      console.log(`📡 Calling API to mark notification as read`)
+      return api.markNotificationAsRead(notificationId)
+    },
+    onSuccess: (_, notificationId) => {
+      console.log(`✅ Notification ${notificationId} marked as read successfully`)
+      const queryKey = isAdmin ? QK.NOTIFICATIONS('all') : QK.NOTIFICATIONS(user?.id)
+      console.log(`🔄 Invalidating queries with key:`, queryKey)
+      
+      // Force immediate refetch to update badge count
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey })
+        queryClient.refetchQueries({ queryKey })
+      }, 100)
+      
       queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user?.id) })
+    },
+    onError: (error, notificationId) => {
+      console.error(`❌ Failed to mark notification ${notificationId} as read:`, error)
     },
   })
 
   // Auto-mark all unread notifications as read when panel opens
-  // Only for database notifications, not derived ones
+  // DISABLED - Users must click notifications to mark as read
+  // This gives better control and visual feedback
   const prevIsOpen = React.useRef(false)
   
   React.useEffect(() => {
+    // Commented out auto-mark feature - notifications are marked when clicked instead
     // Only run when dropdown opens and we have database notifications (not derived)
-    if (isOpen && !prevIsOpen.current && allNotifications.length > 0 && notifications && notifications.length > 0) {
-      const unreadNotifications = notifications.filter(n => !n.isRead)
-      
-      if (unreadNotifications.length > 0) {
-        // Mark each notification as read in the background
-        unreadNotifications.forEach(n => {
-          markAsReadMutation.mutate(n.id)
-        })
-      }
-    }
+    // if (isOpen && !prevIsOpen.current && allNotifications.length > 0 && notifications && notifications.length > 0) {
+    //   const unreadNotifications = notifications.filter(n => !n.isRead)
+    //   
+    //   if (unreadNotifications.length > 0) {
+    //     // Mark each notification as read in the background
+    //     unreadNotifications.forEach(n => {
+    //       markAsReadMutation.mutate(n.id)
+    //     })
+    //   }
+    // }
     
     prevIsOpen.current = isOpen
   }, [isOpen, notifications, allNotifications.length, user?.id, queryClient])
@@ -264,13 +324,31 @@ const NotificationDropdown: React.FC = () => {
   }, [isOpen, isMobile])
 
   const handleNotificationClick = (notification: Notification) => {
-    // Mark as read
+    console.log('🖱️ Notification clicked:', {
+      id: notification.id,
+      title: notification.title,
+      isRead: notification.isRead,
+      link: notification.link
+    })
+    
+    // Mark as read (only for real database notifications with valid UUID)
     if (!notification.isRead) {
-      markAsReadMutation.mutate(notification.id)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(notification.id)
+      console.log(`📝 Notification isRead=${notification.isRead}, isUUID=${isUUID}`)
+      
+      if (isUUID) {
+        console.log(`✅ Marking notification ${notification.id} as read`)
+        markAsReadMutation.mutate(notification.id)
+      } else {
+        console.log(`⚠️ Skipping mark as read - not a valid UUID: ${notification.id}`)
+      }
+    } else {
+      console.log(`ℹ️ Notification already marked as read`)
     }
 
     // Navigate to link if provided
     if (notification.link) {
+      console.log(`🔗 Navigating to: ${notification.link}`)
       navigate(notification.link)
       setIsOpen(false)
     }
@@ -360,8 +438,11 @@ const NotificationDropdown: React.FC = () => {
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="px-4 py-12 text-center">
-                <BellIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">No notifications yet</p>
+                <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <BellIcon className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">All caught up!</h3>
+                <p className="text-sm text-gray-500">We'll notify you when there's something new</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
@@ -398,14 +479,31 @@ const NotificationDropdown: React.FC = () => {
                               New
                             </span>
                           )}
+                          {isAdmin && notification.userId !== user?.id && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 ring-1 ring-inset ring-purple-600/20">
+                              For: {users.find(u => u.id === notification.userId)?.name || 'User'}
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                           {notification.message}
                         </p>
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                          <ClockIcon className="w-3 h-3" />
-                          {formatTime(notification.createdAt)}
-                        </span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <ClockIcon className="w-3 h-3" />
+                            {formatTime(notification.createdAt)}
+                          </span>
+                          {needsAction && (
+                            <div className="flex gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => handleNotificationClick(notification)}
+                                className="text-xs px-2 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors font-medium"
+                              >
+                                Review Now
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -416,19 +514,42 @@ const NotificationDropdown: React.FC = () => {
           </div>
 
           {/* Footer */}
-          {dropdownNotifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 text-center">
-              <button
-                onClick={() => {
-                  navigate('/notifications')
-                  setIsOpen(false)
-                }}
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-              >
-                View all notifications
-              </button>
-            </div>
-          )}
+          <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+            {dropdownNotifications.length > 0 ? (
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    navigate('/notifications')
+                    setIsOpen(false)
+                  }}
+                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  View all
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/settings')
+                    setIsOpen(false)
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Preferences
+                </button>
+              </div>
+            ) : (
+              <div className="text-center">
+                <button
+                  onClick={() => {
+                    navigate('/settings')
+                    setIsOpen(false)
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Notification Preferences
+                </button>
+              </div>
+            )}
+          </div>
           </div>
         )}
       </div>
@@ -473,8 +594,11 @@ const NotificationDropdown: React.FC = () => {
               <div className="overflow-y-auto flex-1">
                 {dropdownNotifications.length === 0 ? (
                   <div className="px-4 py-16 text-center">
-                    <BellIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-sm">No notifications yet</p>
+                    <div className="w-20 h-20 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <BellIcon className="w-10 h-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h3>
+                    <p className="text-gray-500 text-sm">We'll notify you when there's something new</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
@@ -511,14 +635,32 @@ const NotificationDropdown: React.FC = () => {
                                   New
                                 </span>
                               )}
+                              {isAdmin && notification.userId !== user?.id && (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 ring-1 ring-inset ring-purple-600/20">
+                                  For: {users.find(u => u.id === notification.userId)?.name || 'User'}
+                                </span>
+                              )}
                             </div>
                             <p className="text-sm text-gray-600 mb-3 leading-relaxed">
                               {notification.message}
                             </p>
-                            <span className="text-xs text-gray-500 flex items-center gap-1">
-                              <ClockIcon className="w-3.5 h-3.5" />
-                              {formatTime(notification.createdAt)}
-                            </span>
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-xs text-gray-500 flex items-center gap-1">
+                                <ClockIcon className="w-3.5 h-3.5" />
+                                {formatTime(notification.createdAt)}
+                              </span>
+                              {needsAction && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleNotificationClick(notification)
+                                  }}
+                                  className="text-xs px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                                >
+                                  Review Now
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -529,19 +671,40 @@ const NotificationDropdown: React.FC = () => {
               </div>
 
               {/* Footer */}
-              {dropdownNotifications.length > 0 && (
-                <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+              <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+                {dropdownNotifications.length > 0 ? (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        navigate('/notifications')
+                        setIsOpen(false)
+                      }}
+                      className="w-full py-2.5 text-sm text-primary-600 hover:text-primary-700 font-semibold"
+                    >
+                      View all notifications
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/settings')
+                        setIsOpen(false)
+                      }}
+                      className="w-full py-2 text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      Notification Preferences
+                    </button>
+                  </div>
+                ) : (
                   <button
                     onClick={() => {
-                      navigate('/notifications')
+                      navigate('/settings')
                       setIsOpen(false)
                     }}
-                    className="w-full py-3 text-sm text-primary-600 hover:text-primary-700 font-semibold"
+                    className="w-full py-2.5 text-sm text-gray-500 hover:text-gray-700"
                   >
-                    View all notifications
+                    Notification Preferences
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </>

@@ -10,6 +10,7 @@ import StatusBadge from '@/components/StatusBadge'
 import InfoBadge from '@/components/InfoBadge'
 import MobileAuditCard from '@/components/MobileAuditCard'
 import ResponsiveTable, { Column } from '@/components/ResponsiveTable'
+import { SkeletonAuditCard } from '@/components/Skeleton'
 import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 
@@ -1068,9 +1069,12 @@ const DashboardAuditor: React.FC = () => {
           </div>
           
           {isLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-              <p className="text-gray-500 text-lg">Loading audits...</p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <SkeletonAuditCard />
+                <SkeletonAuditCard />
+                <SkeletonAuditCard />
+              </div>
             </div>
           ) : recent.length === 0 ? (
             <div className="text-center py-12">

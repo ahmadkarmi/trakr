@@ -385,6 +385,75 @@ const Settings: React.FC = () => {
           </div>
         </div>
 
+        {/* Notification Preferences */}
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-gray-900">Notification Preferences</h2>
+          <p className="text-gray-600 mt-1">Choose how you want to be notified</p>
+          
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between py-3 border-b border-gray-200">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900">Audit Submissions</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Email when audits are submitted for review</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" defaultChecked className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between py-3 border-b border-gray-200">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900">Approvals & Rejections</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Email when your audits are approved or rejected</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" defaultChecked className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between py-3 border-b border-gray-200">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900">Due Date Reminders</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Email reminders when audits are coming due</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" defaultChecked className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between py-3 border-b border-gray-200">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900">Weekly Digest</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Weekly summary of audit activity</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900">Browser Notifications</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Show desktop notifications in your browser</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <p className="text-xs text-gray-600">
+              <strong>Note:</strong> Notification preferences are currently for display only. Full email notification control will be available soon.
+            </p>
+          </div>
+        </div>
+
         {/* Signature quick access */}
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900">Signature</h2>

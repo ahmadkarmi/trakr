@@ -26,11 +26,8 @@ const ManageUsers: React.FC = () => {
 
   // Invite user mutation
   const inviteUserMutation = useMutation({
-    mutationFn: (data: { email: string; name: string; role: UserRole }) => {
-      // TODO: Implement inviteUser API method
-      console.log('Inviting user:', data)
-      return Promise.resolve({} as User)
-    },
+    mutationFn: (data: { email: string; name: string; role: UserRole }) =>
+      api.inviteUser(data.email, data.name, data.role),
     onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       setShowInviteModal(false)
@@ -71,11 +68,7 @@ const ManageUsers: React.FC = () => {
 
   // Delete user mutation
   const deleteUserMutation = useMutation({
-    mutationFn: (userId: string) => {
-      // TODO: Implement deleteUser API method
-      console.log('Deleting user:', userId)
-      return Promise.resolve()
-    },
+    mutationFn: (userId: string) => api.deleteUser(userId),
     onSuccess: (_result, userId) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       const user = users.find((u: User) => u.id === userId)
@@ -94,11 +87,7 @@ const ManageUsers: React.FC = () => {
 
   // Resend invitation mutation
   const resendInviteMutation = useMutation({
-    mutationFn: (userId: string) => {
-      // TODO: Implement resendInvitation API method
-      console.log('Resending invitation for user:', userId)
-      return Promise.resolve()
-    },
+    mutationFn: (userId: string) => api.resendInvitation(userId),
     onSuccess: (_result, userId) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       const user = users.find((u: User) => u.id === userId)

@@ -41,23 +41,30 @@ const DashboardAdmin: React.FC = () => {
     queryFn: () => api.getAudits(),
   })
 
-  // TODO: Get branches without assigned managers (admin needs to approve these)
-  // const { data: branchManagerAssignments = [] } = useQuery({
-  //   queryKey: ['branch-manager-assignments'],
-  //   queryFn: () => api.getBranchManagerAssignments(),
-  // })
+  // Get all branch manager assignments to identify branches without managers
+  const { data: branchManagerAssignments = [] } = useQuery({
+    queryKey: ['branch-manager-assignments'],
+    queryFn: () => api.getAllBranchManagerAssignments(),
+  })
 
-  // TODO: Implement admin approval logic for branches without managers
-  // const branchesWithoutManagers = React.useMemo(() => {
-  //   const assignedBranchIds = branchManagerAssignments.map(assignment => assignment.branchId);
-  //   return branches.filter(branch => !assignedBranchIds.includes(branch.id));
-  // }, [branches, branchManagerAssignments]);
+  // Identify branches without assigned managers (admin needs to approve audits from these)
+  const branchesWithoutManagers = React.useMemo(() => {
+    const assignedBranchIds = new Set(
+      branchManagerAssignments
+        .filter(assignment => assignment.isActive)
+        .map(assignment => assignment.branchId)
+    )
+    return branches.filter(branch => !assignedBranchIds.has(branch.id))
+  }, [branches, branchManagerAssignments])
 
-  // TODO: Use branchesWithoutManagers to show admin approval stats in UI
-  // const auditsNeedingAdminApproval = audits.filter(audit => 
-  //   audit.status === AuditStatus.SUBMITTED && 
-  //   branchesWithoutManagers.some(branch => branch.id === audit.branchId)
-  // );
+  // Audits from branches without managers that need admin approval
+  const auditsNeedingAdminApproval = React.useMemo(() => {
+    const branchIdsWithoutManagers = new Set(branchesWithoutManagers.map(b => b.id))
+    return audits.filter(audit => 
+      audit.status === AuditStatus.SUBMITTED && 
+      branchIdsWithoutManagers.has(audit.branchId)
+    )
+  }, [audits, branchesWithoutManagers])
 
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'finalized' | AuditStatus>('all')
   const [branchFilter, setBranchFilter] = React.useState<string>('all')
@@ -334,7 +341,7 @@ const DashboardAdmin: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <button 
             className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
             onClick={() => navigate('/manage/branches')}
@@ -378,6 +385,55 @@ const DashboardAdmin: React.FC = () => {
             <p className="text-2xl font-bold text-gray-900">{pendingInvitesCount}</p>
             <p className="text-sm text-gray-600 mt-1">Pending Invites</p>
           </button>
+
+          {/* Branches Without Managers - Needs Attention */}
+          {branchesWithoutManagers.length > 0 ? (
+            <button 
+              className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
+              onClick={() => navigate('/manage/branches')}
+              title="Branches without assigned managers need attention"
+            >
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-xl">⚠️</span>
+              </div>
+              <p className="text-2xl font-bold text-amber-900">{branchesWithoutManagers.length}</p>
+              <p className="text-sm text-amber-800 font-medium mt-1">No Manager</p>
+            </button>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-lg p-4 text-left">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-xl">✅</span>
+              </div>
+              <p className="text-2xl font-bold text-gray-900">0</p>
+              <p className="text-sm text-gray-600 mt-1">No Manager</p>
+            </div>
+          )}
+
+          {/* Audits Needing Admin Approval */}
+          {auditsNeedingAdminApproval.length > 0 ? (
+            <button 
+              className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
+              onClick={() => {
+                setStatusFilter(AuditStatus.SUBMITTED)
+                setQuickChip('waiting_approval')
+              }}
+              title="Submitted audits from branches without managers need admin approval"
+            >
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-xl">🔔</span>
+              </div>
+              <p className="text-2xl font-bold text-red-900">{auditsNeedingAdminApproval.length}</p>
+              <p className="text-sm text-red-800 font-medium mt-1">Need Approval</p>
+            </button>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-lg p-4 text-left">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                <span className="text-xl">✓</span>
+              </div>
+              <p className="text-2xl font-bold text-gray-900">0</p>
+              <p className="text-sm text-gray-600 mt-1">Need Approval</p>
+            </div>
+          )}
         </div>
 
         {/* Weekly Insights - Fixed to Current Week */}
@@ -856,7 +912,39 @@ const DashboardAdmin: React.FC = () => {
               <ResponsiveTable
                 items={filteredAudits.slice(0, viewScope === 'week' ? 8 : 20)}
                 keyField={(a: Audit) => a.id}
-                empty={<p className="text-gray-500 py-8">No audits yet.</p>}
+                empty={
+                  <div className="text-center py-12">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                      <span className="text-3xl">📋</span>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      {viewScope === 'week' ? 'No audits scheduled this week' : 'No audits found'}
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {viewScope === 'week' 
+                        ? 'There are no audits scheduled for the current week.'
+                        : hasFilters 
+                          ? 'Try adjusting your filters or search criteria.'
+                          : 'Get started by creating your first audit.'}
+                    </p>
+                    {viewScope === 'week' && audits.length > 0 && (
+                      <button
+                        onClick={() => setViewScope('all')}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                      >
+                        View All Audits
+                      </button>
+                    )}
+                    {!hasFilters && audits.length === 0 && (
+                      <button
+                        onClick={() => navigate('/manage/surveys')}
+                        className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                      >
+                        Create Survey Template
+                      </button>
+                    )}
+                  </div>
+                }
                 mobileItem={(a: Audit) => {
                   const branchName = branches.find(b => b.id === a.branchId)?.name || a.branchId
                   const auditorName = users.find(u => u.id === a.assignedTo)?.name || 'Unassigned'

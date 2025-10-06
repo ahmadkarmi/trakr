@@ -7,15 +7,28 @@ import { useAuthStore } from '../stores/auth'
 import { QK } from '../utils/queryKeys'
 import { api } from '../utils/api'
 import { BellIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { SkeletonList } from '@/components/Skeleton'
 
 const NotificationsScreen: React.FC = () => {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
+  // Admins see ALL notifications (super user), others see only their own
+  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
+
   const { data: allNotifications = [], isLoading } = useQuery<Notification[]>({
-    queryKey: QK.NOTIFICATIONS(user?.id),
-    queryFn: () => (user?.id ? api.getNotifications(user.id) : Promise.resolve([])),
+    queryKey: isAdmin ? QK.NOTIFICATIONS('all') : QK.NOTIFICATIONS(user?.id),
+    queryFn: async () => {
+      if (!user?.id) return []
+      
+      if (isAdmin) {
+        console.log(`🔍 [ADMIN] Notifications screen fetching ALL notifications`)
+        return await api.getAllNotifications()
+      } else {
+        return await api.getNotifications(user.id)
+      }
+    },
     enabled: !!user?.id,
   })
 
@@ -152,29 +165,42 @@ const NotificationsScreen: React.FC = () => {
     return derivedNotifications.slice(0, 50)
   }, [derivedNotifications])
 
-  // Mark as read mutation
+  // Mark as read mutation with optimistic updates for instant feedback
   const markAsReadMutation = useMutation({
     mutationFn: (notificationId: string) => api.markNotificationAsRead(notificationId),
+    onMutate: async (notificationId) => {
+      // Cancel outgoing refetches
+      const queryKey = isAdmin ? QK.NOTIFICATIONS('all') : QK.NOTIFICATIONS(user?.id)
+      await queryClient.cancelQueries({ queryKey })
+      
+      // Snapshot previous value
+      const previousNotifications = queryClient.getQueryData<Notification[]>(queryKey)
+      
+      // Optimistically update the notification
+      queryClient.setQueryData<Notification[]>(queryKey, (old) =>
+        old?.map((n) => 
+          n.id === notificationId ? { ...n, isRead: true } : n
+        ) || []
+      )
+      
+      // Return context with previous value
+      return { previousNotifications, queryKey }
+    },
+    onError: (_err, _notificationId, context) => {
+      // Rollback on error
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(context.queryKey, context.previousNotifications)
+      }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user?.id) })
+      // Invalidate unread count
       queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user?.id) })
     },
   })
 
-  // Auto-mark all unread notifications as read when page loads
-  // Only for notifications from database, not derived ones
-  React.useEffect(() => {
-    // Only auto-mark if notifications came from database (not derived)
-    if (allNotifications.length > 0 && notifications && notifications.length > 0) {
-      const unreadNotifications = notifications.filter(n => !n.isRead)
-      
-      if (unreadNotifications.length > 0) {
-        unreadNotifications.forEach(n => {
-          markAsReadMutation.mutate(n.id)
-        })
-      }
-    }
-  }, [notifications?.length, allNotifications.length]) // Run when notifications load
+  // Auto-mark disabled - notifications are marked as read when user clicks them
+  // This matches the behavior of the notification dropdown
+  // Users must explicitly click notifications to mark them as read
 
 
   const getNotificationIcon = (type: NotificationType) => {
@@ -210,9 +236,12 @@ const NotificationsScreen: React.FC = () => {
   }
 
   const handleNotificationAction = (notification: Notification) => {
-    // Mark as read
+    // Mark as read (only for real database notifications with valid UUID)
     if (!notification.isRead) {
-      markAsReadMutation.mutate(notification.id)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(notification.id)
+      if (isUUID) {
+        markAsReadMutation.mutate(notification.id)
+      }
     }
 
     // Navigate to relevant page
@@ -228,7 +257,11 @@ const NotificationsScreen: React.FC = () => {
 
   const handleMarkAsRead = (notificationId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    markAsReadMutation.mutate(notificationId)
+    // Only mark as read if it's a valid UUID
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(notificationId)
+    if (isUUID) {
+      markAsReadMutation.mutate(notificationId)
+    }
   }
 
   // Group notifications by date
@@ -283,10 +316,7 @@ const NotificationsScreen: React.FC = () => {
 
           {/* Content */}
           {isLoading ? (
-            <div className="card p-12 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-              <p className="text-gray-500">Loading notifications...</p>
-            </div>
+            <SkeletonList items={8} />
           ) : notifications.length === 0 ? (
             <div className="card p-12 text-center">
               <BellIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -392,6 +422,12 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   formatTime,
   getIcon,
 }) => {
+  const { user } = useAuthStore()
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: QK.USERS,
+    queryFn: api.getUsers,
+  })
+  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
   const needsAction = notification.requiresAction && !notification.actionCompletedAt
 
   return (
@@ -413,6 +449,11 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               {needsAction && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-600/20">
                   Action Required
+                </span>
+              )}
+              {isAdmin && notification.userId !== user?.id && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 ring-1 ring-inset ring-purple-600/20">
+                  For: {users.find(u => u.id === notification.userId)?.name || 'User'}
                 </span>
               )}
               {!notification.isRead && !needsAction && (
