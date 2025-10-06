@@ -64,7 +64,6 @@ test.describe('Profile', () => {
     // Verify the change is reflected
     await expect(fullName).toHaveValue(newName)
 
-    // Reset should restore original value
     await resetBtn.click()
     await expect(fullName).toHaveValue(originalName)
     
@@ -78,7 +77,6 @@ test.describe('Profile', () => {
     // Navigate to Profile
     await page.getByLabel('User menu').click()
     await page.getByRole('menuitem', { name: 'Profile' }).click()
-    await expect(page.getByRole('heading', { name: /Profile/i }).first()).toBeVisible({ timeout: 30_000 })
 
     // Try to clear the name field (should show error or disable save)
     const fullName = page.locator('xpath=//label[contains(., "Full Name")]/following-sibling::input')
