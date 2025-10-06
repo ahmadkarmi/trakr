@@ -53,8 +53,8 @@ test.describe('User Management CRUD', () => {
       console.log('✅ Admin can access Manage Users page')
       
     } catch (error) {
-      // If Manage Users page structure is different, just verify we didn't get redirected
-      expect(page.url()).toContain('dashboard/admin')
+      // If Manage Users page structure is different, just verify we're on the manage/users page
+      expect(page.url()).toContain('/manage/users')
       console.log('ℹ️ Manage Users page may have different structure')
     }
   })

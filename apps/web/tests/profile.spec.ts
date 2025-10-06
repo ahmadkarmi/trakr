@@ -28,7 +28,7 @@ test.describe('Profile', () => {
     await page.getByRole('menuitem', { name: 'Profile' }).click()
 
     // Verify on Profile screen
-    await expect(page.getByRole('heading', { name: /Profile/i })).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole('heading', { name: /Profile/i }).first()).toBeVisible({ timeout: 30_000 })
     await expect(page).toHaveURL(/\/profile/)
   })
 
@@ -40,7 +40,7 @@ test.describe('Profile', () => {
     await page.getByRole('menuitem', { name: 'Profile' }).click()
 
     // Verify on Profile screen
-    await expect(page.getByRole('heading', { name: /Profile/i })).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole('heading', { name: /Profile/i }).first()).toBeVisible({ timeout: 30_000 })
 
     // The Profile form labels are not programmatically associated to inputs,
     // so select the input adjacent to the label instead of getByLabel.
@@ -78,7 +78,7 @@ test.describe('Profile', () => {
     // Navigate to Profile
     await page.getByLabel('User menu').click()
     await page.getByRole('menuitem', { name: 'Profile' }).click()
-    await expect(page.getByRole('heading', { name: /Profile/i })).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole('heading', { name: /Profile/i }).first()).toBeVisible({ timeout: 30_000 })
 
     // Try to clear the name field (should show error or disable save)
     const fullName = page.locator('xpath=//label[contains(., "Full Name")]/following-sibling::input')
