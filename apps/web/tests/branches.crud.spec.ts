@@ -3,9 +3,16 @@ import { test } from '@playwright/test'
 
 // Helper to login with email/password
 async function loginAsAdmin(page: any) {
-  await page.goto('/login')
+  // Clear storage and navigate to login
+  await page.goto('/login', { waitUntil: 'networkidle' })
   await page.evaluate(() => localStorage.clear())
-  await page.goto('/login')
+  
+  // Wait a bit for any redirects to settle, then reload
+  await page.waitForTimeout(500)
+  await page.reload({ waitUntil: 'networkidle' })
+  
+  // Wait for login form to be ready
+  await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 10_000 })
   
   await page.fill('input[type="email"]', 'admin@trakr.com')
   await page.fill('input[type="password"]', 'Password@123')
