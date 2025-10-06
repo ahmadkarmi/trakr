@@ -1,14 +1,17 @@
 import { test, expect } from '@playwright/test'
 
-// Helper function to login using role button (works without password!)
+// Helper function to login with email/password
 async function loginAsAdmin(page: any) {
   await page.goto('/login')
   await page.evaluate(() => localStorage.clear())
   await page.goto('/login')
   
-  const adminBtn = page.getByRole('button', { name: /Login as Admin/i })
-  await expect(adminBtn).toBeVisible({ timeout: 30_000 })
-  await adminBtn.click()
+  // Fill in email and password
+  await page.fill('input[type="email"]', 'admin@trakr.com')
+  await page.fill('input[type="password"]', 'Password123!')
+  
+  // Click login button
+  await page.click('button[type="submit"]')
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
   await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
@@ -19,9 +22,12 @@ async function loginAsAuditor(page: any) {
   await page.evaluate(() => localStorage.clear())
   await page.goto('/login')
   
-  const auditorBtn = page.getByRole('button', { name: /Login as Auditor/i })
-  await expect(auditorBtn).toBeVisible({ timeout: 30_000 })
-  await auditorBtn.click()
+  // Fill in email and password
+  await page.fill('input[type="email"]', 'auditor@trakr.com')
+  await page.fill('input[type="password"]', 'Password123!')
+  
+  // Click login button
+  await page.click('button[type="submit"]')
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/auditor'), { timeout: 60_000 })
   await expect(page.getByRole('heading', { name: /Auditor Dashboard/i })).toBeVisible({ timeout: 30_000 })
@@ -32,17 +38,20 @@ async function loginAsBranchManager(page: any) {
   await page.evaluate(() => localStorage.clear())
   await page.goto('/login')
   
-  const bmBtn = page.getByRole('button', { name: /Login as Branch Manager/i })
-  await expect(bmBtn).toBeVisible({ timeout: 30_000 })
-  await bmBtn.click()
+  // Fill in email and password
+  await page.fill('input[type="email"]', 'branchmanager@trakr.com')
+  await page.fill('input[type="password"]', 'Password123!')
+  
+  // Click login button
+  await page.click('button[type="submit"]')
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/branch-manager'), { timeout: 60_000 })
   await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i })).toBeVisible({ timeout: 30_000 })
 }
 
-// Admin/Auditor/Branch Manager smoke tests using role button authentication
+// Admin/Auditor/Branch Manager smoke tests using email/password authentication
 test.describe('Auth smoke', () => {
-  test('admin can sign in via role button and see Admin Dashboard', async ({ page }) => {
+  test('admin can sign in and see Admin Dashboard', async ({ page }) => {
     await loginAsAdmin(page)
     // Verify we're on the admin dashboard
     await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible()

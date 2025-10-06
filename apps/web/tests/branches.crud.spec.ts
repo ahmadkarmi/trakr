@@ -1,15 +1,15 @@
 import { expect } from '@playwright/test'
 import { test } from '@playwright/test'
 
-// Helper function to login using role button (works without password!)
+// Helper to login with email/password
 async function loginAsAdmin(page: any) {
   await page.goto('/login')
   await page.evaluate(() => localStorage.clear())
   await page.goto('/login')
   
-  const adminBtn = page.getByRole('button', { name: /Login as Admin/i })
-  await expect(adminBtn).toBeVisible({ timeout: 30_000 })
-  await adminBtn.click()
+  await page.fill('input[type="email"]', 'admin@trakr.com')
+  await page.fill('input[type="password"]', 'Password123!')
+  await page.click('button[type="submit"]')
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
   await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
