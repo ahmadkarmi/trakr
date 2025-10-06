@@ -11,7 +11,7 @@ async function loginAsAdmin(page: any) {
   await page.getByRole('button', { name: /Sign in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
-  await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('heading', { name: /Admin Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
 }
 
 // Profile update flow tests

@@ -14,7 +14,7 @@ async function loginAsAdmin(page: any) {
   await page.getByRole('button', { name: /Sign in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
-  await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('heading', { name: /Admin Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
 }
 
 async function loginAsAuditor(page: any) {
@@ -30,7 +30,7 @@ async function loginAsAuditor(page: any) {
   await page.getByRole('button', { name: /Sign in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/auditor'), { timeout: 60_000 })
-  await expect(page.getByRole('heading', { name: /Auditor Dashboard/i })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('heading', { name: /Auditor Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
 }
 
 async function loginAsBranchManager(page: any) {
@@ -46,7 +46,7 @@ async function loginAsBranchManager(page: any) {
   await page.getByRole('button', { name: /Sign in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/branch-manager'), { timeout: 60_000 })
-  await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
 }
 
 // Admin/Auditor/Branch Manager smoke tests using email/password authentication
@@ -54,13 +54,13 @@ test.describe('Auth smoke', () => {
   test('admin can sign in and see Admin Dashboard', async ({ page }) => {
     await loginAsAdmin(page)
     // Verify we're on the admin dashboard
-    await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Admin Dashboard/i }).first()).toBeVisible()
   })
 
   test('admin can sign out and auditor can sign in', async ({ page }) => {
     // Sign in as admin first
     await loginAsAdmin(page)
-    await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Admin Dashboard/i }).first()).toBeVisible()
 
     // Open user menu and sign out
     await page.getByLabel('User menu').click()
@@ -71,11 +71,11 @@ test.describe('Auth smoke', () => {
 
     // Sign in as auditor
     await loginAsAuditor(page)
-    await expect(page.getByRole('heading', { name: /Auditor Dashboard/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Auditor Dashboard/i }).first()).toBeVisible()
   })
 
   test('branch manager can sign in and see Branch Manager Dashboard', async ({ page }) => {
     await loginAsBranchManager(page)
-    await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i }).first()).toBeVisible()
   })
 })
