@@ -16,9 +16,33 @@ import { useOrganization } from '../contexts/OrganizationContext'
 const DashboardAdmin: React.FC = () => {
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  const { effectiveOrgId, isSuperAdmin, currentOrg } = useOrganization()
+  const { effectiveOrgId, isSuperAdmin, currentOrg, isLoading: orgLoading } = useOrganization()
 
   const queryClient = useQueryClient()
+  
+  // Guard: Wait for organization context to load
+  if (orgLoading) {
+    return (
+      <DashboardLayout title="Loading...">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+  
+  // Guard: Ensure org is available
+  if (!effectiveOrgId && !isSuperAdmin) {
+    return (
+      <DashboardLayout title="Organization Required">
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+          <p className="text-yellow-700 font-medium">
+            Your user account is not associated with an organization. Please contact support.
+          </p>
+        </div>
+      </DashboardLayout>
+    )
+  }
   
   const { data: branches = [] } = useQuery<Branch[]>({
     queryKey: ['branches', effectiveOrgId],

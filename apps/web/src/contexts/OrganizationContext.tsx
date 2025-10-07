@@ -42,21 +42,41 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         const orgs = await api.getOrganizations()
         setAvailableOrgs(orgs)
         
-        // Load view scope and active org
+        // Load stored preferences
+        const storedOrgId = localStorage.getItem('super_admin_active_org')
         const viewScope = localStorage.getItem('super_admin_view_scope') || 'ORG'
         const allView = viewScope === 'ALL'
+        
+        // Validate stored org still exists (auto-heal stale localStorage)
+        const storedOrgStillExists = storedOrgId 
+          ? orgs.some(o => o.id === storedOrgId)
+          : false
+        
+        if (storedOrgId && !storedOrgStillExists) {
+          // Auto-heal: remove invalid localStorage
+          console.warn(
+            `[OrganizationContext] Stored organization ${storedOrgId} no longer exists. Clearing preferences.`
+          )
+          localStorage.removeItem('super_admin_active_org')
+        }
+        
         setGlobalViewState(allView)
 
         if (allView) {
           // Global view: no currentOrg (queries should use undefined orgId)
           setCurrentOrg(null)
         } else {
-          // Org-scoped view: pick stored org or first
-          const storedOrgId = localStorage.getItem('super_admin_active_org')
-          const activeOrg = storedOrgId 
-            ? orgs.find(o => o.id === storedOrgId) || orgs[0]
-            : orgs[0]
-          setCurrentOrg(activeOrg || null)
+          // Org-scoped view: use validated stored org or first available
+          const activeOrg = storedOrgStillExists
+            ? orgs.find(o => o.id === storedOrgId)!
+            : orgs[0] || null
+          
+          setCurrentOrg(activeOrg)
+          
+          // If we auto-switched to first org, update localStorage
+          if (activeOrg && activeOrg.id !== storedOrgId) {
+            localStorage.setItem('super_admin_active_org', activeOrg.id)
+          }
         }
         
         // (audit trail omitted in web client)
@@ -64,11 +84,21 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         // Regular users see only their organization
         const orgs = await api.getOrganizations()
         const userOrg = orgs.find(o => o.id === user.orgId)
+        
+        if (!userOrg && user.orgId) {
+          console.error(
+            `[OrganizationContext] User's organization ${user.orgId} not found in available organizations`
+          )
+        }
+        
         setCurrentOrg(userOrg || null)
         setAvailableOrgs(userOrg ? [userOrg] : [])
       }
     } catch (error) {
-      console.error('Failed to load organizations:', error)
+      console.error('[OrganizationContext] Failed to load organizations:', error)
+      // Auto-heal: clear potentially corrupt localStorage on error
+      localStorage.removeItem('super_admin_active_org')
+      localStorage.removeItem('super_admin_view_scope')
       setCurrentOrg(null)
       setAvailableOrgs([])
     } finally {
