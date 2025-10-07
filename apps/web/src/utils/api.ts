@@ -3,7 +3,8 @@
 import { mockApi } from '@trakr/shared'
 import { supabaseApi } from './supabaseApi'
 
-const backend = ((import.meta as any).env?.VITE_BACKEND || 'mock').toLowerCase()
+// Force Supabase in development - change back to 'mock' if needed for testing
+const backend = ((import.meta as any).env?.VITE_BACKEND || 'supabase').toLowerCase()
 // During incremental migration, route known methods to Supabase and fall back to
 // the mock API for anything not yet implemented. This prevents runtime errors
 // on screens that still rely on unported endpoints while allowing us to switch
