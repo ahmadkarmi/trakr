@@ -13,9 +13,11 @@ import ResponsiveTable, { Column } from '@/components/ResponsiveTable'
 import { SkeletonAuditCard } from '@/components/Skeleton'
 import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const DashboardAuditor: React.FC = () => {
   const { user } = useAuthStore()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   const navigate = useNavigate()
 
   const queryClient = useQueryClient()
@@ -29,17 +31,37 @@ const DashboardAuditor: React.FC = () => {
     enabled: !!user?.id,
   })
 
-  // For assignments & frequency gating
-  const { data: orgs = [] } = useQuery<Organization[]>({ queryKey: QK.ORGANIZATIONS, queryFn: api.getOrganizations })
-  const orgId = orgs[0]?.id
-  const { data: branches = [] } = useQuery<Branch[]>({ queryKey: QK.BRANCHES(orgId), queryFn: () => api.getBranches(orgId), enabled: !!orgId })
-  const { data: zones = [] } = useQuery<Zone[]>({ queryKey: QK.ZONES(orgId), queryFn: () => api.getZones(orgId), enabled: !!orgId })
-  const { data: assignments = [] } = useQuery<AuditorAssignment[]>({ queryKey: QK.ASSIGNMENTS, queryFn: api.getAuditorAssignments })
-  const { data: allAudits = [] } = useQuery<Audit[]>({ queryKey: QK.AUDITS('all'), queryFn: () => api.getAudits() })
+  // For assignments & frequency gating - org-scoped
+  const { data: orgs = [] } = useQuery<Organization[]>({ 
+    queryKey: QK.ORGANIZATIONS, 
+    queryFn: api.getOrganizations,
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
+  const { data: branches = [] } = useQuery<Branch[]>({ 
+    queryKey: ['branches', effectiveOrgId], 
+    queryFn: () => api.getBranches(effectiveOrgId), 
+    enabled: !!effectiveOrgId || isSuperAdmin 
+  })
+  const { data: zones = [] } = useQuery<Zone[]>({ 
+    queryKey: ['zones', effectiveOrgId], 
+    queryFn: () => api.getZones(effectiveOrgId), 
+    enabled: !!effectiveOrgId || isSuperAdmin 
+  })
+  const { data: assignments = [] } = useQuery<AuditorAssignment[]>({ 
+    queryKey: ['assignments', effectiveOrgId], 
+    queryFn: () => (api as any).getAuditorAssignments(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
+  const { data: allAudits = [] } = useQuery<Audit[]>({ 
+    queryKey: ['audits', 'all', effectiveOrgId], 
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
 
   const { data: surveys = [] } = useQuery<Survey[]>({
-    queryKey: QK.SURVEYS,
-    queryFn: api.getSurveys,
+    queryKey: ['surveys', effectiveOrgId],
+    queryFn: () => (api as any).getSurveys(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
 
   const [selectedSurveyId, setSelectedSurveyId] = React.useState<string | null>(null)

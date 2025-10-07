@@ -35,16 +35,18 @@ const ManageBranches: React.FC = () => {
 
   const managers = useMemo(() => users.filter(u => u.role === UserRole.BRANCH_MANAGER), [users])
   
-  // Fetch all branch manager assignments
+  // Fetch all branch manager assignments (org-scoped)
   const { data: branchManagerAssignments = [] } = useQuery({
-    queryKey: ['branch-manager-assignments'],
-    queryFn: () => api.getAllBranchManagerAssignments()
+    queryKey: ['branch-manager-assignments', effectiveOrgId],
+    queryFn: () => (api as any).getAllBranchManagerAssignments(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
 
-  // Fetch all auditor assignments
+  // Fetch all auditor assignments (org-scoped)
   const { data: auditorAssignments = [] } = useQuery({
-    queryKey: QK.ASSIGNMENTS,
-    queryFn: () => api.getAuditorAssignments()
+    queryKey: ['assignments', effectiveOrgId],
+    queryFn: () => (api as any).getAuditorAssignments(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   
   // Calculate manager counts per branch
