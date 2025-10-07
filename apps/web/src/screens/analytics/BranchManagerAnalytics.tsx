@@ -66,15 +66,16 @@ const BranchManagerAnalytics: React.FC = () => {
   const branchCompletionRate = totalBranchAudits > 0 ? 
     Math.round((completedBranchAudits / totalBranchAudits) * 100) : 0
   
-  const overdueBranchAudits = branchAudits.filter(a => {
-    if (!a.dueAt) return false
-    return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.APPROVED
-  }).length
-  
   // Track audits pending approval (SUBMITTED status)
   const pendingApprovalAudits = branchAudits.filter(a => 
     a.status === AuditStatus.SUBMITTED
   ).length
+  
+  // Of those pending, how many are overdue? (urgent!)
+  const pendingOverdue = branchAudits.filter(a => {
+    if (a.status !== AuditStatus.SUBMITTED || !a.dueAt) return false
+    return new Date(a.dueAt) < new Date()
+  }).length
   
   // Calculate average quality score using actual survey data
   const branchAverageScore = React.useMemo(() => {
@@ -209,7 +210,11 @@ const BranchManagerAnalytics: React.FC = () => {
             title="Pending Approval"
             value={pendingApprovalAudits.toString()}
             icon="⏳"
-            description="Awaiting your review"
+            description={
+              pendingOverdue > 0 
+                ? `Awaiting your review • ${pendingOverdue} overdue 🚨`
+                : "Awaiting your review"
+            }
             variant={pendingApprovalAudits > 0 ? "warning" : "success"}
           />
         </div>
