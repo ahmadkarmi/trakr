@@ -296,12 +296,18 @@ export const supabaseApi = {
     }))
     return { ...base, sectionPhotos }
   },
-  async getAuditorAssignments(): Promise<AuditorAssignment[]> {
+  async getAuditorAssignments(orgId?: string): Promise<AuditorAssignment[]> {
     const supabase = await getSupabase()
-    const { data, error} = await supabase
+    let q = supabase
       .from('auditor_assignments')
       .select('*')
-      .order('updated_at', { ascending: false })
+    
+    // Filter by org if provided (for multi-tenant isolation)
+    if (orgId) {
+      q = q.eq('org_id', orgId)
+    }
+    
+    const { data, error} = await q.order('updated_at', { ascending: false })
     
     if (error) throw error
     return (data || []).map((row: any) => ({
@@ -841,10 +847,16 @@ export const supabaseApi = {
   },
 
   // Activity logs
-  async getActivityLogs(entityId?: string) {
+  async getActivityLogs(entityId?: string, orgId?: string) {
     const supabase = await getSupabase()
     let q = supabase.from('activity_logs').select('*')
+    
+    // Filter by entity if provided
     if (entityId) q = q.eq('entity_id', entityId)
+    
+    // Filter by org if provided (for multi-tenant isolation)
+    if (orgId) q = q.eq('org_id', orgId)
+    
     const { data, error } = await q.order('created_at', { ascending: false }).limit(50)
     if (error) throw error
     return (data || []).map((r: Tables<'activity_logs'>) => ({
@@ -1259,12 +1271,18 @@ export const supabaseApi = {
   // ===================================
   // Branch Manager Assignments
   // ===================================
-  async getAllBranchManagerAssignments() {
+  async getAllBranchManagerAssignments(orgId?: string) {
     const supabase = await getSupabase()
-    const { data, error } = await supabase
+    let q = supabase
       .from('branch_manager_assignments')
       .select('*')
-      .order('assigned_at', { ascending: false })
+    
+    // Filter by org if provided (for multi-tenant isolation)
+    if (orgId) {
+      q = q.eq('org_id', orgId)
+    }
+    
+    const { data, error } = await q.order('assigned_at', { ascending: false })
     
     if (error) throw error
     return (data || []).map((row: any) => ({

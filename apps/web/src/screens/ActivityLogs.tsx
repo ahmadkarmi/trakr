@@ -12,7 +12,7 @@ const ActivityLogs: React.FC = () => {
 
   const { data: logs = [], isLoading } = useQuery<LogEntry[]>({
     queryKey: ['activity', 'all', effectiveOrgId],
-    queryFn: () => (api as any).getActivityLogs(effectiveOrgId),
+    queryFn: () => (api as any).getActivityLogs(undefined, effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
