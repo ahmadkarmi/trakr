@@ -21,15 +21,16 @@ const AdminAnalytics: React.FC = () => {
   const completedAudits = audits.filter(a => a.status === AuditStatus.APPROVED).length
   const completionRate = totalAudits > 0 ? Math.round((completedAudits / totalAudits) * 100) : 0
   
-  const overdueAudits = audits.filter(a => {
-    if (!a.dueAt) return false
-    return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.APPROVED
-  }).length
-  
   // Track audits pending approval (SUBMITTED status)
   const pendingApprovalAudits = audits.filter(a => 
     a.status === AuditStatus.SUBMITTED
   ).length
+  
+  // Of those pending, how many are overdue? (urgent!)
+  const pendingOverdue = audits.filter(a => {
+    if (a.status !== AuditStatus.SUBMITTED || !a.dueAt) return false
+    return new Date(a.dueAt) < new Date()
+  }).length
   
   // Calculate average quality score using actual survey data
   const averageScore = React.useMemo(() => {
@@ -313,7 +314,12 @@ const AdminAnalytics: React.FC = () => {
               <div className="flex-1">
                 <div className={`text-2xl font-bold ${pendingApprovalAudits > 0 ? 'text-orange-600' : 'text-gray-900'}`}>{pendingApprovalAudits}</div>
                 <div className="text-sm text-gray-600">Pending Approval</div>
-                <div className="text-xs text-gray-500">Awaiting manager review</div>
+                <div className="text-xs text-gray-500">
+                  Awaiting manager review
+                  {pendingOverdue > 0 && (
+                    <span className="text-red-600 font-semibold"> • {pendingOverdue} overdue 🚨</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
