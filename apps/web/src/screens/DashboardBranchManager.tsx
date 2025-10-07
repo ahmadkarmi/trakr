@@ -9,6 +9,7 @@ import DashboardLayout from '../components/DashboardLayout'
 import StatusBadge from '../components/StatusBadge'
 import { ClockIcon, ChartBarIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 import { useOrganization } from '../contexts/OrganizationContext'
+import ResponsiveTable, { Column } from '../components/ResponsiveTable'
 
 const DashboardBranchManager: React.FC = () => {
   const { user } = useAuthStore()
