@@ -44,7 +44,7 @@ const DashboardAdmin: React.FC = () => {
     )
   }
   
-  const { data: branches = [] } = useQuery<Branch[]>({
+  const { data: branches = [], isLoading: branchesLoading } = useQuery<Branch[]>({
     queryKey: ['branches', effectiveOrgId],
     queryFn: () => api.getBranches(effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin,
@@ -347,6 +347,113 @@ const DashboardAdmin: React.FC = () => {
     setSearchQuery('')
   }
 
+  // Empty Organization State: Show onboarding for new orgs
+  const isEmptyOrg = !branchesLoading && branches.length === 0 && audits.length === 0
+  
+  if (isEmptyOrg) {
+    return (
+      <DashboardLayout title="Welcome">
+        <div className="max-w-4xl mx-auto py-12 px-4">
+          <div className="text-center mb-12">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl">🚀</span>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              Welcome to {currentOrg?.name || 'Your Organization'}!
+            </h1>
+            <p className="text-lg text-gray-600">
+              Let's get your organization set up. Follow these steps to get started.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Step 1: Create Branches */}
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                <span className="text-2xl">🏢</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                1. Create Branches
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Add your physical locations or branches that will be audited.
+              </p>
+              <button
+                onClick={() => navigate('/manage/branches')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Create First Branch
+              </button>
+            </div>
+
+            {/* Step 2: Create Survey Templates */}
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-green-500 transition-colors">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                <span className="text-2xl">📋</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                2. Create Survey Templates
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Define what gets audited by creating survey templates with questions.
+              </p>
+              <button
+                onClick={() => navigate('/manage/surveys')}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Create Survey Template
+              </button>
+            </div>
+
+            {/* Step 3: Invite Users */}
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-purple-500 transition-colors">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <span className="text-2xl">👥</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                3. Invite Team Members
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Add auditors, branch managers, and admins to your organization.
+              </p>
+              <button
+                onClick={() => navigate('/manage/users')}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Invite Users
+              </button>
+            </div>
+
+            {/* Step 4: Optional Zones */}
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-yellow-500 transition-colors">
+              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
+                <span className="text-2xl">🗺️</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                4. Create Zones (Optional)
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Group branches into zones for easier management and assignment.
+              </p>
+              <button
+                onClick={() => navigate('/manage/zones')}
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Create Zones
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h4 className="font-semibold text-gray-900 mb-2">📘 Need Help?</h4>
+            <p className="text-gray-600 text-sm">
+              Check out our documentation or contact support if you need assistance setting up your organization.
+            </p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout title="Admin Dashboard">
