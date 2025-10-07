@@ -149,12 +149,28 @@ const Settings: React.FC = () => {
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({ name: '', email: '' })
+  const [orgProfileForm, setOrgProfileForm] = useState({ name: '', address: '' })
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
 
   React.useEffect(() => {
     if (user) {
       setProfileForm({ name: user.name || '', email: user.email || '' })
     }
   }, [user])
+
+  // Initialize organization profile form
+  React.useEffect(() => {
+    const targetOrg = currentOrg || org
+    if (targetOrg) {
+      setOrgProfileForm({
+        name: targetOrg.name || '',
+        address: (targetOrg as any).address || ''
+      })
+      setLogoPreview((targetOrg as any).logoUrl || null)
+    }
+  }, [currentOrg, org])
 
   const updateProfile = useMutation({
     mutationFn: async () => {
@@ -176,6 +192,96 @@ const Settings: React.FC = () => {
       })
     },
   })
+
+  const updateOrgProfile = useMutation({
+    mutationFn: async () => {
+      const targetOrgId = currentOrg?.id || org?.id
+      if (!targetOrgId) throw new Error('No organization selected')
+
+      let logoUrl = logoPreview
+
+      // Upload new logo if selected
+      if (logoFile) {
+        setIsUploadingLogo(true)
+        try {
+          // Delete old logo if exists
+          if (logoPreview && logoPreview !== (currentOrg as any)?.logoUrl && logoPreview !== (org as any)?.logoUrl) {
+            await (api as any).deleteOrganizationLogo(logoPreview)
+          }
+          // Upload new logo
+          logoUrl = await (api as any).uploadOrganizationLogo(targetOrgId, logoFile)
+        } finally {
+          setIsUploadingLogo(false)
+        }
+      }
+
+      return (api as any).updateOrganization(targetOrgId, {
+        name: orgProfileForm.name,
+        address: orgProfileForm.address,
+        logoUrl
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QK.ORGANIZATIONS })
+      setLogoFile(null)
+      showToast({ message: 'Organization profile updated successfully!', variant: 'success' })
+    },
+    onError: (error) => {
+      showToast({
+        message: error instanceof Error ? error.message : 'Failed to update organization profile.',
+        variant: 'error'
+      })
+      setIsUploadingLogo(false)
+    },
+  })
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showToast({ message: 'Please select an image file', variant: 'error' })
+        return
+      }
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        showToast({ message: 'Image must be less than 2MB', variant: 'error' })
+        return
+      }
+      setLogoFile(file)
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveLogo = async () => {
+    if (logoPreview) {
+      // If it's uploaded logo, delete from storage
+      const targetOrg = currentOrg || org
+      if (targetOrg && (targetOrg as any).logoUrl === logoPreview) {
+        try {
+          await (api as any).deleteOrganizationLogo(logoPreview)
+          const targetOrgId = currentOrg?.id || org?.id
+          if (targetOrgId) {
+            await (api as any).updateOrganization(targetOrgId, { logoUrl: '' })
+            queryClient.invalidateQueries({ queryKey: QK.ORGANIZATIONS })
+            showToast({ message: 'Logo removed successfully!', variant: 'success' })
+          }
+        } catch (error) {
+          showToast({ 
+            message: error instanceof Error ? error.message : 'Failed to remove logo',
+            variant: 'error'
+          })
+        }
+      }
+    }
+    setLogoFile(null)
+    setLogoPreview(null)
+  }
 
   if (!user) {
     return (
@@ -410,6 +516,97 @@ const Settings: React.FC = () => {
         {/* Organization Tab */}
         {activeTab === 'organization' && isAdmin && (
         <>
+        {/* Organization Profile (visible when not in global view) */}
+        {!globalView && (currentOrg || org) && (
+          <div className="card p-6">
+            <h2 className="text-lg font-semibold text-gray-900">Organization Profile</h2>
+            <p className="text-gray-600 mt-1">Manage your organization's information and branding</p>
+            
+            <div className="mt-6 space-y-6">
+              {/* Logo Upload */}
+              <div>
+                <label className="label">Organization Logo</label>
+                <div className="mt-2 flex items-center gap-4">
+                  {logoPreview ? (
+                    <div className="relative">
+                      <img
+                        src={logoPreview}
+                        alt="Organization logo"
+                        className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        title="Remove logo"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <span className="text-gray-400 text-xs">No logo</span>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="hidden"
+                      id="logo-upload"
+                    />
+                    <label
+                      htmlFor="logo-upload"
+                      className="btn btn-outline btn-sm cursor-pointer inline-block"
+                    >
+                      {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG or GIF (max. 2MB)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Organization Name */}
+              <div>
+                <label className="label">Organization Name</label>
+                <input
+                  type="text"
+                  className="input mt-1"
+                  value={orgProfileForm.name}
+                  onChange={(e) => setOrgProfileForm({ ...orgProfileForm, name: e.target.value })}
+                  placeholder="Enter organization name"
+                />
+              </div>
+
+              {/* Organization Address */}
+              <div>
+                <label className="label">Address</label>
+                <textarea
+                  className="input mt-1"
+                  rows={3}
+                  value={orgProfileForm.address}
+                  onChange={(e) => setOrgProfileForm({ ...orgProfileForm, address: e.target.value })}
+                  placeholder="Enter organization address"
+                />
+              </div>
+
+              {/* Save Button */}
+              <div>
+                <button
+                  className="btn btn-primary btn-md"
+                  disabled={updateOrgProfile.isPending || isUploadingLogo || !orgProfileForm.name}
+                  onClick={() => updateOrgProfile.mutate()}
+                >
+                  {isUploadingLogo ? 'Uploading Logo...' : updateOrgProfile.isPending ? 'Saving...' : 'Save Organization Profile'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Admin-only: Organization Settings (Super Admin acts as Admin when not in global view and an org is selected) */}
         {(user?.role === UserRole.ADMIN || (isSuperAdmin && !globalView && currentOrg)) ? (
           <div className="card p-6">
