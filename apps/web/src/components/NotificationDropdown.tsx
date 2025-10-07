@@ -250,6 +250,30 @@ const NotificationDropdown: React.FC = () => {
     },
   })
 
+  // Mark all as read mutation
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => {
+      if (!user?.id) throw new Error('No user ID')
+      console.log(`📡 Marking all notifications as read for user: ${user.id}`)
+      return api.markAllNotificationsAsRead(user.id)
+    },
+    onSuccess: () => {
+      console.log(`✅ All notifications marked as read successfully`)
+      const queryKey = isAdmin ? QK.NOTIFICATIONS('all') : QK.NOTIFICATIONS(user?.id)
+      
+      // Force immediate refetch to update badge count
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey })
+        queryClient.refetchQueries({ queryKey })
+      }, 100)
+      
+      queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user?.id) })
+    },
+    onError: (error) => {
+      console.error(`❌ Failed to mark all notifications as read:`, error)
+    },
+  })
+
   // Auto-mark all unread notifications as read when panel opens
   // DISABLED - Users must click notifications to mark as read
   // This gives better control and visual feedback
@@ -516,16 +540,30 @@ const NotificationDropdown: React.FC = () => {
           {/* Footer */}
           <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
             {dropdownNotifications.length > 0 ? (
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => {
-                    navigate('/notifications')
-                    setIsOpen(false)
-                  }}
-                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  View all
-                </button>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      navigate('/notifications')
+                      setIsOpen(false)
+                    }}
+                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    View all
+                  </button>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        markAllAsReadMutation.mutate()
+                      }}
+                      disabled={markAllAsReadMutation.isPending}
+                      className="text-xs text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
                 <button
                   onClick={() => {
                     navigate('/settings')
@@ -683,6 +721,18 @@ const NotificationDropdown: React.FC = () => {
                     >
                       View all notifications
                     </button>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          markAllAsReadMutation.mutate()
+                        }}
+                        disabled={markAllAsReadMutation.isPending}
+                        className="w-full py-2 text-xs text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         navigate('/settings')

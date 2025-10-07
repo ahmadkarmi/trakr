@@ -1398,8 +1398,15 @@ export const mockApi = {
     initializeNotificationsForSubmittedAudits()
     console.log(`📊 Total mockNotifications after init: ${mockNotifications.length}`)
     const userNotifications = mockNotifications.filter(n => n.userId === userId)
-    console.log(`📬 Notifications for user ${userId}: ${userNotifications.length}`, userNotifications.map(n => ({id: n.id, title: n.title, userId: n.userId})))
     return userNotifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  getAllNotifications: async (): Promise<Notification[]> => {
+    await new Promise(resolve => setTimeout(resolve, 80));
+    console.log(`🔔 getAllNotifications called (admin)`)
+    // Ensure notifications exist for submitted audits before returning
+    initializeNotificationsForSubmittedAudits()
+    return mockNotifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
   getUnreadNotificationCount: async (userId: string): Promise<number> => {
