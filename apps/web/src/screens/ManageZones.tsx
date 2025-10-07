@@ -8,14 +8,23 @@ import Tabs from '../components/Tabs'
 import ResponsiveTable from '../components/ResponsiveTable'
 import { PencilIcon, TrashIcon, MapIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../hooks/useToast'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const ManageZones: React.FC = () => {
   const qc = useQueryClient()
   const { showToast } = useToast()
-  const { data: orgs = [] } = useQuery<Organization[]>({ queryKey: QK.ORGANIZATIONS, queryFn: api.getOrganizations })
-  const orgId = orgs[0]?.id
-  const { data: branches = [] } = useQuery<Branch[]>({ queryKey: QK.BRANCHES(orgId), queryFn: () => api.getBranches(orgId), enabled: !!orgId })
-  const { data: zones = [] } = useQuery<Zone[]>({ queryKey: QK.ZONES(orgId), queryFn: () => api.getZones(orgId), enabled: !!orgId })
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
+  
+  const { data: branches = [] } = useQuery<Branch[]>({ 
+    queryKey: ['branches', effectiveOrgId], 
+    queryFn: () => api.getBranches(effectiveOrgId), 
+    enabled: !!effectiveOrgId || isSuperAdmin 
+  })
+  const { data: zones = [] } = useQuery<Zone[]>({ 
+    queryKey: ['zones', effectiveOrgId], 
+    queryFn: () => api.getZones(effectiveOrgId), 
+    enabled: !!effectiveOrgId || isSuperAdmin 
+  })
 
   const [form, setForm] = useState<{ name: string; description: string; branchIds: string[] }>({ name: '', description: '', branchIds: [] })
 
@@ -24,11 +33,11 @@ const ManageZones: React.FC = () => {
 
   const createZone = useMutation({
     mutationFn: async () => {
-      if (!orgId) throw new Error('No organization')
-      return api.createZone({ orgId, name: form.name.trim(), description: form.description.trim(), branchIds: form.branchIds })
+      if (!effectiveOrgId) throw new Error('No organization')
+      return api.createZone({ orgId: effectiveOrgId, name: form.name.trim(), description: form.description.trim(), branchIds: form.branchIds })
     },
     onSuccess: (createdZone) => {
-      qc.invalidateQueries({ queryKey: QK.ZONES(orgId) })
+      qc.invalidateQueries({ queryKey: QK.ZONES(effectiveOrgId) })
       setForm({ name: '', description: '', branchIds: [] })
       setActiveTab('manage') // Switch to manage tab to see the created zone
       showToast({ 
@@ -48,7 +57,7 @@ const ManageZones: React.FC = () => {
     mutationFn: async (payload: { id: string; updates: Partial<Pick<Zone, 'name' | 'description' | 'branchIds'>> }) =>
       api.updateZone(payload.id, payload.updates),
     onSuccess: (_result, variables) => {
-      qc.invalidateQueries({ queryKey: QK.ZONES(orgId) })
+      qc.invalidateQueries({ queryKey: QK.ZONES(effectiveOrgId) })
       const zone = zones.find(z => z.id === variables.id)
       showToast({ 
         message: `Zone "${zone?.name || 'Zone'}" updated successfully!`, 
@@ -66,7 +75,7 @@ const ManageZones: React.FC = () => {
   const deleteZone = useMutation({
     mutationFn: async (id: string) => api.deleteZone(id),
     onSuccess: (_result, id) => {
-      qc.invalidateQueries({ queryKey: QK.ZONES(orgId) })
+      qc.invalidateQueries({ queryKey: QK.ZONES(effectiveOrgId) })
       const zone = zones.find(z => z.id === id)
       showToast({ 
         message: `Zone "${zone?.name || 'Zone'}" deleted successfully!`, 
