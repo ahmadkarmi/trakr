@@ -4,6 +4,7 @@ import { api } from '../../utils/api'
 import { QK } from '../../utils/queryKeys'
 import { Audit, Branch, Survey, AuditStatus, calculateWeightedAuditScore, calculateAuditScore } from '@trakr/shared'
 import { format } from 'date-fns'
+import { useOrganization } from '../../contexts/OrganizationContext'
 
 interface AuditHistoryProps {
   roleFilter?: 'admin' | 'branch-manager' | 'auditor'
@@ -11,18 +12,23 @@ interface AuditHistoryProps {
 }
 
 const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branchId }) => {
-  // Fetch data
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
+
+  // Fetch data (org-scoped)
   const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({ 
-    queryKey: QK.AUDITS(roleFilter), 
-    queryFn: () => api.getAudits() 
+    queryKey: ['audits', roleFilter, effectiveOrgId], 
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   const { data: branches = [] } = useQuery<Branch[]>({ 
-    queryKey: ['branches'], 
-    queryFn: () => api.getBranches() 
+    queryKey: ['branches', effectiveOrgId], 
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   const { data: surveys = [] } = useQuery<Survey[]>({ 
-    queryKey: ['surveys'], 
-    queryFn: () => api.getSurveys() 
+    queryKey: ['surveys', effectiveOrgId], 
+    queryFn: () => (api as any).getSurveys(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
 
   // Filter state
