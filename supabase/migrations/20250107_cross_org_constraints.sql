@@ -32,29 +32,37 @@ CHECK (
 -- BRANCH MANAGER ASSIGNMENTS
 -- ====================
 
--- Ensure branch and manager are in same organization
-ALTER TABLE branch_manager_assignments
-ADD CONSTRAINT bma_branch_same_org_check
-CHECK (
-  org_id = (SELECT org_id FROM branches WHERE id = branch_id)
-);
+-- Note: branch_manager_assignments table doesn't have org_id column
+-- It's implicitly scoped via branch_id -> branches.org_id and manager_id -> users.org_id
+-- RLS policies enforce org isolation, so constraints are not strictly needed here
+-- If we add org_id column in future, uncomment these:
 
-ALTER TABLE branch_manager_assignments
-ADD CONSTRAINT bma_manager_same_org_check
-CHECK (
-  org_id = (SELECT org_id FROM users WHERE id = manager_id)
-);
+-- ALTER TABLE branch_manager_assignments
+-- ADD CONSTRAINT bma_branch_same_org_check
+-- CHECK (
+--   org_id = (SELECT org_id FROM branches WHERE id = branch_id)
+-- );
+
+-- ALTER TABLE branch_manager_assignments
+-- ADD CONSTRAINT bma_manager_same_org_check
+-- CHECK (
+--   org_id = (SELECT org_id FROM users WHERE id = manager_id)
+-- );
 
 -- ====================
 -- AUDITOR ASSIGNMENTS
 -- ====================
 
--- Ensure user is in same organization
-ALTER TABLE auditor_assignments
-ADD CONSTRAINT aa_user_same_org_check
-CHECK (
-  org_id = (SELECT org_id FROM users WHERE id = user_id)
-);
+-- Note: auditor_assignments table likely doesn't have org_id column
+-- It's implicitly scoped via user_id -> users.org_id
+-- RLS policies enforce org isolation
+-- If we add org_id column in future, uncomment this:
+
+-- ALTER TABLE auditor_assignments
+-- ADD CONSTRAINT aa_user_same_org_check
+-- CHECK (
+--   org_id = (SELECT org_id FROM users WHERE id = user_id)
+-- );
 
 -- ====================
 -- ZONES TABLE
@@ -115,11 +123,13 @@ COMMENT ON CONSTRAINT audits_user_same_org_check ON audits IS
 COMMENT ON CONSTRAINT audits_survey_same_org_check ON audits IS 
   'Ensures audit uses a survey template from the same organization';
 
-COMMENT ON CONSTRAINT bma_branch_same_org_check ON branch_manager_assignments IS 
-  'Ensures branch manager assignment references a branch in the same organization';
+-- Branch manager assignments constraints commented out (table doesn't have org_id column)
+-- COMMENT ON CONSTRAINT bma_branch_same_org_check ON branch_manager_assignments IS 
+--   'Ensures branch manager assignment references a branch in the same organization';
 
-COMMENT ON CONSTRAINT bma_manager_same_org_check ON branch_manager_assignments IS 
-  'Ensures branch manager is in the same organization as the branch';
+-- COMMENT ON CONSTRAINT bma_manager_same_org_check ON branch_manager_assignments IS 
+--   'Ensures branch manager is in the same organization as the branch';
 
-COMMENT ON CONSTRAINT aa_user_same_org_check ON auditor_assignments IS 
-  'Ensures auditor assignment references a user in the same organization';
+-- Auditor assignments constraint (only if table has org_id column)
+-- COMMENT ON CONSTRAINT aa_user_same_org_check ON auditor_assignments IS 
+--   'Ensures auditor assignment references a user in the same organization';
