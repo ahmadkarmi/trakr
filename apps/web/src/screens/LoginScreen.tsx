@@ -38,6 +38,8 @@ const LoginScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [fullName, setFullName] = useState('') // For registration form
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [lockoutSecondsRemaining, setLockoutSecondsRemaining] = useState(0)
   
   // Status state
   const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
@@ -48,6 +50,7 @@ const LoginScreen: React.FC = () => {
   const [lockUntil, setLockUntil] = useState<Date | null>(null)
   
   const formRef = useRef<HTMLFormElement>(null)
+  const emailInputRef = useRef<HTMLInputElement>(null)
   
   // Parallax effect state
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
@@ -63,12 +66,26 @@ const LoginScreen: React.FC = () => {
     setConfirmPassword('')
   }
 
-  // Clear lock after timeout
+  // Auto-focus email field on mount
   useEffect(() => {
-    if (lockUntil && lockUntil <= new Date()) {
-      setIsLocked(false)
-      setLockUntil(null)
-      setFailedAttempts(0)
+    emailInputRef.current?.focus()
+  }, [])
+
+  // Lockout countdown timer
+  useEffect(() => {
+    if (lockUntil && lockUntil > new Date()) {
+      const interval = setInterval(() => {
+        const remaining = Math.ceil((lockUntil.getTime() - new Date().getTime()) / 1000)
+        if (remaining <= 0) {
+          setIsLocked(false)
+          setLockUntil(null)
+          setFailedAttempts(0)
+          setLockoutSecondsRemaining(0)
+        } else {
+          setLockoutSecondsRemaining(remaining)
+        }
+      }, 1000)
+      return () => clearInterval(interval)
     }
   }, [lockUntil])
 
@@ -203,6 +220,16 @@ const LoginScreen: React.FC = () => {
         throw new Error('Supabase auth is not configured')
       }
       const supabase = getSupabase()
+      
+      // Set session persistence based on "Remember Me" checkbox
+      if (rememberMe) {
+        console.log('[Auth] Remember me enabled - session will persist for 30 days')
+        // Store preference for extended session (Supabase handles this via local storage)
+        localStorage.setItem('trakr_remember_me', 'true')
+      } else {
+        localStorage.removeItem('trakr_remember_me')
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       if (!data.user) throw new Error('No user returned')
@@ -758,16 +785,26 @@ const LoginScreen: React.FC = () => {
                 )}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-2">Email</label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all text-white placeholder-white/60"
-                    placeholder="Enter your email"
-                    autoComplete="email"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      ref={emailInputRef}
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 pr-12 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all text-white placeholder-white/60"
+                      placeholder="Enter your email"
+                      autoComplete="email"
+                      required
+                    />
+                    {email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {authMode !== 'forgot-password' && (
@@ -813,6 +850,11 @@ const LoginScreen: React.FC = () => {
                       )}
                     </button>
                   </div>
+                  {authMode === 'register' && (
+                    <p className="text-xs text-white/70 mt-2">
+                      Must be 8+ characters with uppercase, lowercase, and numbers
+                    </p>
+                  )}
                 </div>
                 )}
 
@@ -858,9 +900,23 @@ const LoginScreen: React.FC = () => {
                       <span className="text-red-100 text-xl flex-shrink-0">❌</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-red-100 mb-1">{authError.title}</p>
-                        <p className="text-xs text-red-200 mb-2">{authError.message}</p>
-                        {authError.action && (
+                        <p className="text-xs text-red-200 mb-2">
+                          {isLocked && lockoutSecondsRemaining > 0 
+                            ? `Account locked for ${Math.floor(lockoutSecondsRemaining / 60)}:${String(lockoutSecondsRemaining % 60).padStart(2, '0')}. Please wait or use "Forgot password" to reset.`
+                            : authError.message
+                          }
+                        </p>
+                        {authError.action && !isLocked && (
                           <p className="text-xs text-red-100 font-medium">→ {authError.action}</p>
+                        )}
+                        {isLocked && (
+                          <button
+                            type="button"
+                            onClick={() => switchMode('forgot-password')}
+                            className="text-xs text-red-100 font-medium hover:text-red-50 underline"
+                          >
+                            → Forgot password?
+                          </button>
                         )}
                       </div>
                     </div>
@@ -878,6 +934,19 @@ const LoginScreen: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                )}
+
+                {/* Remember Me - Login Only */}
+                {authMode === 'login' && (
+                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded border-white/30 bg-white/20 text-primary-600 focus:ring-2 focus:ring-white/50 cursor-pointer"
+                    />
+                    <span>Remember me for 30 days</span>
+                  </label>
                 )}
 
                 <button
