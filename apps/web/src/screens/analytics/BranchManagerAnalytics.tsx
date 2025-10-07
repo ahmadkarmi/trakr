@@ -71,6 +71,11 @@ const BranchManagerAnalytics: React.FC = () => {
     return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.APPROVED
   }).length
   
+  // Track audits pending approval (SUBMITTED status)
+  const pendingApprovalAudits = branchAudits.filter(a => 
+    a.status === AuditStatus.SUBMITTED
+  ).length
+  
   // Calculate average quality score using actual survey data
   const branchAverageScore = React.useMemo(() => {
     if (branchAudits.length === 0 || surveys.length === 0) return 0
@@ -201,13 +206,11 @@ const BranchManagerAnalytics: React.FC = () => {
             description="Branch quality rating"
           />
           <AnalyticsKPICard
-            title="Overdue"
-            value={overdueBranchAudits.toString()}
-            trend="-5%"
-            trendDirection="down"
-            icon="🚨"
-            description="Past due audits"
-            variant={overdueBranchAudits > 0 ? "danger" : "success"}
+            title="Pending Approval"
+            value={pendingApprovalAudits.toString()}
+            icon="⏳"
+            description="Awaiting your review"
+            variant={pendingApprovalAudits > 0 ? "warning" : "success"}
           />
         </div>
 

@@ -26,6 +26,11 @@ const AdminAnalytics: React.FC = () => {
     return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.APPROVED
   }).length
   
+  // Track audits pending approval (SUBMITTED status)
+  const pendingApprovalAudits = audits.filter(a => 
+    a.status === AuditStatus.SUBMITTED
+  ).length
+  
   // Calculate average quality score using actual survey data
   const averageScore = React.useMemo(() => {
     console.log('🔍 [DEBUG] Audits:', audits.length, 'Surveys:', surveys.length)
@@ -300,15 +305,15 @@ const AdminAnalytics: React.FC = () => {
             </div>
           </div>
           
-          <div className={`card-compact ${overdueAudits > 0 ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
+          <div className={`card-compact ${pendingApprovalAudits > 0 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
-                <span className="text-xl">🚨</span>
+                <span className="text-xl">⏳</span>
               </div>
               <div className="flex-1">
-                <div className={`text-2xl font-bold ${overdueAudits > 0 ? 'text-red-600' : 'text-gray-900'}`}>{overdueAudits}</div>
-                <div className="text-sm text-gray-600">Overdue</div>
-                <div className="text-xs text-gray-500">Past due audits</div>
+                <div className={`text-2xl font-bold ${pendingApprovalAudits > 0 ? 'text-orange-600' : 'text-gray-900'}`}>{pendingApprovalAudits}</div>
+                <div className="text-sm text-gray-600">Pending Approval</div>
+                <div className="text-xs text-gray-500">Awaiting manager review</div>
               </div>
             </div>
           </div>
