@@ -809,18 +809,7 @@ const LoginScreen: React.FC = () => {
 
                 {authMode !== 'forgot-password' && (
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label htmlFor="password" className="block text-sm font-medium text-white/90">Password</label>
-                    {authMode === 'login' && (
-                      <button
-                        type="button"
-                        className="text-sm text-white/80 hover:text-white font-medium transition-colors"
-                        onClick={() => switchMode('forgot-password')}
-                      >
-                        Forgot?
-                      </button>
-                    )}
-                  </div>
+                  <label htmlFor="password" className="block text-sm font-medium text-white/90 mb-2">Password</label>
                   <div className="relative">
                     <input
                       id="password"
@@ -936,17 +925,26 @@ const LoginScreen: React.FC = () => {
                   </div>
                 )}
 
-                {/* Remember Me - Login Only */}
+                {/* Remember Me Toggle - Login Only */}
                 {authMode === 'login' && (
-                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-white/30 bg-white/20 text-primary-600 focus:ring-2 focus:ring-white/50 cursor-pointer"
-                    />
-                    <span>Remember me for 30 days</span>
-                  </label>
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-sm text-white/90 font-medium">Remember me for 30 days</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={rememberMe}
+                      onClick={() => setRememberMe(!rememberMe)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-transparent ${
+                        rememberMe ? 'bg-primary-600' : 'bg-white/20'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform ${
+                          rememberMe ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 )}
 
                 <button
@@ -979,16 +977,27 @@ const LoginScreen: React.FC = () => {
               {/* Mode Switch Links */}
               <div className="text-center text-sm text-white/80">
                 {authMode === 'login' ? (
-                  <>
-                    Don't have an account?{' '}
-                    <button 
-                      onClick={() => switchMode('register')}
-                      className="text-white font-medium hover:underline"
-                      type="button"
-                    >
-                      Sign up
-                    </button>
-                  </>
+                  <div className="space-y-2">
+                    <div>
+                      Don't have an account?{' '}
+                      <button 
+                        onClick={() => switchMode('register')}
+                        className="text-white font-medium hover:underline"
+                        type="button"
+                      >
+                        Sign up
+                      </button>
+                    </div>
+                    <div>
+                      <button 
+                        onClick={() => switchMode('forgot-password')}
+                        className="text-white/70 hover:text-white font-medium hover:underline transition-colors"
+                        type="button"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  </div>
                 ) : authMode === 'register' ? (
                   <>
                     Already have an account?{' '}
