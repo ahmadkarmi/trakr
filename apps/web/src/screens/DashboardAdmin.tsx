@@ -11,34 +11,35 @@ import StatusBadge from '@/components/StatusBadge'
 import ResponsiveTable from '../components/ResponsiveTable'
 import InfoBadge from '@/components/InfoBadge'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const DashboardAdmin: React.FC = () => {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const { effectiveOrgId, isSuperAdmin, currentOrg } = useOrganization()
 
   const queryClient = useQueryClient()
-  const { data: orgs = [] } = useQuery<Organization[]>({
-    queryKey: QK.ORGANIZATIONS,
-    queryFn: api.getOrganizations,
-  })
+  
   const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: QK.BRANCHES(orgs[0]?.id),
-    queryFn: () => api.getBranches(orgs[0]?.id),
-    enabled: orgs.length > 0,
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
   const { data: zones = [] } = useQuery<Zone[]>({
-    queryKey: QK.ZONES(orgs[0]?.id),
-    queryFn: () => api.getZones(orgs[0]?.id),
-    enabled: orgs.length > 0,
+    queryKey: ['zones', effectiveOrgId],
+    queryFn: () => api.getZones(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
   const { data: users = [] } = useQuery({
-    queryKey: QK.USERS,
-    queryFn: api.getUsers,
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
   // surveys query removed from dashboard; not needed for KPIs here
   const { data: audits = [] } = useQuery<Audit[]>({
-    queryKey: QK.AUDITS('admin'),
-    queryFn: () => api.getAudits(),
+    queryKey: ['audits', 'admin', effectiveOrgId],
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
   // Get all branch manager assignments to identify branches without managers
@@ -89,7 +90,7 @@ const DashboardAdmin: React.FC = () => {
 
   // Organization settings moved to Settings screen (admin-only)
   // Org-aware period helpers (mirrors server scheduling logic)
-  const org = orgs[0]
+  const org = currentOrg
   const getOrgLocalNow = React.useCallback((now: Date) => {
     try { return new Date(now.toLocaleString('en-US', { timeZone: org?.timeZone || 'UTC' })) } catch { return new Date(now) }
   }, [org?.timeZone])
