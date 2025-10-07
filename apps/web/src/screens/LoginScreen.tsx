@@ -727,11 +727,11 @@ const LoginScreen: React.FC = () => {
           {/* Enhanced glass effect overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-white/15 to-white/5 rounded-2xl"></div>
           
-          {/* Mobile Logo Header - Balanced Design */}
-          <div className="relative py-8 border-b border-white/30 lg:hidden bg-gradient-to-b from-white/5 to-transparent">
-            <div className="flex flex-col items-center justify-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-white to-gray-100 rounded-2xl flex items-center justify-center shadow-2xl ring-2 ring-white/20">
-                <span className="text-3xl font-bold bg-gradient-to-br from-primary-600 to-primary-700 bg-clip-text text-transparent">T</span>
+          {/* Mobile Logo Header */}
+          <div className="relative py-6 border-b border-white/30 lg:hidden bg-gradient-to-b from-white/5 to-transparent">
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-white to-gray-100 rounded-2xl flex items-center justify-center shadow-2xl ring-2 ring-white/20">
+                <span className="text-2xl font-bold bg-gradient-to-br from-primary-600 to-primary-700 bg-clip-text text-transparent">T</span>
               </div>
               <span className="text-white font-bold text-3xl tracking-tight drop-shadow-2xl">Trakr</span>
             </div>
@@ -741,10 +741,10 @@ const LoginScreen: React.FC = () => {
             
             {/* Center Column - Auth Form */}
             <div className="relative p-8 flex flex-col justify-center max-w-md w-full">
-              {/* Desktop Logo - Balanced Design */}
-              <div className="hidden lg:flex flex-col items-center justify-center mb-10 gap-5">
-                <div className="w-20 h-20 bg-gradient-to-br from-white to-gray-100 rounded-2xl flex items-center justify-center shadow-2xl ring-2 ring-white/20">
-                  <span className="text-4xl font-bold bg-gradient-to-br from-primary-600 to-primary-700 bg-clip-text text-transparent">T</span>
+              {/* Desktop Logo */}
+              <div className="hidden lg:flex items-center justify-center mb-8 gap-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-white to-gray-100 rounded-2xl flex items-center justify-center shadow-2xl ring-2 ring-white/20">
+                  <span className="text-3xl font-bold bg-gradient-to-br from-primary-600 to-primary-700 bg-clip-text text-transparent">T</span>
                 </div>
                 <span className="text-white font-bold text-4xl tracking-tight drop-shadow-2xl">Trakr</span>
               </div>
