@@ -26,8 +26,9 @@ export function ZoneBulkAuditorAssignment({ orgId, onClose }: ZoneBulkAuditorAss
   })
 
   const { data: allUsers = [] } = useQuery<User[]>({
-    queryKey: ['users'],
-    queryFn: () => api.getUsers(),
+    queryKey: ['users', orgId],
+    queryFn: () => (api as any).getUsers(orgId),
+    enabled: !!orgId,
   })
 
   const auditors = allUsers.filter(user => user.role === UserRole.AUDITOR)
