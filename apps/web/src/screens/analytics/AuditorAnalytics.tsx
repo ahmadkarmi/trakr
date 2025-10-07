@@ -23,15 +23,16 @@ const AuditorAnalytics: React.FC = () => {
   
   // Calculate personal KPIs
   const totalMyAudits = myAudits.length
+  // Only count APPROVED audits as completed (COMPLETED = not submitted yet)
   const completedMyAudits = myAudits.filter(a => 
-    a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED
+    a.status === AuditStatus.APPROVED
   ).length
   const myCompletionRate = totalMyAudits > 0 ? 
     Math.round((completedMyAudits / totalMyAudits) * 100) : 0
   
   const overdueMyAudits = myAudits.filter(a => {
     if (!a.dueAt) return false
-    return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED
+    return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.APPROVED
   }).length
   
   // Calculate average quality score using actual survey data
@@ -60,7 +61,7 @@ const AuditorAnalytics: React.FC = () => {
   // Calculate team average for anonymous comparison
   const teamAudits = audits.filter(a => a.assignedTo !== user?.id) // Other auditors' audits
   const teamCompletionRate = teamAudits.length > 0 ? 
-    Math.round((teamAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length / teamAudits.length) * 100) : 0
+    Math.round((teamAudits.filter(a => a.status === AuditStatus.APPROVED).length / teamAudits.length) * 100) : 0
   
   const teamAverageScore = React.useMemo(() => {
     if (teamAudits.length === 0 || surveys.length === 0) return 0

@@ -59,15 +59,16 @@ const BranchManagerAnalytics: React.FC = () => {
 
   // Calculate branch-specific KPIs
   const totalBranchAudits = branchAudits.length
+  // Only count APPROVED audits as completed (COMPLETED = not submitted yet)
   const completedBranchAudits = branchAudits.filter(a => 
-    a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED
+    a.status === AuditStatus.APPROVED
   ).length
   const branchCompletionRate = totalBranchAudits > 0 ? 
     Math.round((completedBranchAudits / totalBranchAudits) * 100) : 0
   
   const overdueBranchAudits = branchAudits.filter(a => {
     if (!a.dueAt) return false
-    return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED
+    return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.APPROVED
   }).length
   
   // Calculate average quality score using actual survey data
@@ -95,7 +96,7 @@ const BranchManagerAnalytics: React.FC = () => {
 
   // Calculate system average for comparison (anonymized)
   const systemCompletionRate = audits.length > 0 ? 
-    Math.round((audits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length / audits.length) * 100) : 0
+    Math.round((audits.filter(a => a.status === AuditStatus.APPROVED).length / audits.length) * 100) : 0
 
   // Calculate real monthly trends from audit data
   const monthlyTrends = React.useMemo(() => {
@@ -118,7 +119,6 @@ const BranchManagerAnalytics: React.FC = () => {
       // Calculate metrics
       const total = monthAudits.length
       const completed = monthAudits.filter(a => 
-        a.status === AuditStatus.COMPLETED || 
         a.status === AuditStatus.APPROVED
       ).length
       const completion = total > 0 ? Math.round((completed / total) * 100) : 0
