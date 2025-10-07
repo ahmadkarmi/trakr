@@ -6,14 +6,37 @@ import { Audit, Branch, User, Zone, AuditStatus, UserRole, Survey, calculateAudi
 import Tabs from '../../components/Tabs'
 import AuditHistory from './AuditHistory'
 import AnalyticsChart from '../../components/analytics/AnalyticsChart'
+import { useOrganization } from '../../contexts/OrganizationContext'
 
 const AdminAnalytics: React.FC = () => {
-  // Fetch all data for admin analytics
-  const { data: audits = [] } = useQuery<Audit[]>({ queryKey: QK.AUDITS('admin'), queryFn: () => api.getAudits() })
-  const { data: branches = [] } = useQuery<Branch[]>({ queryKey: ['branches'], queryFn: () => api.getBranches() })
-  const { data: users = [] } = useQuery<User[]>({ queryKey: ['users'], queryFn: () => api.getUsers() })
-  const { data: zones = [] } = useQuery<Zone[]>({ queryKey: ['zones'], queryFn: () => api.getZones() })
-  const { data: surveys = [] } = useQuery<Survey[]>({ queryKey: QK.SURVEYS, queryFn: () => api.getSurveys() })
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
+
+  // Fetch all data for admin analytics (org-scoped)
+  const { data: audits = [] } = useQuery<Audit[]>({ 
+    queryKey: ['audits', 'admin', effectiveOrgId], 
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
+  const { data: branches = [] } = useQuery<Branch[]>({ 
+    queryKey: ['branches', effectiveOrgId], 
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
+  const { data: users = [] } = useQuery<User[]>({ 
+    queryKey: ['users', effectiveOrgId], 
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
+  const { data: zones = [] } = useQuery<Zone[]>({ 
+    queryKey: ['zones', effectiveOrgId], 
+    queryFn: () => api.getZones(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
+  const { data: surveys = [] } = useQuery<Survey[]>({ 
+    queryKey: ['surveys', effectiveOrgId], 
+    queryFn: () => (api as any).getSurveys(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
 
   // Calculate system-wide KPIs
   const totalAudits = audits.length

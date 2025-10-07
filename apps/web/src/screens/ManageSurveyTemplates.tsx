@@ -10,16 +10,19 @@ import StatCard from '../components/StatCard'
 import ResponsiveTable from '../components/ResponsiveTable'
 import { ClipboardDocumentListIcon, CheckCircleIcon, FolderIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../hooks/useToast'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const ManageSurveyTemplates: React.FC = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user } = useAuthStore()
   const { showToast } = useToast()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
 
   const { data: surveys = [], isLoading } = useQuery<Survey[]>({
-    queryKey: QK.SURVEYS,
-    queryFn: api.getSurveys,
+    queryKey: ['surveys', effectiveOrgId],
+    queryFn: () => (api as any).getSurveys(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
 
   const createMutation = useMutation({

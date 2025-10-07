@@ -8,6 +8,7 @@ import { QK } from '../utils/queryKeys'
 import StatusBadge from '@/components/StatusBadge'
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../stores/auth'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 interface SearchResult {
   type: 'audit' | 'branch' | 'user'
@@ -23,29 +24,30 @@ const SearchResults: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   
   const query = searchParams.get('q') || ''
   const [sortBy, setSortBy] = React.useState<'recent' | 'relevance' | 'alphabetical'>('relevance')
 
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
 
-  // Fetch all data
+  // Fetch all data (org-scoped)
   const { data: audits = [] } = useQuery<Audit[]>({
-    queryKey: QK.AUDITS('search'),
-    queryFn: () => api.getAudits(),
-    enabled: !!query,
+    queryKey: ['audits', 'search', effectiveOrgId],
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!query && (!!effectiveOrgId || isSuperAdmin),
   })
 
   const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: QK.BRANCHES(),
-    queryFn: () => api.getBranches(),
-    enabled: !!query && isAdmin,
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!query && isAdmin && (!!effectiveOrgId || isSuperAdmin),
   })
 
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: QK.USERS,
-    queryFn: () => api.getUsers(),
-    enabled: !!query && isAdmin,
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!query && isAdmin && (!!effectiveOrgId || isSuperAdmin),
   })
 
   // Search logic

@@ -5,36 +5,42 @@ import { LogEntry, Audit, AuditStatus, User, Branch, Organization } from '@trakr
 import ResponsiveTable from '../components/ResponsiveTable'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const ActivityLogs: React.FC = () => {
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
+
   const { data: logs = [], isLoading } = useQuery<LogEntry[]>({
-    queryKey: QK.ACTIVITY('all'),
+    queryKey: ['activity', 'all', effectiveOrgId],
     queryFn: () => api.getActivityLogs(),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
-  // Always fetch users for display names
+  // Always fetch users for display names (org-scoped)
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: QK.USERS,
-    queryFn: api.getUsers,
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
   // Fetch organizations and branches for context
   const { data: orgs = [] } = useQuery<Organization[]>({
     queryKey: QK.ORGANIZATIONS,
     queryFn: api.getOrganizations,
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
   const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: QK.BRANCHES(orgs[0]?.id),
-    queryFn: () => api.getBranches(orgs[0]?.id),
-    enabled: orgs.length > 0,
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
-  // Fetch audits to derive activity if logs are empty
+  // Fetch audits to derive activity if logs are empty (org-scoped)
   const { data: audits = [] } = useQuery<Audit[]>({
-    queryKey: QK.AUDITS('all'),
-    queryFn: () => api.getAudits(),
-    enabled: logs.length === 0, // Only fetch if no logs
+    queryKey: ['audits', 'all', effectiveOrgId],
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: (logs.length === 0) && (!!effectiveOrgId || isSuperAdmin),
   })
 
   // Derive activity from audits if no logs exist
