@@ -216,6 +216,16 @@ export const supabaseApi = {
     if (error) throw error
     return (data || []).map(mapOrganization)
   },
+  async createOrganization(name: string): Promise<Organization> {
+    const supabase = await getSupabase()
+    const { data, error } = await supabase.from('organizations').insert({
+      name,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }).select('*').single()
+    if (error) throw error
+    return mapOrganization(data)
+  },
   async getUsers(orgId?: string): Promise<User[]> {
     const supabase = await getSupabase()
     let q = supabase.from('users').select('*')
@@ -1133,7 +1143,7 @@ export const supabaseApi = {
     if (error) throw error
     return mapUser(data as any)
   },
-    async updateUser(id: string, updates: Partial<{ name: string; email: string; role: UserRole; isActive: boolean }>) {
+    async updateUser(id: string, updates: Partial<{ name: string; email: string; role: UserRole; isActive: boolean; org_id: string }>) {
     const supabase = await getSupabase()
 
     // If email is being changed, update it in auth.users as well
@@ -1150,6 +1160,7 @@ export const supabaseApi = {
     if (updates.email != null) base.email = updates.email
     if (updates.role != null) base.role = updates.role.toUpperCase()
     if (updates.isActive != null) base.is_active = updates.isActive
+    if (updates.org_id != null) base.org_id = updates.org_id
     const { data, error } = await supabase.from('users').update(base).eq('id', id).select('*').single()
     if (error) throw error
     return mapUser(data as any)
