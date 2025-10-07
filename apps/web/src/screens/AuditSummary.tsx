@@ -360,7 +360,7 @@ const AuditSummary: React.FC = () => {
               )}
               {isManager && (
                 <div className="flex items-center gap-2 flex-wrap">
-              <button className="btn-outline btn-sm" onClick={() => {
+              <button className="btn-outline btn-sm flex items-center" onClick={() => {
                 if (!audit || !survey) return;
                 // Build CSV rows
                 const rows: string[] = [];
@@ -386,7 +386,10 @@ const AuditSummary: React.FC = () => {
                 a.download = `audit_${auditId}_summary.csv`;
                 a.click();
                 URL.revokeObjectURL(url);
-              }}><DocumentArrowDownIcon className="w-4 h-4 mr-1" /> CSV</button>
+              }}>
+                <DocumentArrowDownIcon className="w-5 h-5" />
+                <span className="hidden sm:inline ml-1.5">CSV</span>
+              </button>
                   {(() => {
                     const canExportPdf = !!audit && !!survey && !!branch && (user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN || audit.status === AuditStatus.APPROVED)
                     const handlePDFExport = async () => {
@@ -413,11 +416,12 @@ const AuditSummary: React.FC = () => {
                     
                     return (
                       <button
-                        className={`btn-outline btn-sm whitespace-nowrap ${!canExportPdf ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`btn-outline btn-sm flex items-center whitespace-nowrap ${!canExportPdf ? 'opacity-50 cursor-not-allowed' : ''}`}
                         onClick={handlePDFExport}
                         disabled={!canExportPdf}
                       >
-                        <ArrowDownTrayIcon className="w-4 h-4 mr-1" /> PDF
+                        <ArrowDownTrayIcon className="w-5 h-5" />
+                        <span className="hidden sm:inline ml-1.5">PDF</span>
                       </button>
                     )
                   })()}
