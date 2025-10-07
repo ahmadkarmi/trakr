@@ -216,9 +216,16 @@ export const supabaseApi = {
     if (error) throw error
     return (data || []).map(mapOrganization)
   },
-  async getUsers(): Promise<User[]> {
+  async getUsers(orgId?: string): Promise<User[]> {
     const supabase = await getSupabase()
-    const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: true })
+    let q = supabase.from('users').select('*')
+    
+    // Filter by org unless Super Admin in global view (orgId = undefined)
+    if (orgId) {
+      q = q.eq('org_id', orgId)
+    }
+    
+    const { data, error } = await q.order('created_at', { ascending: true })
     if (error) throw error
     return (data || []).map(mapUser)
   },
@@ -764,9 +771,16 @@ export const supabaseApi = {
     }
     return survey as any
   },
-  async getSurveys() {
+  async getSurveys(orgId?: string) {
     const supabase = await getSupabase()
-    const { data, error } = await supabase.from('surveys').select('*').order('updated_at', { ascending: false })
+    let q = supabase.from('surveys').select('*')
+    
+    // Filter by org unless Super Admin in global view (orgId = undefined)
+    if (orgId) {
+      q = q.eq('org_id', orgId)
+    }
+    
+    const { data, error } = await q.order('updated_at', { ascending: false })
     if (error) throw error
     
     // Load sections and questions for all surveys
