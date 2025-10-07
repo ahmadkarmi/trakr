@@ -202,7 +202,7 @@ const ActivityLogs: React.FC = () => {
               keyField={(l) => l.id}
               mobileItem={(l) => {
                 const user = users.find(u => u.id === l.userId)
-                const userName = user?.name || l.userId
+                const userName = user?.name || user?.email || 'Unknown User'
                 const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                 const actionIcon = l.action.includes('approved') ? '✅' :
                                   l.action.includes('rejected') ? '❌' :
@@ -217,7 +217,17 @@ const ActivityLogs: React.FC = () => {
                         <div className="text-sm font-semibold text-gray-900">
                           {actionIcon} {l.action.replace(/_/g, ' ')}
                         </div>
-                        <div className="text-sm text-gray-600 mt-1">{l.details}</div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {(() => {
+                            let details = l.details
+                            users.forEach(user => {
+                              if (details.includes(user.id)) {
+                                details = details.replace(new RegExp(user.id, 'g'), user.name || user.email)
+                              }
+                            })
+                            return details
+                          })()}
+                        </div>
                       </div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">
                         {new Date(l.timestamp).toLocaleDateString('en-US', {
@@ -263,18 +273,27 @@ const ActivityLogs: React.FC = () => {
                 {
                   key: 'details',
                   header: 'Details',
-                  render: (l) => (
-                    <div className="text-sm text-gray-700 max-w-md truncate" title={l.details}>
-                      {l.details}
-                    </div>
-                  ),
+                  render: (l) => {
+                    // Replace any user IDs in details with names
+                    let details = l.details
+                    users.forEach(user => {
+                      if (details.includes(user.id)) {
+                        details = details.replace(new RegExp(user.id, 'g'), user.name || user.email)
+                      }
+                    })
+                    return (
+                      <div className="text-sm text-gray-700 max-w-md truncate" title={details}>
+                        {details}
+                      </div>
+                    )
+                  },
                 },
                 {
                   key: 'user',
                   header: 'By',
                   render: (l) => {
                     const user = users.find(u => u.id === l.userId)
-                    const userName = user?.name || l.userId
+                    const userName = user?.name || user?.email || 'Unknown User'
                     const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                     
                     return (
