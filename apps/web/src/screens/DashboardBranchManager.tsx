@@ -14,6 +14,7 @@ const DashboardBranchManager: React.FC = () => {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const { effectiveOrgId, isSuperAdmin } = useOrganization()
+  const [selectedBranchId, setSelectedBranchId] = React.useState('')
 
   const { data: allAudits = [], isLoading } = useQuery<Audit[]>({
     queryKey: ['audits', 'branch-manager', effectiveOrgId],
