@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Organization, UserRole } from '@trakr/shared'
 import { api } from '../utils/api'
 import { useAuthStore } from '../stores/auth'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface OrganizationContextType {
   currentOrg: Organization | null
@@ -21,12 +22,14 @@ const OrganizationContext = createContext<OrganizationContextType | undefined>(u
 
 export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuthStore()
+  const queryClient = useQueryClient()
   const isSuperAdmin = (user?.role === UserRole.SUPER_ADMIN)
   
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null)
   const [availableOrgs, setAvailableOrgs] = useState<Organization[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [globalView, setGlobalViewState] = useState<boolean>(false)
+  const [isSwitching, setIsSwitching] = useState(false)
 
   const loadOrganizations = async () => {
     if (!user) {
@@ -112,23 +115,42 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
 
   const switchOrganization = async (orgId: string) => {
     if (!isSuperAdmin) {
-      console.warn('Only super admins can switch organizations')
+      console.warn('[OrganizationContext] Only super admins can switch organizations')
+      return
+    }
+    
+    // Race condition protection: prevent concurrent switches
+    if (isSwitching) {
+      console.warn('[OrganizationContext] Organization switch already in progress, ignoring request')
       return
     }
     
     const org = availableOrgs.find(o => o.id === orgId)
     if (org) {
-      setCurrentOrg(org)
-      localStorage.setItem('super_admin_active_org', orgId)
-      // Ensure we are in ORG scope when selecting a specific org
-      localStorage.setItem('super_admin_view_scope', 'ORG')
-      setGlobalViewState(false)
+      setIsSwitching(true)
       
-      // (audit trail omitted in web client)
-      
-      // Invalidate React Query cache to reload data for new org
-      // This ensures all data refreshes for the new organization
-      window.location.reload()
+      try {
+        // Cancel all pending queries to prevent race conditions
+        await queryClient.cancelQueries()
+        
+        // Update org state
+        setCurrentOrg(org)
+        localStorage.setItem('super_admin_active_org', orgId)
+        // Ensure we are in ORG scope when selecting a specific org
+        localStorage.setItem('super_admin_view_scope', 'ORG')
+        setGlobalViewState(false)
+        
+        // Clear query cache to ensure fresh data for new org
+        queryClient.clear()
+        
+        // (audit trail omitted in web client)
+        
+        // Reload to ensure clean state
+        window.location.reload()
+      } catch (error) {
+        console.error('[OrganizationContext] Error during org switch:', error)
+        setIsSwitching(false)
+      }
     }
   }
 
