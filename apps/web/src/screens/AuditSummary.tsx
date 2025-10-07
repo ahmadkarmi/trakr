@@ -18,6 +18,7 @@ import { api } from '../utils/api'
 import { notificationHelpers } from '../utils/notifications'
 import { generateAuditPDF } from '../utils/pdfGenerator'
 import { useOrganization } from '../contexts/OrganizationContext'
+import ErrorState from '../components/ErrorState'
 
 const AuditSummary: React.FC = () => {
   const { auditId } = useParams<{ auditId: string }>()
@@ -27,10 +28,27 @@ const AuditSummary: React.FC = () => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  const { data: audit, isLoading: loadingAudit } = useQuery<Audit | null>({
+  const { data: audit, isLoading: loadingAudit, error: auditError } = useQuery<Audit | null>({
     queryKey: QK.AUDIT(auditId),
-    queryFn: () => (auditId ? api.getAuditById(auditId) : Promise.resolve(null)),
-    enabled: !!auditId,
+    queryFn: async () => {
+      if (!auditId) return null
+      
+      const audit = await api.getAuditById(auditId)
+      
+      // Security check: Verify audit belongs to current org (unless Super Admin)
+      if (audit && audit.orgId !== effectiveOrgId && !isSuperAdmin) {
+        console.warn('[Security] Attempted access to audit from different org:', {
+          auditId: audit.id,
+          auditOrgId: audit.orgId,
+          userOrgId: effectiveOrgId
+        })
+        throw new Error('UNAUTHORIZED_ACCESS')
+      }
+      
+      return audit
+    },
+    enabled: !!auditId && (!!effectiveOrgId || isSuperAdmin),
+    retry: false, // Don't retry unauthorized access
   })
 
   // Manager approval state
@@ -73,7 +91,22 @@ const AuditSummary: React.FC = () => {
   // Organization (for time zone formatting)
   const orgTimeZone = useOrgTimeZone()
 
-  const branch = React.useMemo(() => branches.find(b => b.id === audit?.branchId) || null, [branches, audit?.branchId])
+  const branch = React.useMemo(() => {
+    const foundBranch = branches.find(b => b.id === audit?.branchId) || null
+    
+    // Security check: Warn if audit references branch from different org
+    if (audit && !foundBranch && audit.branchId) {
+      console.error('[Security] Cross-org reference detected:', {
+        auditId: audit.id,
+        branchId: audit.branchId,
+        auditOrgId: audit.orgId,
+        effectiveOrgId,
+        availableBranches: branches.length
+      })
+    }
+    
+    return foundBranch
+  }, [branches, audit?.branchId, audit, effectiveOrgId])
   const canManagerApprove = React.useMemo(() => {
     if (!audit || !user) return false
     if (user.role !== UserRole.BRANCH_MANAGER) return false
@@ -335,6 +368,62 @@ const AuditSummary: React.FC = () => {
 
   const isAuditor = user?.role === UserRole.AUDITOR
   const isManager = user?.role === UserRole.BRANCH_MANAGER || user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
+
+  // Handle errors
+  if (auditError) {
+    const errorMessage = auditError.message || auditError.toString()
+    
+    if (errorMessage.includes('UNAUTHORIZED_ACCESS')) {
+      return (
+        <DashboardLayout title="Access Denied">
+          <div className="text-center py-12 px-4">
+            <ErrorState
+              title="Access Denied"
+              message="You don't have permission to view this audit. It belongs to a different organization."
+            />
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </DashboardLayout>
+      )
+    }
+    
+    return (
+      <DashboardLayout title="Error">
+        <ErrorState
+          message={`Failed to load audit: ${errorMessage}`}
+          retry={() => window.location.reload()}
+        />
+      </DashboardLayout>
+    )
+  }
+  
+  // Loading state
+  if (loadingAudit) return <SkeletonDetailPage />
+  
+  // Audit not found
+  if (!audit) {
+    return (
+      <DashboardLayout title="Not Found">
+        <div className="text-center py-12 px-4">
+          <ErrorState
+            title="Audit Not Found"
+            message="This audit doesn't exist or has been deleted."
+          />
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout title="Audit Summary">
