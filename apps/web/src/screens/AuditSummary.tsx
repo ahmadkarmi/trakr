@@ -17,10 +17,12 @@ import { useOrgTimeZone } from '../hooks/useOrg'
 import { api } from '../utils/api'
 import { notificationHelpers } from '../utils/notifications'
 import { generateAuditPDF } from '../utils/pdfGenerator'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const AuditSummary: React.FC = () => {
   const { auditId } = useParams<{ auditId: string }>()
   const { user } = useAuthStore()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   const { showToast } = useToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -176,8 +178,9 @@ const AuditSummary: React.FC = () => {
 
   // Fetch users for displaying names in history
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: QK.USERS,
-    queryFn: () => api.getUsers(),
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   
   // Generate key events from actual logs OR derive from audit status if no logs exist
