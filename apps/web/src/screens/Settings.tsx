@@ -261,17 +261,17 @@ const Settings: React.FC = () => {
 
         {/* Super Admin: Organization Management Panel */}
         {isSuperAdmin && availableOrgs.length > 0 ? (
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
+          <div className="card p-4 sm:p-6">
+            <div className="mb-4">
+              <div className="flex items-start justify-between gap-3 mb-2">
                 <h2 className="text-lg font-semibold text-gray-900">Manage Organizations</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Access management tools for each organization
-                </p>
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full whitespace-nowrap flex-shrink-0">
+                  {availableOrgs.length} {availableOrgs.length === 1 ? 'Org' : 'Orgs'}
+                </span>
               </div>
-              <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
-                {availableOrgs.length} {availableOrgs.length === 1 ? 'Organization' : 'Organizations'}
-              </span>
+              <p className="text-sm text-gray-600">
+                Access management tools for each organization
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
