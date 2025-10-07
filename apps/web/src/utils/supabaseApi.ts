@@ -1271,18 +1271,20 @@ export const supabaseApi = {
   // ===================================
   // Branch Manager Assignments
   // ===================================
-  async getAllBranchManagerAssignments(orgId?: string) {
+  async getAllBranchManagerAssignments() {
     const supabase = await getSupabase()
-    let q = supabase
+    
+    // NOTE: branch_manager_assignments table doesn't have org_id column
+    // It's org-scoped implicitly via:
+    // - branch_id -> branches.org_id
+    // - manager_id -> users.org_id
+    // RLS policies on branches and users tables enforce org isolation
+    // (orgId parameter removed as it's not needed - RLS handles filtering)
+    
+    const { data, error } = await supabase
       .from('branch_manager_assignments')
       .select('*')
-    
-    // Filter by org if provided (for multi-tenant isolation)
-    if (orgId) {
-      q = q.eq('org_id', orgId)
-    }
-    
-    const { data, error } = await q.order('assigned_at', { ascending: false })
+      .order('assigned_at', { ascending: false })
     
     if (error) throw error
     return (data || []).map((row: any) => ({
