@@ -881,19 +881,7 @@ const LoginScreen: React.FC = () => {
                 )}
 
                 <button
-                  type="button"
-                  onClick={(e) => {
-                    if (authStatus === 'submitting' || isLocked) return
-                    e.preventDefault()
-                    e.stopPropagation()
-                    if (authMode === 'login') {
-                      void handleLogin(e as any)
-                    } else if (authMode === 'register') {
-                      void handleRegister(e as any)
-                    } else {
-                      void handleForgotPassword(e as any)
-                    }
-                  }}
+                  type="submit"
                   disabled={authStatus === 'submitting' || isLocked}
                   className="w-full bg-white hover:bg-gray-50 text-gray-900 font-semibold py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 shadow-xl flex items-center justify-center gap-2"
                 >
