@@ -693,7 +693,7 @@ const LoginScreen: React.FC = () => {
       </div>
 
       {/* Main Login Card - Glass Effect with Logo Inside */}
-      <div className="relative z-10 w-full max-w-4xl mx-4">
+      <div className="relative z-10 w-full max-w-md mx-4">
         <div className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
           {/* Glass effect overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-white/5 rounded-2xl"></div>
@@ -963,7 +963,7 @@ const LoginScreen: React.FC = () => {
       {/* Bottom Tagline */}
       <div className="absolute bottom-4 lg:bottom-8 left-0 right-0 text-center z-10 px-4">
         <p className="text-white/90 text-xs lg:text-sm font-medium tracking-wide leading-relaxed">
-          LET'S MAKE THE WORLD MORE PRODUCTIVE, TOGETHER.
+          Streamline audits. Empower teams. Drive excellence.
         </p>
       </div>
     </div>
