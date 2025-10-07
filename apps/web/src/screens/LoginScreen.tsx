@@ -963,7 +963,7 @@ const LoginScreen: React.FC = () => {
       {/* Bottom Tagline */}
       <div className="absolute bottom-4 lg:bottom-8 left-0 right-0 text-center z-10 px-4">
         <p className="text-white/90 text-xs lg:text-sm font-medium tracking-wide leading-relaxed">
-          Streamline audits. Empower teams. Drive excellence.
+          Streamline audits. Empower teams. Drive excellence. Use Trakr.
         </p>
       </div>
     </div>
