@@ -7,13 +7,13 @@ import { useQueryClient } from '@tanstack/react-query'
 interface OrganizationContextType {
   currentOrg: Organization | null
   availableOrgs: Organization[]
-  switchOrganization: (orgId: string) => Promise<void>
+  switchOrganization: (orgId: string, force?: boolean) => Promise<void>
   isLoading: boolean
   isSuperAdmin: boolean
   refreshOrganizations: () => Promise<void>
   // Super admin global view (all organizations)
   globalView: boolean
-  setGlobalView: (on: boolean) => Promise<void>
+  setGlobalView: (on: boolean, force?: boolean) => Promise<void>
   // Computed effective org id for queries (undefined when globalView)
   effectiveOrgId: string | undefined
 }
@@ -113,7 +113,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     loadOrganizations()
   }, [user, isSuperAdmin])
 
-  const switchOrganization = async (orgId: string) => {
+  const switchOrganization = async (orgId: string, force: boolean = false) => {
     if (!isSuperAdmin) {
       console.warn('[OrganizationContext] Only super admins can switch organizations')
       return
@@ -123,6 +123,19 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     if (isSwitching) {
       console.warn('[OrganizationContext] Organization switch already in progress, ignoring request')
       return
+    }
+    
+    // Check for unsaved changes (pending mutations)
+    if (!force && queryClient.isMutating() > 0) {
+      const confirmed = window.confirm(
+        '⚠️ You have unsaved changes that will be lost if you switch organizations.\n\n' +
+        'Do you want to continue switching anyway?'
+      )
+      
+      if (!confirmed) {
+        console.log('[OrganizationContext] Org switch cancelled by user (unsaved changes)')
+        return
+      }
     }
     
     const org = availableOrgs.find(o => o.id === orgId)
@@ -154,8 +167,22 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const setGlobalView = async (on: boolean) => {
+  const setGlobalView = async (on: boolean, force: boolean = false) => {
     if (!isSuperAdmin) return
+    
+    // Check for unsaved changes before switching view mode
+    if (!force && queryClient.isMutating() > 0) {
+      const confirmed = window.confirm(
+        '⚠️ You have unsaved changes that will be lost if you switch view mode.\n\n' +
+        'Do you want to continue anyway?'
+      )
+      
+      if (!confirmed) {
+        console.log('[OrganizationContext] View mode switch cancelled by user (unsaved changes)')
+        return
+      }
+    }
+    
     setGlobalViewState(on)
     localStorage.setItem('super_admin_view_scope', on ? 'ALL' : 'ORG')
     // When switching to ALL, clear currentOrg to avoid confusion
