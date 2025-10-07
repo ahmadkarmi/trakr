@@ -11,22 +11,29 @@ import { useOrganization } from '../../contexts/OrganizationContext'
 
 const BranchManagerAnalytics: React.FC = () => {
   const { user } = useAuthStore()
-  const { currentOrg } = useOrganization()
-  const orgId = currentOrg?.id || user?.orgId
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
 
   // Fetch data scoped to current organization
   const { data: audits = [] } = useQuery<Audit[]>({
-    queryKey: ['audits', orgId],
-    queryFn: () => api.getAudits(orgId ? { orgId } : undefined),
-    enabled: !!orgId,
+    queryKey: ['audits', effectiveOrgId],
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
   const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: QK.BRANCHES(orgId),
-    queryFn: () => api.getBranches(orgId),
-    enabled: !!orgId,
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
-  const { data: users = [] } = useQuery<User[]>({ queryKey: QK.USERS, queryFn: api.getUsers })
-  const { data: surveys = [] } = useQuery<Survey[]>({ queryKey: QK.SURVEYS, queryFn: () => api.getSurveys() })
+  const { data: users = [] } = useQuery<User[]>({ 
+    queryKey: ['users', effectiveOrgId], 
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
+  const { data: surveys = [] } = useQuery<Survey[]>({ 
+    queryKey: ['surveys', effectiveOrgId], 
+    queryFn: () => (api as any).getSurveys(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
   
   // Get branch manager assignments for current user
   const { data: myAssignments = [] } = useQuery<BranchManagerAssignment[]>({
