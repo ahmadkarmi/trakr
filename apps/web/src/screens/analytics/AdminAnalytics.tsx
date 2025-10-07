@@ -17,12 +17,13 @@ const AdminAnalytics: React.FC = () => {
 
   // Calculate system-wide KPIs
   const totalAudits = audits.length
-  const completedAudits = audits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
+  // Only count APPROVED audits as completed (COMPLETED = not submitted yet)
+  const completedAudits = audits.filter(a => a.status === AuditStatus.APPROVED).length
   const completionRate = totalAudits > 0 ? Math.round((completedAudits / totalAudits) * 100) : 0
   
   const overdueAudits = audits.filter(a => {
     if (!a.dueAt) return false
-    return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.APPROVED
+    return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.APPROVED
   }).length
   
   // Calculate average quality score using actual survey data
@@ -87,7 +88,7 @@ const AdminAnalytics: React.FC = () => {
       })
       
       const total = monthAudits.length
-      const completed = monthAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
+      const completed = monthAudits.filter(a => a.status === AuditStatus.APPROVED).length
       const completion = total > 0 ? Math.round((completed / total) * 100) : 0
       
       months.push({ name: monthName, completion, total })
@@ -102,7 +103,7 @@ const AdminAnalytics: React.FC = () => {
     
     // Only include completed/approved audits for quality metrics
     const completedAudits = audits.filter(a => 
-      (a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED) &&
+      a.status === AuditStatus.APPROVED &&
       a.responses && Object.keys(a.responses).length > 0
     )
     
@@ -142,13 +143,13 @@ const AdminAnalytics: React.FC = () => {
     return branches.map(branch => {
       const branchAudits = audits.filter(a => a.branchId === branch.id)
       const total = branchAudits.length
-      const completed = branchAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
+      const completed = branchAudits.filter(a => a.status === AuditStatus.APPROVED).length
       const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
       
       // Only calculate quality score from completed audits with responses
       const completedWithResponses = branchAudits
         .filter(audit => 
-          (audit.status === AuditStatus.COMPLETED || audit.status === AuditStatus.APPROVED) &&
+          audit.status === AuditStatus.APPROVED &&
           audit.responses && Object.keys(audit.responses).length > 0
         )
         .map(audit => {
@@ -186,13 +187,13 @@ const AdminAnalytics: React.FC = () => {
     return auditors.map(auditor => {
       const auditorAudits = audits.filter(a => a.assignedTo === auditor.id)
       const total = auditorAudits.length
-      const completed = auditorAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
+      const completed = auditorAudits.filter(a => a.status === AuditStatus.APPROVED).length
       const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
       
       // Only calculate quality score from completed audits with responses
       const completedWithResponses = auditorAudits
         .filter(audit => 
-          (audit.status === AuditStatus.COMPLETED || audit.status === AuditStatus.APPROVED) &&
+          audit.status === AuditStatus.APPROVED &&
           audit.responses && Object.keys(audit.responses).length > 0
         )
         .map(audit => {

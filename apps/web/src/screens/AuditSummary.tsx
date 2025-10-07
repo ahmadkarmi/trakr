@@ -2,7 +2,7 @@ import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Audit, Survey, calculateAuditScore, calculateWeightedAuditScore, calculateSectionWeightedCompliance, calculateSectionWeightedWeightedCompliance, AuditStatus, UserRole, Branch, LogEntry, User } from '@trakr/shared'
+import { Audit, Survey, calculateAuditScore, calculateWeightedAuditScore, calculateSectionWeightedCompliance, calculateSectionWeightedWeightedCompliance, AuditStatus, UserRole, Branch, LogEntry, User, validateAuditCompletion, getValidationErrorMessage, groupMissingResponsesBySection } from '@trakr/shared'
 import StatusBadge from '@/components/StatusBadge'
 import StatCard from '../components/StatCard'
 import ProgressDonut from '../components/ProgressDonut'
@@ -290,30 +290,36 @@ const AuditSummary: React.FC = () => {
 
   const handleSubmitForApproval = React.useCallback(() => {
     if (!audit || !survey || !user) return
-    // Validate only when not completed yet (draft/in_progress)
-    if (audit.status === AuditStatus.DRAFT || audit.status === AuditStatus.IN_PROGRESS) {
-      const issues: Array<{ sectionId: string; sectionTitle: string; questions: Array<{ id: string; text: string }> }> = []
-      survey.sections.forEach((sec) => {
-        const missing: Array<{ id: string; text: string }> = []
-        sec.questions.forEach((q) => {
-          if (q.required) {
-            const resp = audit.responses[q.id]
-            if (!resp) missing.push({ id: q.id, text: q.text })
-          }
-        })
-        if (missing.length > 0) issues.push({ sectionId: sec.id, sectionTitle: sec.title, questions: missing })
-      })
-      if (issues.length > 0) {
-        setSubmitIssues(issues)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-        return
-      }
-    } else if (audit.status === AuditStatus.SUBMITTED || audit.status === AuditStatus.APPROVED) {
+    
+    // Block if already submitted or approved
+    if (audit.status === AuditStatus.SUBMITTED || audit.status === AuditStatus.APPROVED) {
       return
     }
+    
+    // Validate completeness for all statuses (even COMPLETED - double check)
+    const validation = validateAuditCompletion(audit, survey)
+    
+    if (!validation.isValid) {
+      // Convert validation result to the format expected by UI
+      const grouped = groupMissingResponsesBySection(validation)
+      const issues = Object.entries(grouped).map(([sectionTitle, questions]) => ({
+        sectionId: '', // Not needed for display
+        sectionTitle,
+        questions: questions.map(q => ({ id: q.questionId, text: q.questionText }))
+      }))
+      
+      setSubmitIssues(issues)
+      showToast({ 
+        message: getValidationErrorMessage(validation), 
+        variant: 'error' 
+      })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    
     setSubmitIssues([])
     submitMutation.mutate()
-  }, [audit, survey, user, submitMutation])
+  }, [audit, survey, user, submitMutation, showToast])
 
   
 

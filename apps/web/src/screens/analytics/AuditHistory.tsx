@@ -124,8 +124,9 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
   // Calculate stats
   const stats = useMemo(() => {
     const total = filteredAudits.length
+    // Only count APPROVED audits as completed (COMPLETED = not submitted yet)
     const completed = filteredAudits.filter(a => 
-      a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED
+      a.status === AuditStatus.APPROVED
     ).length
     
     const auditsWithValidScores = filteredAudits.filter(a => a.calculatedScore !== null)
