@@ -719,37 +719,47 @@ const LoginScreen: React.FC = () => {
         <div className="absolute bottom-0 left-0 w-full h-[95%] bg-gradient-to-t from-black via-slate-900/80 via-slate-800/60 via-slate-700/40 via-slate-600/20 to-transparent"></div>
       </div>
 
-      {/* Main Login Card - Glass Effect with Logo Inside */}
+      {/* Main Login Card - Enhanced Depth & Contrast */}
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
-          {/* Glass effect overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-white/5 rounded-2xl"></div>
+        {/* Enhanced shadow layers for depth */}
+        <div className="absolute inset-0 bg-primary-600/20 blur-3xl rounded-2xl transform scale-105"></div>
+        <div className="relative bg-white/15 backdrop-blur-2xl border border-white/30 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] overflow-hidden">
+          {/* Enhanced glass effect overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-white/15 to-white/5 rounded-2xl"></div>
           
-          {/* Mobile Logo Header */}
-          <div className="relative p-6 text-center border-b border-white/20 lg:hidden">
-            <div className="flex items-center justify-center gap-3 mb-2">
+          {/* Mobile Logo Header with Value Prop */}
+          <div className="relative p-6 text-center border-b border-white/30 lg:hidden">
+            <div className="flex items-center justify-center gap-3 mb-3">
               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-xl">
                 <span className="text-xl font-bold text-primary-600 drop-shadow-sm">T</span>
               </div>
               <span className="text-white font-bold text-2xl tracking-wide drop-shadow-lg">Trakr</span>
             </div>
+            <p className="text-xs text-white/80 font-medium">Streamline audits. Empower teams.</p>
           </div>
 
           <div className="relative flex justify-center min-h-[500px]">
             
             {/* Center Column - Auth Form */}
             <div className="relative p-8 flex flex-col justify-center max-w-md w-full">
-              {/* Desktop Logo - Above Welcome Back */}
-              <div className="hidden lg:flex items-center justify-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-xl">
-                  <span className="text-2xl font-bold text-primary-600 drop-shadow-sm">T</span>
+              {/* Desktop Logo with Value Prop */}
+              <div className="hidden lg:block mb-8">
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-xl">
+                    <span className="text-2xl font-bold text-primary-600 drop-shadow-sm">T</span>
+                  </div>
+                  <span className="text-white font-bold text-3xl tracking-wide drop-shadow-lg">Trakr</span>
                 </div>
-                <span className="text-white font-bold text-3xl tracking-wide drop-shadow-lg">Trakr</span>
+                <p className="text-center text-sm text-white/90 font-medium">Streamline audits. Empower teams. Drive excellence.</p>
               </div>
 
               <div className="text-center mb-6">
                 <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">Welcome back!</h1>
-                <p className="text-white/80">Sign in to continue to Trakr</p>
+                <p className="text-white/90 font-medium">
+                  {authMode === 'login' ? 'Secure access to your team\'s insights' : 
+                   authMode === 'register' ? 'Join your team on Trakr' :
+                   'Reset your password'}
+                </p>
               </div>
 
               {/* Email/Password Form */}
@@ -776,7 +786,7 @@ const LoginScreen: React.FC = () => {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all text-white placeholder-white/60"
+                      className="w-full px-4 py-3 bg-white/25 backdrop-blur-sm border border-white/40 rounded-lg shadow-[0_2px_8px_0_rgba(0,0,0,0.3)] focus:ring-2 focus:ring-primary-400 focus:border-primary-400 transition-all text-white placeholder-white/60"
                       placeholder="Enter your full name"
                       autoComplete="name"
                       required
@@ -974,18 +984,18 @@ const LoginScreen: React.FC = () => {
                 </button>
               </form>
 
-              {/* Mode Switch Links */}
-              <div className="text-center text-sm text-white/80">
+              {/* Mode Switch Links - Enhanced CTA */}
+              <div className="text-center text-sm">
                 {authMode === 'login' ? (
-                  <div className="space-y-2">
-                    <div>
+                  <div className="space-y-3">
+                    <div className="text-white/80">
                       Don't have an account?{' '}
                       <button 
                         onClick={() => switchMode('register')}
-                        className="text-white font-medium hover:underline"
+                        className="text-primary-400 hover:text-primary-300 font-semibold transition-colors"
                         type="button"
                       >
-                        Sign up
+                        Sign up now →
                       </button>
                     </div>
                     <div>
@@ -999,16 +1009,16 @@ const LoginScreen: React.FC = () => {
                     </div>
                   </div>
                 ) : authMode === 'register' ? (
-                  <>
+                  <div className="text-white/80">
                     Already have an account?{' '}
                     <button 
                       onClick={() => switchMode('login')}
-                      className="text-white font-medium hover:underline"
+                      className="text-primary-400 hover:text-primary-300 font-semibold transition-colors"
                       type="button"
                     >
                       Sign in
                     </button>
-                  </>
+                  </div>
                 ) : (
                   <button 
                     onClick={() => switchMode('login')}
