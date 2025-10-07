@@ -255,6 +255,78 @@ const Settings: React.FC = () => {
         </div>
         ) : null}
 
+        {/* Super Admin: Organization Management Panel */}
+        {isSuperAdmin && availableOrgs.length > 0 ? (
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Manage Organizations</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Access management tools for each organization
+                </p>
+              </div>
+              <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                {availableOrgs.length} {availableOrgs.length === 1 ? 'Organization' : 'Organizations'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {availableOrgs.map((org) => (
+                <div key={org.id} className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 hover:shadow-md transition-all">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{org.name}</h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(org as any).subscription_status || 'Active'} • {org.timeZone || 'UTC'}
+                      </p>
+                    </div>
+                    {currentOrg?.id === org.id && (
+                      <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded">
+                        Active
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link
+                      to="/manage/surveys"
+                      onClick={() => currentOrg?.id !== org.id && switchOrganization(org.id)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <DocumentTextIcon className="w-4 h-4" />
+                      Surveys
+                    </Link>
+                    <Link
+                      to="/manage/branches"
+                      onClick={() => currentOrg?.id !== org.id && switchOrganization(org.id)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <BuildingOffice2Icon className="w-4 h-4" />
+                      Branches
+                    </Link>
+                    <Link
+                      to="/manage/zones"
+                      onClick={() => currentOrg?.id !== org.id && switchOrganization(org.id)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <MapIcon className="w-4 h-4" />
+                      Zones
+                    </Link>
+                    <Link
+                      to="/manage/users"
+                      onClick={() => currentOrg?.id !== org.id && switchOrganization(org.id)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <UsersIcon className="w-4 h-4" />
+                      Users
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         {/* Super Admin: Fallback when no organizations found */}
         {(isSuperAdmin && availableOrgs.length === 0) ? (
           <div className="card p-6 bg-yellow-50 border border-yellow-200">
