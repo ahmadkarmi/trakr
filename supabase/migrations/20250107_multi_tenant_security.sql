@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_zone_branches_branch_id ON zone_branches(branch_i
 CREATE INDEX IF NOT EXISTS idx_auditor_assignments_user_id ON auditor_assignments(user_id);
 
 -- Branch manager assignments
-CREATE INDEX IF NOT EXISTS idx_branch_manager_assignments_user_id ON branch_manager_assignments(user_id);
+CREATE INDEX IF NOT EXISTS idx_branch_manager_assignments_manager_id ON branch_manager_assignments(manager_id);
 CREATE INDEX IF NOT EXISTS idx_branch_manager_assignments_branch_id ON branch_manager_assignments(branch_id);
 
 -- Composite indexes for common query patterns
@@ -507,7 +507,7 @@ CREATE POLICY branch_manager_assignments_select ON branch_manager_assignments
   USING (
     (SELECT role FROM users WHERE id = auth.uid()) IN ('ADMIN', 'SUPER_ADMIN', 'BRANCH_MANAGER')
     OR
-    user_id = auth.uid()
+    manager_id = auth.uid()
   );
 
 CREATE POLICY branch_manager_assignments_all ON branch_manager_assignments
