@@ -66,12 +66,18 @@ const BranchManagerAnalytics: React.FC = () => {
   const branchCompletionRate = totalBranchAudits > 0 ? 
     Math.round((completedBranchAudits / totalBranchAudits) * 100) : 0
   
+  // ALL overdue audits (for recommendations section)
+  const overdueBranchAudits = branchAudits.filter(a => {
+    if (!a.dueAt) return false
+    return new Date(a.dueAt) < new Date() && a.status !== AuditStatus.APPROVED
+  }).length
+  
   // Track audits pending approval (SUBMITTED status)
   const pendingApprovalAudits = branchAudits.filter(a => 
     a.status === AuditStatus.SUBMITTED
   ).length
   
-  // Of those pending, how many are overdue? (urgent!)
+  // Of those pending, how many are overdue? (urgent - subset of pending)
   const pendingOverdue = branchAudits.filter(a => {
     if (a.status !== AuditStatus.SUBMITTED || !a.dueAt) return false
     return new Date(a.dueAt) < new Date()
