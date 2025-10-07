@@ -727,15 +727,22 @@ const LoginScreen: React.FC = () => {
           {/* Enhanced glass effect overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-white/15 to-white/5 rounded-2xl"></div>
           
-          {/* Mobile Logo Header with Value Prop */}
-          <div className="relative p-6 text-center border-b border-white/30 lg:hidden">
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-xl">
-                <span className="text-xl font-bold text-primary-600 drop-shadow-sm">T</span>
+          {/* Mobile Logo Header */}
+          <div className="relative p-6 border-b border-white/30 lg:hidden bg-gradient-to-b from-white/5 to-transparent">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-100 rounded-2xl flex items-center justify-center shadow-2xl ring-2 ring-white/20">
+                <span className="text-2xl font-bold bg-gradient-to-br from-primary-600 to-primary-700 bg-clip-text text-transparent drop-shadow-sm">T</span>
               </div>
-              <span className="text-white font-bold text-2xl tracking-wide drop-shadow-lg">Trakr</span>
+              <span className="text-white font-bold text-3xl tracking-tight drop-shadow-2xl">Trakr</span>
             </div>
-            <p className="text-xs text-white/80 font-medium">Streamline audits. Empower teams.</p>
+            <div className="space-y-2 px-2">
+              <p className="text-sm text-white leading-relaxed">
+                Transform compliance into a competitive advantage with intelligent audit management.
+              </p>
+              <p className="text-xs text-white/80 leading-relaxed">
+                Real-time insights, seamless workflows, and actionable analytics for teams that demand excellence.
+              </p>
+            </div>
           </div>
 
           <div className="relative flex justify-center min-h-[500px]">
@@ -744,13 +751,20 @@ const LoginScreen: React.FC = () => {
             <div className="relative p-8 flex flex-col justify-center max-w-md w-full">
               {/* Desktop Logo with Value Prop */}
               <div className="hidden lg:block mb-8">
-                <div className="flex items-center justify-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-xl">
-                    <span className="text-2xl font-bold text-primary-600 drop-shadow-sm">T</span>
+                <div className="flex items-center justify-center gap-4 mb-5">
+                  <div className="w-14 h-14 bg-gradient-to-br from-white to-gray-100 rounded-2xl flex items-center justify-center shadow-2xl ring-2 ring-white/20">
+                    <span className="text-3xl font-bold bg-gradient-to-br from-primary-600 to-primary-700 bg-clip-text text-transparent">T</span>
                   </div>
-                  <span className="text-white font-bold text-3xl tracking-wide drop-shadow-lg">Trakr</span>
+                  <span className="text-white font-bold text-4xl tracking-tight drop-shadow-2xl">Trakr</span>
                 </div>
-                <p className="text-center text-sm text-white/90 font-medium">Streamline audits. Empower teams. Drive excellence.</p>
+                <div className="space-y-2.5 px-4">
+                  <p className="text-center text-base text-white leading-relaxed font-medium">
+                    Transform compliance into a competitive advantage with intelligent audit management.
+                  </p>
+                  <p className="text-center text-sm text-white/85 leading-relaxed">
+                    Real-time insights, seamless workflows, and actionable analytics for teams that demand excellence.
+                  </p>
+                </div>
               </div>
 
               <div className="text-center mb-6">
