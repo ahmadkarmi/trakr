@@ -43,10 +43,11 @@ const DashboardAdmin: React.FC = () => {
     enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
-  // Get all branch manager assignments to identify branches without managers (org-scoped)
+  // Get all branch manager assignments to identify branches without managers
+  // NOTE: RLS policies automatically filter by org, no need to pass orgId
   const { data: branchManagerAssignments = [] } = useQuery({
     queryKey: ['branch-manager-assignments', effectiveOrgId],
-    queryFn: () => (api as any).getAllBranchManagerAssignments(effectiveOrgId),
+    queryFn: () => (api as any).getAllBranchManagerAssignments(),
     enabled: !!effectiveOrgId || isSuperAdmin,
   })
 

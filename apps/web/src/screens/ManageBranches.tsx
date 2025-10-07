@@ -35,10 +35,11 @@ const ManageBranches: React.FC = () => {
 
   const managers = useMemo(() => users.filter(u => u.role === UserRole.BRANCH_MANAGER), [users])
   
-  // Fetch all branch manager assignments (org-scoped)
+  // Fetch all branch manager assignments
+  // NOTE: RLS policies automatically filter by org, no need to pass orgId
   const { data: branchManagerAssignments = [] } = useQuery({
     queryKey: ['branch-manager-assignments', effectiveOrgId],
-    queryFn: () => (api as any).getAllBranchManagerAssignments(effectiveOrgId),
+    queryFn: () => (api as any).getAllBranchManagerAssignments(),
     enabled: !!effectiveOrgId || isSuperAdmin
   })
 
