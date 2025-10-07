@@ -53,7 +53,7 @@ test.describe('Branches CRUD', () => {
       
     } catch (error) {
       // Fallback: just verify we didn't get redirected away
-      expect(page.url()).toContain('dashboard/admin')
+      expect(page.url()).toContain('manage/branches')
       console.log('ℹ️ Branches page structure may be different')
     }
   })
