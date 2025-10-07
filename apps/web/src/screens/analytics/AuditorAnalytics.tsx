@@ -7,16 +7,23 @@ import { Audit, AuditStatus, Survey, calculateAuditScore, calculateWeightedAudit
 import AnalyticsKPICard from '../../components/analytics/AnalyticsKPICard'
 import AnalyticsChart from '../../components/analytics/AnalyticsChart'
 import PersonalGoalsWidget from '../../components/analytics/PersonalGoalsWidget'
+import { useOrganization } from '../../contexts/OrganizationContext'
 
 const AuditorAnalytics: React.FC = () => {
   const { user } = useAuthStore()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   
-  // Fetch audits - will be filtered to user's audits only
+  // Fetch audits - org-scoped, then filtered to user's audits
   const { data: audits = [] } = useQuery<Audit[]>({ 
-    queryKey: QK.AUDITS('auditor'), 
-    queryFn: () => api.getAudits() 
+    queryKey: ['audits', 'auditor', effectiveOrgId], 
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
-  const { data: surveys = [] } = useQuery<Survey[]>({ queryKey: QK.SURVEYS, queryFn: () => api.getSurveys() })
+  const { data: surveys = [] } = useQuery<Survey[]>({ 
+    queryKey: ['surveys', effectiveOrgId], 
+    queryFn: () => (api as any).getSurveys(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
 
   // Filter to only current user's audits
   const myAudits = audits.filter(a => a.assignedTo === user?.id)

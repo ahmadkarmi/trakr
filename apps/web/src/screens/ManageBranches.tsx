@@ -10,15 +10,28 @@ import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { UserGroupIcon, UsersIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../hooks/useToast'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const ManageBranches: React.FC = () => {
   const qc = useQueryClient()
   const { showToast } = useToast()
-  const { data: orgs = [], isLoading: orgsLoading } = useQuery<Organization[]>({ queryKey: QK.ORGANIZATIONS, queryFn: api.getOrganizations })
-  const orgId = orgs[0]?.id
-  const { data: branches = [] } = useQuery<Branch[]>({ queryKey: QK.BRANCHES(orgId), queryFn: () => api.getBranches(orgId), enabled: !!orgId })
-  const { data: users = [] } = useQuery<User[]>({ queryKey: QK.USERS, queryFn: api.getUsers })
-  const { data: zones = [] } = useQuery<Zone[]>({ queryKey: QK.ZONES(orgId), queryFn: () => api.getZones(orgId), enabled: !!orgId })
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
+  
+  const { data: branches = [] } = useQuery<Branch[]>({ 
+    queryKey: ['branches', effectiveOrgId], 
+    queryFn: () => api.getBranches(effectiveOrgId), 
+    enabled: !!effectiveOrgId || isSuperAdmin 
+  })
+  const { data: users = [] } = useQuery<User[]>({ 
+    queryKey: ['users', effectiveOrgId], 
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
+  })
+  const { data: zones = [] } = useQuery<Zone[]>({ 
+    queryKey: ['zones', effectiveOrgId], 
+    queryFn: () => api.getZones(effectiveOrgId), 
+    enabled: !!effectiveOrgId || isSuperAdmin 
+  })
 
   const managers = useMemo(() => users.filter(u => u.role === UserRole.BRANCH_MANAGER), [users])
   
@@ -81,8 +94,8 @@ const ManageBranches: React.FC = () => {
 
   const createBranch = useMutation({
     mutationFn: async (payload: { name: string; address: string; managerId?: string; zoneId?: string }) => {
-      if (!orgId) throw new Error('No organization')
-      const created = await api.createBranch({ orgId, name: payload.name, address: payload.address, managerId: payload.managerId })
+      if (!effectiveOrgId) throw new Error('No organization')
+      const created = await api.createBranch({ orgId: effectiveOrgId, name: payload.name, address: payload.address, managerId: payload.managerId })
       if (payload.zoneId) {
         const z = zones.find(zz => zz.id === payload.zoneId)
         const nextBranchIds = Array.from(new Set([...(z?.branchIds || []), created.id]))
@@ -91,8 +104,8 @@ const ManageBranches: React.FC = () => {
       return created
     },
     onSuccess: (created) => {
-      qc.invalidateQueries({ queryKey: QK.BRANCHES(orgId) })
-      qc.invalidateQueries({ queryKey: QK.ZONES(orgId) })
+      qc.invalidateQueries({ queryKey: QK.BRANCHES(effectiveOrgId) })
+      qc.invalidateQueries({ queryKey: QK.ZONES(effectiveOrgId) })
       setForm({ name: '', address: '', managerId: '', zoneId: '' })
       setActiveTab('list') // Switch to list tab to show the created branch
       showToast({ 
@@ -113,7 +126,7 @@ const ManageBranches: React.FC = () => {
   const deleteBranch = useMutation({
     mutationFn: async (id: string) => api.deleteBranch(id),
     onSuccess: (_result, id) => {
-      qc.invalidateQueries({ queryKey: QK.BRANCHES(orgId) })
+      qc.invalidateQueries({ queryKey: QK.BRANCHES(effectiveOrgId) })
       const branch = branches.find(b => b.id === id)
       showToast({ 
         message: `Branch "${branch?.name || 'Branch'}" deleted successfully!`, 
@@ -128,19 +141,10 @@ const ManageBranches: React.FC = () => {
     },
   })
 
-  // Show loading state
-  if (orgsLoading) {
-    return (
-      <DashboardLayout title="Manage Branches">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </DashboardLayout>
-    )
-  }
+  // Loading state handled by query enabled flags
 
   // Show helpful message if no organization
-  if (!orgId) {
+  if (!effectiveOrgId) {
     return (
       <DashboardLayout title="Manage Branches">
         <div className="card p-6">
@@ -586,9 +590,9 @@ const ManageBranches: React.FC = () => {
         )}
 
         {/* Zone Bulk Assignment Modal */}
-        {showZoneBulkAssignment && orgId && (
+        {showZoneBulkAssignment && effectiveOrgId && (
           <ZoneBulkAuditorAssignment
-            orgId={orgId}
+            orgId={effectiveOrgId}
             onClose={() => setShowZoneBulkAssignment(false)}
           />
         )}
