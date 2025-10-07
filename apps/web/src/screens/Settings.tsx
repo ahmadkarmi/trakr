@@ -10,11 +10,16 @@ import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
 import { DocumentTextIcon, BuildingOffice2Icon, MapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
+type SettingsTab = 'profile' | 'organization' | 'notifications' | 'super-admin'
+
 const Settings: React.FC = () => {
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const { showToast } = useToast()
   const { currentOrg, availableOrgs, switchOrganization, isSuperAdmin, globalView, setGlobalView } = useOrganization()
+  const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
+  
+  const isAdmin = user?.role === UserRole.ADMIN || isSuperAdmin
 
   // Admin: Organization settings (timezone, week start, gating)
   const { data: orgs = [] } = useQuery<Organization[]>({ queryKey: QK.ORGANIZATIONS, queryFn: api.getOrganizations })
@@ -188,9 +193,64 @@ const Settings: React.FC = () => {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600 mt-1">Manage your organization preferences</p>
+          <p className="text-gray-600 mt-1">Manage your preferences and configuration</p>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Settings tabs">
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                activeTab === 'profile'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Profile
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('organization')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                  activeTab === 'organization'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Organization
+              </button>
+            )}
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                activeTab === 'notifications'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Notifications
+            </button>
+            {isSuperAdmin && (
+              <button
+                onClick={() => setActiveTab('super-admin')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                  activeTab === 'super-admin'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Super Admin
+              </button>
+            )}
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        
+        {/* Super Admin Tab */}
+        {activeTab === 'super-admin' && isSuperAdmin && (
+        <>
         {/* Organization Switcher (Super Admin only) */}
         {isSuperAdmin ? (
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-4 sm:p-5 text-white">
@@ -344,7 +404,12 @@ const Settings: React.FC = () => {
             </ul>
           </div>
         ) : null}
+        </>
+        )}
 
+        {/* Organization Tab */}
+        {activeTab === 'organization' && isAdmin && (
+        <>
         {/* Admin-only: Organization Settings (Super Admin acts as Admin when not in global view and an org is selected) */}
         {(user?.role === UserRole.ADMIN || (isSuperAdmin && !globalView && currentOrg)) ? (
           <div className="card p-6">
@@ -426,7 +491,12 @@ const Settings: React.FC = () => {
             </div>
           </div>
         ) : null}
+        </>
+        )}
 
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+        <>
         {/* Profile Settings */}
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900">Profile Settings</h2>
@@ -461,6 +531,20 @@ const Settings: React.FC = () => {
           </div>
         </div>
 
+        {/* Signature quick access */}
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-gray-900">Signature</h2>
+          <p className="text-sm text-gray-600 mt-1">Manage your saved signature for approvals in your profile.</p>
+          <div className="mt-3">
+            <Link to="/profile/signature" className="btn btn-outline btn-sm">Open Profile · Signature</Link>
+          </div>
+        </div>
+        </>
+        )}
+
+        {/* Notifications Tab */}
+        {activeTab === 'notifications' && (
+        <>
         {/* Notification Preferences */}
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900">Notification Preferences</h2>
@@ -529,15 +613,9 @@ const Settings: React.FC = () => {
             </p>
           </div>
         </div>
+        </>
+        )}
 
-        {/* Signature quick access */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Signature</h2>
-          <p className="text-sm text-gray-600 mt-1">Manage your saved signature for approvals in your profile.</p>
-          <div className="mt-3">
-            <Link to="/profile/signature" className="btn btn-outline btn-sm">Open Profile · Signature</Link>
-          </div>
-        </div>
       </div>
     </DashboardLayout>
   )
