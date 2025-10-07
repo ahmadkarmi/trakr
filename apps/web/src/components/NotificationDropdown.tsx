@@ -7,9 +7,11 @@ import { QK } from '../utils/queryKeys'
 import { BellIcon, XMarkIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../stores/auth'
 import { backfillAuditNotifications } from '../utils/backfillNotifications'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const NotificationDropdown: React.FC = () => {
   const { user } = useAuthStore()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [isOpen, setIsOpen] = React.useState(false)
@@ -93,21 +95,21 @@ const NotificationDropdown: React.FC = () => {
 
   // Fetch audits, branches, and users to derive notifications if empty
   const { data: audits = [] } = useQuery<Audit[]>({
-    queryKey: QK.AUDITS('all'),
-    queryFn: () => api.getAudits(),
-    enabled: !!user?.id,
+    queryKey: ['audits', 'all', effectiveOrgId],
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
   })
 
   const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: ['branches'],
-    queryFn: () => api.getBranches(),
-    enabled: !!user?.id,
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
   })
 
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: QK.USERS,
-    queryFn: api.getUsers,
-    enabled: !!user?.id,
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
   })
 
   // Derive notifications from audits if database is empty
