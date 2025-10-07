@@ -20,30 +20,7 @@ const DashboardAdmin: React.FC = () => {
 
   const queryClient = useQueryClient()
   
-  // Guard: Wait for organization context to load
-  if (orgLoading) {
-    return (
-      <DashboardLayout title="Loading...">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-  
-  // Guard: Ensure org is available
-  if (!effectiveOrgId && !isSuperAdmin) {
-    return (
-      <DashboardLayout title="Organization Required">
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-          <p className="text-yellow-700 font-medium">
-            Your user account is not associated with an organization. Please contact support.
-          </p>
-        </div>
-      </DashboardLayout>
-    )
-  }
-  
+  // IMPORTANT: Call ALL hooks before any conditional returns (Rules of Hooks)
   const { data: branches = [], isLoading: branchesLoading } = useQuery<Branch[]>({
     queryKey: ['branches', effectiveOrgId],
     queryFn: () => api.getBranches(effectiveOrgId),
@@ -347,6 +324,29 @@ const DashboardAdmin: React.FC = () => {
     setSearchQuery('')
   }
 
+  // Guards: Handle loading and missing org states AFTER all hooks
+  if (orgLoading) {
+    return (
+      <DashboardLayout title="Loading...">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+  
+  if (!effectiveOrgId && !isSuperAdmin) {
+    return (
+      <DashboardLayout title="Organization Required">
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+          <p className="text-yellow-700 font-medium">
+            Your user account is not associated with an organization. Please contact support.
+          </p>
+        </div>
+      </DashboardLayout>
+    )
+  }
+  
   // Empty Organization State: Check if we should show onboarding
   const isEmptyOrg = !branchesLoading && branches.length === 0 && audits.length === 0
   
