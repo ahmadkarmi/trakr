@@ -13,6 +13,7 @@ import { ClockIcon, ChartBarIcon, ExclamationCircleIcon } from '@heroicons/react
 const DashboardBranchManager: React.FC = () => {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const [selectedBranchId, setSelectedBranchId] = React.useState<string>('')
 
   const { data: allAudits = [], isLoading } = useQuery<Audit[]>({
     queryKey: QK.AUDITS('branch-manager'),
@@ -52,37 +53,42 @@ const DashboardBranchManager: React.FC = () => {
 
   const managedBranchIds = React.useMemo(() => assignedBranches.map(b => b.id), [assignedBranches])
   
-  // Filter audits by managed branches ONLY
+  // Filter audits by managed branches ONLY - security: show nothing if no assignments
   const audits = managedBranchIds.length > 0 
     ? allAudits.filter(a => managedBranchIds.includes(a.branchId))
-    : allAudits
+    : []  // Security: unassigned managers see nothing (only super admins see all orgs)
+  
+  // Apply branch filter if selected
+  const filteredAudits = selectedBranchId
+    ? audits.filter(a => a.branchId === selectedBranchId)
+    : audits
     
-  const total = audits.length
+  const total = filteredAudits.length
   
   // Audits actively being worked on (not yet submitted)
-  const inProgress = audits.filter(a => 
+  // COMPLETED = finished but not submitted yet, so keep in active
+  const inProgress = filteredAudits.filter(a => 
     a.status === AuditStatus.DRAFT || 
     a.status === AuditStatus.IN_PROGRESS || 
     a.status === AuditStatus.COMPLETED
   ).length
   
   // Audits that have been finalized (approved or rejected)
-  const finalized = audits.filter(a => 
+  const finalized = filteredAudits.filter(a => 
     a.status === AuditStatus.APPROVED || 
     a.status === AuditStatus.REJECTED
   ).length
   const completionRate = total > 0 ? Math.round((finalized / total) * 100) : 0
   
   // Audits pending approval (submitted status)
-  const pendingApproval = audits.filter(a => a.status === AuditStatus.SUBMITTED)
+  const pendingApproval = filteredAudits.filter(a => a.status === AuditStatus.SUBMITTED)
 
-  // Audit history - completed audits only (approved, rejected, finalized)
+  // Audit history - finalized audits only (approved or rejected, NOT completed)
   const [historyPage, setHistoryPage] = React.useState(1)
   const pageSize = 10
-  const completedAudits = audits.filter(a => 
+  const completedAudits = filteredAudits.filter(a => 
     a.status === AuditStatus.APPROVED || 
-    a.status === AuditStatus.REJECTED || 
-    a.status === AuditStatus.COMPLETED
+    a.status === AuditStatus.REJECTED
   ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   
   const totalHistoryPages = Math.ceil(completedAudits.length / pageSize)
@@ -99,7 +105,11 @@ const DashboardBranchManager: React.FC = () => {
           </div>
           
           {assignedBranches.length > 1 && (
-            <select className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-sm font-medium">
+            <select 
+              value={selectedBranchId}
+              onChange={(e) => setSelectedBranchId(e.target.value)}
+              className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-sm font-medium"
+            >
               <option value="">All Branches ({assignedBranches.length})</option>
               {assignedBranches.map(branch => (
                 <option key={branch.id} value={branch.id}>{branch.name}</option>
@@ -108,7 +118,27 @@ const DashboardBranchManager: React.FC = () => {
           )}
         </div>
 
+        {/* No Assignments Warning */}
+        {managedBranchIds.length === 0 && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <ExclamationCircleIcon className="h-5 w-5 text-yellow-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-yellow-700 font-medium">
+                  No branches assigned
+                </p>
+                <p className="text-sm text-yellow-600 mt-1">
+                  Contact your administrator to get branch assignments. You cannot view audits without branch assignments.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Key Metrics - Responsive Grid */}
+        {managedBranchIds.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div 
             className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-5 text-white cursor-pointer hover:shadow-lg transition-shadow sm:col-span-3 lg:col-span-1"
@@ -148,8 +178,10 @@ const DashboardBranchManager: React.FC = () => {
             <p className="text-xs text-gray-500 mt-0.5">Approved or rejected</p>
           </div>
         </div>
+        )}
 
         {/* Pending Approval Section */}
+        {managedBranchIds.length > 0 && (
         <div id="pending-approvals" className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -218,8 +250,10 @@ const DashboardBranchManager: React.FC = () => {
             )}
           </div>
         </div>
+        )}
 
         {/* Audit History Section */}
+        {managedBranchIds.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -393,6 +427,7 @@ const DashboardBranchManager: React.FC = () => {
             )}
           </div>
         </div>
+        )}
       </div>
     </DashboardLayout>
   )
