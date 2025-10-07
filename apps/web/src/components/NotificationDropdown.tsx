@@ -551,18 +551,16 @@ const NotificationDropdown: React.FC = () => {
                   >
                     View all
                   </button>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        markAllAsReadMutation.mutate()
-                      }}
-                      disabled={markAllAsReadMutation.isPending}
-                      className="text-xs text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50"
-                    >
-                      Mark all read
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      markAllAsReadMutation.mutate()
+                    }}
+                    disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
+                    className="text-xs text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Mark all read
+                  </button>
                 </div>
                 <button
                   onClick={() => {
@@ -721,18 +719,16 @@ const NotificationDropdown: React.FC = () => {
                     >
                       View all notifications
                     </button>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          markAllAsReadMutation.mutate()
-                        }}
-                        disabled={markAllAsReadMutation.isPending}
-                        className="w-full py-2 text-xs text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        markAllAsReadMutation.mutate()
+                      }}
+                      disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
+                      className="w-full py-2 text-xs text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Mark all as read
+                    </button>
                     <button
                       onClick={() => {
                         navigate('/settings')
