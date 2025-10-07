@@ -1130,16 +1130,58 @@ export const supabaseApi = {
   },
 
   // Organization update
-  async updateOrganization(id: string, updates: Partial<Pick<Organization, 'name' | 'description' | 'timeZone' | 'weekStartsOn' | 'gatingPolicy'>>): Promise<Organization> {
+  async updateOrganization(id: string, updates: Partial<Pick<Organization, 'name' | 'description' | 'timeZone' | 'weekStartsOn' | 'gatingPolicy'> & { address?: string; logoUrl?: string }>): Promise<Organization> {
     const supabase = await getSupabase()
     const base: any = { updated_at: new Date().toISOString() }
     if (updates.name != null) base.name = updates.name
     if (updates.timeZone != null) base.time_zone = updates.timeZone
     if (updates.weekStartsOn != null) base.week_starts_on = updates.weekStartsOn
     if (updates.gatingPolicy != null) base.gating_policy = updates.gatingPolicy
+    if (updates.address != null) base.address = updates.address
+    if (updates.logoUrl != null) base.logo_url = updates.logoUrl
     const { data, error } = await supabase.from('organizations').update(base).eq('id', id).select('*').single()
     if (error) throw error
     return mapOrganization(data as Tables<'organizations'>)
+  },
+
+  // Upload organization logo
+  async uploadOrganizationLogo(orgId: string, file: File): Promise<string> {
+    const supabase = await getSupabase()
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${orgId}-${Date.now()}.${fileExt}`
+    const filePath = `organization-logos/${fileName}`
+
+    // Upload file to storage
+    const { error: uploadError } = await supabase.storage
+      .from('public')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (uploadError) throw uploadError
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('public')
+      .getPublicUrl(filePath)
+
+    return publicUrl
+  },
+
+  // Delete organization logo
+  async deleteOrganizationLogo(logoUrl: string): Promise<void> {
+    const supabase = await getSupabase()
+    // Extract file path from URL
+    const urlParts = logoUrl.split('/public/')
+    if (urlParts.length < 2) return
+    
+    const filePath = urlParts[1]
+    const { error } = await supabase.storage
+      .from('public')
+      .remove([filePath])
+
+    if (error) console.error('Failed to delete logo:', error)
   },
 
   // User management functions
