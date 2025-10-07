@@ -66,11 +66,11 @@ const DashboardBranchManager: React.FC = () => {
   const total = filteredAudits.length
   
   // Audits actively being worked on (not yet submitted)
-  // COMPLETED = finished but not submitted yet, so keep in active
+  // For managers: only DRAFT and IN_PROGRESS count as active
+  // COMPLETED audits are done, just waiting for auditor to submit
   const inProgress = filteredAudits.filter(a => 
     a.status === AuditStatus.DRAFT || 
-    a.status === AuditStatus.IN_PROGRESS || 
-    a.status === AuditStatus.COMPLETED
+    a.status === AuditStatus.IN_PROGRESS
   ).length
   
   // Audits that have been finalized (approved or rejected)
