@@ -10,8 +10,142 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import StatusBadge from '@/components/StatusBadge'
 import ResponsiveTable from '../components/ResponsiveTable'
 import InfoBadge from '@/components/InfoBadge'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon, FunnelIcon, XMarkIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline'
 import { useOrganization } from '../contexts/OrganizationContext'
+import toast from 'react-hot-toast'
+
+// Admin Organization Onboarding Component
+const AdminOrgOnboarding: React.FC = () => {
+  const { user } = useAuthStore()
+  const queryClient = useQueryClient()
+  const [orgName, setOrgName] = React.useState('')
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+
+  const createOrgMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const org = await api.createOrganization(name)
+      // Update current user's org_id
+      if (user) {
+        await api.updateUser(user.id, { org_id: org.id })
+      }
+      return org
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QK.ORGANIZATIONS })
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+      toast.success('Organization created successfully!')
+      // Refresh the page to reload org context
+      window.location.reload()
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to create organization')
+    }
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (orgName.trim()) {
+      setIsSubmitting(true)
+      createOrgMutation.mutate(orgName.trim())
+    }
+  }
+
+  return (
+    <DashboardLayout title="Welcome to Trakr">
+      <div className="max-w-2xl mx-auto py-12 px-4">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <BuildingOffice2Icon className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              Welcome, {user?.name}!
+            </h1>
+            <p className="text-lg text-gray-600">
+              Let's get started by creating your organization
+            </p>
+          </div>
+
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  As an Admin, you'll be able to manage branches, surveys, users, and audits within your organization.
+                  Any users you invite will automatically join your organization.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="orgName" className="block text-sm font-medium text-gray-700 mb-2">
+                Organization Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="orgName"
+                value={orgName}
+                onChange={(e) => setOrgName(e.target.value)}
+                placeholder="e.g., Acme Corporation"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+                disabled={isSubmitting}
+              />
+              <p className="mt-2 text-sm text-gray-500">
+                This will be the name of your organization across the platform
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button
+                type="submit"
+                disabled={!orgName.trim() || isSubmitting}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Creating...
+                  </span>
+                ) : (
+                  'Create Organization'
+                )}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-medium text-gray-900 mb-3">What's next?</h3>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-start gap-2">
+                <span className="text-blue-500 mt-0.5">✓</span>
+                <span>Set up your branches and locations</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-500 mt-0.5">✓</span>
+                <span>Create survey templates for audits</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-500 mt-0.5">✓</span>
+                <span>Invite branch managers and auditors (they'll join your org automatically)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-500 mt-0.5">✓</span>
+                <span>Start conducting audits!</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  )
+}
 
 const DashboardAdmin: React.FC = () => {
   const { user } = useAuthStore()
@@ -336,16 +470,9 @@ const DashboardAdmin: React.FC = () => {
     )
   }
   
+  // If admin has no org, show org creation onboarding
   if (!effectiveOrgId && !isSuperAdmin) {
-    return (
-      <DashboardLayout title="Organization Required">
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-          <p className="text-yellow-700 font-medium">
-            Your user account is not associated with an organization. Please contact support.
-          </p>
-        </div>
-      </DashboardLayout>
-    )
+    return <AdminOrgOnboarding />
   }
   
   // Empty Organization State: Check if we should show onboarding
