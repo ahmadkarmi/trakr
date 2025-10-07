@@ -4,6 +4,7 @@ import { User, UserRole, AuditorAssignment } from '@trakr/shared'
 import { api } from '../utils/api'
 import { useAuthStore } from '../stores/auth'
 import { XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 interface BranchAuditorAssignmentsProps {
   branchId: string
@@ -12,6 +13,7 @@ interface BranchAuditorAssignmentsProps {
 
 export function BranchAuditorAssignments({ branchId, branchName }: BranchAuditorAssignmentsProps) {
   const { user: currentUser } = useAuthStore()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   const queryClient = useQueryClient()
   const [showAddAuditor, setShowAddAuditor] = useState(false)
   const [selectedAuditorIds, setSelectedAuditorIds] = useState<string[]>([])
@@ -36,8 +38,9 @@ export function BranchAuditorAssignments({ branchId, branchName }: BranchAuditor
 
   // Get all users
   const { data: allUsers = [] } = useQuery<User[]>({
-    queryKey: ['users'],
-    queryFn: () => api.getUsers(),
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
   const auditors = allUsers.filter(user => user.role === UserRole.AUDITOR)

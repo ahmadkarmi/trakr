@@ -20,22 +20,14 @@ export function useDashboardPrefetch() {
     // Prefetch common data needed by all dashboards
     const prefetch = async () => {
       try {
-        // Prefetch in parallel - these are needed by all dashboard types
+        // Prefetch organizations (not org-scoped)
+        // Note: Users and Surveys are org-scoped, so they'll be fetched
+        // on dashboard mount with proper effectiveOrgId
         await Promise.allSettled([
           queryClient.prefetchQuery({
             queryKey: QK.ORGANIZATIONS,
             queryFn: api.getOrganizations,
             staleTime: 1000 * 60 * 5, // 5 minutes
-          }),
-          queryClient.prefetchQuery({
-            queryKey: QK.USERS,
-            queryFn: api.getUsers,
-            staleTime: 1000 * 60 * 5,
-          }),
-          queryClient.prefetchQuery({
-            queryKey: QK.SURVEYS,
-            queryFn: api.getSurveys,
-            staleTime: 1000 * 60 * 5,
           }),
         ])
       } catch (error) {

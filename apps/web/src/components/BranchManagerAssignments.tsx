@@ -4,6 +4,7 @@ import { User, UserRole, BranchManagerAssignment } from '@trakr/shared'
 import { api } from '../utils/api'
 import { useAuthStore } from '../stores/auth'
 import { XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 interface BranchManagerAssignmentsProps {
   branchId: string
@@ -12,6 +13,7 @@ interface BranchManagerAssignmentsProps {
 
 export function BranchManagerAssignments({ branchId, branchName }: BranchManagerAssignmentsProps) {
   const { user: currentUser } = useAuthStore()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   const queryClient = useQueryClient()
   const [showAddManager, setShowAddManager] = useState(false)
   const [selectedManagerId, setSelectedManagerId] = useState('')
@@ -36,8 +38,9 @@ export function BranchManagerAssignments({ branchId, branchName }: BranchManager
 
   // Get all branch managers
   const { data: allUsers = [] } = useQuery<User[]>({
-    queryKey: ['users'],
-    queryFn: () => api.getUsers(),
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
   const branchManagers = allUsers.filter(user => user.role === UserRole.BRANCH_MANAGER)
