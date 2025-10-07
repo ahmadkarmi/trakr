@@ -102,13 +102,15 @@ const DashboardAuditor: React.FC = () => {
   const inProgress = statusCounts.inProgress
   const completed = statusCounts.completed + statusCounts.approved
   const openCycleAudits = React.useMemo(() => {
-    const openStatuses = new Set<AuditStatus>([AuditStatus.DRAFT, AuditStatus.IN_PROGRESS, AuditStatus.SUBMITTED])
+    // COMPLETED = finished but not submitted yet, so keep in open for auditor to submit
+    const openStatuses = new Set<AuditStatus>([AuditStatus.DRAFT, AuditStatus.IN_PROGRESS, AuditStatus.COMPLETED, AuditStatus.SUBMITTED])
     return myCycleAudits
       .filter(a => openStatuses.has(a.status))
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   }, [myCycleAudits])
   const completedCycleAudits = React.useMemo(() => {
-    const done = new Set<AuditStatus>([AuditStatus.COMPLETED, AuditStatus.APPROVED])
+    // Only APPROVED audits are truly done from auditor perspective
+    const done = new Set<AuditStatus>([AuditStatus.APPROVED])
     return myCycleAudits
       .filter(a => done.has(a.status))
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
