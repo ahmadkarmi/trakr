@@ -20,6 +20,7 @@ import { useZones } from '@/hooks/data/useZones'
 import { useAudits } from '@/hooks/data/useAudits'
 import { useAssignments } from '@/hooks/data/useAssignments'
 import InfoBadge from '@/components/InfoBadge'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const ManageAssignments: React.FC = () => {
   const qc = useQueryClient()
@@ -28,10 +29,10 @@ const ManageAssignments: React.FC = () => {
   const applyZoneWithReset = useApplyZoneWithSafeReset()
   const assignBranchMut = useAssignBranchToAuditor()
   const clearManualMut = useClearManualAssignment()
+  const { effectiveOrgId } = useOrganization()
   const { data: orgs = [] } = useOrganizations()
-  const orgId = orgs[0]?.id
-  const { data: branches = [] } = useBranches(orgId)
-  const { data: zones = [] } = useZones(orgId)
+  const { data: branches = [] } = useBranches(effectiveOrgId)
+  const { data: zones = [] } = useZones(effectiveOrgId)
   const { data: users = [] } = useUsers()
   const { data: assignments = [] } = useAssignments()
   const { data: audits = [] } = useAudits('assignments')

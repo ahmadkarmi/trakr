@@ -40,12 +40,12 @@ const DashboardBranchManager: React.FC = () => {
 
   // Get branches assigned to current manager using new assignment system
   const { data: assignedBranches = [] } = useQuery<Branch[]>({
-    queryKey: ['branches-for-manager', user?.id],
+    queryKey: ['branches-for-manager', user?.id, effectiveOrgId],
     queryFn: async () => {
       if (!user?.id) return []
       
-      // Get all branches
-      const allBranches = await api.getBranches()
+      // Get all branches (org-scoped)
+      const allBranches = await api.getBranches(effectiveOrgId)
       
       // Get branch manager assignments for this manager
       const assignments = await api.getManagerBranchAssignments(user.id)
@@ -54,7 +54,7 @@ const DashboardBranchManager: React.FC = () => {
       const assignedBranchIds = assignments.map(a => a.branchId)
       return allBranches.filter(b => assignedBranchIds.includes(b.id))
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
   })
 
   const managedBranchIds = React.useMemo(() => assignedBranches.map(b => b.id), [assignedBranches])

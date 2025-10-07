@@ -42,10 +42,11 @@ const DashboardAdmin: React.FC = () => {
     enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
-  // Get all branch manager assignments to identify branches without managers
+  // Get all branch manager assignments to identify branches without managers (org-scoped)
   const { data: branchManagerAssignments = [] } = useQuery({
-    queryKey: ['branch-manager-assignments'],
-    queryFn: () => api.getAllBranchManagerAssignments(),
+    queryKey: ['branch-manager-assignments', effectiveOrgId],
+    queryFn: () => (api as any).getAllBranchManagerAssignments(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
   // Identify branches without assigned managers (admin needs to approve audits from these)

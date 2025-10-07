@@ -65,8 +65,9 @@ const AuditSummary: React.FC = () => {
   const clearCanvas = () => { const c = canvasRef.current; if (!c) return; const ctx = c.getContext('2d'); if (!ctx) return; ctx.clearRect(0,0,c.width,c.height); setSignatureDataUrl(null) }
 
   const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: QK.BRANCHES(),
-    queryFn: () => api.getBranches(),
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
 
   // Organization (for time zone formatting)
