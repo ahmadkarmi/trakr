@@ -11,16 +11,41 @@ import InfoBadge from '@/components/InfoBadge'
 import MobileAuditCard from '@/components/MobileAuditCard'
 import ResponsiveTable, { Column } from '@/components/ResponsiveTable'
 import { SkeletonAuditCard } from '@/components/Skeleton'
-import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
+import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, CalendarDaysIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { useOrganization } from '../contexts/OrganizationContext'
+import EmptyState from '../components/EmptyState'
 
 const DashboardAuditor: React.FC = () => {
   const { user } = useAuthStore()
-  const { effectiveOrgId, isSuperAdmin } = useOrganization()
+  const { effectiveOrgId, isSuperAdmin, isLoading: orgLoading } = useOrganization()
   const navigate = useNavigate()
 
   const queryClient = useQueryClient()
+  
+  // Guard: Wait for organization context to load
+  if (orgLoading) {
+    return (
+      <DashboardLayout title="Loading...">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+  
+  // Guard: Ensure org is available (not Super Admin in global view)
+  if (!effectiveOrgId && !isSuperAdmin) {
+    return (
+      <DashboardLayout title="Organization Required">
+        <EmptyState
+          icon={<BuildingOfficeIcon className="w-16 h-16" />}
+          title="Organization Not Available"
+          message="Your user account is not associated with an organization. Please contact your administrator."
+        />
+      </DashboardLayout>
+    )
+  }
 
   const { data: audits = [], isLoading } = useQuery<Audit[]>({
     queryKey: QK.AUDITS(`auditor-${user?.id || ''}`),
@@ -78,19 +103,30 @@ const DashboardAuditor: React.FC = () => {
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
 
   const createAudit = useMutation({
-    mutationFn: (payload: { surveyId: string; branchId: string }) =>
-      api.createAudit({
-        orgId: user?.orgId || 'org-1',
+    mutationFn: (payload: { surveyId: string; branchId: string }) => {
+      // Validate required data at mutation time (defense-in-depth)
+      if (!user?.orgId || !user?.id) {
+        return Promise.reject(new Error(
+          'Your user account is not properly configured. Please refresh the page or contact support.'
+        ))
+      }
+      
+      return api.createAudit({
+        orgId: user.orgId,
         branchId: payload.branchId,
         surveyId: payload.surveyId,
-        assignedTo: user?.id || 'user-1',
-      }),
+        assignedTo: user.id,
+      })
+    },
     onSuccess: async (created, variables) => {
       queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
       if (created?.id) navigate(`/audit/${created.id}/wizard`)
       
       // Note: No notification needed here since auditor is creating their own audit
       // Notifications are sent when admin/manager assigns audits to auditors
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to create audit')
     },
   })
 
@@ -858,14 +894,16 @@ const DashboardAuditor: React.FC = () => {
                     </div>
                     <button
                       className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-                        isAllowed 
+                        isAllowed && user?.orgId && user?.id
                           ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow' 
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
-                      disabled={!isAllowed || createAudit.isPending || !selectedSurvey}
+                      disabled={!isAllowed || createAudit.isPending || !selectedSurvey || !user?.orgId || !user?.id}
                       onClick={() => selectedSurvey && createAudit.mutate({ surveyId: selectedSurvey.id, branchId: branch.id })}
+                      title={!user?.orgId || !user?.id ? 'User account not properly configured' : (reason || undefined)}
                     >
-                      {createAudit.isPending && createAudit.variables?.branchId === branch.id ? 'Starting...' : 'Start'}
+                      {createAudit.isPending && createAudit.variables?.branchId === branch.id ? 'Starting...' : 
+                       !user?.orgId || !user?.id ? 'Account Error' : 'Start'}
                     </button>
                   </div>
                 )
