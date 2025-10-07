@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend Check</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .success {
+      color: #10b981;
+      font-size: 48px;
+      text-align: center;
+    }
+    .error {
+      color: #ef4444;
+      font-size: 48px;
+      text-align: center;
+    }
+    .info {
+      background: #f0f9ff;
+      border: 1px solid #0ea5e9;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    pre {
+      background: #1f2937;
+      color: #10b981;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    #results {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔍 Backend Configuration Check</h1>
+    
+    <div class="info">
+      <strong>Purpose:</strong> Verify that the app is using Supabase instead of mock data.
+    </div>
+
+    <h2>Environment Check:</h2>
+    <pre id="env-check">Loading...</pre>
+
+    <h2>Quick Tests:</h2>
+    <button onclick="testBranches()">Test Get Branches</button>
+    <button onclick="testUsers()">Test Get Users</button>
+    <button onclick="testAssignments()">Test Branch Manager Assignments</button>
+    
+    <div id="results"></div>
+  </div>
+
+  <script type="module">
+    // Check environment
+    const envCheck = document.getElementById('env-check');
+    const backend = import.meta.env.VITE_BACKEND || 'NOT SET (defaults to mock)';
+    
+    let status = '';
+    if (backend === 'supabase') {
+      status = '✅ SUCCESS: Using Supabase';
+      envCheck.style.color = '#10b981';
+    } else {
+      status = '❌ ERROR: Using Mock Data';
+      envCheck.style.color = '#ef4444';
+    }
+    
+    envCheck.textContent = `VITE_BACKEND = "${backend}"\n\n${status}\n\nSupabase URL: ${import.meta.env.VITE_SUPABASE_URL || 'NOT SET'}`;
+
+    // Make test functions available globally
+    window.testBranches = async () => {
+      const results = document.getElementById('results');
+      results.innerHTML = '<div class="info">Testing branches API...</div>';
+      
+      try {
+        const { api } = await import('/src/utils/api.js');
+        const branches = await api.getBranches();
+        
+        results.innerHTML = `
+          <div class="success">✅ SUCCESS</div>
+          <div class="info">
+            <strong>Found ${branches.length} branches</strong>
+            <pre>${JSON.stringify(branches.slice(0, 3), null, 2)}</pre>
+          </div>
+        `;
+      } catch (error) {
+        results.innerHTML = `
+          <div class="error">❌ ERROR</div>
+          <div class="info">
+            <pre>${error.message}</pre>
+          </div>
+        `;
+      }
+    };
+
+    window.testUsers = async () => {
+      const results = document.getElementById('results');
+      results.innerHTML = '<div class="info">Testing users API...</div>';
+      
+      try {
+        const { api } = await import('/src/utils/api.js');
+        const users = await api.getUsers();
+        
+        results.innerHTML = `
+          <div class="success">✅ SUCCESS</div>
+          <div class="info">
+            <strong>Found ${users.length} users</strong>
+            <pre>${JSON.stringify(users.slice(0, 3).map(u => ({
+              name: u.name,
+              email: u.email,
+              role: u.role
+            })), null, 2)}</pre>
+          </div>
+        `;
+      } catch (error) {
+        results.innerHTML = `
+          <div class="error">❌ ERROR</div>
+          <div class="info">
+            <pre>${error.message}</pre>
+          </div>
+        `;
+      }
+    };
+
+    window.testAssignments = async () => {
+      const results = document.getElementById('results');
+      results.innerHTML = '<div class="info">Testing branch manager assignments API...</div>';
+      
+      try {
+        const { api } = await import('/src/utils/api.js');
+        const assignments = await api.getAllBranchManagerAssignments();
+        
+        results.innerHTML = `
+          <div class="success">✅ SUCCESS</div>
+          <div class="info">
+            <strong>Found ${assignments.length} branch manager assignments</strong>
+            <pre>${JSON.stringify(assignments, null, 2)}</pre>
+          </div>
+        `;
+      } catch (error) {
+        results.innerHTML = `
+          <div class="error">❌ ERROR</div>
+          <div class="info">
+            <pre>${error.message}</pre>
+          </div>
+        `;
+      }
+    };
+  </script>
+</body>
+</html>

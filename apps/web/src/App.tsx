@@ -38,6 +38,7 @@ const Profile = lazy(() => import('./screens/Profile'))
 const Analytics = lazy(() => import('./screens/Analytics'))
 const SearchResults = lazy(() => import('./screens/SearchResults'))
 const Notifications = lazy(() => import('./screens/Notifications'))
+const DevBackendCheck = lazy(() => import('./screens/DevBackendCheck'))
 
 function App() {
   const { user, isLoading, init } = useAuthStore()
@@ -143,6 +144,7 @@ function App() {
                     <Route path="/help" element={<Help />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/search" element={<SearchResults />} />
+                    <Route path="/dev/backend-check" element={<DevBackendCheck />} />
 
                     {/* Audit routes */}
                     <Route path="/audit/:auditId/wizard" element={<AuditWizard />} />
