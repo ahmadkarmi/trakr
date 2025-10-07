@@ -193,19 +193,27 @@ const Settings: React.FC = () => {
 
         {/* Organization Switcher (Super Admin only) */}
         {isSuperAdmin ? (
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-5 text-white">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-2xl">⚙️</span>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-lg font-semibold text-white">Organization Context</h2>
-                <span className="px-2 py-0.5 bg-white/20 text-white text-xs font-bold rounded-full">SUPER ADMIN</span>
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-4 sm:p-5 text-white">
+          {/* Header with badge */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-xl sm:text-2xl">⚙️</span>
               </div>
-              <p className="text-sm text-white/90 mb-4">
-                Switch between organizations for management and support.
-              </p>
+              <h2 className="text-base sm:text-lg font-semibold text-white">Organization Context</h2>
+            </div>
+            <span className="px-2 py-0.5 bg-white/20 text-white text-xs font-bold rounded-full whitespace-nowrap">SUPER ADMIN</span>
+          </div>
+          
+          {/* Description */}
+          <div className="mb-4">
+            <p className="text-sm text-white/90">
+              Switch between organizations for management and support.
+            </p>
+          </div>
+          
+          {/* Content */}
+          <div>
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-white mb-2">
@@ -235,22 +243,17 @@ const Settings: React.FC = () => {
                 )}
               </div>
 
-              {(
-                <div className="mt-4 flex items-center gap-3">
-                  <input
-                    id="toggle-global-view"
-                    type="checkbox"
-                    className="w-4 h-4 text-white rounded focus:ring-white/50 bg-white/20 border-white/30"
-                    checked={globalView}
-                    onChange={(e) => setGlobalView(e.target.checked)}
-                  />
-                  <label htmlFor="toggle-global-view" className="text-sm text-white cursor-pointer">
-                    View as Super Admin (All organizations)
-                  </label>
-                </div>
-              )}
-
-              {/* Dev override removed */}
+            <div className="mt-4 flex items-center gap-3">
+              <input
+                id="toggle-global-view"
+                type="checkbox"
+                className="w-4 h-4 text-white rounded focus:ring-white/50 bg-white/20 border-white/30"
+                checked={globalView}
+                onChange={(e) => setGlobalView(e.target.checked)}
+              />
+              <label htmlFor="toggle-global-view" className="text-sm text-white cursor-pointer">
+                View as Super Admin (All organizations)
+              </label>
             </div>
           </div>
         </div>
