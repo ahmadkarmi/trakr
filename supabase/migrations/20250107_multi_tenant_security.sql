@@ -61,7 +61,7 @@ ALTER TABLE surveys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE survey_sections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE survey_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audits ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_responses ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE audit_responses ENABLE ROW LEVEL SECURITY; -- Table does not exist
 ALTER TABLE audit_photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE auditor_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE branch_manager_assignments ENABLE ROW LEVEL SECURITY;
@@ -393,35 +393,10 @@ CREATE POLICY audits_update ON audits
   );
 
 -- ============================================================================
--- AUDIT RESPONSES & PHOTOS POLICIES
+-- AUDIT PHOTOS POLICIES
 -- ============================================================================
 
--- Audit responses inherit permissions from parent audit
-CREATE POLICY audit_responses_select ON audit_responses
-  FOR SELECT
-  USING (
-    audit_id IN (
-      SELECT id FROM audits WHERE
-        (SELECT role FROM users WHERE id = auth.uid()) = 'SUPER_ADMIN'
-        OR
-        org_id = (SELECT org_id FROM users WHERE id = auth.uid())
-    )
-  );
-
-CREATE POLICY audit_responses_all ON audit_responses
-  FOR ALL
-  USING (
-    audit_id IN (
-      SELECT id FROM audits WHERE
-        (SELECT role FROM users WHERE id = auth.uid()) = 'SUPER_ADMIN'
-        OR
-        (
-          org_id = (SELECT org_id FROM users WHERE id = auth.uid())
-          AND
-          (assigned_to = auth.uid() OR (SELECT role FROM users WHERE id = auth.uid()) IN ('ADMIN', 'BRANCH_MANAGER'))
-        )
-    )
-  );
+-- Note: audit_responses table does not exist, policies commented out
 
 -- Audit photos inherit permissions from parent audit
 CREATE POLICY audit_photos_select ON audit_photos
