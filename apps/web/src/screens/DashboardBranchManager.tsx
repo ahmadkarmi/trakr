@@ -6,9 +6,11 @@ import { api } from '../utils/api'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
 import StatusBadge from '../components/StatusBadge'
-import { ClockIcon, ChartBarIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
+import { ClockIcon, ChartBarIcon, ExclamationCircleIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
 import { useOrganization } from '../contexts/OrganizationContext'
 import ResponsiveTable, { Column } from '../components/ResponsiveTable'
+import EmptyState from '../components/EmptyState'
+import ErrorState from '../components/ErrorState'
 
 const DashboardBranchManager: React.FC = () => {
   const { user } = useAuthStore()
@@ -16,7 +18,7 @@ const DashboardBranchManager: React.FC = () => {
   const { effectiveOrgId, isSuperAdmin } = useOrganization()
   const [selectedBranchId, setSelectedBranchId] = React.useState('')
 
-  const { data: allAudits = [], isLoading } = useQuery<Audit[]>({
+  const { data: allAudits = [], isLoading, error: auditsError } = useQuery<Audit[]>({
     queryKey: ['audits', 'branch-manager', effectiveOrgId],
     queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
     enabled: !!effectiveOrgId || isSuperAdmin
@@ -38,7 +40,7 @@ const DashboardBranchManager: React.FC = () => {
   })
 
   // Get branches assigned to current manager using new assignment system
-  const { data: assignedBranches = [] } = useQuery<Branch[]>({
+  const { data: assignedBranches = [], error: branchesError } = useQuery<Branch[]>({
     queryKey: ['branches-for-manager', user?.id, effectiveOrgId],
     queryFn: async () => {
       if (!user?.id) return []
@@ -99,6 +101,18 @@ const DashboardBranchManager: React.FC = () => {
   const totalHistoryPages = Math.ceil(completedAudits.length / pageSize)
   const paginatedHistory = completedAudits.slice((historyPage - 1) * pageSize, historyPage * pageSize)
 
+  // Error handling
+  if (auditsError || branchesError) {
+    return (
+      <DashboardLayout title="Branch Manager Dashboard">
+        <ErrorState 
+          message={(auditsError || branchesError)?.toString() || 'Failed to load dashboard data'} 
+          retry={() => window.location.reload()}
+        />
+      </DashboardLayout>
+    )
+  }
+
   return (
     <DashboardLayout title="Branch Manager Dashboard">
       <div className="mobile-container breathing-room">
@@ -123,23 +137,13 @@ const DashboardBranchManager: React.FC = () => {
           )}
         </div>
 
-        {/* No Assignments Warning */}
-        {managedBranchIds.length === 0 && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <ExclamationCircleIcon className="h-5 w-5 text-yellow-400" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700 font-medium">
-                  No branches assigned
-                </p>
-                <p className="text-sm text-yellow-600 mt-1">
-                  Contact your administrator to get branch assignments. You cannot view audits without branch assignments.
-                </p>
-              </div>
-            </div>
-          </div>
+        {/* No Assignments - Empty State */}
+        {!isLoading && managedBranchIds.length === 0 && (
+          <EmptyState
+            icon={<BuildingOfficeIcon className="w-16 h-16" />}
+            title="No Branch Assignments"
+            message="You haven't been assigned to any branches yet. Contact your administrator to get branch assignments so you can view and manage audits."
+          />
         )}
 
         {/* Key Metrics - Responsive Grid */}
