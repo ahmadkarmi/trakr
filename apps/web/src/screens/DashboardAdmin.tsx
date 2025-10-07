@@ -347,9 +347,10 @@ const DashboardAdmin: React.FC = () => {
     setSearchQuery('')
   }
 
-  // Empty Organization State: Show onboarding for new orgs
+  // Empty Organization State: Check if we should show onboarding
   const isEmptyOrg = !branchesLoading && branches.length === 0 && audits.length === 0
   
+  // Render empty org onboarding OR normal dashboard
   if (isEmptyOrg) {
     return (
       <DashboardLayout title="Welcome">
@@ -455,6 +456,7 @@ const DashboardAdmin: React.FC = () => {
     )
   }
 
+  // Normal dashboard (has data)
   return (
     <DashboardLayout title="Admin Dashboard">
       <div className="mobile-container breathing-room">
