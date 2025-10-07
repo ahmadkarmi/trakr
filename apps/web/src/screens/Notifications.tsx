@@ -8,11 +8,13 @@ import { QK } from '../utils/queryKeys'
 import { api } from '../utils/api'
 import { BellIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { SkeletonList } from '@/components/Skeleton'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const NotificationsScreen: React.FC = () => {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
 
   // Admins see ALL notifications (super user), others see only their own
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
@@ -32,23 +34,23 @@ const NotificationsScreen: React.FC = () => {
     enabled: !!user?.id,
   })
 
-  // Always fetch audits, branches, and users to derive notifications
+  // Always fetch audits, branches, and users to derive notifications (org-scoped)
   const { data: audits = [] } = useQuery<Audit[]>({
-    queryKey: QK.AUDITS('all'),
-    queryFn: () => api.getAudits(),
-    enabled: !!user?.id,
+    queryKey: ['audits', 'all', effectiveOrgId],
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
   })
 
   const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: ['branches'],
-    queryFn: () => api.getBranches(),
-    enabled: !!user?.id,
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
   })
 
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: QK.USERS,
-    queryFn: api.getUsers,
-    enabled: !!user?.id,
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
   })
 
   // Derive notifications from audits if table is empty

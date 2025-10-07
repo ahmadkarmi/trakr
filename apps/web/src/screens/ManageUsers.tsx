@@ -7,10 +7,14 @@ import { User, UserRole, USER_ROLE_LABELS } from '@trakr/shared'
 import { PlusIcon, PencilIcon, TrashIcon, EnvelopeIcon, ShieldCheckIcon, UserIcon, UserPlusIcon, UserGroupIcon, CheckCircleIcon, PencilSquareIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import StatCard from '../components/StatCard'
 import { useToast } from '../hooks/useToast'
+import { useOrganization } from '../contexts/OrganizationContext'
+import { useAuthStore } from '../stores/auth'
 
 const ManageUsers: React.FC = () => {
   const queryClient = useQueryClient()
   const { showToast } = useToast()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
+  const { user } = useAuthStore()
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [inviteForm, setInviteForm] = useState({
@@ -18,10 +22,11 @@ const ManageUsers: React.FC = () => {
     name: '',
     role: UserRole.AUDITOR
   })
-  // Fetch users
+  // Fetch users (org-scoped)
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => api.getUsers()
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
 
   // Invite user mutation
