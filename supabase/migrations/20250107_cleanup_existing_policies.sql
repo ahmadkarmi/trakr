@@ -40,8 +40,9 @@ DROP POLICY IF EXISTS audits_insert ON audits;
 DROP POLICY IF EXISTS audits_update ON audits;
 DROP POLICY IF EXISTS audits_all ON audits;
 
-DROP POLICY IF EXISTS audit_responses_select ON audit_responses;
-DROP POLICY IF EXISTS audit_responses_all ON audit_responses;
+-- Note: audit_responses table does not exist, policies commented out
+-- DROP POLICY IF EXISTS audit_responses_select ON audit_responses;
+-- DROP POLICY IF EXISTS audit_responses_all ON audit_responses;
 
 DROP POLICY IF EXISTS audit_photos_select ON audit_photos;
 DROP POLICY IF EXISTS audit_photos_all ON audit_photos;
