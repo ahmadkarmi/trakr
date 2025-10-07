@@ -12,6 +12,7 @@ import DashboardLayout from '../components/DashboardLayout'
 import { CheckCircleIcon, XCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import StatusBadge from '@/components/StatusBadge'
 import { notificationHelpers } from '../utils/notifications'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 /**
  * Audit Review Screen for Branch Managers
@@ -22,6 +23,7 @@ export default function AuditReviewScreen() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user } = useAuthStore()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   
   const [showApprovalDialog, setShowApprovalDialog] = useState(false)
   const [showRejectionDialog, setShowRejectionDialog] = useState(false)
@@ -71,14 +73,16 @@ export default function AuditReviewScreen() {
 
   // Fetch users to get submitter name
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: QK.USERS,
-    queryFn: () => api.getUsers(),
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   
   // Fetch branches
   const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: QK.BRANCHES(),
-    queryFn: () => api.getBranches(),
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   
   const branch = branches.find(b => b.id === audit?.branchId)
