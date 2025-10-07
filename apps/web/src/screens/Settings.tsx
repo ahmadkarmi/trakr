@@ -8,6 +8,7 @@ import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
+import { DocumentTextIcon, BuildingOffice2Icon, MapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
 const Settings: React.FC = () => {
   const { user } = useAuthStore()
