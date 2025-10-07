@@ -2,7 +2,7 @@ import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Audit, Survey, calculateAuditScore, calculateWeightedAuditScore, calculateSectionWeightedCompliance, calculateSectionWeightedWeightedCompliance, AuditStatus, UserRole, Branch, LogEntry } from '@trakr/shared'
+import { Audit, Survey, calculateAuditScore, calculateWeightedAuditScore, calculateSectionWeightedCompliance, calculateSectionWeightedWeightedCompliance, AuditStatus, UserRole, Branch, LogEntry, User } from '@trakr/shared'
 import StatusBadge from '@/components/StatusBadge'
 import StatCard from '../components/StatCard'
 import ProgressDonut from '../components/ProgressDonut'
@@ -166,6 +166,12 @@ const AuditSummary: React.FC = () => {
     queryKey: QK.LOGS('audit', auditId),
     queryFn: () => (auditId ? api.getActivityLogs(auditId) : Promise.resolve([])),
     enabled: !!auditId,
+  })
+
+  // Fetch users for displaying names in history
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: QK.USERS,
+    queryFn: () => api.getUsers(),
   })
   
   // Generate key events from actual logs OR derive from audit status if no logs exist
@@ -830,7 +836,7 @@ const AuditSummary: React.FC = () => {
                                     </p>
                                     {log.userId && (
                                       <p className="mt-0.5 text-sm text-gray-500">
-                                        by {log.userId}
+                                        by {users.find((u: User) => u.id === log.userId)?.name || (log.userId.startsWith('Manager') ? log.userId : 'Unknown')}
                                       </p>
                                     )}
                                     {log.details && (
