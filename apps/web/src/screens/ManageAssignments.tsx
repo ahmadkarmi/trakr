@@ -13,7 +13,6 @@ import { api } from '../utils/api'
 import { useAssignmentBoard } from '@/hooks/assignments/useAssignmentBoard'
 import { useInvalidate } from '@/utils/query'
 import { apiErrorMessage } from '../utils/apiError'
-import { useOrganizations } from '@/hooks/data/useOrganizations'
 import { useUsers } from '@/hooks/data/useUsers'
 import { useBranches } from '@/hooks/data/useBranches'
 import { useZones } from '@/hooks/data/useZones'
@@ -30,7 +29,6 @@ const ManageAssignments: React.FC = () => {
   const assignBranchMut = useAssignBranchToAuditor()
   const clearManualMut = useClearManualAssignment()
   const { effectiveOrgId } = useOrganization()
-  const { data: orgs = [] } = useOrganizations()
   const { data: branches = [] } = useBranches(effectiveOrgId)
   const { data: zones = [] } = useZones(effectiveOrgId)
   const { data: users = [] } = useUsers()

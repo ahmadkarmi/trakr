@@ -1,10 +1,9 @@
 import React, { useMemo, useState } from 'react'
 import DashboardLayout from '../components/DashboardLayout'
 import { useQuery } from '@tanstack/react-query'
-import { LogEntry, Audit, AuditStatus, User, Branch, Organization } from '@trakr/shared'
+import { LogEntry, Audit, AuditStatus, User, Branch } from '@trakr/shared'
 import ResponsiveTable from '../components/ResponsiveTable'
 import { api } from '../utils/api'
-import { QK } from '../utils/queryKeys'
 import { useOrganization } from '../contexts/OrganizationContext'
 
 const ActivityLogs: React.FC = () => {
@@ -23,13 +22,7 @@ const ActivityLogs: React.FC = () => {
     enabled: !!effectiveOrgId || isSuperAdmin,
   })
 
-  // Fetch organizations and branches for context
-  const { data: orgs = [] } = useQuery<Organization[]>({
-    queryKey: QK.ORGANIZATIONS,
-    queryFn: api.getOrganizations,
-    enabled: !!effectiveOrgId || isSuperAdmin,
-  })
-
+  // Fetch branches for context (org-scoped)
   const { data: branches = [] } = useQuery<Branch[]>({
     queryKey: ['branches', effectiveOrgId],
     queryFn: () => api.getBranches(effectiveOrgId),
