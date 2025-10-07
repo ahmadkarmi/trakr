@@ -7,29 +7,33 @@ import { QK } from '../utils/queryKeys'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
 import StatusBadge from '../components/StatusBadge'
-import ResponsiveTable, { Column } from '../components/ResponsiveTable'
 import { ClockIcon, ChartBarIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
+import { useOrganization } from '../contexts/OrganizationContext'
 
 const DashboardBranchManager: React.FC = () => {
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  const [selectedBranchId, setSelectedBranchId] = React.useState<string>('')
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
 
   const { data: allAudits = [], isLoading } = useQuery<Audit[]>({
-    queryKey: QK.AUDITS('branch-manager'),
-    queryFn: () => api.getAudits(),
+    queryKey: ['audits', 'branch-manager', effectiveOrgId],
+    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: QK.BRANCHES(),
-    queryFn: () => api.getBranches(),
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: QK.USERS,
-    queryFn: () => api.getUsers(),
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   const { data: surveys = [] } = useQuery<Survey[]>({
-    queryKey: QK.SURVEYS,
-    queryFn: () => api.getSurveys(),
+    queryKey: ['surveys', effectiveOrgId],
+    queryFn: () => (api as any).getSurveys(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
 
   // Get branches assigned to current manager using new assignment system

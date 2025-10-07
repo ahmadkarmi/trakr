@@ -492,9 +492,11 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   getIcon,
 }) => {
   const { user } = useAuthStore()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: QK.USERS,
-    queryFn: api.getUsers,
+    queryKey: ['users', effectiveOrgId],
+    queryFn: () => (api as any).getUsers(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
   const needsAction = notification.requiresAction && !notification.actionCompletedAt
