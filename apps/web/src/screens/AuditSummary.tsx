@@ -103,6 +103,9 @@ const AuditSummary: React.FC = () => {
         try {
           await api.completeNotificationAction(audit.id, 'REVIEW_AUDIT')
           console.log('✅ Notification action completed (approved)')
+          // Invalidate notification queries to update UI
+          queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
+          queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS('all') })
         } catch (error) {
           console.error('Failed to complete notification action:', error)
         }
@@ -136,6 +139,9 @@ const AuditSummary: React.FC = () => {
         try {
           await api.completeNotificationAction(audit.id, 'REVIEW_AUDIT')
           console.log('✅ Notification action completed (rejected)')
+          // Invalidate notification queries to update UI
+          queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
+          queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS('all') })
         } catch (error) {
           console.error('Failed to complete notification action:', error)
         }
