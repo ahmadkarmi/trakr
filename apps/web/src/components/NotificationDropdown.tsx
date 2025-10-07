@@ -454,8 +454,18 @@ const NotificationDropdown: React.FC = () => {
         {isOpen && !isMobile && (
           <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-2 border-b border-gray-200 bg-white">
+          <div className="px-4 py-2 border-b border-gray-200 bg-white flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">Notifications</h3>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                markAllAsReadMutation.mutate()
+              }}
+              disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
+              className="text-xs text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400"
+            >
+              Mark all read
+            </button>
           </div>
 
           {/* Notifications List */}
@@ -540,28 +550,16 @@ const NotificationDropdown: React.FC = () => {
           {/* Footer */}
           <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
             {dropdownNotifications.length > 0 ? (
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      navigate('/notifications')
-                      setIsOpen(false)
-                    }}
-                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                  >
-                    View all
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      markAllAsReadMutation.mutate()
-                    }}
-                    disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
-                    className="text-xs text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Mark all read
-                  </button>
-                </div>
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    navigate('/notifications')
+                    setIsOpen(false)
+                  }}
+                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  View all
+                </button>
                 <button
                   onClick={() => {
                     navigate('/settings')
@@ -616,13 +614,25 @@ const NotificationDropdown: React.FC = () => {
                 {/* Header */}
                 <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="text-lg font-bold text-gray-900">Notifications</h3>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    aria-label="Close"
-                  >
-                    <XMarkIcon className="w-5 h-5 text-gray-600" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        markAllAsReadMutation.mutate()
+                      }}
+                      disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
+                      className="text-xs text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400"
+                    >
+                      Mark all read
+                    </button>
+                    <button
+                      onClick={() => setIsOpen(false)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      aria-label="Close"
+                    >
+                      <XMarkIcon className="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -718,16 +728,6 @@ const NotificationDropdown: React.FC = () => {
                       className="w-full py-2.5 text-sm text-primary-600 hover:text-primary-700 font-semibold"
                     >
                       View all notifications
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        markAllAsReadMutation.mutate()
-                      }}
-                      disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
-                      className="w-full py-2 text-xs text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Mark all as read
                     </button>
                     <button
                       onClick={() => {
