@@ -30,7 +30,23 @@ async function loginAsAuditor(page: any) {
   await page.getByRole('button', { name: /Sign in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/auditor'), { timeout: 60_000 })
-  await expect(page.getByRole('heading', { name: /Auditor Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
+  
+  // Check for organization guard or dashboard
+  const organizationNotAvailable = page.getByText(/Organization Not Available/i)
+  const dashboard = page.getByRole('heading', { name: /Auditor Dashboard/i }).first()
+  
+  // Wait for either to appear
+  try {
+    await expect(dashboard).toBeVisible({ timeout: 10_000 })
+  } catch {
+    // If dashboard not visible, check if it's the org guard
+    const isOrgGuard = await organizationNotAvailable.isVisible({ timeout: 5_000 })
+    if (isOrgGuard) {
+      throw new Error('Auditor user has no organization assigned. Please verify test data setup.')
+    }
+    // Re-throw if it's a different issue
+    await expect(dashboard).toBeVisible({ timeout: 30_000 })
+  }
 }
 
 async function loginAsBranchManager(page: any) {
@@ -71,7 +87,10 @@ test.describe('Auth smoke', () => {
 
     // Sign in as auditor
     await loginAsAuditor(page)
-    await expect(page.getByRole('heading', { name: /Auditor Dashboard/i }).first()).toBeVisible()
+    
+    // Verify auditor dashboard is visible
+    const dashboard = page.getByRole('heading', { name: /Auditor Dashboard/i }).first()
+    await expect(dashboard).toBeVisible({ timeout: 30_000 })
   })
 
   test('branch manager can sign in and see Branch Manager Dashboard', async ({ page }) => {
