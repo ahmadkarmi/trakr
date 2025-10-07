@@ -70,6 +70,30 @@ ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
+-- CLEANUP EXISTING POLICIES (Ensure Idempotency)
+-- ============================================================================
+
+-- Drop any existing policies to avoid conflicts
+DROP POLICY IF EXISTS organizations_all ON organizations;
+DROP POLICY IF EXISTS users_all ON users;
+DROP POLICY IF EXISTS branches_all ON branches;
+DROP POLICY IF EXISTS zones_all ON zones;
+DROP POLICY IF EXISTS surveys_all ON surveys;
+DROP POLICY IF EXISTS survey_sections_all ON survey_sections;
+DROP POLICY IF EXISTS survey_questions_all ON survey_questions;
+DROP POLICY IF EXISTS audits_all ON audits;
+DROP POLICY IF EXISTS audit_photos_all ON audit_photos;
+DROP POLICY IF EXISTS auditor_assignments_all ON auditor_assignments;
+DROP POLICY IF EXISTS branch_manager_assignments_all ON branch_manager_assignments;
+DROP POLICY IF EXISTS zone_branches_all ON zone_branches;
+DROP POLICY IF EXISTS notifications_select ON notifications;
+DROP POLICY IF EXISTS notifications_insert ON notifications;
+DROP POLICY IF EXISTS notifications_update ON notifications;
+DROP POLICY IF EXISTS notifications_delete ON notifications;
+DROP POLICY IF EXISTS activity_logs_select ON activity_logs;
+DROP POLICY IF EXISTS activity_logs_insert ON activity_logs;
+
+-- ============================================================================
 -- SIMPLIFIED RLS POLICIES (App-Layer Filtering)
 -- ============================================================================
 
