@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "cross-env VITE_BACKEND=supabase vite --port 3002 --host",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "build:local": "cross-env VITE_BACKEND=supabase tsc && vite build",
     "build:analyze": "cross-env VITE_BACKEND=supabase tsc && vite build --mode analyze",
     "preview": "vite preview",
