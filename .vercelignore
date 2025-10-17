@@ -1,0 +1,11 @@
+node_modules
+.git
+*.log
+.env.local
+.DS_Store
+dist
+test-results
+playwright-report
+.turbo
+apps/web/test-results
+apps/web/playwright-report
