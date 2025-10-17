@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build --workspace=@trakr/web",
   "outputDirectory": "apps/web/dist",
-  "installCommand": "npm install",
+  "installCommand": "npm ci --include=dev",
   "framework": null,
   "rewrites": [
     {
