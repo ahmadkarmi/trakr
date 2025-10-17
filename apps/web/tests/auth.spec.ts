@@ -22,7 +22,7 @@ async function loginAsAdmin(page: any) {
   // Fallback to email/password
   await page.fill('input[type="email"]', 'admin@trakr.com')
   await page.fill('input[type="password"]', 'Password@123')
-  await page.getByRole('button', { name: /Sign in/i }).click()
+  await page.getByRole('button', { name: /Sign in|Log in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
   await expect(page.getByRole('heading', { name: /Admin Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
@@ -39,23 +39,7 @@ async function loginAsAuditor(page: any) {
     if (await auditorRoleButton.isVisible({ timeout: 5_000 })) {
       await auditorRoleButton.click()
       await page.waitForURL(url => url.pathname.includes('/dashboard/auditor'), { timeout: 60_000 })
-      
-      // Wait for page to settle and check what's displayed
-      await page.waitForTimeout(2_000)
-      
-      // Check if org guard is showing
-      const orgGuardTitle = page.getByText(/Organization Not Available|Organization Required/i)
-      const isOrgGuard = await orgGuardTitle.isVisible().catch(() => false)
-      
-      if (isOrgGuard) {
-        console.log('⚠️ Auditor user has no organization assigned - this is expected in test environment')
-        // Return successfully - the org guard is working as intended
-        return
-      }
-      
-      // Otherwise expect dashboard
-      const dashboard = page.getByRole('heading', { name: /Auditor Dashboard/i }).first()
-      await expect(dashboard).toBeVisible({ timeout: 30_000 })
+      await expect(page.getByRole('heading', { name: /Auditor Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
       return
     }
   } catch (e) {
@@ -65,26 +49,10 @@ async function loginAsAuditor(page: any) {
   // Fallback to email/password
   await page.fill('input[type="email"]', 'auditor@trakr.com')
   await page.fill('input[type="password"]', 'Password@123')
-  await page.getByRole('button', { name: /Sign in/i }).click()
+  await page.getByRole('button', { name: /Sign in|Log in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/auditor'), { timeout: 60_000 })
-  
-  // Wait for page to settle and check what's displayed
-  await page.waitForTimeout(2_000)
-  
-  // Check if org guard is showing
-  const orgGuardTitle = page.getByText(/Organization Not Available|Organization Required/i)
-  const isOrgGuard = await orgGuardTitle.isVisible().catch(() => false)
-  
-  if (isOrgGuard) {
-    console.log('⚠️ Auditor user has no organization assigned - this is expected in test environment')
-    // Return successfully - the org guard is working as intended
-    return
-  }
-  
-  // Otherwise expect dashboard
-  const dashboard = page.getByRole('heading', { name: /Auditor Dashboard/i }).first()
-  await expect(dashboard).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('heading', { name: /Auditor Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
 }
 
 async function loginAsBranchManager(page: any) {
@@ -108,7 +76,7 @@ async function loginAsBranchManager(page: any) {
   // Fallback to email/password
   await page.fill('input[type="email"]', 'branchmanager@trakr.com')
   await page.fill('input[type="password"]', 'Password@123')
-  await page.getByRole('button', { name: /Sign in/i }).click()
+  await page.getByRole('button', { name: /Sign in|Log in/i }).click()
   
   await page.waitForURL(url => url.pathname.includes('/dashboard/branch-manager'), { timeout: 60_000 })
   await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
@@ -136,10 +104,6 @@ test.describe('Auth smoke', () => {
 
     // Sign in as auditor
     await loginAsAuditor(page)
-    
-    // Verify auditor dashboard is visible
-    const dashboard = page.getByRole('heading', { name: /Auditor Dashboard/i }).first()
-    await expect(dashboard).toBeVisible({ timeout: 30_000 })
   })
 
   test('branch manager can sign in and see Branch Manager Dashboard', async ({ page }) => {
