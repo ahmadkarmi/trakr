@@ -49,6 +49,12 @@ jobs:
         working-directory: apps/web
         run: npx wait-on@7.0.1 http://localhost:3002
 
+      - name: Seed test database
+        env:
+          SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_KEY }}
+        run: node scripts/seed-with-credentials.js
+
       - name: Debug BASE_URL and /login HTML
         run: |
           echo "BASE_URL=$BASE_URL"
