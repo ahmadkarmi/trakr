@@ -617,10 +617,11 @@ const Landing: React.FC = () => {
             <span className="hidden sm:inline text-sm text-gray-500">© {new Date().getFullYear()} All rights reserved.</span>
           </div>
           <nav className="flex items-center gap-2">
+            <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">How Trakr Works</a>
             <a href="#features" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">Features</a>
-            <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">How It Works</a>
-            <a href="#beta" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">Request Access</a>
-            <a href="/login" className="text-sm text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-md font-semibold">Login</a>
+            <a href="#industries" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">Industries</a>
+            <a href="#beta" className="text-sm text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-md font-semibold">Request Access</a>
+            <a href="/login" className="text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md font-medium">Login</a>
           </nav>
         </div>
       </footer>
