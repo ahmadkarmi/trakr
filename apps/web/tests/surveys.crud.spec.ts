@@ -74,11 +74,10 @@ test.describe.skip('Surveys CRUD (real session via magic link)', () => {
     await page.fill('#title', title)
     await page.fill('#desc', 'QA description')
     await page.selectOption('#frequency', { label: 'Monthly' })
-    // Toggle Active off (newly created surveys default to active)
-    const toggleBtn = page.getByRole('button', { name: /Deactivate|Activate/i })
-    const toggleText = await toggleBtn.textContent()
-    if (toggleText && /Deactivate/i.test(toggleText)) {
-      await toggleBtn.click()
+    const activeSwitch = page.getByRole('switch')
+    const isChecked = (await activeSwitch.getAttribute('aria-checked')) === 'true'
+    if (isChecked) {
+      await activeSwitch.click()
     }
 
     // Add a section and update its fields
@@ -88,12 +87,10 @@ test.describe.skip('Surveys CRUD (real session via magic link)', () => {
     await pageTitleInput.fill('QA Page 1')
     await pageDescInput.fill('QA Page 1 description')
 
-    // Save changes and wait for mutation to complete (button toggles to "Saving…" then back)
-    const saveBtn = page.getByRole('button', { name: 'Save Changes' })
+    const saveBtn = page.getByRole('button', { name: 'Save Metadata' })
     await saveBtn.click()
-    // If the transient "Saving…" appears, wait for it to disappear
     await page.getByRole('button', { name: 'Saving…' }).waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
-    await expect(page.getByRole('button', { name: 'Save Changes' })).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole('button', { name: 'Save Metadata' })).toBeVisible({ timeout: 30_000 })
 
     // Go back to Manage Surveys and validate row persisted
     await page.getByRole('link', { name: 'Survey Templates' }).click()
@@ -115,8 +112,24 @@ test.describe.skip('Surveys CRUD (real session via magic link)', () => {
     await expect(page.locator('#title')).toHaveValue(title)
     await expect(page.locator('#desc')).toHaveValue('QA description')
     await expect(page.locator('#frequency')).toHaveValue(/MONTHLY/i)
-    await expect(page.getByRole('button', { name: 'Activate' })).toBeVisible()
+    await expect(page.getByRole('switch', { checked: false })).toBeVisible()
     await expect(page.locator('label:has-text("Page Title") + input')).toHaveValue('QA Page 1')
+
+    const versionLabel = page.locator('text=/^v\\d+$/').first()
+    const beforeVersionText = (await versionLabel.textContent()) || 'v0'
+    const beforeVersion = Number(beforeVersionText.replace('v','')) || 0
+
+    const publishBtn = page.getByRole('button', { name: 'Publish New Version' })
+    await publishBtn.click()
+    await page.getByRole('button', { name: 'Publishing…' }).waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
+    await expect(page.getByRole('button', { name: 'Publish New Version' })).toBeVisible({ timeout: 30_000 })
+
+    const afterVersionText = (await versionLabel.textContent()) || 'v0'
+    const afterVersion = Number(afterVersionText.replace('v','')) || 0
+    expect(afterVersion).toBeGreaterThan(beforeVersion)
+
+    const lastPublished = page.locator('text=Last published:')
+    await expect(lastPublished).not.toContainText('—')
 
     // Back to list for duplication and deletion
     await page.getByRole('link', { name: 'Survey Templates' }).click()
@@ -144,6 +157,13 @@ test.describe.skip('Surveys CRUD (real session via magic link)', () => {
       dupRow = mobileListItems.filter({ hasText: dupTitle }).first()
     }
     await expect(dupRow).toBeVisible({ timeout: 30_000 })
+
+    await dupRow.getByTestId('edit-template').click()
+    await expect(page.getByRole('heading', { name: /Edit Survey Template/i })).toBeVisible({ timeout: 30_000 })
+    const dupVersionLabel = page.locator('text=/^v\\d+$/').first()
+    await expect(dupVersionLabel).toHaveText(/^v1$/)
+    await page.getByRole('link', { name: 'Survey Templates' }).click()
+    await expect(page.getByRole('heading', { name: 'Manage Survey Templates' })).toBeVisible({ timeout: 30_000 })
 
     // Delete duplicate first
     await dupRow.getByTestId('delete-template').click()

@@ -1,27 +1,9 @@
 import { test, expect } from '@playwright/test'
+import { loginAsAdmin as sharedLoginAsAdmin } from './helpers/auth'
 
 // Helper: login as Admin using role button or fallback credentials
 async function loginAsAdmin(page: any) {
-  await page.goto('/login')
-  await page.evaluate(() => localStorage.clear())
-  await page.goto('/login')
-
-  try {
-    const adminRoleButton = page.getByRole('button', { name: /Admin/i }).first()
-    if (await adminRoleButton.isVisible({ timeout: 5_000 })) {
-      await adminRoleButton.click()
-      await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
-      await expect(page.getByRole('heading', { name: /Admin Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
-      return
-    }
-  } catch {}
-
-  // Fallback to email/password
-  await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 10_000 })
-  await page.fill('input[type="email"]', 'admin@trakr.com')
-  await page.fill('input[type="password"]', 'Password@123')
-  await page.getByRole('button', { name: /Sign in|Log in/i }).click()
-  await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
+  await sharedLoginAsAdmin(page)
   await expect(page.getByRole('heading', { name: /Admin Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
 }
 
