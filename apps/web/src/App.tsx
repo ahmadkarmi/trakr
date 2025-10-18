@@ -17,6 +17,8 @@ import PWAInstallPrompt from './components/PWAInstallPrompt'
 
 // Lazy load all screens for code splitting
 const LoginScreen = lazy(() => import('./screens/LoginScreen'))
+const AdminOnboarding = lazy(() => import('./screens/AdminOnboarding'))
+const UserOnboarding = lazy(() => import('./screens/UserOnboarding'))
 const DashboardAuditor = lazy(() => import('./screens/DashboardAuditor'))
 const DashboardBranchManager = lazy(() => import('./screens/DashboardBranchManager'))
 const DashboardAdmin = lazy(() => import('./screens/DashboardAdmin'))
@@ -39,6 +41,7 @@ const Analytics = lazy(() => import('./screens/Analytics'))
 const SearchResults = lazy(() => import('./screens/SearchResults'))
 const Notifications = lazy(() => import('./screens/Notifications'))
 const DevBackendCheck = lazy(() => import('./screens/DevBackendCheck'))
+const Landing = lazy(() => import('./screens/Landing'))
 
 function App() {
   const { user, isLoading, init } = useAuthStore()
@@ -123,19 +126,60 @@ function App() {
                       <LoginScreen />
                   } 
                 />
+                <Route 
+                  path="/" 
+                  element={
+                    user ? (
+                      !user.orgId && user.role === UserRole.ADMIN ? (
+                        <Navigate to="/onboarding/admin" replace />
+                      ) : (
+                        <Navigate to={getHomeRouteForRole(user.role)} replace />
+                      )
+                    ) : (
+                      <Landing />
+                    )
+                  }
+                />
+
+                {/* Onboarding routes (public/authenticated) */}
+                <Route path="/onboarding/admin" element={<AdminOnboarding />} />
+                <Route path="/onboarding/user" element={<UserOnboarding />} />
 
                 {/* Protected routes */}
                 {user ? (
                   <>
-                    <Route 
-                      path="/" 
-                      element={<Navigate to={getHomeRouteForRole(user!.role)} replace />} 
-                    />
                     
                     {/* Dashboard routes */}
-                    <Route path="/dashboard/auditor" element={<DashboardAuditor />} />
-                    <Route path="/dashboard/branch-manager" element={<DashboardBranchManager />} />
-                    <Route path="/dashboard/admin" element={<DashboardAdmin />} />
+                    <Route 
+                      path="/dashboard/auditor" 
+                      element={
+                        !user.orgId ? (
+                          <Navigate to="/onboarding/user" replace />
+                        ) : (
+                          <DashboardAuditor />
+                        )
+                      } 
+                    />
+                    <Route 
+                      path="/dashboard/branch-manager" 
+                      element={
+                        !user.orgId ? (
+                          <Navigate to="/onboarding/user" replace />
+                        ) : (
+                          <DashboardBranchManager />
+                        )
+                      } 
+                    />
+                    <Route 
+                      path="/dashboard/admin" 
+                      element={
+                        !user.orgId ? (
+                          <Navigate to="/onboarding/admin" replace />
+                        ) : (
+                          <DashboardAdmin />
+                        )
+                      } 
+                    />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/analytics" element={<Analytics />} />
                     <Route path="/activity/logs" element={<ActivityLogs />} />
@@ -180,7 +224,7 @@ function App() {
                     <Route path="*" element={<Navigate to={getHomeRouteForRole(user!.role)} replace />} />
                   </>
                 ) : (
-                  <Route path="*" element={<Navigate to="/login" replace />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 )}
               </Routes>
             </Suspense>
