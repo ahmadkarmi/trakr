@@ -17,6 +17,8 @@ import PWAInstallPrompt from './components/PWAInstallPrompt'
 
 // Lazy load all screens for code splitting
 const LoginScreen = lazy(() => import('./screens/LoginScreen'))
+const AdminOnboarding = lazy(() => import('./screens/AdminOnboarding'))
+const UserOnboarding = lazy(() => import('./screens/UserOnboarding'))
 const DashboardAuditor = lazy(() => import('./screens/DashboardAuditor'))
 const DashboardBranchManager = lazy(() => import('./screens/DashboardBranchManager'))
 const DashboardAdmin = lazy(() => import('./screens/DashboardAdmin'))
@@ -39,6 +41,7 @@ const Analytics = lazy(() => import('./screens/Analytics'))
 const SearchResults = lazy(() => import('./screens/SearchResults'))
 const Notifications = lazy(() => import('./screens/Notifications'))
 const DevBackendCheck = lazy(() => import('./screens/DevBackendCheck'))
+const Landing = lazy(() => import('./screens/Landing'))
 
 function App() {
   const { user, isLoading, init } = useAuthStore()
@@ -123,14 +126,33 @@ function App() {
                       <LoginScreen />
                   } 
                 />
+                <Route 
+                  path="/" 
+                  element={
+                    user ? (
+                      !user.orgId ? (
+                        // Users without orgId need onboarding
+                        user.role === UserRole.ADMIN ? (
+                          <Navigate to="/onboarding/admin" replace />
+                        ) : (
+                          <Navigate to="/onboarding/user" replace />
+                        )
+                      ) : (
+                        <Navigate to={getHomeRouteForRole(user.role)} replace />
+                      )
+                    ) : (
+                      <Landing />
+                    )
+                  }
+                />
+
+                {/* Onboarding routes (public/authenticated) */}
+                <Route path="/onboarding/admin" element={<AdminOnboarding />} />
+                <Route path="/onboarding/user" element={<UserOnboarding />} />
 
                 {/* Protected routes */}
                 {user ? (
                   <>
-                    <Route 
-                      path="/" 
-                      element={<Navigate to={getHomeRouteForRole(user!.role)} replace />} 
-                    />
                     
                     {/* Dashboard routes */}
                     <Route path="/dashboard/auditor" element={<DashboardAuditor />} />
@@ -180,13 +202,13 @@ function App() {
                     <Route path="*" element={<Navigate to={getHomeRouteForRole(user!.role)} replace />} />
                   </>
                 ) : (
-                  <Route path="*" element={<Navigate to="/login" replace />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 )}
               </Routes>
             </Suspense>
             
-            {/* PWA Install Prompt */}
-            <PWAInstallPrompt />
+            {/* PWA Install Prompt - only show for authenticated users */}
+            {user && <PWAInstallPrompt />}
             
             {/* Global Error Toast Container */}
             <ErrorToastContainer />
