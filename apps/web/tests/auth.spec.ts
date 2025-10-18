@@ -99,8 +99,13 @@ test.describe('Auth smoke', () => {
     await page.getByLabel('User menu').click()
     await page.getByRole('menuitem', { name: 'Sign Out' }).click()
     
-    // Wait for login page
-    await page.waitForURL(url => url.pathname.includes('/login'), { timeout: 30_000 })
+    // Wait for landing page or login page (landing is new default after sign out)
+    await page.waitForURL(url => url.pathname === '/' || url.pathname.includes('/login'), { timeout: 30_000 })
+    
+    // Navigate to login page if we're on landing
+    if (page.url().endsWith('/')) {
+      await page.goto('/login')
+    }
 
     // Sign in as auditor
     await loginAsAuditor(page)

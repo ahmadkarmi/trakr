@@ -150,36 +150,9 @@ function App() {
                   <>
                     
                     {/* Dashboard routes */}
-                    <Route 
-                      path="/dashboard/auditor" 
-                      element={
-                        !user.orgId ? (
-                          <Navigate to="/onboarding/user" replace />
-                        ) : (
-                          <DashboardAuditor />
-                        )
-                      } 
-                    />
-                    <Route 
-                      path="/dashboard/branch-manager" 
-                      element={
-                        !user.orgId ? (
-                          <Navigate to="/onboarding/user" replace />
-                        ) : (
-                          <DashboardBranchManager />
-                        )
-                      } 
-                    />
-                    <Route 
-                      path="/dashboard/admin" 
-                      element={
-                        !user.orgId ? (
-                          <Navigate to="/onboarding/admin" replace />
-                        ) : (
-                          <DashboardAdmin />
-                        )
-                      } 
-                    />
+                    <Route path="/dashboard/auditor" element={<DashboardAuditor />} />
+                    <Route path="/dashboard/branch-manager" element={<DashboardBranchManager />} />
+                    <Route path="/dashboard/admin" element={<DashboardAdmin />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/analytics" element={<Analytics />} />
                     <Route path="/activity/logs" element={<ActivityLogs />} />
