@@ -142,7 +142,7 @@ async function seedDatabase() {
     console.log('👥 Seeding users...')
     const { data: userData, error: userError } = await supabase.from('users').upsert([
       // Main test accounts (trakr.com domain)
-      { org_id: retailOrg.id, email: 'admin@trakr.com', role: 'ADMIN' },
+      { org_id: retailOrg.id, email: 'admin@trakr.com', role: 'SUPER_ADMIN' },
       { org_id: retailOrg.id, email: 'branchmanager@trakr.com', role: 'BRANCH_MANAGER' },
       { org_id: retailOrg.id, email: 'auditor@trakr.com', role: 'AUDITOR' },
       
@@ -193,6 +193,7 @@ async function seedDatabase() {
     console.log('  • 7 Users (1 admin, 3 branch managers, 3 auditors)')
     
     console.log('\n🔐 Test User Accounts:')
+    console.log('  Super Admin: admin@trakr.com')
     console.log('  Admin: admin@retailchain.com')
     console.log('  Branch Manager (2 branches): manager.manhattan@retailchain.com')
     console.log('  Branch Manager (2 branches): manager.miami@retailchain.com')
