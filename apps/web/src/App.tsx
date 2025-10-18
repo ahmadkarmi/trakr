@@ -130,8 +130,13 @@ function App() {
                   path="/" 
                   element={
                     user ? (
-                      !user.orgId && user.role === UserRole.ADMIN ? (
-                        <Navigate to="/onboarding/admin" replace />
+                      !user.orgId ? (
+                        // Users without orgId need onboarding
+                        user.role === UserRole.ADMIN ? (
+                          <Navigate to="/onboarding/admin" replace />
+                        ) : (
+                          <Navigate to="/onboarding/user" replace />
+                        )
                       ) : (
                         <Navigate to={getHomeRouteForRole(user.role)} replace />
                       )

@@ -3,18 +3,32 @@ import { Page } from '@playwright/test'
 /**
  * Handle onboarding screen if it appears after login.
  * Completes org creation for admin users without orgId.
+ * Skips user onboarding (requires invitation token).
  */
 export async function handleOnboardingIfNeeded(page: Page) {
   try {
+    // Check for admin onboarding (Welcome heading)
     const welcomeHeading = page.getByRole('heading', { name: /Welcome/i })
     if (await welcomeHeading.isVisible({ timeout: 2_000 })) {
-      // Fill onboarding form
+      console.log('🔧 Detected admin onboarding - completing org creation')
       await page.fill('input[id="orgName"]', 'Test Organization')
       await page.getByRole('button', { name: /Create Organization/i }).click()
       await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
+      return
     }
-  } catch (e) {
+    
+    // Check for user onboarding (invitation required)
+    const invitationError = page.getByText(/No invitation token/i)
+    if (await invitationError.isVisible({ timeout: 2_000 })) {
+      console.log('⚠️ User onboarding detected - requires invitation token. User may not have orgId in database.')
+      // This shouldn't happen in tests if database is properly seeded
+      throw new Error('User redirected to onboarding but no invitation token. Check database seeding.')
+    }
+  } catch (e: any) {
     // Onboarding not needed or already completed
+    if (e.message?.includes('invitation token')) {
+      throw e // Re-throw to fail the test
+    }
   }
 }
 
