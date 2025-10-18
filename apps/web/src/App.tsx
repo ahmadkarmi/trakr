@@ -202,8 +202,8 @@ function App() {
               </Routes>
             </Suspense>
             
-            {/* PWA Install Prompt */}
-            <PWAInstallPrompt />
+            {/* PWA Install Prompt - only show for authenticated users */}
+            {user && <PWAInstallPrompt />}
             
             {/* Global Error Toast Container */}
             <ErrorToastContainer />
