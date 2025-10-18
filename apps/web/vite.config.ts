@@ -39,8 +39,8 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Vendor chunk for React ecosystem
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom') || id.includes('node_modules/react-router')) {
+          // Vendor chunk for React ecosystem (including Heroicons which depends on React)
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom') || id.includes('node_modules/react-router') || id.includes('@heroicons')) {
             return 'vendor'
           }
           // Data management libraries
@@ -52,7 +52,7 @@ export default defineConfig(({ mode }) => ({
             return 'charts'
           }
           // UI utilities
-          if (id.includes('@headlessui') || id.includes('@heroicons') || id.includes('clsx') || id.includes('tailwind-merge')) {
+          if (id.includes('@headlessui') || id.includes('clsx') || id.includes('tailwind-merge')) {
             return 'ui'
           }
           // Date utilities
