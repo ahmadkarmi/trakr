@@ -609,15 +609,19 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <footer className="py-10 border-t border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-sm text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p> Trakr. All rights reserved.</p>
-          <p>© {new Date().getFullYear()} Trakr. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <a href="#about" className="hover:text-gray-900">About</a>
-            <a href="#features" className="hover:text-gray-900">Features</a>
-            <a href="#beta" className="hover:text-gray-900">Request Access</a>
+      <footer className="bg-white/80 backdrop-blur border-t border-gray-100">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
+            <span className="font-semibold text-gray-900">Trakr</span>
+            <span className="hidden sm:inline text-sm text-gray-500">© {new Date().getFullYear()} All rights reserved.</span>
           </div>
+          <nav className="flex items-center gap-2">
+            <a href="#features" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">Features</a>
+            <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">How It Works</a>
+            <a href="#beta" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">Request Access</a>
+            <a href="/login" className="text-sm text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-md font-semibold">Login</a>
+          </nav>
         </div>
       </footer>
     </div>
