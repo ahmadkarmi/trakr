@@ -261,6 +261,26 @@ async function seedDatabase() {
       console.log('  ✅ Auditors assigned to zones')
     }
 
+    // Create a basic survey for analytics testing
+    console.log('📋 Creating test survey...')
+    try {
+      const { data: surveyData, error: surveyError } = await supabase.from('surveys').insert([
+        {
+          org_id: retailOrg.id,
+          title: 'Store Compliance Audit',
+          description: 'Standard compliance audit for retail locations',
+          frequency: 'MONTHLY',
+          is_active: true
+        }
+      ]).select()
+      
+      if (!surveyError && surveyData && surveyData[0]) {
+        console.log('  ✅ Created test survey:', surveyData[0].title)
+      }
+    } catch (err) {
+      console.log(`  ⚠️  Survey creation: ${err.message}`)
+    }
+
     console.log('\n🎉 Database seeding completed successfully!')
     console.log('\n📊 Seeded Data Summary:')
     console.log('  • 2 Organizations (Global Retail Chain + Manufacturing Corp)')
