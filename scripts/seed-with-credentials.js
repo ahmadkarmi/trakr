@@ -72,17 +72,19 @@ async function seedDatabase() {
     // Clear existing data more thoroughly
     console.log('🧹 Clearing existing data...')
     
-    // Clear in correct order to handle foreign key constraints
+    // Clear in order that respects foreign key constraints:
+    // 1. Audits and their dependencies
+    // 2. Branch managers (set to NULL before deleting users)
+    // 3. Users
+    // 4. Branches and zones
+    // 5. Organizations
     const clearOrder = [
       'audit_photos',
-      'audit_comments', 
+      'audit_comments',
       'audits',
       'auditor_assignments',
-      'users',
-      'branches', 
-      'zones',
       'surveys',
-      'organizations'
+      'zone_branches'
     ]
     
     for (const table of clearOrder) {
@@ -96,6 +98,47 @@ async function seedDatabase() {
       } catch (err) {
         console.log(`  ⚠️  ${table}: ${err.message}`)
       }
+    }
+    
+    // Clear FK-constrained tables in correct order
+    try {
+      // 1. Remove branch managers (set to NULL)
+      await supabase.from('branches').update({ manager_id: null }).neq('id', '00000000-0000-0000-0000-000000000000')
+      console.log('  ✅ Nullified branch managers')
+    } catch (err) {
+      console.log(`  ⚠️  branches.manager_id: ${err.message}`)
+    }
+    
+    try {
+      // 2. Delete users
+      await supabase.from('users').delete().gte('created_at', '1900-01-01')
+      console.log('  ✅ Cleared users')
+    } catch (err) {
+      console.log(`  ⚠️  users: ${err.message}`)
+    }
+    
+    try {
+      // 3. Delete branches
+      await supabase.from('branches').delete().gte('created_at', '1900-01-01')
+      console.log('  ✅ Cleared branches')
+    } catch (err) {
+      console.log(`  ⚠️  branches: ${err.message}`)
+    }
+    
+    try {
+      // 4. Delete zones
+      await supabase.from('zones').delete().gte('created_at', '1900-01-01')
+      console.log('  ✅ Cleared zones')
+    } catch (err) {
+      console.log(`  ⚠️  zones: ${err.message}`)
+    }
+    
+    try {
+      // 5. Delete organizations
+      await supabase.from('organizations').delete().gte('created_at', '1900-01-01')
+      console.log('  ✅ Cleared organizations')
+    } catch (err) {
+      console.log(`  ⚠️  organizations: ${err.message}`)
     }
 
     // Seed organizations
@@ -138,6 +181,32 @@ async function seedDatabase() {
     ]).select()
     if (branchError) throw branchError
 
+    // Assign branches to zones
+    const manhattanBranch = branchData.find(b => b.name === 'Manhattan Store')
+    const brooklynBranch = branchData.find(b => b.name === 'Brooklyn Store')
+    const miamiBranch = branchData.find(b => b.name === 'Miami Store')
+    const atlantaBranch = branchData.find(b => b.name === 'Atlanta Store')
+    const laBranch = branchData.find(b => b.name === 'Los Angeles Store')
+    const sfBranch = branchData.find(b => b.name === 'San Francisco Store')
+    const dallasBranch = branchData.find(b => b.name === 'Dallas Store')
+    const houstonBranch = branchData.find(b => b.name === 'Houston Store')
+    
+    try {
+      await supabase.from('zone_branches').insert([
+        { zone_id: northZone.id, branch_id: manhattanBranch.id },
+        { zone_id: northZone.id, branch_id: brooklynBranch.id },
+        { zone_id: southZone.id, branch_id: miamiBranch.id },
+        { zone_id: southZone.id, branch_id: atlantaBranch.id },
+        { zone_id: westZone.id, branch_id: laBranch.id },
+        { zone_id: westZone.id, branch_id: sfBranch.id },
+        { zone_id: centralZone.id, branch_id: dallasBranch.id },
+        { zone_id: centralZone.id, branch_id: houstonBranch.id }
+      ])
+      console.log('  ✅ Branches assigned to zones')
+    } catch (err) {
+      console.log(`  ⚠️  zone_branches: ${err.message}`)
+    }
+
     // Seed users (ultra minimal - just email and role) with upsert
     console.log('👥 Seeding users...')
     const { data: userData, error: userError } = await supabase.from('users').upsert([
@@ -167,15 +236,6 @@ async function seedDatabase() {
 
     // Update branch managers
     console.log('🔄 Assigning branch managers...')
-    const manhattanBranch = branchData.find(b => b.name === 'Manhattan Store')
-    const brooklynBranch = branchData.find(b => b.name === 'Brooklyn Store')
-    const miamiBranch = branchData.find(b => b.name === 'Miami Store')
-    const atlantaBranch = branchData.find(b => b.name === 'Atlanta Store')
-    const laBranch = branchData.find(b => b.name === 'Los Angeles Store')
-    const sfBranch = branchData.find(b => b.name === 'San Francisco Store')
-    const dallasBranch = branchData.find(b => b.name === 'Dallas Store')
-    const houstonBranch = branchData.find(b => b.name === 'Houston Store')
-    
     await supabase.from('branches').update({ manager_id: jenniferManager.id }).eq('id', manhattanBranch.id) // Jennifer - Manhattan
     await supabase.from('branches').update({ manager_id: jenniferManager.id }).eq('id', brooklynBranch.id) // Jennifer - Brooklyn (2 branches)
     await supabase.from('branches').update({ manager_id: mariaManager.id }).eq('id', miamiBranch.id) // Maria - Miami
@@ -184,6 +244,22 @@ async function seedDatabase() {
     await supabase.from('branches').update({ manager_id: jamesManager.id }).eq('id', sfBranch.id) // James - SF (2 branches)
     await supabase.from('branches').update({ manager_id: jamesManager.id }).eq('id', dallasBranch.id) // James - Dallas (3 branches)
     await supabase.from('branches').update({ manager_id: jamesManager.id }).eq('id', houstonBranch.id) // James - Houston (4 branches)
+
+    // Assign auditors to zones for branch coverage
+    console.log('🔍 Assigning auditor coverage...')
+    const auditor1 = userData.find(u => u.email === 'auditor1@retailchain.com')
+    const auditor2 = userData.find(u => u.email === 'auditor2@retailchain.com')
+    const auditor3 = userData.find(u => u.email === 'auditor3@retailchain.com')
+    
+    if (auditor1 && auditor2 && auditor3) {
+      await supabase.from('auditor_assignments').insert([
+        { auditor_id: auditor1.id, zone_id: northZone.id },
+        { auditor_id: auditor2.id, zone_id: southZone.id },
+        { auditor_id: auditor3.id, zone_id: westZone.id },
+        { auditor_id: auditor3.id, zone_id: centralZone.id }
+      ])
+      console.log('  ✅ Auditors assigned to zones')
+    }
 
     console.log('\n🎉 Database seeding completed successfully!')
     console.log('\n📊 Seeded Data Summary:')
