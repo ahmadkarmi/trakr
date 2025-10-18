@@ -39,25 +39,13 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Vendor chunk for React ecosystem (including Heroicons which depends on React)
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom') || id.includes('node_modules/react-router') || id.includes('@heroicons')) {
+          // All node_modules in vendor chunk to avoid circular dependencies
+          if (id.includes('node_modules')) {
+            // Separate out large chart library
+            if (id.includes('recharts')) {
+              return 'charts'
+            }
             return 'vendor'
-          }
-          // Data management libraries
-          if (id.includes('@tanstack/react-query') || id.includes('@supabase/supabase-js') || id.includes('zustand')) {
-            return 'data'
-          }
-          // Chart libraries (only if actually used)
-          if (id.includes('recharts')) {
-            return 'charts'
-          }
-          // UI utilities
-          if (id.includes('@headlessui') || id.includes('clsx') || id.includes('tailwind-merge')) {
-            return 'ui'
-          }
-          // Date utilities
-          if (id.includes('date-fns')) {
-            return 'utils'
           }
         },
       },
