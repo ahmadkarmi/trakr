@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { ClipboardDocumentCheckIcon, ClipboardDocumentListIcon, CameraIcon, CheckCircleIcon, ChartBarIcon, GlobeAltIcon, PlayCircleIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
@@ -641,7 +642,7 @@ const Landing: React.FC = () => {
             <div>
               <h3 className="font-semibold text-gray-900 mb-4">Resources</h3>
               <ul className="space-y-3">
-                <li><a href="/login" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">Login</a></li>
+                <li><Link to="/login" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">Login</Link></li>
                 <li><a href="#beta" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">Request Access</a></li>
               </ul>
             </div>
