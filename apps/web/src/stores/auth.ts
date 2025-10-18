@@ -6,13 +6,35 @@ import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
 import { preloadDashboardChunk } from '../hooks/useDashboardPrefetch'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
+async function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)) }
+
+async function fetchAppUserWithRetry(authUserId: string, email?: string | null, maxAttempts = 5, delayMs = 300): Promise<User | null> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const [byId, all] = await Promise.allSettled([
+        api.getUserById(authUserId),
+        api.getUsers(),
+      ])
+      if (byId.status === 'fulfilled' && byId.value) {
+        return byId.value as User
+      }
+      if (all.status === 'fulfilled' && all.value && email) {
+        const found = (all.value as User[]).find(u => (u.email || '').toLowerCase() === (email || '').toLowerCase()) || null
+        if (found) return found
+      }
+    } catch {}
+    if (attempt < maxAttempts) await sleep(delayMs)
+  }
+  return null
+}
+
 interface AuthState {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
   signIn: (role: UserRole) => Promise<void>
   signInWithCredentials: (email: string, password: string) => Promise<void>
-  signOut: () => void
+  signOut: () => Promise<void>
   setLoading: (loading: boolean) => void
   updateUser: (user: User) => void
   init: () => Promise<void>
@@ -202,8 +224,14 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      signOut: () => {
-        try { if (hasSupabaseEnv()) getSupabase().auth.signOut() } catch {}
+      signOut: async () => {
+        try { 
+          if (hasSupabaseEnv()) {
+            await getSupabase().auth.signOut()
+          }
+          // Clear persisted auth state from localStorage
+          localStorage.removeItem('trakr-auth')
+        } catch {}
         set({ user: null, isAuthenticated: false, isLoading: false })
       },
 
@@ -242,34 +270,9 @@ export const useAuthStore = create<AuthState>()(
           const sessUser = sessionRes?.session?.user
           if (sessUser) {
             // If we already have a user persisted and IDs match, keep it
-            // Regardless, try to hydrate to ensure consistency (parallel for speed)
-            let appUser: User | null = null
-            try {
-              const [userById, allUsers] = await Promise.allSettled([
-                api.getUserById(sessUser.id),
-                api.getUsers()
-              ])
-              
-              if (userById.status === 'fulfilled' && userById.value) {
-                appUser = userById.value
-              } else if (allUsers.status === 'fulfilled' && allUsers.value) {
-                const email = sessUser.email || ''
-                appUser = allUsers.value.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
-              }
-            } catch (parallelError) {
-              console.warn('[Auth] Parallel init lookup failed, trying sequential', parallelError)
-              try {
-                appUser = await api.getUserById(sessUser.id)
-              } catch {
-                const email = sessUser.email || ''
-                const users = await api.getUsers()
-                appUser = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
-              }
-            }
-            
-            if (appUser) {
-              set({ user: appUser, isAuthenticated: true })
-            }
+            // Regardless, hydrate with retry to avoid race where DB user isn't ready yet
+            const appUser = await fetchAppUserWithRetry(sessUser.id, sessUser.email || '', 6, 350)
+            if (appUser) set({ user: appUser, isAuthenticated: true })
           }
           // Subscribe to auth changes
           supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
@@ -278,19 +281,7 @@ export const useAuthStore = create<AuthState>()(
               set({ user: null, isAuthenticated: false })
               return
             }
-            // Parallel user lookup for speed
-            let appUser: User | null = null
-            const [userById, allUsers] = await Promise.allSettled([
-              api.getUserById(u.id),
-              api.getUsers()
-            ])
-            
-            if (userById.status === 'fulfilled') {
-              appUser = userById.value
-            } else if (allUsers.status === 'fulfilled' && u.email) {
-              appUser = allUsers.value.find(x => (x.email || '').toLowerCase() === u.email!.toLowerCase()) || null
-            }
-            
+            const appUser = await fetchAppUserWithRetry(u.id, u.email || '', 6, 350)
             if (appUser) set({ user: appUser, isAuthenticated: true })
           })
         } finally {
