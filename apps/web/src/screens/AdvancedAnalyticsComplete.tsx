@@ -340,7 +340,7 @@ const AdvancedAnalyticsComplete: React.FC = () => {
           {/* Export Buttons */}
           <div className="flex gap-2 justify-end">
             <button
-              onClick={() => exportToExcel(results, selectedSurvey.title)}
+              onClick={() => void exportToExcel(results, selectedSurvey.title)}
               className="btn btn-outline btn-sm"
             >
               <ArrowDownTrayIcon className="w-4 h-4" />
