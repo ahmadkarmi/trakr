@@ -8,7 +8,7 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|manifest.json|icon.svg|sw.js|.*\\.).*)",
       "destination": "/index.html"
     }
   ],

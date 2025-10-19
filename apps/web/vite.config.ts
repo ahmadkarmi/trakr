@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 3002,
     host: true,
+    // SPA fallback - serve index.html for all routes (fixes 404 on refresh)
+    strictPort: false,
     fs: {
       // Allow serving files from the shared workspace outside this package root
       allow: [
@@ -31,6 +33,11 @@ export default defineConfig(({ mode }) => ({
         path.resolve(__dirname, '../../'),
       ],
     },
+  },
+  preview: {
+    port: 3002,
+    host: true,
+    strictPort: false,
   },
   build: {
     outDir: 'dist',
