@@ -3,6 +3,7 @@ import { Organization, UserRole } from '@trakr/shared'
 import { api } from '../utils/api'
 import { useAuthStore } from '../stores/auth'
 import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 
 interface OrganizationContextType {
   currentOrg: Organization | null
@@ -23,6 +24,7 @@ const OrganizationContext = createContext<OrganizationContextType | undefined>(u
 export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const isSuperAdmin = (user?.role === UserRole.SUPER_ADMIN)
   
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null)
@@ -158,11 +160,19 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         
         // (audit trail omitted in web client)
         
-        // Reload to ensure clean state
-        window.location.reload()
+        console.log(`[OrganizationContext] Switched to organization: ${org.name} (${orgId})`)
+        
+        // Navigate to admin dashboard instead of reloading
+        // This prevents 404 errors and ensures proper routing
+        navigate('/dashboard/admin', { replace: true })
+        
+        // Reset switching state after navigation
+        setTimeout(() => setIsSwitching(false), 100)
       } catch (error) {
         console.error('[OrganizationContext] Error during org switch:', error)
         setIsSwitching(false)
+        // On error, try to navigate to dashboard anyway
+        navigate('/dashboard/admin', { replace: true })
       }
     }
   }
@@ -189,7 +199,11 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     if (on) {
       setCurrentOrg(null)
     }
-    window.location.reload()
+    
+    // Clear query cache and navigate to dashboard
+    queryClient.clear()
+    console.log(`[OrganizationContext] Switched to ${on ? 'global' : 'organization-specific'} view`)
+    navigate('/dashboard/admin', { replace: true })
   }
 
   const effectiveOrgId: string | undefined = (isSuperAdmin && globalView)
