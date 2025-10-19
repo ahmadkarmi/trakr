@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom'
 import { beforeAll } from 'vitest'
 import { getSupabase } from './utils/supabaseClient'
+import { logger } from './utils/logger'
 
 // jsdom doesn't implement scrollTo; stub to avoid errors in components that may call it.
 Object.defineProperty(window, 'scrollTo', { value: () => {}, writable: true })
@@ -46,15 +47,12 @@ beforeAll(async () => {
     if (email && password) {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        // eslint-disable-next-line no-console
-        console.error('[setupTests] Supabase sign-in failed:', error.message)
+        logger.error('Supabase sign-in failed for tests', error, { context: 'SetupTests' })
       }
     } else {
-      // eslint-disable-next-line no-console
-      console.warn('[setupTests] Missing VITE_TEST_EMAIL / VITE_TEST_PASSWORD for Supabase tests under RLS')
+      logger.warn('Missing VITE_TEST_EMAIL / VITE_TEST_PASSWORD for Supabase tests under RLS', { context: 'SetupTests' })
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('[setupTests] Supabase pre-test sign-in skipped due to error:', (e as any)?.message || e)
+    logger.warn('Supabase pre-test sign-in skipped due to error', { context: 'SetupTests', data: (e as any)?.message || e })
   }
 })
