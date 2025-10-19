@@ -50,23 +50,6 @@ jobs:
           name: database-backup-${{ github.run_number }}
           path: trakr-db-backup-*.sql.gz
           retention-days: 90 # Keep for 3 months
-          
-      - name: Upload to AWS S3 (optional)
-        # IDE may warn about secrets context, but this is correct GitHub Actions syntax
-        if: secrets.AWS_ACCESS_KEY_ID
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          S3_BUCKET: ${{ secrets.S3_BACKUP_BUCKET }}
-        run: |
-          # Install AWS CLI
-          pip install awscli
-          
-          # Upload to S3
-          aws s3 cp trakr-db-backup-*.sql.gz \
-            s3://${S3_BUCKET}/database-backups/ \
-            --storage-class GLACIER_IR
             
   backup-schema-only:
     runs-on: ubuntu-latest
