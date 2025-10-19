@@ -59,6 +59,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    // Ensure proper CSS handling for production
+    cssCodeSplit: true,
     // Performance optimizations
     rollupOptions: {
       output: {
@@ -72,6 +74,10 @@ export default defineConfig(({ mode }) => ({
             return 'vendor'
           }
         },
+        // Ensure consistent asset naming
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
       },
     },
     // Increase chunk size warning limit for better chunking
