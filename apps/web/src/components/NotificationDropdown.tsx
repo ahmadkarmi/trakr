@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Notification, NotificationType } from '@trakr/shared'
 import { BellIcon, XMarkIcon, ClockIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, DocumentPlusIcon, BuildingOfficeIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline'
 import { useNotificationsEngine } from '../notifications/useNotifications'
+import { logger } from '../utils/logger'
 
 const NotificationDropdown: React.FC = () => {
   const navigate = useNavigate()
@@ -59,23 +60,26 @@ const NotificationDropdown: React.FC = () => {
   }, [isOpen, isMobile])
 
   const handleNotificationClick = (notification: Notification) => {
-    console.log('🖱️ Notification clicked:', {
-      id: notification.id,
-      title: notification.title,
-      isRead: notification.isRead,
-      link: notification.link
+    logger.debug('Notification clicked', {
+      context: 'NotificationDropdown',
+      data: {
+        id: notification.id,
+        title: notification.title,
+        isRead: notification.isRead,
+        link: notification.link
+      }
     })
     
     // Mark as read (only for real database notifications with valid UUID)
     if (!notification.isRead) {
       engine.markAsRead(notification.id)
     } else {
-      console.log(`ℹ️ Notification already marked as read`)
+      logger.debug('Notification already marked as read', { context: 'NotificationDropdown' })
     }
 
     // Navigate to link if provided
     if (notification.link) {
-      console.log(`🔗 Navigating to: ${notification.link}`)
+      logger.debug(`Navigating to: ${notification.link}`, { context: 'NotificationDropdown' })
       navigate(notification.link)
       setIsOpen(false)
     }
