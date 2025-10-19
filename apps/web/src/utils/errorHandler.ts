@@ -1,3 +1,6 @@
+import { logger } from './logger'
+import { safeLocalStorage } from './safeStorage'
+
 export interface AppError {
   code: string
   message: string
@@ -236,38 +239,46 @@ export class ErrorHandler {
   }
 
   static logError(error: AppError): void {
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.group(`🚨 ${error.severity.toUpperCase()} Error: ${error.code}`)
-      console.error('User Message:', error.userMessage)
-      console.error('Technical Message:', error.message)
-      console.error('Context:', error.context)
-      console.error('Timestamp:', error.timestamp)
-      console.groupEnd()
-    }
+    // Log using structured logger
+    logger.group(`${error.severity.toUpperCase()} Error: ${error.code}`, () => {
+      logger.error('User Message', undefined, { 
+        context: 'ErrorHandler',
+        data: { userMessage: error.userMessage }
+      })
+      logger.error('Technical Message', undefined, { 
+        context: 'ErrorHandler',
+        data: { message: error.message }
+      })
+      if (error.context) {
+        logger.error('Error Context', undefined, { 
+          context: 'ErrorHandler',
+          data: error.context
+        })
+      }
+      logger.error('Timestamp', undefined, { 
+        context: 'ErrorHandler',
+        data: { timestamp: error.timestamp }
+      })
+    })
     
     // In production, you could send to error tracking service
     // Example: Sentry.captureException(error)
     
     // Store in local storage for debugging (limit to last 50 errors)
     try {
-      const stored = JSON.parse(localStorage.getItem('trakr_errors') || '[]')
+      const stored = safeLocalStorage.getObject<AppError[]>('trakr_errors', []) || []
       stored.unshift(error)
-      localStorage.setItem('trakr_errors', JSON.stringify(stored.slice(0, 50)))
+      safeLocalStorage.setObject('trakr_errors', stored.slice(0, 50))
     } catch {
-      // Ignore localStorage errors
+      // Ignore storage errors (handled by safeLocalStorage)
     }
   }
 
   static getStoredErrors(): AppError[] {
-    try {
-      return JSON.parse(localStorage.getItem('trakr_errors') || '[]')
-    } catch {
-      return []
-    }
+    return safeLocalStorage.getObject<AppError[]>('trakr_errors', []) || []
   }
 
   static clearStoredErrors(): void {
-    localStorage.removeItem('trakr_errors')
+    safeLocalStorage.removeItem('trakr_errors')
   }
 }
