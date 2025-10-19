@@ -6,6 +6,7 @@ import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
 import { preloadDashboardChunk } from '../hooks/useDashboardPrefetch'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { logger } from '../utils/logger'
+import { setSentryUser, clearSentryUser } from '../utils/sentry'
 
 async function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)) }
 
@@ -102,7 +103,8 @@ export const useAuthStore = create<AuthState>()(
               [UserRole.SUPER_ADMIN]: 'admin@trakr.com',
             }
             const email = emailByRole[role]
-            const password = 'Password@123' // Default password set by our script
+            // Use default password from environment or fallback for development
+            const password = (import.meta as any).env?.VITE_DEFAULT_PASSWORD || 'Password@123'
             
             // Use the credentials login flow to create a real Supabase session
             const supabase = getSupabase()
@@ -140,6 +142,14 @@ export const useAuthStore = create<AuthState>()(
             // Preload dashboard chunk for faster navigation
             preloadDashboardChunk(appUser.role)
             
+            // Track user in Sentry for error monitoring
+            setSentryUser({
+              id: appUser.id,
+              email: appUser.email,
+              role: appUser.role,
+              orgId: appUser.orgId
+            })
+            
             set({ user: appUser, isAuthenticated: true, isLoading: false })
             return
           }
@@ -162,6 +172,14 @@ export const useAuthStore = create<AuthState>()(
 
           // Preload dashboard chunk for faster navigation
           preloadDashboardChunk(user.role)
+          
+          // Track user in Sentry for error monitoring
+          setSentryUser({
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            orgId: user.orgId
+          })
           
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e) {
@@ -218,6 +236,14 @@ export const useAuthStore = create<AuthState>()(
           // Preload dashboard chunk for faster navigation
           preloadDashboardChunk(appUser.role)
           
+          // Track user in Sentry for error monitoring
+          setSentryUser({
+            id: appUser.id,
+            email: appUser.email,
+            role: appUser.role,
+            orgId: appUser.orgId
+          })
+          
           set({ user: appUser, isAuthenticated: true, isLoading: false })
         } catch (e) {
           set({ isLoading: false })
@@ -233,6 +259,10 @@ export const useAuthStore = create<AuthState>()(
           // Clear persisted auth state from localStorage
           localStorage.removeItem('trakr-auth')
         } catch {}
+        
+        // Clear Sentry user context
+        clearSentryUser()
+        
         set({ user: null, isAuthenticated: false, isLoading: false })
       },
 
@@ -273,17 +303,34 @@ export const useAuthStore = create<AuthState>()(
             // If we already have a user persisted and IDs match, keep it
             // Regardless, hydrate with retry to avoid race where DB user isn't ready yet
             const appUser = await fetchAppUserWithRetry(sessUser.id, sessUser.email || '', 6, 350)
-            if (appUser) set({ user: appUser, isAuthenticated: true })
+            if (appUser) {
+              setSentryUser({
+                id: appUser.id,
+                email: appUser.email,
+                role: appUser.role,
+                orgId: appUser.orgId
+              })
+              set({ user: appUser, isAuthenticated: true })
+            }
           }
           // Subscribe to auth changes
           supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
             const u = session?.user
             if (!u) {
+              clearSentryUser()
               set({ user: null, isAuthenticated: false })
               return
             }
             const appUser = await fetchAppUserWithRetry(u.id, u.email || '', 6, 350)
-            if (appUser) set({ user: appUser, isAuthenticated: true })
+            if (appUser) {
+              setSentryUser({
+                id: appUser.id,
+                email: appUser.email,
+                role: appUser.role,
+                orgId: appUser.orgId
+              })
+              set({ user: appUser, isAuthenticated: true })
+            }
           })
         } finally {
           set({ isLoading: false })

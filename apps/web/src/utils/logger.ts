@@ -60,10 +60,38 @@ class Logger {
 
     this.log('error', message, { ...options, data: errorData });
 
-    // TODO: Send to error tracking service (Sentry, LogRocket, etc.)
-    // if (!this.isDev) {
-    //   this.sendToErrorService(message, errorData);
-    // }
+    // Send to Sentry in production
+    if (!this.isDev && error) {
+      this.sendToSentry(error, message, options);
+    }
+  }
+
+  /**
+   * Send error to Sentry
+   */
+  private sendToSentry(error: Error | unknown, message: string, options?: LogOptions): void {
+    try {
+      // Dynamic import to avoid bundling Sentry in development
+      import('./sentry').then(({ captureException, setContext }) => {
+        // Add context if provided
+        if (options?.context || options?.data) {
+          setContext('logger', {
+            context: options?.context,
+            data: options?.data,
+          });
+        }
+
+        // Capture the exception
+        if (error instanceof Error) {
+          captureException(error, { message });
+        } else {
+          captureException(new Error(message), { originalError: error });
+        }
+      });
+    } catch (err) {
+      // Fail silently - don't break the app if Sentry fails
+      console.warn('Failed to send error to Sentry:', err);
+    }
   }
 
   /**

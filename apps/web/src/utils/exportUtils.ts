@@ -1,67 +1,101 @@
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { SurveyResultRow } from '../types/analytics'
 import { format } from 'date-fns'
 
-export const exportToExcel = (data: SurveyResultRow[], surveyTitle: string) => {
-  // Prepare data for export
-  const exportData = data.map(row => ({
-    'Branch': row.branchName,
-    'Zone': row.zoneName || 'N/A',
-    'Date': format(new Date(row.completedAt), 'yyyy-MM-dd'),
-    'Auditor': row.auditorName,
-    'Score (%)': row.complianceScore,
-    'Status': row.status,
-    'Total Questions': row.totalQuestions,
-    'Yes': row.yesCount,
-    'No': row.noCount,
-    'N/A': row.naCount,
-  }))
-
+export const exportToExcel = async (data: SurveyResultRow[], surveyTitle: string) => {
   // Create workbook
-  const ws = XLSX.utils.json_to_sheet(exportData)
-  
-  // Auto-size columns
-  const colWidths = Object.keys(exportData[0] || {}).map(key => ({
-    wch: Math.max(key.length, 15)
-  }))
-  ws['!cols'] = colWidths
+  const workbook = new ExcelJS.Workbook()
+  const worksheet = workbook.addWorksheet('Survey Results')
 
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Survey Results')
-  
+  // Define columns
+  worksheet.columns = [
+    { header: 'Branch', key: 'branch', width: 20 },
+    { header: 'Zone', key: 'zone', width: 15 },
+    { header: 'Date', key: 'date', width: 12 },
+    { header: 'Auditor', key: 'auditor', width: 20 },
+    { header: 'Score (%)', key: 'score', width: 12 },
+    { header: 'Status', key: 'status', width: 15 },
+    { header: 'Total Questions', key: 'totalQuestions', width: 15 },
+    { header: 'Yes', key: 'yes', width: 10 },
+    { header: 'No', key: 'no', width: 10 },
+    { header: 'N/A', key: 'na', width: 10 },
+  ]
+
+  // Style header row
+  worksheet.getRow(1).font = { bold: true }
+  worksheet.getRow(1).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF2563EB' },
+  }
+  worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }
+
+  // Add data rows
+  data.forEach(row => {
+    worksheet.addRow({
+      branch: row.branchName,
+      zone: row.zoneName || 'N/A',
+      date: format(new Date(row.completedAt), 'yyyy-MM-dd'),
+      auditor: row.auditorName,
+      score: row.complianceScore,
+      status: row.status,
+      totalQuestions: row.totalQuestions,
+      yes: row.yesCount,
+      no: row.noCount,
+      na: row.naCount,
+    })
+  })
+
   // Generate filename
   const filename = `${surveyTitle.replace(/[^a-z0-9]/gi, '_')}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`
-  
+
   // Save file
-  XLSX.writeFile(wb, filename)
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = filename
+  link.click()
 }
 
 export const exportToCSV = (data: SurveyResultRow[], surveyTitle: string) => {
-  // Prepare data for export
-  const exportData = data.map(row => ({
-    'Branch': row.branchName,
-    'Zone': row.zoneName || 'N/A',
-    'Date': format(new Date(row.completedAt), 'yyyy-MM-dd'),
-    'Auditor': row.auditorName,
-    'Score (%)': row.complianceScore,
-    'Status': row.status,
-    'Total Questions': row.totalQuestions,
-    'Yes': row.yesCount,
-    'No': row.noCount,
-    'N/A': row.naCount,
-  }))
-
-  // Create workbook and convert to CSV
-  const ws = XLSX.utils.json_to_sheet(exportData)
-  const csv = XLSX.utils.sheet_to_csv(ws)
+  // Define headers
+  const headers = ['Branch', 'Zone', 'Date', 'Auditor', 'Score (%)', 'Status', 'Total Questions', 'Yes', 'No', 'N/A']
+  
+  // Prepare data rows
+  const rows = data.map(row => [
+    row.branchName,
+    row.zoneName || 'N/A',
+    format(new Date(row.completedAt), 'yyyy-MM-dd'),
+    row.auditorName,
+    row.complianceScore.toString(),
+    row.status,
+    row.totalQuestions.toString(),
+    row.yesCount.toString(),
+    row.noCount.toString(),
+    row.naCount.toString(),
+  ])
+  
+  // Convert to CSV (escape fields with commas/quotes)
+  const escapeCSV = (field: string) => {
+    if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+      return `"${field.replace(/"/g, '""')}"`
+    }
+    return field
+  }
+  
+  const csvContent = [
+    headers.map(escapeCSV).join(','),
+    ...rows.map(row => row.map(escapeCSV).join(','))
+  ].join('\n')
   
   // Generate filename
   const filename = `${surveyTitle.replace(/[^a-z0-9]/gi, '_')}_${format(new Date(), 'yyyy-MM-dd')}.csv`
   
   // Create blob and download
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
   link.download = filename

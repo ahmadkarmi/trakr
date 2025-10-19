@@ -20,27 +20,37 @@ const API_CACHE_PATTERNS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...')
+  if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+    console.log('[SW] Installing service worker...')
+  }
   
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
-        console.log('[SW] Caching static assets')
+        if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+          console.log('[SW] Caching static assets')
+        }
         return cache.addAll(STATIC_ASSETS)
       })
       .then(() => {
-        console.log('[SW] Static assets cached')
+        if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+          console.log('[SW] Static assets cached')
+        }
         return self.skipWaiting()
       })
       .catch((error) => {
-        console.error('[SW] Failed to cache static assets:', error)
+        if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+          console.error('[SW] Failed to cache static assets:', error)
+        }
       })
   )
 })
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...')
+  if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+    console.log('[SW] Activating service worker...')
+  }
   
   event.waitUntil(
     caches.keys()
@@ -48,14 +58,18 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-              console.log('[SW] Deleting old cache:', cacheName)
+              if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+                console.log('[SW] Deleting old cache:', cacheName)
+              }
               return caches.delete(cacheName)
             }
           })
         )
       })
       .then(() => {
-        console.log('[SW] Service worker activated')
+        if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+          console.log('[SW] Service worker activated')
+        }
         return self.clients.claim()
       })
   )
@@ -127,11 +141,8 @@ async function cacheFirst(request, cacheName) {
   const cachedResponse = await cache.match(request)
   
   if (cachedResponse) {
-    console.log('[SW] Cache hit:', request.url)
     return cachedResponse
   }
-  
-  console.log('[SW] Cache miss, fetching:', request.url)
   const networkResponse = await fetch(request)
   
   if (networkResponse.ok) {
@@ -146,7 +157,6 @@ async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName)
   
   try {
-    console.log('[SW] Network first:', request.url)
     const networkResponse = await fetch(request)
     
     if (networkResponse.ok) {
@@ -155,11 +165,9 @@ async function networkFirst(request, cacheName) {
     
     return networkResponse
   } catch (error) {
-    console.log('[SW] Network failed, trying cache:', request.url)
     const cachedResponse = await cache.match(request)
     
     if (cachedResponse) {
-      console.log('[SW] Cache fallback hit:', request.url)
       return cachedResponse
     }
     
@@ -169,7 +177,6 @@ async function networkFirst(request, cacheName) {
 
 // Background sync for offline actions
 self.addEventListener('sync', (event) => {
-  console.log('[SW] Background sync:', event.tag)
   
   if (event.tag === 'audit-sync') {
     event.waitUntil(syncAudits())
@@ -180,10 +187,9 @@ async function syncAudits() {
   try {
     // Get pending audit data from IndexedDB
     // Sync with server when online
-    console.log('[SW] Syncing pending audits...')
     // Implementation would go here
   } catch (error) {
-    console.error('[SW] Audit sync failed:', error)
+    // Error handling would go here
   }
 }
 
@@ -195,13 +201,13 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body,
     icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    badge: '/icon.svg',
     data: data.data,
     actions: [
       {
         action: 'view',
         title: 'View',
-        icon: '/icons/icon-72x72.png'
+        icon: '/icon.svg'
       },
       {
         action: 'dismiss',

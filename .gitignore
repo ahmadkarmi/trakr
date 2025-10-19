@@ -82,3 +82,7 @@ database/backups/local/
 *.sql
 *.sql.gz
 *.sql.zip
+
+# EXCEPTION: Allow Supabase migrations (critical for schema versioning)
+!supabase/migrations/*.sql
+!supabase/migrations/**/*.sql
