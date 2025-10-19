@@ -1,5 +1,6 @@
 import { NotificationType } from '@trakr/shared'
 import { api } from './api'
+import { logger } from './logger'
 
 /**
  * Helper utility to create notifications for audit lifecycle events
@@ -24,7 +25,7 @@ export const notificationHelpers = {
         relatedId: params.auditId,
       })
     } catch (error) {
-      console.error('Failed to create audit assigned notification:', error)
+      logger.error('Failed to create audit assigned notification', error, { context: 'NotificationHelpers' })
     }
   },
 
@@ -38,7 +39,7 @@ export const notificationHelpers = {
     auditorName: string
   }) {
     try {
-      console.log('🔔 Creating audit submitted notification for manager:', params.managerId)
+      logger.debug('Creating audit submitted notification for manager', { context: 'NotificationHelpers', data: { managerId: params.managerId } })
       await api.createNotification({
         userId: params.managerId,
         type: NotificationType.AUDIT_SUBMITTED,
@@ -50,9 +51,9 @@ export const notificationHelpers = {
         requiresAction: true,
         actionType: 'REVIEW_AUDIT',
       })
-      console.log('✅ Notification created successfully (requires action)')
+      logger.debug('Notification created successfully (requires action)', { context: 'NotificationHelpers' })
     } catch (error) {
-      console.error('❌ Failed to create audit submitted notification:', error)
+      logger.error('Failed to create audit submitted notification', error, { context: 'NotificationHelpers' })
       // Re-throw to surface the error
       throw error
     }
@@ -68,7 +69,7 @@ export const notificationHelpers = {
     approverName: string
   }) {
     try {
-      console.log('🔔 Creating audit approved notification for auditor:', params.auditorId)
+      logger.debug('Creating audit approved notification for auditor', { context: 'NotificationHelpers', data: { auditorId: params.auditorId } })
       await api.createNotification({
         userId: params.auditorId,
         type: NotificationType.AUDIT_APPROVED,
@@ -77,9 +78,9 @@ export const notificationHelpers = {
         link: `/audits/${params.auditId}/summary`,
         relatedId: params.auditId,
       })
-      console.log('✅ Notification created successfully')
+      logger.debug('Notification created successfully', { context: 'NotificationHelpers' })
     } catch (error) {
-      console.error('❌ Failed to create audit approved notification:', error)
+      logger.error('Failed to create audit approved notification', error, { context: 'NotificationHelpers' })
       throw error
     }
   },
@@ -95,7 +96,7 @@ export const notificationHelpers = {
     reason?: string
   }) {
     try {
-      console.log('🔔 Creating audit rejected notification for auditor:', params.auditorId)
+      logger.debug('Creating audit rejected notification for auditor', { context: 'NotificationHelpers', data: { auditorId: params.auditorId } })
       await api.createNotification({
         userId: params.auditorId,
         type: NotificationType.AUDIT_REJECTED,
@@ -107,9 +108,9 @@ export const notificationHelpers = {
         link: `/audit/${params.auditId}/wizard`,
         relatedId: params.auditId,
       })
-      console.log('✅ Notification created successfully')
+      logger.debug('Notification created successfully', { context: 'NotificationHelpers' })
     } catch (error) {
-      console.error('❌ Failed to create audit rejected notification:', error)
+      logger.error('Failed to create audit rejected notification', error, { context: 'NotificationHelpers' })
       throw error
     }
   },
@@ -134,7 +135,7 @@ export const notificationHelpers = {
         relatedId: params.auditId,
       })
     } catch (error) {
-      console.error('Failed to create audit due soon notification:', error)
+      logger.error('Failed to create audit due soon notification', error, { context: 'NotificationHelpers' })
     }
   },
 
@@ -156,7 +157,7 @@ export const notificationHelpers = {
         relatedId: params.auditId,
       })
     } catch (error) {
-      console.error('Failed to create audit overdue notification:', error)
+      logger.error('Failed to create audit overdue notification', error, { context: 'NotificationHelpers' })
     }
   },
 
@@ -181,7 +182,7 @@ export const notificationHelpers = {
       )
       await Promise.all(promises)
     } catch (error) {
-      console.error('Failed to create survey created notifications:', error)
+      logger.error('Failed to create survey created notifications', error, { context: 'NotificationHelpers' })
     }
   },
 
@@ -203,7 +204,7 @@ export const notificationHelpers = {
         relatedId: params.branchId,
       })
     } catch (error) {
-      console.error('Failed to create branch assigned notification:', error)
+      logger.error('Failed to create branch assigned notification', error, { context: 'NotificationHelpers' })
     }
   },
 }
