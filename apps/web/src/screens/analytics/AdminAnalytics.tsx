@@ -2,6 +2,7 @@ import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../utils/api'
 import { Audit, Branch, User, Zone, AuditStatus, UserRole, Survey, calculateWeightedAuditScore } from '@trakr/shared'
+import { logger } from '../../utils/logger'
 import Tabs from '../../components/Tabs'
 import AuditHistory from './AuditHistory'
 import AnalyticsChart from '../../components/analytics/AnalyticsChart'
@@ -59,35 +60,62 @@ const AdminAnalytics: React.FC = () => {
   
   // Calculate average quality score using actual survey data
   const averageScore = React.useMemo(() => {
-    console.log('🔍 [DEBUG] Audits:', audits.length, 'Surveys:', surveys.length)
-    console.log('🔍 [DEBUG] First survey sections count:', surveys[0]?.sections?.length, 'Survey title:', surveys[0]?.title)
+    logger.debug('Calculating average score', { 
+      context: 'AdminAnalytics',
+      data: { 
+        auditsCount: audits.length, 
+        surveysCount: surveys.length,
+        firstSurveySections: surveys[0]?.sections?.length,
+        firstSurveyTitle: surveys[0]?.title
+      }
+    })
     
     if (audits.length === 0 || surveys.length === 0) return 0
     
     const auditsWithResponses = audits.filter(audit => audit.responses && Object.keys(audit.responses).length > 0)
-    console.log('🔍 [DEBUG] Audits with responses:', auditsWithResponses.length)
+    logger.debug('Audits with responses', { 
+      context: 'AdminAnalytics',
+      data: { count: auditsWithResponses.length }
+    })
     
     const scoresWithData = auditsWithResponses
       .map((audit, index) => {
         const survey = surveys.find(s => s.id === audit.surveyId)
         if (!survey) return null
         if (index === 0) {
-          console.log('🔍 [DEBUG] First audit - Survey has sections:', survey.sections?.length)
-          console.log('🔍 [DEBUG] First audit - Response keys:', Object.keys(audit.responses || {}).length)
+          logger.debug('First audit analysis', {
+            context: 'AdminAnalytics',
+            data: {
+              surveySections: survey.sections?.length,
+              responseKeys: Object.keys(audit.responses || {}).length
+            }
+          })
         }
         const weightedScore = calculateWeightedAuditScore(audit, survey)
         if (weightedScore.weightedPossiblePoints <= 0) return null
-        console.log('✅ [DEBUG] Weighted score:', weightedScore.weightedCompliancePercentage, 'for audit:', audit.id.slice(0, 8))
+        logger.debug('Weighted score calculated', {
+          context: 'AdminAnalytics',
+          data: {
+            score: weightedScore.weightedCompliancePercentage,
+            auditId: audit.id.slice(0, 8)
+          }
+        })
         return weightedScore.weightedCompliancePercentage
       })
       .filter((score): score is number => score !== null)
     
-    console.log('🔍 [DEBUG] All scores:', scoresWithData)
+    logger.debug('All scores collected', {
+      context: 'AdminAnalytics',
+      data: { scores: scoresWithData }
+    })
     
     if (scoresWithData.length === 0) return 0
     
     const avg = Math.round(scoresWithData.reduce((sum, score) => sum + score, 0) / scoresWithData.length)
-    console.log('🎯 [DEBUG] Final average:', avg)
+    logger.debug('Final average calculated', {
+      context: 'AdminAnalytics',
+      data: { average: avg }
+    })
     return avg
   }, [audits, surveys])
 

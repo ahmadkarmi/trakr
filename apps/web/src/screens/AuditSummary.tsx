@@ -22,6 +22,7 @@ import { generateAuditPDF } from '../utils/pdfGenerator'
 import { useOrganization } from '../contexts/OrganizationContext'
 import ErrorState from '../components/ErrorState'
 import { useAuditProgress } from '../hooks/useAuditProgress'
+import { logger } from '../utils/logger'
 
 const AuditSummary: React.FC = () => {
   const { auditId } = useParams<{ auditId: string }>()
@@ -40,10 +41,13 @@ const AuditSummary: React.FC = () => {
       
       // Security check: Verify audit belongs to current org (unless Super Admin)
       if (audit && audit.orgId !== effectiveOrgId && !isSuperAdmin) {
-        console.warn('[Security] Attempted access to audit from different org:', {
-          auditId: audit.id,
-          auditOrgId: audit.orgId,
-          userOrgId: effectiveOrgId
+        logger.warn('Attempted access to audit from different org', {
+          context: 'AuditSummary',
+          data: {
+            auditId: audit.id,
+            auditOrgId: audit.orgId,
+            userOrgId: effectiveOrgId
+          }
         })
         throw new Error('UNAUTHORIZED_ACCESS')
       }
@@ -99,12 +103,15 @@ const AuditSummary: React.FC = () => {
     
     // Security check: Warn if audit references branch from different org
     if (audit && !foundBranch && audit.branchId) {
-      console.error('[Security] Cross-org reference detected:', {
-        auditId: audit.id,
-        branchId: audit.branchId,
-        auditOrgId: audit.orgId,
-        effectiveOrgId,
-        availableBranches: branches.length
+      logger.error('Cross-org reference detected', undefined, {
+        context: 'AuditSummary',
+        data: {
+          auditId: audit.id,
+          branchId: audit.branchId,
+          auditOrgId: audit.orgId,
+          userOrgId: effectiveOrgId,
+          availableBranches: branches.length
+        }
       })
     }
     
@@ -141,12 +148,12 @@ const AuditSummary: React.FC = () => {
         // Complete the actionable notification for this audit
         try {
           await api.completeNotificationAction(audit.id, 'REVIEW_AUDIT')
-          console.log('✅ Notification action completed (approved)')
+          logger.debug('Notification action completed (approved)', { context: 'AuditSummary' })
           // Invalidate notification queries to update UI
           queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
           queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user.id) })
         } catch (error) {
-          console.error('Failed to complete notification action:', error)
+          logger.error('Failed to complete notification action', error, { context: 'AuditSummary' })
         }
         
         // Notify auditor about approval
@@ -177,12 +184,12 @@ const AuditSummary: React.FC = () => {
         // Complete the actionable notification for this audit
         try {
           await api.completeNotificationAction(audit.id, 'REVIEW_AUDIT')
-          console.log('✅ Notification action completed (rejected)')
+          logger.debug('Notification action completed (rejected)', { context: 'AuditSummary' })
           // Invalidate notification queries to update UI
           queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
           queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user.id) })
         } catch (error) {
-          console.error('Failed to complete notification action:', error)
+          logger.error('Failed to complete notification action', error, { context: 'AuditSummary' })
         }
         
         // Notify auditor about rejection
@@ -331,7 +338,7 @@ const AuditSummary: React.FC = () => {
             }
           }
         } catch (error) {
-          console.error('Failed to notify branch managers:', error)
+          logger.error('Failed to notify branch managers', error, { context: 'AuditSummary' })
         }
       }
 
@@ -529,7 +536,7 @@ const AuditSummary: React.FC = () => {
                         
                         showToast({ message: 'PDF exported successfully!', variant: 'success' })
                       } catch (error) {
-                        console.error('PDF export error:', error)
+                        logger.error('PDF export error', error, { context: 'AuditSummary' })
                         showToast({ message: 'Failed to export PDF', variant: 'error' })
                       }
                     }
