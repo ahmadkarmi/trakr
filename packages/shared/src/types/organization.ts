@@ -16,6 +16,7 @@ export interface Branch {
   address?: string;
   orgId: string;
   managerId?: string; // Deprecated: kept for backward compatibility
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

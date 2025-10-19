@@ -2,8 +2,7 @@ import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth'
 import { api } from '../../utils/api'
-import { QK } from '../../utils/queryKeys'
-import { Audit, Branch, User, AuditStatus, UserRole, BranchManagerAssignment, Survey, calculateAuditScore, calculateWeightedAuditScore } from '@trakr/shared'
+import { Audit, Branch, User, AuditStatus, UserRole, BranchManagerAssignment, Survey, calculateWeightedAuditScore } from '@trakr/shared'
 import AnalyticsChart from '../../components/analytics/AnalyticsChart'
 import TeamPerformanceTable from '../../components/analytics/TeamPerformanceTable'
 import AnalyticsKPICard from '../../components/analytics/AnalyticsKPICard'
@@ -99,13 +98,9 @@ const BranchManagerAnalytics: React.FC = () => {
       .map(audit => {
         const survey = surveys.find(s => s.id === audit.surveyId)
         if (!survey) return null
-        // Try weighted score first, fall back to compliance if no weighted questions
         const weightedScore = calculateWeightedAuditScore(audit, survey)
-        if (weightedScore.weightedPossiblePoints > 0) {
-          return weightedScore.weightedCompliancePercentage
-        }
-        const basicScore = calculateAuditScore(audit, survey)
-        return basicScore.compliancePercentage
+        if (weightedScore.weightedPossiblePoints <= 0) return null
+        return weightedScore.weightedCompliancePercentage
       })
       .filter((score): score is number => score !== null)
     
@@ -148,13 +143,9 @@ const BranchManagerAnalytics: React.FC = () => {
         .map(audit => {
           const survey = surveys.find(s => s.id === audit.surveyId)
           if (!survey) return null
-          // Try weighted score first, fall back to compliance if no weighted questions
           const weightedScore = calculateWeightedAuditScore(audit, survey)
-          if (weightedScore.weightedPossiblePoints > 0) {
-            return weightedScore.weightedCompliancePercentage
-          }
-          const basicScore = calculateAuditScore(audit, survey)
-          return basicScore.compliancePercentage
+          if (weightedScore.weightedPossiblePoints <= 0) return null
+          return weightedScore.weightedCompliancePercentage
         })
         .filter((score): score is number => score !== null)
       
@@ -173,7 +164,7 @@ const BranchManagerAnalytics: React.FC = () => {
   }, [branchAudits, surveys])
 
   return (
-    <div className="mobile-container breathing-room">
+    <div className="space-y-6">
       {/* Branch Overview */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
@@ -256,17 +247,18 @@ const BranchManagerAnalytics: React.FC = () => {
             compact
           />
         </div>
-      </div>
+
+        </div>
 
       {/* Charts and Analysis */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
         {/* Branch Trends */}
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Branch Performance Trends</h3>
             <p className="text-sm text-gray-500">Monthly completion and quality trends</p>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {branchAudits.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <p className="text-lg font-medium">No data available</p>
@@ -282,8 +274,8 @@ const BranchManagerAnalytics: React.FC = () => {
                 type="line"
                 data={monthlyTrends}
                 xKey="name"
-                yKeys={['completion', 'quality']}
-                colors={['#10B981', '#3B82F6']}
+                yKeys={["completion", "quality"]}
+                colors={["#10B981", "#3B82F6"]}
               />
             )}
           </div>
@@ -291,11 +283,11 @@ const BranchManagerAnalytics: React.FC = () => {
 
         {/* Audit Status Distribution */}
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Audit Status Breakdown</h3>
             <p className="text-sm text-gray-500">Current audit status distribution</p>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {branchAudits.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <p className="text-lg font-medium">No audits to display</p>
@@ -312,7 +304,7 @@ const BranchManagerAnalytics: React.FC = () => {
                   { name: 'Draft', value: branchAudits.filter(a => a.status === AuditStatus.DRAFT).length },
                   { name: 'Rejected', value: branchAudits.filter(a => a.status === AuditStatus.REJECTED).length },
                 ]}
-                colors={['#10B981', '#8B5CF6', '#3B82F6', '#F59E0B', '#6B7280', '#EF4444']}
+                colors={["#10B981", "#8B5CF6", "#3B82F6", "#F59E0B", "#6B7280", "#EF4444"]}
               />
             )}
           </div>
@@ -321,15 +313,15 @@ const BranchManagerAnalytics: React.FC = () => {
 
       {/* Team Performance */}
       <div className="mb-8">
-        <TeamPerformanceTable teamMembers={teamMembers} audits={branchAudits} />
+        <TeamPerformanceTable teamMembers={teamMembers} audits={branchAudits} surveys={surveys} />
       </div>
 
       {/* Branch Insights */}
       <div className="card">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">Branch Insights & Recommendations</h3>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="space-y-4">
             <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
               <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">

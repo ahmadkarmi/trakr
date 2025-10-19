@@ -1,4 +1,4 @@
-import { User, UserRole, Audit, AuditStatus, Survey, Organization, Branch, Zone, LogEntry, QuestionType, AuditPhoto, AuditorAssignment, AuditFrequency, BranchManagerAssignment, AuditReviewLock, ApprovalAuthority, Notification, NotificationType } from '../types';
+import { User, UserRole, Audit, AuditStatus, Survey, Organization, Branch, Zone, LogEntry, QuestionType, AuditPhoto, AuditorAssignment, AuditFrequency, BranchManagerAssignment, AuditReviewLock, ApprovalAuthority, Notification, NotificationType, UserInvitation } from '../types';
 
 // Mock Organizations
 export const mockOrganizations: Organization[] = [
@@ -254,6 +254,8 @@ export const mockAudits: Audit[] = [];
 
 // Mock Activity Logs - Cleared, will be created dynamically
 export const mockActivityLogs: LogEntry[] = [];
+// Mock Invitations
+const mockInvitations: UserInvitation[] = [];
 
 // Utility: Clear all mock data
 export function clearAllMockData() {
@@ -261,6 +263,7 @@ export function clearAllMockData() {
   mockActivityLogs.length = 0
   mockNotifications.length = 0
   mockReviewLocks.length = 0
+  mockInvitations.length = 0
   console.log('🧹 All mock data cleared')
 }
 
@@ -662,6 +665,80 @@ export const mockApi = {
     return next
   },
 
+  inviteUser: async (email: string, name: string, role: UserRole): Promise<User> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const id = `user-${Date.now()}`
+    const newUser: User = {
+      id,
+      email: email.toLowerCase(),
+      name,
+      role,
+      orgId: mockOrganizations[0]?.id || 'org-1',
+      isActive: true,
+      emailVerified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as User
+    mockUsers.push(newUser)
+    addLog(id, 'user_invited', `Invited ${email} as ${role}`, 'user', id)
+    return newUser
+  },
+
+  resendInvitation: async (_userId: string): Promise<void> => {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    // No-op for mock; in real backend an email would be sent
+  },
+
+  // Invitations (mock parity with Supabase API)
+  getPendingInvitations: async (orgId: string): Promise<UserInvitation[]> => {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const now = Date.now();
+    return mockInvitations
+      .filter(inv => inv.orgId === orgId && !inv.acceptedAt && inv.expiresAt.getTime() > now)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  },
+
+  createInvitation: async (params: { orgId: string; email: string; role: string; invitedBy?: string }): Promise<UserInvitation> => {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const token = `mock-${Math.random().toString(36).slice(2, 10)}`;
+    const now = new Date();
+    const invitation: UserInvitation = {
+      id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      orgId: params.orgId,
+      email: params.email.toLowerCase(),
+      role: params.role as any,
+      invitedBy: params.invitedBy,
+      invitationToken: token,
+      expiresAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+      acceptedAt: undefined,
+      createdAt: now,
+      updatedAt: now,
+    };
+    mockInvitations.unshift(invitation);
+    addLog(params.invitedBy || 'system', 'invitation_created', `Invited ${params.email} as ${params.role}`, 'organization', params.orgId);
+    return invitation;
+  },
+
+  deleteInvitation: async (invitationId: string): Promise<void> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const idx = mockInvitations.findIndex(i => i.id === invitationId);
+    if (idx !== -1) mockInvitations.splice(idx, 1);
+  },
+
+  deleteUser: async (userId: string): Promise<void> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const idx = mockUsers.findIndex(u => u.id === userId)
+    if (idx === -1) throw new Error(`User not found: ${userId}`)
+    mockUsers.splice(idx, 1)
+    addLog(userId, 'user_deleted', `Deleted user ${userId}`, 'user', userId)
+  },
+
+  getUncoveredActiveBranchesIfAuditorRemoved: async (_userId: string): Promise<{ ids: string[]; names: string[] }> => {
+    // Mock implementation: return empty lists to keep UI flow smooth in mock mode
+    await new Promise(resolve => setTimeout(resolve, 50));
+    return { ids: [], names: [] }
+  },
+
   // Audits
   getAudits: async (filters?: { assignedTo?: string; status?: AuditStatus; branchId?: string; orgId?: string; updatedAfter?: Date; updatedBefore?: Date }): Promise<Audit[]> => {
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -776,17 +853,31 @@ export const mockApi = {
   createBranch: async (payload: Pick<Branch, 'orgId' | 'name' | 'address' | 'managerId'>): Promise<Branch> => {
     await new Promise(resolve => setTimeout(resolve, 200));
     const now = new Date()
-    const branch: Branch = { id: `branch-${Date.now()}`, orgId: payload.orgId, name: payload.name, address: payload.address, managerId: payload.managerId, createdAt: now, updatedAt: now }
+    const branch: Branch = { id: `branch-${Date.now()}`, orgId: payload.orgId, name: payload.name, address: payload.address, managerId: payload.managerId, isActive: false, createdAt: now, updatedAt: now }
     mockBranches.unshift(branch)
     addLog('system', 'branch_created', `Created branch ${branch.name}`, 'branch', branch.id)
     return branch
   },
 
-  updateBranch: async (id: string, updates: Partial<Pick<Branch, 'name' | 'address' | 'managerId'>>): Promise<Branch> => {
+  updateBranch: async (id: string, updates: Partial<Pick<Branch, 'name' | 'address' | 'managerId' | 'isActive'>>): Promise<Branch> => {
     await new Promise(resolve => setTimeout(resolve, 200));
     const idx = mockBranches.findIndex(b => b.id === id)
     if (idx === -1) throw new Error(`Branch not found: ${id}`)
     const current = mockBranches[idx]
+    // Enforce auditor coverage when activating branch
+    if (updates.isActive === true) {
+      const hasDirect = mockAuditorAssignments.some(a => (a.branchIds || []).includes(id))
+      let hasZone = false
+      if (!hasDirect) {
+        const zonesForBranch = mockZones.filter(z => (z.branchIds || []).includes(id)).map(z => z.id)
+        if (zonesForBranch.length) {
+          hasZone = mockAuditorAssignments.some(a => (a.zoneIds || []).some(zid => zonesForBranch.includes(zid)))
+        }
+      }
+      if (!hasDirect && !hasZone) {
+        throw new Error('Cannot activate branch without at least one assigned auditor (directly or via zone).')
+      }
+    }
     const next: Branch = { ...current, ...updates, updatedAt: new Date() }
     mockBranches[idx] = next
     addLog('system', 'branch_updated', `Updated branch ${id}`, 'branch', id)
@@ -924,6 +1015,15 @@ export const mockApi = {
     await new Promise(resolve => setTimeout(resolve, 200));
     return mockAuditorAssignments
   },
+  getAuditorAssignment: async (auditorId: string): Promise<AuditorAssignment | null> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const found = mockAuditorAssignments.find(a => a.userId === auditorId)
+    return found ? { ...found } : null
+  },
+  getAuditorAssignmentsByBranch: async (branchId: string): Promise<AuditorAssignment[]> => {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    return mockAuditorAssignments.filter(a => Array.isArray(a.branchIds) && a.branchIds.includes(branchId))
+  },
 
   setAuditorAssignment: async (userId: string, payload: { branchIds: string[]; zoneIds: string[] }): Promise<AuditorAssignment> => {
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -933,6 +1033,9 @@ export const mockApi = {
     else mockAuditorAssignments[idx] = next
     addLog(userId, 'auditor_assigned', `Assigned to ${next.branchIds.length} branches and ${next.zoneIds.length} zones`, 'user', userId)
     return next
+  },
+  assignAuditor: async (auditorId: string, branchIds: string[], zoneIds: string[]): Promise<AuditorAssignment> => {
+    return await (mockApi as any).setAuditorAssignment(auditorId, { branchIds, zoneIds })
   },
 
   // Activity Logs

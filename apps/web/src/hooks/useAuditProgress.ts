@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Audit, Survey } from '@trakr/shared'
+import { Audit, Survey, QuestionType } from '@trakr/shared'
 
 export interface SectionProgress {
   sectionId: string
@@ -37,17 +37,32 @@ export function useAuditProgress(audit: Audit | null, survey: Survey | null): Au
       }
     }
 
-    const answers = audit.answers || {}
+    const answers = (audit as any).responses || {}
     
     // Calculate overall progress
-    const totalQuestions = survey.sections.reduce(
-      (sum, section) => sum + section.questions.length,
-      0
-    )
-    
-    const answeredQuestions = Object.keys(answers).filter(
-      questionId => answers[questionId] !== undefined && answers[questionId] !== null && answers[questionId] !== ''
-    ).length
+    const totalQuestions = survey.sections.reduce((sum, section) => sum + section.questions.length, 0)
+
+    const isAnswered = (qId: string): boolean => {
+      const q = survey.sections.flatMap(s => s.questions).find(qq => qq.id === qId)
+      const raw = answers[qId]
+      if (!q) return raw !== undefined && raw !== null && String(raw) !== ''
+      if (raw === undefined || raw === null) return false
+      if (q.type === QuestionType.YES_NO) {
+        if (typeof raw === 'boolean') return true
+        const v = String(raw).toLowerCase()
+        return v === 'yes' || v === 'no' || v === 'na'
+      }
+      if (q.type === QuestionType.CHECKBOX) {
+        if (Array.isArray(raw)) return raw.length > 0
+        try { const arr = JSON.parse(String(raw) || '[]'); return Array.isArray(arr) && arr.length > 0 } catch { return false }
+      }
+      // TEXT, NUMBER, DATE, MULTIPLE_CHOICE
+      return String(raw).trim().length > 0
+    }
+
+    const answeredQuestions = survey.sections.reduce((acc, section) => {
+      return acc + section.questions.filter(q => isAnswered(q.id)).length
+    }, 0)
     
     const completionPercent = totalQuestions > 0 
       ? Math.round((answeredQuestions / totalQuestions) * 100)
@@ -56,14 +71,12 @@ export function useAuditProgress(audit: Audit | null, survey: Survey | null): Au
     // Calculate section-level progress
     const sectionProgress: SectionProgress[] = survey.sections.map(section => {
       const sectionQuestions = section.questions.map(q => q.id)
-      const sectionAnswered = sectionQuestions.filter(
-        qId => answers[qId] !== undefined && answers[qId] !== null && answers[qId] !== ''
-      ).length
-      
+      const sectionAnswered = sectionQuestions.filter(qId => isAnswered(qId)).length
+
       const percent = sectionQuestions.length > 0
         ? Math.round((sectionAnswered / sectionQuestions.length) * 100)
         : 0
-      
+
       return {
         sectionId: section.id,
         sectionTitle: section.title,
@@ -85,7 +98,7 @@ export function useAuditProgress(audit: Audit | null, survey: Survey | null): Au
       isComplete: completionPercent === 100,
       nextUnanswered,
     }
-  }, [audit?.answers, survey])
+  }, [audit?.responses, survey])
 }
 
 /**
@@ -97,8 +110,21 @@ function findNextUnanswered(
 ): { sectionId: string; sectionTitle: string; questionId: string } | null {
   for (const section of survey.sections) {
     for (const question of section.questions) {
-      const answer = answers[question.id]
-      if (answer === undefined || answer === null || answer === '') {
+      const raw = answers[question.id]
+      const unanswered = (() => {
+        if (raw === undefined || raw === null) return true
+        if (question.type === QuestionType.YES_NO) {
+          if (typeof raw === 'boolean') return false
+          const v = String(raw).toLowerCase()
+          return !(v === 'yes' || v === 'no' || v === 'na')
+        }
+        if (question.type === QuestionType.CHECKBOX) {
+          if (Array.isArray(raw)) return raw.length === 0
+          try { const arr = JSON.parse(String(raw) || '[]'); return !(Array.isArray(arr) && arr.length > 0) } catch { return true }
+        }
+        return String(raw).trim().length === 0
+      })()
+      if (unanswered) {
         return {
           sectionId: section.id,
           sectionTitle: section.title,
@@ -116,19 +142,29 @@ function findNextUnanswered(
 export function useAuditCompletionPercent(audit: Audit | null, survey: Survey | null): number {
   return useMemo(() => {
     if (!audit || !survey) return 0
-    
-    const totalQuestions = survey.sections.reduce(
-      (sum, section) => sum + section.questions.length,
-      0
-    )
-    
+
+    const totalQuestions = survey.sections.reduce((sum, section) => sum + section.questions.length, 0)
     if (totalQuestions === 0) return 0
-    
-    const answers = audit.answers || {}
-    const answeredQuestions = Object.keys(answers).filter(
-      questionId => answers[questionId] !== undefined && answers[questionId] !== null && answers[questionId] !== ''
-    ).length
-    
-    return Math.round((answeredQuestions / totalQuestions) * 100)
-  }, [audit?.answers, survey])
+
+    const answers = (audit as any).responses || {}
+    const answered = survey.sections.reduce((acc, section) => {
+      const n = section.questions.filter(q => {
+        const raw = answers[q.id]
+        if (raw === undefined || raw === null) return false
+        if (q.type === QuestionType.YES_NO) {
+          if (typeof raw === 'boolean') return true
+          const v = String(raw).toLowerCase()
+          return v === 'yes' || v === 'no' || v === 'na'
+        }
+        if (q.type === QuestionType.CHECKBOX) {
+          if (Array.isArray(raw)) return raw.length > 0
+          try { const arr = JSON.parse(String(raw) || '[]'); return Array.isArray(arr) && arr.length > 0 } catch { return false }
+        }
+        return String(raw).trim().length > 0
+      }).length
+      return acc + n
+    }, 0)
+
+    return Math.round((answered / totalQuestions) * 100)
+  }, [audit?.responses, survey])
 }

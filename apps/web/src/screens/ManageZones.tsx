@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Branch, Organization, Zone } from '@trakr/shared'
+import { Branch, Zone } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import Tabs from '../components/Tabs'
@@ -14,7 +14,7 @@ const ManageZones: React.FC = () => {
   const qc = useQueryClient()
   const { showToast } = useToast()
   const { effectiveOrgId, isSuperAdmin } = useOrganization()
-  
+  const [, setActiveTab] = useState<'manage' | 'create'>('manage')
   const { data: branches = [] } = useQuery<Branch[]>({ 
     queryKey: ['branches', effectiveOrgId], 
     queryFn: () => api.getBranches(effectiveOrgId), 
@@ -28,7 +28,7 @@ const ManageZones: React.FC = () => {
 
   const [form, setForm] = useState<{ name: string; description: string; branchIds: string[] }>({ name: '', description: '', branchIds: [] })
 
-  const [activeTab, setActiveTab] = useState<'manage' | 'create'>('manage')
+  
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null)
 
   const createZone = useMutation({
@@ -103,12 +103,12 @@ const ManageZones: React.FC = () => {
 
   return (
     <DashboardLayout title="Manage Zones">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         <Tabs tabs={tabs} defaultTab="manage" onChange={(tabId) => setActiveTab(tabId as 'manage' | 'create')}>
 
         {/* Manage Zones Tab */}
         <div>
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">Zones</h2>
           </div>
@@ -118,7 +118,7 @@ const ManageZones: React.FC = () => {
               keyField={(z) => z.id}
               empty={<p className="text-gray-500 text-center py-8">No zones found.</p>}
               mobileItem={(z) => (
-                <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                <div className="card p-5 hover:shadow-md transition-shadow">
                   <div className="mb-4">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex-1 min-w-0">
@@ -157,7 +157,14 @@ const ManageZones: React.FC = () => {
                   <div className="pt-4 border-t border-gray-200">
                     <div className="flex flex-col gap-2">
                       <button 
-                        className="w-full bg-white border-2 border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                        className="w-full btn btn-primary btn-md flex items-center justify-center gap-2"
+                        onClick={() => setEditingZoneId(z.id)}
+                      >
+                        <MapIcon className="w-5 h-5" />
+                        <span>Manage Branches</span>
+                      </button>
+                      <button 
+                        className="w-full btn btn-outline btn-md flex items-center justify-center gap-2"
                         onClick={() => {
                           const newName = prompt('Rename zone', z.name)
                           if (newName && newName.trim()) {
@@ -169,7 +176,7 @@ const ManageZones: React.FC = () => {
                         <span>Edit Zone</span>
                       </button>
                       <button 
-                        className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                        className="w-full btn btn-danger btn-md flex items-center justify-center gap-2"
                         onClick={() => { 
                           if (window.confirm(`Delete zone "${z.name}"? This will not delete the branches.`)) {
                             deleteZone.mutate(z.id)
@@ -260,7 +267,7 @@ const ManageZones: React.FC = () => {
 
         {/* Create New Zone Tab */}
         <div>
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Create New Zone</h2>
             <p className="text-sm text-gray-600 mt-1">Group branches together for easier auditor assignments</p>
@@ -272,7 +279,7 @@ const ManageZones: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Zone Name *</label>
                 <input 
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                  className="input" 
                   value={form.name} 
                   onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} 
                   placeholder="e.g., North Region, Downtown Area"
@@ -281,7 +288,7 @@ const ManageZones: React.FC = () => {
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Description (Optional)</label>
                 <input 
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                  className="input" 
                   value={form.description} 
                   onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} 
                   placeholder="Describe this zone"
@@ -302,7 +309,7 @@ const ManageZones: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setForm(f => ({ ...f, branchIds: [] }))}
-                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                    className="btn btn-link btn-sm"
                   >
                     Clear all
                   </button>
@@ -348,7 +355,7 @@ const ManageZones: React.FC = () => {
               <button
                 onClick={() => createZone.mutate()}
                 disabled={!form.name.trim() || createZone.isPending}
-                className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="btn btn-primary btn-md flex items-center gap-2"
               >
                 {createZone.isPending ? (
                   <>
@@ -484,7 +491,7 @@ const ManageZones: React.FC = () => {
                 <div className="flex-shrink-0 border-t border-gray-200 bg-gray-50 px-4 sm:px-6 py-4">
                   <button
                     onClick={() => setEditingZoneId(null)}
-                    className="w-full bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors"
+                    className="w-full btn btn-outline btn-md font-semibold"
                   >
                     Done
                   </button>

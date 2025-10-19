@@ -11,6 +11,7 @@ export interface Survey {
   updatedAt: Date;
   isActive: boolean;
   frequency?: AuditFrequency; // how often this survey can be conducted per branch
+  applicableBranchIds?: string[]; // Empty array = all branches, populated = specific branches only
 }
 
 export interface SurveySection {

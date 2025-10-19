@@ -1,9 +1,13 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+//
+
 import { useAuthStore } from '../stores/auth'
 import { USER_ROLE_LABELS, UserRole } from '@trakr/shared'
 import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, PencilSquareIcon, MapIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon, UsersIcon, PresentationChartLineIcon, BellIcon } from '@heroicons/react/24/outline'
 import { useOrganization } from '../contexts/OrganizationContext'
+//
+
 import { Toaster } from 'react-hot-toast'
 import NotificationDropdown from './NotificationDropdown'
 
@@ -21,6 +25,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [compact, setCompact] = useState<boolean>(false)
   const userMenuRef = useRef<HTMLDivElement | null>(null)
 
   // Close the overflow menu on outside click
@@ -34,6 +39,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
     document.addEventListener('click', onDocClick)
     return () => document.removeEventListener('click', onDocClick)
   }, [moreOpen])
+
+  // Load/save compact preference per user
+  useEffect(() => {
+    const id = useAuthStore.getState().user?.id || 'anon'
+    try {
+      const val = localStorage.getItem(`nav:compact:${id}`)
+      if (val != null) setCompact(val === '1')
+    } catch {}
+  }, [])
+  useEffect(() => {
+    const id = useAuthStore.getState().user?.id || 'anon'
+    try { localStorage.setItem(`nav:compact:${id}`, compact ? '1' : '0') } catch {}
+  }, [compact])
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -51,6 +69,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
   const isBranchManager = !!user && user.role === UserRole.BRANCH_MANAGER
   const isAuditor = !!user && user.role === UserRole.AUDITOR
 
+  // Unassigned page removed; no badge or extra queries
+
   const nav = [
     // Dashboard links - role specific
     { to: '/dashboard/admin', label: 'My Dashboard', icon: <ChartBarIcon className="w-5 h-5" />, show: isAdmin },
@@ -64,12 +84,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
     { to: '/analytics', label: 'Analytics', icon: <PresentationChartLineIcon className="w-5 h-5" />, show: true },
     
     // Admin-only management sections
+    
     { to: '/manage/surveys', label: 'Survey Templates', icon: <DocumentTextIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/manage/branches', label: 'Manage Branches', icon: <BuildingOffice2Icon className="w-5 h-5" />, show: isAdmin },
     { to: '/manage/zones', label: 'Manage Zones', icon: <MapIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/manage/users', label: 'Manage Users', icon: <UsersIcon className="w-5 h-5" />, show: isAdmin },
     { to: '/activity/logs', label: 'Activity Logs', icon: <ClockIcon className="w-5 h-5" />, show: isAdmin },
   ].filter(i => i.show)
+
+  const headerRef = useRef<HTMLDivElement | null>(null)
+  const [headerHeight, setHeaderHeight] = useState<number>(56)
+
+  useEffect(() => {
+    const update = () => {
+      const h = headerRef.current?.getBoundingClientRect().height || 56
+      setHeaderHeight(Math.max(40, Math.round(h)))
+    }
+    update()
+
+    let ro: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => update())
+      if (headerRef.current) ro.observe(headerRef.current)
+    }
+
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      if (ro) ro.disconnect()
+    }
+  }, [])
 
   return (
     <div className="h-screen overflow-hidden bg-gray-50 flex flex-col">
@@ -81,16 +125,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
           className={`fixed inset-0 z-40 bg-black/30 transition-opacity ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => setMobileOpen(false)}
         />
-        <aside className={`fixed inset-y-0 left-0 z-50 w-80 text-white bg-gradient-to-b from-primary-700 to-primary-600 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col max-h-screen overflow-hidden`}>
+        <aside className={`fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 text-gray-900 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col max-h-screen overflow-hidden`}>
           {/* Enhanced mobile header */}
-          <div className="h-20 px-6 flex items-center justify-between border-b border-white/10">
+          <div className="h-20 px-6 flex items-center justify-between border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-lg font-bold text-primary-600">T</span>
-              </div>
-              <span className="text-xl font-bold tracking-wide">Trakr</span>
+              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
+              <span className="text-xl font-bold tracking-wide text-gray-900">Trakr</span>
             </div>
-            <button className="touch-target p-2 hover:bg-white/10 rounded-xl text-white" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
+            <button className="touch-target p-2 hover:bg-gray-100 rounded-lg text-gray-700" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
               <XMarkIcon className="w-6 h-6" />
             </button>
           </div>
@@ -99,11 +141,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {/* Mobile-optimized search */}
             <div className="px-6 py-4">
-              <div className="bg-white/10 rounded-xl flex items-center px-4 py-3">
-                <MagnifyingGlassIcon className="w-5 h-5 text-white/80" />
+              <div className="rounded-md flex items-center px-3 py-2 border border-gray-200">
+                <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
                 <input 
                   placeholder="Search" 
-                  className="ml-3 bg-transparent placeholder-white/70 text-white text-base outline-none flex-1"
+                  className="ml-2 bg-transparent placeholder-gray-400 text-gray-700 text-base outline-none flex-1"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       const query = e.currentTarget.value.trim()
@@ -118,7 +160,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
             </div>
             
             {/* Enhanced navigation with better touch targets */}
-            <nav className="px-4 space-y-2 pb-4">
+            <nav className="px-4 space-y-2 pb-4" aria-label="Primary">
+              <div className="px-1 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Navigation</div>
               {nav.map(item => {
                 const active = location.pathname.startsWith(item.to)
                 return (
@@ -126,12 +169,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
                     key={item.to} 
                     to={item.to} 
                     onClick={() => setMobileOpen(false)} 
-                    className={`flex items-center gap-4 px-4 py-4 rounded-xl transition touch-target ${active ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                    title={item.label}
+                    aria-current={active ? 'page' : undefined}
+                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-gray-50 ${active ? 'bg-primary-50 border-l-2 border-primary-600' : ''}`}
                   >
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      {item.icon}
-                    </div>
-                    <span className="text-base font-medium">{item.label}</span>
+                    <span className={`${active ? 'text-primary-700' : 'text-gray-500 group-hover:text-gray-700'} shrink-0`}>{item.icon}</span>
+                    <span className={`text-sm ${active ? 'text-primary-800 font-medium' : 'text-gray-800'} flex items-center gap-2`}>
+                      {item.label}
+                    </span>
                   </Link>
                 )
               })}
@@ -139,18 +184,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
           </div>
           
           {/* Enhanced user section - Fixed at bottom */}
-          <div className="flex-shrink-0 p-6 pb-8 border-t border-white/10 space-y-4">
+          <div className="flex-shrink-0 p-6 pb-8 border-t border-gray-200 space-y-4">
             <div className="flex items-center gap-4">
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-white/20" />
+                <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-white/10 text-white/90 flex items-center justify-center text-lg font-medium border-2 border-white/20">
+                <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-lg font-medium border-2 border-gray-200">
                   {user?.name?.charAt(0) || '?'}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-white/90 font-semibold text-base truncate">{user?.name}</div>
-                <div className="text-white/70 text-sm">{user?.role && USER_ROLE_LABELS[user.role]}</div>
+                <div className="text-gray-900 font-semibold text-base truncate">{user?.name}</div>
+                <div className="text-gray-500 text-sm">{user?.role && USER_ROLE_LABELS[user.role]}</div>
               </div>
             </div>
             
@@ -159,14 +204,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
               <Link 
                 to="/profile" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 touch-target w-full text-sm text-gray-700"
               >
                 <span>Profile</span>
               </Link>
               <Link 
                 to="/profile/signature" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 touch-target w-full text-sm text-gray-700"
               >
                 <PencilSquareIcon className="w-4 h-4" />
                 <span>Signature</span>
@@ -174,14 +219,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
               <Link 
                 to="/settings" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 touch-target w-full text-sm text-gray-700"
               >
                 <Cog6ToothIcon className="w-4 h-4" />
                 <span>Settings</span>
               </Link>
               <button 
                 onClick={signOut} 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 touch-target w-full text-sm"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 touch-target w-full text-sm text-gray-700"
               >
                 <ArrowRightOnRectangleIcon className="w-4 h-4" />
                 <span>Sign Out</span>
@@ -191,71 +236,73 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
         </aside>
       </div>
       {/* Sidebar */}
-      <aside className="hidden md:flex md:w-64 lg:w-72 flex-col text-white bg-gradient-to-b from-primary-700 to-primary-600 pb-9 overflow-y-auto">
+      <aside className={`hidden md:flex ${compact ? 'md:w-16' : 'md:w-64 lg:w-72'} flex-col bg-white border-r border-gray-200 text-gray-900 pb-9 overflow-y-auto transition-all duration-200 md:relative md:z-20 md:shadow-lg`}>
         <div className="h-18 px-5 flex items-center justify-between">
           <Link to={isAdmin ? '/dashboard/admin' : '/'} className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-              <span className="text-lg font-bold text-primary-600">T</span>
-            </div>
-            <span className="text-xl font-bold tracking-wide">Trakr</span>
+            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
+            {!compact && <span className="text-xl font-bold tracking-wide">Trakr</span>}
           </Link>
         </div>
-        <div className="px-4">
-          <div className="bg-white/10 rounded-md flex items-center px-3 py-2">
-            <MagnifyingGlassIcon className="w-5 h-5 text-white/80" />
-            <input 
-              placeholder="Search" 
-              className="ml-2 bg-transparent placeholder-white/70 text-white text-sm outline-none flex-1"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const query = e.currentTarget.value.trim()
-                  if (query) {
-                    navigate(`/search?q=${encodeURIComponent(query)}`)
+        <div className="px-3">
+          {!compact && (
+            <div className="rounded-md flex items-center px-3 py-2 border border-gray-200">
+              <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
+              <input 
+                placeholder="Search" 
+                className="ml-2 bg-transparent placeholder-gray-400 text-gray-700 text-sm outline-none flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const query = e.currentTarget.value.trim()
+                    if (query) {
+                      navigate(`/search?q=${encodeURIComponent(query)}`)
+                    }
                   }
-                }
-              }}
-            />
-          </div>
+                }}
+              />
+            </div>
+          )}
         </div>
-        <nav className="mt-4 px-2 space-y-1">
+        <nav className="mt-3 px-2 space-y-1" aria-label="Primary">
+          {!compact && (
+            <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Navigation</div>
+          )}
           {nav.map(item => {
             const active = location.pathname.startsWith(item.to)
             return (
-              <Link key={item.to} to={item.to} className={`flex items-center gap-3 px-3 py-2 rounded-md transition ${active ? 'bg-white/20' : 'hover:bg-white/10'}`}>
-                {item.icon}
-                <span className="text-sm">{item.label}</span>
+              <Link
+                key={item.to}
+                to={item.to}
+                title={item.label}
+                aria-current={active ? 'page' : undefined}
+                className={`group flex items-center gap-3 ${compact ? 'justify-center' : ''} px-3 py-2.5 rounded-lg transition-colors hover:bg-gray-50 ${active ? 'bg-primary-50 border-l-2 border-primary-600' : ''}`}
+              >
+                <span className={`shrink-0 ${active ? 'text-primary-700' : 'text-gray-500 group-hover:text-gray-700'}`}>{item.icon}</span>
+                {!compact && (
+                  <span className={`text-sm ${active ? 'text-primary-800 font-medium' : 'text-gray-800'} flex items-center gap-2`}>
+                    {item.label}
+                  </span>
+                )}
               </Link>
             )
           })}
         </nav>
-        <div className="mt-auto p-4 border-t border-white/10 text-sm space-y-3">
-          <div className="flex items-center gap-3">
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-white/20" />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-white/10 text-white/90 flex items-center justify-center text-sm font-medium border border-white/20">
-                {user?.name?.charAt(0) || '?'}
-              </div>
-            )}
-            <div>
-              <div className="text-white/90 font-medium truncate max-w-[12rem]">{user?.name}</div>
-              <div className="text-white/70">{user?.role && USER_ROLE_LABELS[user.role]}</div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link to="/profile" className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white/10 hover:bg-white/20">Profile</Link>
-            <Link to="/profile/signature" className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white/10 hover:bg-white/20">Signature</Link>
-          </div>
-          <button onClick={signOut} className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white/10 hover:bg-white/20">
-            <ArrowRightOnRectangleIcon className="w-5 h-5" /> Sign Out
+        <div className="mt-auto px-3 pt-3 border-t border-gray-200">
+          <button
+            className="w-full inline-flex items-center justify-center gap-2 text-xs text-gray-600 hover:text-gray-800 bg-white border border-gray-200 rounded-md px-2 py-2 hover:shadow-sm transition"
+            onClick={() => setCompact(v => !v)}
+            aria-label="Toggle compact sidebar"
+            title={compact ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <span className="text-sm">{compact ? '»' : '«'}</span>
+            {!compact && <span>Compact mode</span>}
           </button>
         </div>
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto" style={{ ['--app-header-height' as any]: `${headerHeight}px` }}>
         {/* Modern Enhanced Header */}
-        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)]">
+        <header ref={headerRef} className="sticky top-0 z-30 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)]">
           <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
             {/* Left: Menu Button (Mobile) + Title */}
             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">

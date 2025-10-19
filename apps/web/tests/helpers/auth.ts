@@ -37,30 +37,39 @@ export async function handleOnboardingIfNeeded(page: Page) {
  * Auto-completes onboarding if user doesn't have orgId.
  */
 export async function loginAsAdmin(page: Page) {
-  // First, ensure we're logged out
+  // Navigate to page first, THEN clear storage
   await page.goto('/login')
+  await page.context().clearCookies()
+  
+  //  Aggressively clear ALL storage (zustand persist uses localStorage)
   await page.evaluate(() => {
-    localStorage.clear()
-    sessionStorage.clear()
-    // Also clear zustand persisted state
-    Object.keys(localStorage).forEach(key => {
-      if (key.includes('trakr') || key.includes('auth')) {
-        localStorage.removeItem(key)
-      }
-    })
+    try {
+      localStorage.clear()
+      sessionStorage.clear()
+      // Clear all keys one by one to ensure zustand persist state is gone
+      const lsKeys = Object.keys(localStorage)
+      lsKeys.forEach(key => localStorage.removeItem(key))
+      const ssKeys = Object.keys(sessionStorage)
+      ssKeys.forEach(key => sessionStorage.removeItem(key))
+    } catch (e) {
+      console.warn('Error clearing storage:', e)
+    }
   })
   
-  // Force reload to clear any cached state
+  // Reload to ensure cleared state takes effect
   await page.goto('/login', { waitUntil: 'networkidle' })
   
-  // Check if we're already on a dashboard (persisted session)
-  if (page.url().includes('/dashboard')) {
-    console.log('[Auth Helper] Already logged in, logging out first')
-    try {
-      await page.goto('/login', { waitUntil: 'networkidle' })
-    } catch (e) {
-      // Ignore navigation errors
-    }
+  // If still on dashboard, auth.init() restored session - force to login
+  let retries = 0
+  while (page.url().includes('/dashboard') && retries < 3) {
+    console.log(`[Auth Helper] Redirected to dashboard (retry ${retries + 1}/3), forcing logout...`)
+    await page.evaluate(() => {
+      localStorage.clear()
+      sessionStorage.clear()
+    })
+    await page.goto('/login', { waitUntil: 'load' })
+    retries++
+    await page.waitForTimeout(500)
   }
   
   // Wait for login UI to appear (either form or role buttons)
@@ -70,8 +79,10 @@ export async function loginAsAdmin(page: Page) {
       page.waitForSelector('button:has-text("Admin")', { timeout: 15_000 })
     ])
   } catch (e) {
-    console.error('[Auth Helper] Login UI not found, current URL:', page.url())
-    throw new Error('Login page did not render properly. Check if already logged in or page structure changed.')
+    console.error('[Auth Helper] Login UI not found after', retries, 'retries. Current URL:', page.url())
+    // Take a screenshot for debugging
+    await page.screenshot({ path: `test-results/login-failure-${Date.now()}.png` })
+    throw new Error(`Login page did not render. URL: ${page.url()}. Check screenshot.`)
   }
   
   try {

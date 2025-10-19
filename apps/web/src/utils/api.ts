@@ -5,6 +5,7 @@ import { supabaseApi } from './supabaseApi'
 
 // Force Supabase in development - change back to 'mock' if needed for testing
 const backend = ((import.meta as any).env?.VITE_BACKEND || 'supabase').toLowerCase()
+const strict = ((import.meta as any).env?.VITE_STRICT_API ?? '1') === '1'
 // During incremental migration, route known methods to Supabase and fall back to
 // the mock API for anything not yet implemented. This prevents runtime errors
 // on screens that still rely on unported endpoints while allowing us to switch
@@ -19,7 +20,9 @@ const proxyApi = new Proxy(supabaseApi as any, {
     const key = String(prop)
     if (!__warnedFallbacks.has(key)) {
       try {
-        // eslint-disable-next-line no-console
+        if (backend === 'supabase' && strict) {
+          throw new Error(`[api] Missing Supabase implementation for method: ${key}`)
+        }
         console.warn(`[api] Falling back to mockApi.${key} (Supabase not implemented)`) // visible in dev console/tests
       } catch {}
       __warnedFallbacks.add(key)

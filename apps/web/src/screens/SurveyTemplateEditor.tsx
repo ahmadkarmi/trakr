@@ -7,12 +7,15 @@ import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon, ChevronUpIcon, ChevronDownIcon, PencilSquareIcon, XMarkIcon, InformationCircleIcon, TrophyIcon, ListBulletIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../hooks/useToast'
+import { useOrganization } from '../contexts/OrganizationContext'
+import BranchSelector from '../components/BranchSelector'
 
 const SurveyTemplateEditor: React.FC = () => {
   const { surveyId } = useParams<{ surveyId: string }>()
   const isEditing = !!surveyId
   const queryClient = useQueryClient()
   const { showToast } = useToast()
+  const { effectiveOrgId } = useOrganization()
 
   const { data: survey, isLoading } = useQuery<Survey | null>({
     queryKey: QK.SURVEY(surveyId),
@@ -20,14 +23,23 @@ const SurveyTemplateEditor: React.FC = () => {
     enabled: isEditing,
   })
 
+  const { data: publishLogs } = useQuery({
+    queryKey: ['survey_last_published', surveyId, effectiveOrgId],
+    queryFn: () => (surveyId && effectiveOrgId
+      ? (api as any).getActivityLogs(undefined, effectiveOrgId, { surveyId, actionPrefix: 'SURVEY_PUBLISHED', limit: 1 })
+      : Promise.resolve([])),
+    enabled: isEditing && !!surveyId && !!effectiveOrgId,
+  })
+
   const updateMutation = useMutation({
-    mutationFn: (payload: Partial<Pick<Survey, 'title' | 'description' | 'isActive' | 'sections' | 'frequency'>>) => {
+    mutationFn: (payload: Partial<Pick<Survey, 'title' | 'description' | 'isActive' | 'sections' | 'frequency' | 'applicableBranchIds'>>) => {
       if (!surveyId) throw new Error('No surveyId provided')
       return api.updateSurvey(surveyId, payload)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
       if (surveyId) queryClient.invalidateQueries({ queryKey: QK.SURVEY(surveyId) })
+      if (surveyId && effectiveOrgId) queryClient.invalidateQueries({ queryKey: ['survey_last_published', surveyId, effectiveOrgId] })
       showToast({ message: 'Survey updated successfully!', variant: 'success' })
     },
     onError: (error) => {
@@ -43,6 +55,7 @@ const SurveyTemplateEditor: React.FC = () => {
   const [active, setActive] = React.useState(true)
   const [sections, setSections] = React.useState<SurveySection[]>([])
   const [frequency, setFrequency] = React.useState<AuditFrequency>(AuditFrequency.UNLIMITED)
+  const [applicableBranchIds, setApplicableBranchIds] = React.useState<string[]>([])
   const [selectedSectionId, setSelectedSectionId] = React.useState<string | null>(null)
   const [questionModal, setQuestionModal] = React.useState<{ open: boolean; sectionId: string | null; questionId: string | null; draft: SurveyQuestion | null }>({ open: false, sectionId: null, questionId: null, draft: null })
   const questionTextRef = React.useRef<HTMLInputElement>(null)
@@ -57,6 +70,7 @@ const SurveyTemplateEditor: React.FC = () => {
       setDescription(survey.description)
       setActive(!!survey.isActive)
       setFrequency(survey.frequency || AuditFrequency.UNLIMITED)
+      setApplicableBranchIds(survey.applicableBranchIds || [])
       const nextSections = Array.isArray(survey.sections) ? survey.sections.map(s => ({ ...s })) : []
       setSections(nextSections)
       setSelectedSectionId(nextSections[0]?.id || null)
@@ -64,7 +78,7 @@ const SurveyTemplateEditor: React.FC = () => {
   }, [survey])
 
   const onSave = () => {
-    updateMutation.mutate({ title, description, isActive: active, sections, frequency })
+    updateMutation.mutate({ title, description, isActive: active, sections, frequency, applicableBranchIds })
   }
 
   // Helpers
@@ -475,7 +489,7 @@ const SurveyTemplateEditor: React.FC = () => {
 
   return (
     <DashboardLayout title={isEditing ? 'Edit Survey Template' : 'Create Survey Template'}>
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {isLoading ? (
           <p className="text-gray-500">Loading template…</p>
         ) : !isEditing || !survey ? (
@@ -483,35 +497,59 @@ const SurveyTemplateEditor: React.FC = () => {
         ) : (
           <>
             <div className="card-spacious">
-              <div className="card-header">
-                <h2 className="text-xl font-semibold text-gray-900">Template Settings</h2>
-                <p className="text-sm text-gray-600 mt-1">Configure survey details and frequency</p>
+              <div className="card-header pb-5">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+                  <div className="flex-1">
+                    <h2 className="text-xl font-semibold text-gray-900">Template Settings</h2>
+                    <p className="text-sm text-gray-600 mt-1">Configure survey details and frequency</p>
+                    <div className="mt-3 grid grid-cols-1 gap-1 sm:gap-1 mb-2 sm:mb-3">
+                      <div className="text-xs text-gray-600">
+                        <span className="font-semibold text-gray-900">Version</span>
+                        <span className="ml-2">v{survey.version}</span>
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        <span className="font-semibold text-gray-900">Last published:</span>
+                        <span className="ml-2">{Array.isArray(publishLogs) && publishLogs.length > 0 && publishLogs[0]?.timestamp ? new Date(publishLogs[0].timestamp).toLocaleString() : '—'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-3">
+                    <div className="flex flex-col">
+                      <div className="text-sm font-semibold text-gray-900 sm:text-right">Status</div>
+                      <div className="text-xs text-gray-600 sm:text-right">{active ? 'Active' : 'Inactive'}</div>
+                    </div>
+                    <div className="sm:pl-3 sm:ml-3 sm:border-l sm:border-gray-200">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={active}
+                        onClick={() => setActive(v => !v)}
+                        className={`relative inline-flex h-10 w-16 sm:h-8 sm:w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                          active ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-9 w-9 sm:h-7 sm:w-7 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                            active ? 'translate-x-6 sm:translate-x-6' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              <div className="card-body">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="card-body space-y-6 sm:space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                   <div className="content-section">
                     <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="title">Title</label>
-                    <input id="title" className="input rounded-xl border-gray-300 bg-white w-full" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter survey title" />
-                  </div>
-                  <div className="content-section">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="active">Status</label>
-                    <button
-                      className={`btn btn-responsive-sm w-full ${
-                        active 
-                          ? 'bg-green-50 border-2 border-green-600 text-green-700 hover:bg-green-100' 
-                          : 'bg-gray-50 border-2 border-gray-400 text-gray-700 hover:bg-gray-100'
-                      }`}
-                      onClick={() => setActive(v => !v)}
-                    >
-                      {active ? '✓ Active' : '○ Inactive'}
-                    </button>
+                    <input id="title" className="input rounded-xl w-full" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter survey title" />
                   </div>
                   <div className="content-section">
                     <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="frequency">Frequency</label>
                     <select
                       id="frequency"
-                      className="input rounded-xl border-gray-300 bg-white w-full"
+                      className="input rounded-xl w-full"
                       value={frequency}
                       onChange={(e) => setFrequency(e.target.value as AuditFrequency)}
                       title="How often this survey can be conducted per branch"
@@ -525,12 +563,20 @@ const SurveyTemplateEditor: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Branch Selection */}
+                <div className="content-section">
+                  <BranchSelector
+                    selectedBranchIds={applicableBranchIds}
+                    onChange={setApplicableBranchIds}
+                  />
+                </div>
+
                 <div className="content-section">
                   <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="desc">Description</label>
                   <textarea
                     id="desc"
-                    className="input rounded-xl border-gray-300 bg-white w-full"
-                    rows={4}
+                    className="input rounded-xl w-full h-auto min-h-24 sm:min-h-28"
+                    rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe the purpose of this survey"
@@ -542,16 +588,25 @@ const SurveyTemplateEditor: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
                   <button 
                     className="btn btn-outline btn-responsive-sm" 
-                    onClick={() => { setTitle(survey.title); setDescription(survey.description); setActive(!!survey.isActive); setFrequency(survey.frequency || AuditFrequency.UNLIMITED); setSections(survey.sections || []); }}
+                    onClick={() => { setTitle(survey.title); setDescription(survey.description); setActive(!!survey.isActive); setFrequency(survey.frequency || AuditFrequency.UNLIMITED); setApplicableBranchIds(survey.applicableBranchIds || []); setSections(survey.sections || []); }}
                   >
                     Reset Changes
                   </button>
                   <button 
+                    className="btn btn-outline btn-responsive-sm" 
+                    title="Save metadata without creating a new version"
+                    onClick={() => updateMutation.mutate({ title, description, isActive: active, frequency, applicableBranchIds })}
+                    disabled={updateMutation.isPending}
+                  >
+                    {updateMutation.isPending ? 'Saving…' : 'Save Metadata'}
+                  </button>
+                  <button 
                     className="btn btn-primary btn-responsive-sm" 
+                    title="Publish a new version with content changes"
                     onClick={onSave} 
                     disabled={updateMutation.isPending}
                   >
-                    {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                    {updateMutation.isPending ? 'Publishing…' : 'Publish New Version'}
                   </button>
                 </div>
               </div>

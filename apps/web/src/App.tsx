@@ -93,8 +93,8 @@ function App() {
   return (
     <LoadingProvider>
       <ToastProvider>
-        <OrganizationProvider>
-          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <OrganizationProvider>
             <ErrorBoundary>
           <div className="min-h-screen bg-gray-50">
             {/* Offline Banner */}
@@ -213,10 +213,10 @@ function App() {
             {/* Global Error Toast Container */}
             <ErrorToastContainer />
           </div>
-        </ErrorBoundary>
-      </Router>
-        </OrganizationProvider>
-    </ToastProvider>
+            </ErrorBoundary>
+          </OrganizationProvider>
+        </Router>
+      </ToastProvider>
     </LoadingProvider>
   )
 }

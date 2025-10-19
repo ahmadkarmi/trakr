@@ -1,12 +1,14 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../utils/api'
-import { QK } from '../../utils/queryKeys'
-import { Audit, Branch, User, Zone, AuditStatus, UserRole, Survey, calculateAuditScore, calculateWeightedAuditScore } from '@trakr/shared'
+import { Audit, Branch, User, Zone, AuditStatus, UserRole, Survey, calculateWeightedAuditScore } from '@trakr/shared'
 import Tabs from '../../components/Tabs'
 import AuditHistory from './AuditHistory'
 import AnalyticsChart from '../../components/analytics/AnalyticsChart'
 import { useOrganization } from '../../contexts/OrganizationContext'
+import AdvancedAnalyticsComplete from '../AdvancedAnalyticsComplete'
+import EmptyState from '../../components/EmptyState'
+import { ComputerDesktopIcon } from '@heroicons/react/24/outline'
 
 const AdminAnalytics: React.FC = () => {
   const { effectiveOrgId, isSuperAdmin } = useOrganization()
@@ -69,22 +71,14 @@ const AdminAnalytics: React.FC = () => {
       .map((audit, index) => {
         const survey = surveys.find(s => s.id === audit.surveyId)
         if (!survey) return null
-        
         if (index === 0) {
           console.log('🔍 [DEBUG] First audit - Survey has sections:', survey.sections?.length)
           console.log('🔍 [DEBUG] First audit - Response keys:', Object.keys(audit.responses || {}).length)
         }
-        
-        // Try weighted score first, fall back to compliance if no weighted questions
         const weightedScore = calculateWeightedAuditScore(audit, survey)
-        if (weightedScore.weightedPossiblePoints > 0) {
-          console.log('✅ [DEBUG] Using weighted score:', weightedScore.weightedCompliancePercentage, 'for audit:', audit.id.slice(0, 8))
-          return weightedScore.weightedCompliancePercentage
-        }
-        // Fallback to compliance score if no weighted questions
-        const basicScore = calculateAuditScore(audit, survey)
-        console.log('📊 [DEBUG] Using compliance score:', basicScore.compliancePercentage, 'Yes:', basicScore.yesAnswers, 'No:', basicScore.noAnswers, 'for audit:', audit.id.slice(0, 8))
-        return basicScore.compliancePercentage
+        if (weightedScore.weightedPossiblePoints <= 0) return null
+        console.log('✅ [DEBUG] Weighted score:', weightedScore.weightedCompliancePercentage, 'for audit:', audit.id.slice(0, 8))
+        return weightedScore.weightedCompliancePercentage
       })
       .filter((score): score is number => score !== null)
     
@@ -149,22 +143,13 @@ const AdminAnalytics: React.FC = () => {
     completedAudits.forEach(audit => {
       const survey = surveys.find(s => s.id === audit.surveyId)
       if (!survey) return
-      
-      // Try weighted score first, fall back to compliance if no weighted questions
       const weightedScore = calculateWeightedAuditScore(audit, survey)
-      let percentage: number
-      if (weightedScore.weightedPossiblePoints > 0) {
-        percentage = Math.round(weightedScore.weightedCompliancePercentage)
-      } else {
-        const basicScore = calculateAuditScore(audit, survey)
-        percentage = Math.round(basicScore.compliancePercentage)
-      }
-      
+      const percentage = Math.round(weightedScore.weightedCompliancePercentage)
       const range = ranges.find(r => percentage >= r.min && percentage <= r.max)
       if (range) range.count++
     })
     
-    return ranges.filter(r => r.count > 0)
+    return ranges
   }, [audits, surveys])
 
   // Calculate branch performance
@@ -174,6 +159,11 @@ const AdminAnalytics: React.FC = () => {
       const total = branchAudits.length
       const completed = branchAudits.filter(a => a.status === AuditStatus.APPROVED).length
       const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
+      // Most recent audit's survey version for this branch
+      const latestAudit = branchAudits
+        .slice()
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
+      const latestVersion = latestAudit?.surveyVersion ?? null
       
       // Only calculate quality score from completed audits with responses
       const completedWithResponses = branchAudits
@@ -184,13 +174,8 @@ const AdminAnalytics: React.FC = () => {
         .map(audit => {
           const survey = surveys.find(s => s.id === audit.surveyId)
           if (!survey) return null
-          // Try weighted score first, fall back to compliance if no weighted questions
           const weightedScore = calculateWeightedAuditScore(audit, survey)
-          if (weightedScore.weightedPossiblePoints > 0) {
-            return weightedScore.weightedCompliancePercentage
-          }
-          const basicScore = calculateAuditScore(audit, survey)
-          return basicScore.compliancePercentage
+          return weightedScore.weightedPossiblePoints > 0 ? weightedScore.weightedCompliancePercentage : null
         })
         .filter((score): score is number => score !== null)
       
@@ -202,7 +187,8 @@ const AdminAnalytics: React.FC = () => {
         totalAudits: total,
         completedAudits: completed,
         completionRate,
-        avgScore
+        avgScore,
+        latestVersion,
       }
     })
     .filter(b => b.totalAudits > 0) // Only show branches with audits
@@ -228,13 +214,8 @@ const AdminAnalytics: React.FC = () => {
         .map(audit => {
           const survey = surveys.find(s => s.id === audit.surveyId)
           if (!survey) return null
-          // Try weighted score first, fall back to compliance if no weighted questions
           const weightedScore = calculateWeightedAuditScore(audit, survey)
-          if (weightedScore.weightedPossiblePoints > 0) {
-            return weightedScore.weightedCompliancePercentage
-          }
-          const basicScore = calculateAuditScore(audit, survey)
-          return basicScore.compliancePercentage
+          return weightedScore.weightedPossiblePoints > 0 ? weightedScore.weightedCompliancePercentage : null
         })
         .filter((score): score is number => score !== null)
       
@@ -263,11 +244,11 @@ const AdminAnalytics: React.FC = () => {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '📊' },
     { id: 'history', label: 'Audit History', icon: '📋', badge: audits.length },
-    { id: 'reports', label: 'Reports', icon: '📄', disabled: true },
+    { id: 'reports', label: 'Reports', icon: '📄' },
   ]
 
   return (
-    <div className="mobile-container breathing-room">
+    <div className="space-y-6">
       <Tabs tabs={tabs} defaultTab="overview">
         {/* Overview Tab */}
         <div>
@@ -395,11 +376,11 @@ const AdminAnalytics: React.FC = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
         {/* Completion Trends */}
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Completion Trends</h3>
             <p className="text-sm text-gray-500">Audit completion over time (last 6 months)</p>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {completionTrends.every(m => m.total === 0) ? (
               <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <div className="text-center">
@@ -422,11 +403,11 @@ const AdminAnalytics: React.FC = () => {
 
         {/* Quality Distribution */}
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Quality Distribution</h3>
             <p className="text-sm text-gray-500">Audit scores breakdown by range</p>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {qualityDistribution.length === 0 ? (
               <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <div className="text-center">
@@ -451,11 +432,11 @@ const AdminAnalytics: React.FC = () => {
       {/* Branch Performance Matrix */}
       <div className="mb-8">
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Branch Performance Matrix</h3>
             <p className="text-sm text-gray-500">Completion rates and quality scores by branch</p>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {branchPerformance.length === 0 ? (
               <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <div className="text-center">
@@ -472,6 +453,7 @@ const AdminAnalytics: React.FC = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Audits</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completion Rate</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Quality Score</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
@@ -480,12 +462,15 @@ const AdminAnalytics: React.FC = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {branchPerformance.map((branch, idx) => (
                       <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{branch.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{branch.totalAudits}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">{branch.name}</td>
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">{branch.totalAudits}</td>
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">
                           <span className="text-green-600 font-medium">{branch.completedAudits}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">
+                          {branch.latestVersion != null ? `v${branch.latestVersion}` : '—'}
+                        </td>
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">
                           <div className="flex items-center gap-2">
                             <span>{branch.completionRate}%</span>
                             <div className="w-24 bg-gray-200 rounded-full h-2">
@@ -493,7 +478,7 @@ const AdminAnalytics: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">
                           {branch.avgScore !== null ? (
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               branch.avgScore >= 90 ? 'bg-green-100 text-green-800' :
@@ -507,7 +492,7 @@ const AdminAnalytics: React.FC = () => {
                             <span className="text-gray-400 text-xs">No completed audits</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">
                           {branch.avgScore !== null ? (
                             branch.completionRate >= 90 && branch.avgScore >= 90 ? (
                               <span className="text-green-600 font-medium">⭐ Excellent</span>
@@ -535,11 +520,11 @@ const AdminAnalytics: React.FC = () => {
       {/* Auditor Rankings */}
       <div className="mb-8">
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Auditor Performance Rankings</h3>
             <p className="text-sm text-gray-500">Top performing auditors by completion rate and quality</p>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {auditorRankings.length === 0 ? (
               <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <div className="text-center">
@@ -565,19 +550,19 @@ const AdminAnalytics: React.FC = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {auditorRankings.map((auditor, idx) => (
                       <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {idx < 3 ? (
                             <span className="text-lg">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>
                           ) : (
                             <span>#{idx + 1}</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{auditor.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{auditor.totalAudits}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">{auditor.name}</td>
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">{auditor.totalAudits}</td>
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">
                           <span className="text-green-600 font-medium">{auditor.completedAudits}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">
                           <div className="flex items-center gap-2">
                             <span>{auditor.completionRate}%</span>
                             <div className="w-20 bg-gray-200 rounded-full h-2">
@@ -585,7 +570,7 @@ const AdminAnalytics: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">
                           {auditor.avgScore !== null ? (
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               auditor.avgScore >= 90 ? 'bg-green-100 text-green-800' :
@@ -599,7 +584,7 @@ const AdminAnalytics: React.FC = () => {
                             <span className="text-gray-400 text-xs">No completed audits</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-600">
                           {auditor.avgScore !== null ? (
                             auditor.completionRate >= 90 && auditor.avgScore >= 90 ? (
                               <span className="text-green-600 font-medium">⭐ Outstanding</span>
@@ -630,12 +615,31 @@ const AdminAnalytics: React.FC = () => {
           <AuditHistory roleFilter="admin" />
         </div>
 
-        {/* Reports Tab (Disabled) */}
+        {/* Reports Tab - Advanced Analytics */}
         <div>
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">📄</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Reports Coming Soon</h3>
-            <p className="text-gray-500">Scheduled and automated reports will be available here</p>
+          <div className="md:hidden">
+            <div className="mx-auto max-w-md rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 to-blue-50 p-2">
+              <div className="rounded-xl bg-white/70 backdrop-blur-sm">
+                <EmptyState
+                  icon={(
+                    <div className="w-16 h-16 rounded-2xl bg-primary-100 text-primary-600 flex items-center justify-center">
+                      <ComputerDesktopIcon className="w-9 h-9" />
+                    </div>
+                  )}
+                  title="Advanced Analytics is best on desktop"
+                  message="For the most accurate view and performance, please open this page on a larger screen. Mobile optimization is coming soon."
+                  action={{
+                    label: 'Copy link to share',
+                    onClick: () => {
+                      try { navigator.clipboard?.writeText(window.location.href) } catch {}
+                    },
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="hidden md:block">
+            <AdvancedAnalyticsComplete />
           </div>
         </div>
       </Tabs>

@@ -11,41 +11,19 @@ import InfoBadge from '@/components/InfoBadge'
 import MobileAuditCard from '@/components/MobileAuditCard'
 import ResponsiveTable, { Column } from '@/components/ResponsiveTable'
 import { SkeletonAuditCard } from '@/components/Skeleton'
-import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, CalendarDaysIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
+import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { useOrganization } from '../contexts/OrganizationContext'
-import EmptyState from '../components/EmptyState'
+// import EmptyState from '../components/EmptyState'
+import MetricCard from '../components/MetricCard'
 
 const DashboardAuditor: React.FC = () => {
   const { user } = useAuthStore()
-  const { effectiveOrgId, isSuperAdmin, isLoading: orgLoading } = useOrganization()
+  const { effectiveOrgId, isSuperAdmin } = useOrganization()
   const navigate = useNavigate()
 
   const queryClient = useQueryClient()
-  
-  // Guard: Wait for organization context to load
-  if (orgLoading) {
-    return (
-      <DashboardLayout title="Loading...">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-  
-  // Guard: Ensure org is available (not Super Admin in global view)
-  if (!effectiveOrgId && !isSuperAdmin) {
-    return (
-      <DashboardLayout title="Organization Required">
-        <EmptyState
-          icon={<BuildingOfficeIcon className="w-16 h-16" />}
-          title="Organization Not Available"
-          message="Your user account is not associated with an organization. Please contact your administrator."
-        />
-      </DashboardLayout>
-    )
-  }
+  // Guard flags handled after all hooks to preserve hook order across renders
 
   const { data: audits = [], isLoading } = useQuery<Audit[]>({
     queryKey: QK.AUDITS(`auditor-${user?.id || ''}`),
@@ -94,6 +72,7 @@ const DashboardAuditor: React.FC = () => {
   const [showAvailableOnly, setShowAvailableOnly] = React.useState(true)
   const [mainTab, setMainTab] = React.useState<'cycle' | 'rejected' | 'history'>('cycle')
   const [cycleTab, setCycleTab] = React.useState<'open' | 'completed'>('open')
+  const startNewAuditRef = React.useRef<HTMLDivElement | null>(null)
   React.useEffect(() => {
     if (!selectedSurveyId && surveys.length > 0) setSelectedSurveyId(surveys[0].id)
   }, [surveys, selectedSurveyId])
@@ -118,7 +97,7 @@ const DashboardAuditor: React.FC = () => {
         assignedTo: user.id,
       })
     },
-    onSuccess: async (created, variables) => {
+    onSuccess: async (created) => {
       queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
       if (created?.id) navigate(`/audit/${created.id}/wizard`)
       
@@ -243,6 +222,7 @@ const DashboardAuditor: React.FC = () => {
     return base
   }, [assignedBranchesSorted, branchSearch, showAvailableOnly, allowedBranches])
 
+
   // Get blocking reason for a branch
   const getBlockingReason = React.useCallback((branchId: string): string | null => {
     if (!selectedSurvey) return null
@@ -291,6 +271,8 @@ const DashboardAuditor: React.FC = () => {
       return surveyAllowedBranches.length > 0
     })
   }, [surveys, assignedBranches, allAudits, orgs])
+  const surveysReadyCount = availableSurveys.length
+  const surveysReadyActive = surveysReadyCount > 0
 
   // Auto-select first available survey if current selection is not available
   React.useEffect(() => {
@@ -303,61 +285,53 @@ const DashboardAuditor: React.FC = () => {
 
   return (
     <DashboardLayout title="Auditor Dashboard">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Auditor Dashboard</h1>
-          <p className="text-gray-600 mt-1">{assignedBranches.length} branches • {myCycleAudits.length} this cycle • {audits.length} total audits • {user?.name}</p>
+          <p className="text-gray-600 mt-1">{assignedBranches.length} branches • {myCycleAudits.length} this cycle • {audits.length} total audits • {user?.name} • {surveysReadyCount} surveys ready</p>
         </div>
 
-        {/* Quick Metrics - Comprehensive Status Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
-              <ClipboardDocumentCheckIcon className="w-5 h-5 text-blue-600" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{statusCounts.draft}</p>
-            <p className="text-xs text-gray-600 mt-1">Draft</p>
-          </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mb-2">
-              <ClockIcon className="w-5 h-5 text-orange-600" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{statusCounts.inProgress}</p>
-            <p className="text-xs text-gray-600 mt-1">In Progress</p>
-          </div>
-          
-          <div className="bg-white border border-yellow-200 rounded-lg p-4">
-            <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mb-2">
-              <span className="text-lg">📤</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{statusCounts.submitted}</p>
-            <p className="text-xs text-gray-600 mt-1">Submitted</p>
-          </div>
-          
-          <div className="bg-white border border-green-200 rounded-lg p-4">
-            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mb-2">
-              <CheckCircleIcon className="w-5 h-5 text-green-600" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{statusCounts.completed}</p>
-            <p className="text-xs text-gray-600 mt-1">Completed</p>
-          </div>
-          
-          <div className="bg-white border border-emerald-200 rounded-lg p-4">
-            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mb-2">
-              <span className="text-lg">✅</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{statusCounts.approved}</p>
-            <p className="text-xs text-gray-600 mt-1">Approved</p>
-          </div>
+        {/* Quick Metrics - MetricCard */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <MetricCard
+            icon={<span className="text-lg">🚀</span>}
+            value={surveysReadyCount}
+            label="Surveys Ready"
+            tone={surveysReadyActive ? 'primary' : 'default'}
+            onClick={() => { if (surveysReadyActive) { setMainTab('cycle'); startNewAuditRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) } }}
+          >
+            {surveysReadyActive && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-200 mt-1">Start here</span>
+            )}
+          </MetricCard>
+          <MetricCard icon={<ClipboardDocumentCheckIcon className="w-5 h-5 text-blue-600" />} value={statusCounts.draft} label="Draft" tone="primary" />
+          <MetricCard icon={<ClockIcon className="w-5 h-5 text-orange-600" />} value={statusCounts.inProgress} label="In Progress" tone="warning" />
+          <MetricCard icon={<span className="text-lg">📤</span>} value={statusCounts.submitted} label="Submitted" tone="warning" />
+          <MetricCard icon={<CheckCircleIcon className="w-5 h-5 text-green-600" />} value={statusCounts.completed} label="Completed" tone="success" />
+          <MetricCard icon={<span className="text-lg">✅</span>} value={statusCounts.approved} label="Approved" tone="success" />
         </div>
 
         {/* Resume Audit Card */}
         {latestEditable && (
           <div className="bg-gradient-to-r from-blue-500 to-primary-600 rounded-lg p-5 text-white">
             <h3 className="text-lg font-semibold mb-2">Continue Your Audit</h3>
-            <p className="text-sm opacity-90 mb-4">Resume audit #{latestEditable.id.slice(0, 8)} • Pick up where you left off</p>
+            <p className="text-sm opacity-90 mb-4">
+              {(() => {
+                const branch = branches.find(b => b.id === latestEditable.branchId)
+                const survey = surveys.find(s => s.id === latestEditable.surveyId)
+                const date = new Date(latestEditable.updatedAt).toLocaleDateString()
+                const left = (survey?.title || 'Audit') + (latestEditable.surveyVersion != null ? ` (v${latestEditable.surveyVersion})` : '')
+                const right = branch?.name || 'Unknown Branch'
+                return `${left} — ${right} • ${date}`
+              })()}
+            </p>
+            <div className="mb-4">
+              <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white text-primary-700">
+                <span>Due:</span>
+                <span>{latestEditable.dueAt ? new Date(latestEditable.dueAt).toLocaleDateString() : '—'}</span>
+              </div>
+            </div>
             <button
               className="bg-white text-primary-600 hover:bg-gray-100 font-medium py-2.5 px-4 rounded-lg transition-colors"
               onClick={() => navigate(`/audit/${latestEditable.id}/wizard`)}
@@ -419,22 +393,41 @@ const DashboardAuditor: React.FC = () => {
           
           {/* Cycle Tab Sub-tabs */}
           {mainTab === 'cycle' && (
-            <div className="px-4 sm:px-6 py-3 border-b border-gray-200 bg-gray-50">
-              <div className="inline-flex items-center bg-white border border-gray-200 rounded-lg p-1">
+            <>
+              <div className="px-4 sm:px-6 py-3 border-b border-gray-200 bg-gray-50">
+                <div className="inline-flex items-center bg-white border border-gray-200 rounded-lg p-1">
+                  <button
+                    className={`${cycleTab === 'open' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
+                    onClick={() => setCycleTab('open')}
+                  >
+                    Open ({openCycleAudits.length})
+                  </button>
+                  <button
+                    className={`${cycleTab === 'completed' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
+                    onClick={() => setCycleTab('completed')}
+                  >
+                    Completed ({completedCycleAudits.length})
+                  </button>
+                </div>
+              </div>
+              <div className="px-4 sm:px-6 py-2">
                 <button
-                  className={`${cycleTab === 'open' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
-                  onClick={() => setCycleTab('open')}
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() =>
+                    toast(
+                      cycleTab === 'open'
+                        ? 'Open = audits you are still working on or waiting for approval.'
+                        : 'Completed = audits that are approved and fully done this cycle.'
+                    )
+                  }
+                  aria-label="Explain Open vs Completed"
                 >
-                  Open ({openCycleAudits.length})
-                </button>
-                <button
-                  className={`${cycleTab === 'completed' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
-                  onClick={() => setCycleTab('completed')}
-                >
-                  Completed ({completedCycleAudits.length})
+                  <InformationCircleIcon className="w-5 h-5" />
+                  <span>What does this mean?</span>
                 </button>
               </div>
-            </div>
+            </>
           )}
           
           <div className="p-4 sm:p-6">
@@ -470,7 +463,9 @@ const DashboardAuditor: React.FC = () => {
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
-                            <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                            <p className="text-sm text-gray-600 truncate">
+                              {survey?.title || 'Unknown Survey'}{a.surveyVersion != null ? ` (v${a.surveyVersion})` : ''}
+                            </p>
                           </div>
                         </div>
                         
@@ -528,7 +523,7 @@ const DashboardAuditor: React.FC = () => {
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
-                            <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                            <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}{a.surveyVersion != null ? ` (v${a.surveyVersion})` : ''}</p>
                             <p className="text-xs text-gray-500 mt-1">Completed {completedAt.toLocaleDateString()}</p>
                           </div>
                         </div>
@@ -591,6 +586,12 @@ const DashboardAuditor: React.FC = () => {
                       render: (a) => surveys.find(s => s.id === a.surveyId)?.title || 'Unknown Survey'
                     },
                     {
+                      key: 'version',
+                      header: 'Version',
+                      className: 'px-6 py-4 text-gray-600',
+                      render: (a) => (a.surveyVersion != null ? `v${a.surveyVersion}` : '—')
+                    },
+                    {
                       key: 'reason',
                       header: 'Rejection Reason',
                       className: 'px-6 py-4 text-gray-600 max-w-md',
@@ -624,6 +625,7 @@ const DashboardAuditor: React.FC = () => {
                         <div className="mb-3">
                           <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
                           <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                          <p className="text-xs text-gray-500">{a.surveyVersion != null ? `v${a.surveyVersion}` : '—'}</p>
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -688,6 +690,12 @@ const DashboardAuditor: React.FC = () => {
                       render: (a) => surveys.find(s => s.id === a.surveyId)?.title || 'Unknown Survey'
                     },
                     {
+                      key: 'version',
+                      header: 'Version',
+                      className: 'px-6 py-4 text-gray-600',
+                      render: (a) => (a.surveyVersion != null ? `v${a.surveyVersion}` : '—')
+                    },
+                    {
                       key: 'status',
                       header: 'Status',
                       className: 'px-6 py-4',
@@ -747,6 +755,7 @@ const DashboardAuditor: React.FC = () => {
                           <div className="flex-1 min-w-0">
                             <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
                             <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                            <p className="text-xs text-gray-500">{a.surveyVersion != null ? `v${a.surveyVersion}` : '—'}</p>
                           </div>
                           <div className="text-sm font-semibold text-gray-900 ml-4">{comp}%</div>
                         </div>
@@ -787,15 +796,28 @@ const DashboardAuditor: React.FC = () => {
 
         {/* Smart Survey Selection - Only Available Surveys */}
         {availableSurveys.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div ref={startNewAuditRef} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             {/* Header */}
             <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-blue-50">
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Start New Audit</h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xl font-semibold text-gray-900">Start New Audit</h3>
+              </div>
               
               {/* Survey Selection */}
               {availableSurveys.length > 1 ? (
                 <div className="space-y-2">
                   <label htmlFor="survey-select" className="block text-sm font-medium text-gray-700">Select Survey Template</label>
+                  <div>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => toast('Pick a survey to start. Green shows branches you can audit now. Yellow shows surveys blocked this period. Turn on “Available only” to hide blocked branches. Start is enabled only for allowed branches.')}
+                      aria-label="Explain Start New Audit"
+                    >
+                      <InformationCircleIcon className="w-5 h-5" />
+                      <span>More Info</span>
+                    </button>
+                  </div>
                   <select 
                     id="survey-select"
                     className="input w-full sm:max-w-md"
@@ -803,14 +825,25 @@ const DashboardAuditor: React.FC = () => {
                     onChange={(e) => setSelectedSurveyId(e.target.value)}
                   >
                     {availableSurveys.map(s => (
-                      <option key={s.id} value={s.id}>{s.title}</option>
+                      <option key={s.id} value={s.id}>{`${s.title} (v${s.version})`}</option>
                     ))}
                   </select>
                 </div>
               ) : (
-                <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Survey:</span>
-                  <span className="text-sm font-semibold text-gray-900">{selectedSurvey?.title}</span>
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg">
+                    <span className="text-sm font-medium text-gray-700">Survey:</span>
+                    <span className="text-sm font-semibold text-gray-900">{selectedSurvey ? `${selectedSurvey.title} (v${selectedSurvey.version})` : ''}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => toast('Pick a survey to start. Green shows branches you can audit now. Yellow shows surveys blocked this period. Turn on “Available only” to hide blocked branches. Start is enabled only for allowed branches.')}
+                    aria-label="Explain Start New Audit"
+                  >
+                    <InformationCircleIcon className="w-5 h-5" />
+                    <span>More Info</span>
+                  </button>
                 </div>
               )}
               

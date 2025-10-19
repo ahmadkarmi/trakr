@@ -295,7 +295,7 @@ const Settings: React.FC = () => {
 
   return (
     <DashboardLayout title="Settings">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
@@ -442,7 +442,7 @@ const Settings: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {availableOrgs.map((org) => (
-                <div key={org.id} className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 hover:shadow-md transition-all">
+                <div key={org.id} className="card p-4 hover:shadow-md transition-all">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">{org.name}</h3>
@@ -461,7 +461,7 @@ const Settings: React.FC = () => {
                     <Link
                       to="/manage/surveys"
                       onClick={() => currentOrg?.id !== org.id && switchOrganization(org.id)}
-                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="btn btn-outline btn-sm flex items-center gap-2"
                     >
                       <DocumentTextIcon className="w-4 h-4" />
                       Surveys
@@ -469,7 +469,7 @@ const Settings: React.FC = () => {
                     <Link
                       to="/manage/branches"
                       onClick={() => currentOrg?.id !== org.id && switchOrganization(org.id)}
-                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="btn btn-outline btn-sm flex items-center gap-2"
                     >
                       <BuildingOffice2Icon className="w-4 h-4" />
                       Branches
@@ -477,7 +477,7 @@ const Settings: React.FC = () => {
                     <Link
                       to="/manage/zones"
                       onClick={() => currentOrg?.id !== org.id && switchOrganization(org.id)}
-                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="btn btn-outline btn-sm flex items-center gap-2"
                     >
                       <MapIcon className="w-4 h-4" />
                       Zones
@@ -485,7 +485,7 @@ const Settings: React.FC = () => {
                     <Link
                       to="/manage/users"
                       onClick={() => currentOrg?.id !== org.id && switchOrganization(org.id)}
-                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="btn btn-outline btn-sm flex items-center gap-2"
                     >
                       <UsersIcon className="w-4 h-4" />
                       Users

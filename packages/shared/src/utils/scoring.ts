@@ -1,5 +1,12 @@
 import { Audit, Survey, QuestionType } from '../types';
 
+// Normalize NA responses
+function isNA(value?: string): boolean {
+  if (!value) return false;
+  const v = value.toLowerCase().trim();
+  return v === 'na' || v === 'n/a';
+}
+
 export interface AuditScore {
   totalQuestions: number;
   answeredQuestions: number;
@@ -47,14 +54,8 @@ export function calculateSectionWeightedCompliance(audit: Audit, survey: Survey)
 }
 
 export function calculateSectionWeightedWeightedCompliance(audit: Audit, survey: Survey): number {
-  const fractions = getSectionWeightFractions(survey);
-  const sections = calculateWeightedSectionScores(audit, survey);
-  let composite = 0;
-  sections.forEach(sec => {
-    const f = fractions[sec.sectionId] ?? 0;
-    composite += f * (sec.weightedCompliancePercentage || 0);
-  });
-  return composite; // 0..100
+  const overall = calculateWeightedAuditScore(audit, survey);
+  return overall.weightedCompliancePercentage;
 }
 
 export interface SectionScore extends AuditScore {
@@ -83,6 +84,7 @@ export function calculateAuditScore(audit: Audit, survey: Survey): AuditScore {
           noAnswers++;
           break;
         case 'na':
+        case 'n/a':
           naAnswers++;
           break;
       }
@@ -126,6 +128,7 @@ export function calculateSectionScores(audit: Audit, survey: Survey): SectionSco
             noAnswers++;
             break;
           case 'na':
+          case 'n/a':
             naAnswers++;
             break;
         }
@@ -177,7 +180,7 @@ export function calculateWeightedAuditScore(audit: Audit, survey: Survey): Weigh
       if (response?.toLowerCase() === 'yes' || response?.toLowerCase() === 'no') {
         possible += maxPoints;
         earned += response.toLowerCase() === 'yes' ? (q.yesWeight ?? 0) : (q.noWeight ?? 0);
-      } else if (response?.toLowerCase() === 'na' && typeof override === 'number') {
+      } else if (isNA(response) && typeof override === 'number') {
         // Override turns N/A into a scored item
         possible += maxPoints;
         earned += Math.max(0, Math.min(maxPoints, override));
@@ -206,7 +209,7 @@ export function calculateWeightedSectionScores(audit: Audit, survey: Survey): We
       if (response?.toLowerCase() === 'yes' || response?.toLowerCase() === 'no') {
         possible += maxPoints;
         earned += response.toLowerCase() === 'yes' ? (q.yesWeight ?? 0) : (q.noWeight ?? 0);
-      } else if (response?.toLowerCase() === 'na' && typeof override === 'number') {
+      } else if (isNA(response) && typeof override === 'number') {
         possible += maxPoints;
         earned += Math.max(0, Math.min(maxPoints, override));
       }

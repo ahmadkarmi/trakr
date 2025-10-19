@@ -157,7 +157,7 @@ export async function generateAuditPDF(options: PDFExportOptions): Promise<void>
   
   yPosition += 10
   
-  // Score Summary Box
+  // Score Summary Box (weighted compliance only)
   const basicScore = calculateAuditScore(audit, survey)
   const weightedScore = calculateWeightedAuditScore(audit, survey)
   
@@ -171,17 +171,10 @@ export async function generateAuditPDF(options: PDFExportOptions): Promise<void>
   yPosition += 7
   pdf.setFontSize(10)
   pdf.setFont('helvetica', 'bold')
-  pdf.text('Compliance Score:', margin + 5, yPosition)
+  pdf.text('Compliance (Weighted):', margin + 5, yPosition)
   pdf.setFont('helvetica', 'normal')
   pdf.setTextColor(34, 197, 94)
-  pdf.text(`${basicScore.compliancePercentage.toFixed(1)}%`, margin + 45, yPosition)
-  
-  pdf.setTextColor(0, 0, 0)
-  pdf.setFont('helvetica', 'bold')
-  pdf.text('Weighted Score:', margin + 80, yPosition)
-  pdf.setFont('helvetica', 'normal')
-  pdf.setTextColor(34, 197, 94)
-  pdf.text(`${weightedScore.weightedCompliancePercentage.toFixed(1)}%`, margin + 125, yPosition)
+  pdf.text(`${weightedScore.weightedCompliancePercentage.toFixed(1)}%`, margin + 45, yPosition)
   pdf.setTextColor(0, 0, 0)
   
   yPosition += 6
@@ -265,53 +258,7 @@ export async function generateAuditPDF(options: PDFExportOptions): Promise<void>
         yPosition += 2
       }
       
-      // Show photos for this question
-      const questionPhotos = audit.photos?.filter(p => p.questionId === question.id) || []
-      if (questionPhotos.length > 0) {
-        yPosition += 3
-        pdf.setFontSize(9)
-        pdf.setTextColor(59, 130, 246)
-        pdf.text(`📷 ${questionPhotos.length} photo(s) attached`, margin + 7, yPosition)
-        yPosition += 5
-        
-        // Display photos (max 2 per row)
-        let xOffset = margin + 7
-        let photoCount = 0
-        const photoWidth = 40
-        const photoHeight = 30
-        
-        for (const photo of questionPhotos.slice(0, 4)) { // Max 4 photos per question
-          if (photoCount > 0 && photoCount % 2 === 0) {
-            yPosition += photoHeight + 3
-            xOffset = margin + 7
-            checkPageBreak(photoHeight + 5)
-          }
-          
-          try {
-            const imageData = await loadImageAsBase64(photo.url)
-            if (imageData) {
-              pdf.addImage(imageData, 'JPEG', xOffset, yPosition, photoWidth, photoHeight)
-            }
-          } catch (error) {
-            // If image fails to load, show placeholder
-            pdf.setDrawColor(200, 200, 200)
-            pdf.rect(xOffset, yPosition, photoWidth, photoHeight, 'S')
-            pdf.setFontSize(8)
-            pdf.text('Image unavailable', xOffset + 5, yPosition + 15)
-            pdf.setFontSize(9)
-          }
-          
-          xOffset += photoWidth + 5
-          photoCount++
-        }
-        
-        if (photoCount > 0) {
-          yPosition += photoHeight + 3
-        }
-        
-        pdf.setTextColor(0, 0, 0)
-        pdf.setFontSize(10)
-      }
+      // Per-question photos removed; only section-level photos are included below
       
       // Draw border around question box
       const questionEndY = yPosition + 2

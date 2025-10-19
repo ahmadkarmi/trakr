@@ -14,7 +14,13 @@ export function getSupabase() {
     throw new Error('[supabaseClient] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
   }
   if (!supabase) {
-    supabase = createClient(supabaseUrl as string, supabaseAnonKey as string)
+    supabase = createClient(supabaseUrl as string, supabaseAnonKey as string, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
   }
   return supabase
 }

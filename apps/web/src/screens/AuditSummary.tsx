@@ -2,14 +2,16 @@ import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Audit, Survey, calculateAuditScore, calculateWeightedAuditScore, calculateSectionWeightedCompliance, calculateSectionWeightedWeightedCompliance, AuditStatus, UserRole, Branch, LogEntry, User, validateAuditCompletion, getValidationErrorMessage, groupMissingResponsesBySection } from '@trakr/shared'
+import { Audit, Survey, calculateAuditScore, calculateWeightedAuditScore, AuditStatus, UserRole, Branch, LogEntry, User, validateAuditCompletion, getValidationErrorMessage, groupMissingResponsesBySection, QuestionType } from '@trakr/shared'
+
 import StatusBadge from '@/components/StatusBadge'
-import StatCard from '../components/StatCard'
+import MetricCard from '../components/MetricCard'
 import ProgressDonut from '../components/ProgressDonut'
 import Modal from '../components/Modal'
 import { SkeletonDetailPage } from '@/components/Skeleton'
-import { useToast } from '../hooks/useToast'
+import { decodeUnicodeEscapes } from '@/utils/text'
 import { ArrowDownTrayIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline'
+import { useToast } from '../hooks/useToast'
 import { useAuthStore } from '../stores/auth'
 import { formatInTimeZone } from '../utils/datetime'
 import { QK } from '../utils/queryKeys'
@@ -19,6 +21,7 @@ import { notificationHelpers } from '../utils/notifications'
 import { generateAuditPDF } from '../utils/pdfGenerator'
 import { useOrganization } from '../contexts/OrganizationContext'
 import ErrorState from '../components/ErrorState'
+import { useAuditProgress } from '../hooks/useAuditProgress'
 
 const AuditSummary: React.FC = () => {
   const { auditId } = useParams<{ auditId: string }>()
@@ -141,7 +144,7 @@ const AuditSummary: React.FC = () => {
           console.log('✅ Notification action completed (approved)')
           // Invalidate notification queries to update UI
           queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
-          queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS('all') })
+          queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user.id) })
         } catch (error) {
           console.error('Failed to complete notification action:', error)
         }
@@ -177,7 +180,7 @@ const AuditSummary: React.FC = () => {
           console.log('✅ Notification action completed (rejected)')
           // Invalidate notification queries to update UI
           queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
-          queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS('all') })
+          queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user.id) })
         } catch (error) {
           console.error('Failed to complete notification action:', error)
         }
@@ -198,8 +201,8 @@ const AuditSummary: React.FC = () => {
   })
 
   const { data: survey, isLoading: loadingSurvey } = useQuery<Survey | null>({
-    queryKey: QK.SURVEY(audit?.surveyId),
-    queryFn: () => (audit?.surveyId ? api.getSurveyById(audit!.surveyId) : Promise.resolve(null)),
+    queryKey: QK.SURVEY_VERSION(audit?.surveyId, audit?.surveyVersion as number | undefined),
+    queryFn: () => (audit?.surveyId ? (api as any).getSurveyByIdAndVersion(audit!.surveyId, (audit as any).surveyVersion ?? 1) : Promise.resolve(null)),
     enabled: !!audit?.surveyId,
   })
 
@@ -276,6 +279,9 @@ const AuditSummary: React.FC = () => {
     return derivedEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
   }, [auditLogs, audit])
 
+  // Progress for accurate completion and answered/total
+  const progress = useAuditProgress(audit || null, survey || null)
+
   const [submitIssues, setSubmitIssues] = React.useState<Array<{ sectionId: string; sectionTitle: string; questions: Array<{ id: string; text: string }> }>>([])
 
   const submitMutation = useMutation({
@@ -328,6 +334,9 @@ const AuditSummary: React.FC = () => {
           console.error('Failed to notify branch managers:', error)
         }
       }
+
+      // Redirect back to dashboard after successful submission
+      navigate('/dashboard')
     },
   })
 
@@ -458,7 +467,7 @@ const AuditSummary: React.FC = () => {
                     return (
                       <button
                         data-testid="submit-for-approval"
-                        className={`btn-primary btn-sm whitespace-nowrap ${!canSubmit ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`btn btn-primary btn-sm whitespace-nowrap ${!canSubmit ? 'opacity-50 cursor-not-allowed' : ''}`}
                         onClick={() => canSubmit && handleSubmitForApproval()}
                         disabled={!canSubmit || submitMutation.isPending}
                       >
@@ -466,7 +475,7 @@ const AuditSummary: React.FC = () => {
                       </button>
                     )
                   })()}
-                  <button className="btn-outline btn-sm whitespace-nowrap" onClick={() => navigate(-1)}>← Back</button>
+                  <button className="btn btn-ghost btn-sm whitespace-nowrap" onClick={() => navigate(-1)}>← Back</button>
                 </>
               )}
               {isManager && (
@@ -574,8 +583,8 @@ const AuditSummary: React.FC = () => {
                       {ev.action === 'audit_approved' ? '\u2713 Approved' : ev.action === 'audit_rejected' ? '\u2715 Rejected' : '\u2192 Submitted'}
                     </span>
                     <span className="text-gray-600">{formatInTimeZone(ev.timestamp, orgTimeZone)}</span>
-                    <span className="text-gray-400">\u2022</span>
-                    <span className="text-gray-700">{ev.details}</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-700">{decodeUnicodeEscapes(ev.details)}</span>
                   </li>
                 ))}
               </ul>
@@ -690,8 +699,8 @@ const AuditSummary: React.FC = () => {
               <h4 className="font-medium text-danger-800">Required questions remaining</h4>
               <p className="text-sm text-danger-700 mt-1">Please answer the following before submitting for approval.</p>
               <ul className="mt-2 list-disc pl-6 text-sm text-danger-800 space-y-1">
-                {submitIssues.map(sec => (
-                  <li key={sec.sectionId}>
+                {submitIssues.map((sec, idx) => (
+                  <li key={`${sec.sectionTitle || 'Section'}-${idx}`}>
                     <span className="font-medium">{sec.sectionTitle}:</span> {sec.questions.map(q => q.text).join(', ')}
                   </li>
                 ))}
@@ -707,19 +716,34 @@ const AuditSummary: React.FC = () => {
               {(() => {
                 const base = calculateAuditScore(audit, survey)
                 const weighted = calculateWeightedAuditScore(audit, survey)
-                const completion = Math.round(base.completionPercentage)
-                const compliance = Math.round(base.compliancePercentage)
                 const weightedCompliance = Math.round(weighted.weightedCompliancePercentage)
-                const sectionWeighted = Math.round(calculateSectionWeightedCompliance(audit, survey))
-                const sectionWeightedWeighted = Math.round(calculateSectionWeightedWeightedCompliance(audit, survey))
                 return (
                   <>
-                    {/* KPI Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
-                      <StatCard title="Completion" value={`${completion}%`} subtitle={`${base.yesAnswers + base.noAnswers + base.naAnswers}/${base.totalQuestions} answered`} variant="primary" progress={completion} />
-                      <StatCard title="Compliance (unweighted)" value={`${compliance}%`} subtitle="Yes / Total" variant="success" />
-                      <StatCard title="Compliance (weighted)" value={`${weightedCompliance}%`} subtitle="Weighted score" variant="success" />
-                      <StatCard title="N/A Selected" value={base.naAnswers} subtitle="Across all sections" variant="neutral" />
+                    {/* KPI Row (weighted compliance only) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+                      <MetricCard
+                        icon={<span className="text-lg">📊</span>}
+                        value={`${progress.completionPercent}%`}
+                        label="Completion"
+                        tone="primary"
+                      >
+                        <p className="text-xs text-gray-500 mt-1">{progress.answeredQuestions}/{progress.totalQuestions} answered</p>
+                      </MetricCard>
+                      <MetricCard
+                        icon={<span className="text-lg">✅</span>}
+                        value={`${weightedCompliance}%`}
+                        label="Compliance"
+                        tone="success"
+                      >
+                        <p className="text-xs text-gray-500 mt-1">Weighted score</p>
+                      </MetricCard>
+                      <MetricCard
+                        icon={<span className="text-lg">ℹ️</span>}
+                        value={base.naAnswers}
+                        label="N/A Selected"
+                      >
+                        <p className="text-xs text-gray-500 mt-1">Across all sections</p>
+                      </MetricCard>
                     </div>
 
                     {/* Overview + Donut */}
@@ -730,6 +754,7 @@ const AuditSummary: React.FC = () => {
                         {audit.status === AuditStatus.SUBMITTED && (
                           <p className="text-sm text-amber-700 mt-1">Submitted for approval on {audit.submittedAt ? formatInTimeZone(audit.submittedAt, orgTimeZone) : ''}</p>
                         )}
+                        {/* First submitted / Resubmitted intentionally not shown per requirement */}
                         {audit.status === AuditStatus.APPROVED && (
                           <div className="text-sm text-green-700 mt-2">
                             <p>Approved on {audit.approvedAt ? formatInTimeZone(audit.approvedAt, orgTimeZone) : ''}</p>
@@ -750,16 +775,6 @@ const AuditSummary: React.FC = () => {
                         )}
                         <p className="text-sm text-gray-600">Survey: {survey.title} (v{survey.version})</p>
                         <p className="text-sm text-gray-600">Updated: {formatInTimeZone(audit.updatedAt, orgTimeZone)}</p>
-                        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                          <div className="p-2 rounded bg-gray-50">
-                            <div className="text-gray-500">Section-weighted (unweighted)</div>
-                            <div className="font-semibold text-gray-900">{sectionWeighted}%</div>
-                          </div>
-                          <div className="p-2 rounded bg-gray-50">
-                            <div className="text-gray-500">Section-weighted (weighted)</div>
-                            <div className="font-semibold text-gray-900">{sectionWeightedWeighted}%</div>
-                          </div>
-                        </div>
                       </div>
                       <div className="card p-4">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">Print-friendly Approval</h3>
@@ -788,8 +803,8 @@ const AuditSummary: React.FC = () => {
                         </div>
                         <div className="mt-4 flex items-center justify-center">
                           <div className="flex flex-col items-center">
-                            <ProgressDonut value={weightedCompliance} label="Weighted" />
-                            <p className="mt-2 text-sm text-gray-600">Weighted compliance</p>
+                            <ProgressDonut value={weightedCompliance} label="Compliance (Weighted)" />
+                            <p className="mt-2 text-sm text-gray-600">Compliance (Weighted)</p>
                           </div>
                         </div>
                       </div>
@@ -835,23 +850,37 @@ const AuditSummary: React.FC = () => {
                                       <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
                                       <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Answer</th>
                                       <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N/A Reason</th>
-                                      <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photos</th>
                                     </tr>
                                   </thead>
                                   <tbody className="bg-white divide-y divide-gray-200">
                                     {sec.questions.map((q, qIdx) => {
                                       const ans = (audit.responses || {})[q.id]
                                       const na = (audit.naReasons || {})[q.id]
-                                      const qPhotos = (audit.photos || []).filter(p => p.questionId === q.id)
-                                      const answerBadge = !ans ? (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">—</span>
-                                      ) : ans === 'yes' ? (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">Yes</span>
-                                      ) : ans === 'no' ? (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-100 text-red-800">No</span>
-                                      ) : (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-200 text-gray-800">N/A</span>
-                                      )
+                                      const answerCell = (() => {
+                                        if (!ans) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">—</span>
+                                        if (q.type === QuestionType.YES_NO) {
+                                          if (ans === 'yes') return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">Yes</span>
+                                          if (ans === 'no') return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-100 text-red-800">No</span>
+                                          if (ans === 'na') return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-200 text-gray-800">N/A</span>
+                                          return <span className="text-sm text-gray-900 font-medium">{String(ans)}</span>
+                                        }
+                                        if (q.type === QuestionType.DATE) {
+                                          const d = new Date(String(ans))
+                                          const valid = !isNaN(d.getTime())
+                                          return <span className="text-sm text-gray-900 font-medium">{valid ? d.toLocaleDateString() : '—'}</span>
+                                        }
+                                        if (q.type === QuestionType.CHECKBOX) {
+                                          try {
+                                            const arr = JSON.parse(String(ans) || '[]')
+                                            if (Array.isArray(arr) && arr.length > 0) return <span className="text-sm text-gray-900 font-medium">{arr.join(', ')}</span>
+                                            return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">—</span>
+                                          } catch {
+                                            return <span className="text-sm text-gray-900 font-medium">{String(ans)}</span>
+                                          }
+                                        }
+                                        // TEXT, NUMBER, MULTIPLE_CHOICE and others
+                                        return <span className="text-sm text-gray-900 font-medium">{String(ans)}</span>
+                                      })()
                                       return (
                                         <tr key={q.id}>
                                           <td className="px-3 py-1.5 text-sm text-gray-600 whitespace-nowrap">{qIdx + 1}</td>
@@ -863,19 +892,8 @@ const AuditSummary: React.FC = () => {
                                               )}
                                             </div>
                                           </td>
-                                          <td className="px-3 py-1.5 text-sm">{answerBadge}</td>
-                                          <td className="px-3 py-1.5 text-sm text-gray-700">{ans === 'na' && na ? na : ''}</td>
-                                          <td className="px-3 py-1.5 text-sm">
-                                            {qPhotos.length > 0 ? (
-                                              <div className="flex flex-wrap gap-1">
-                                                {qPhotos.map(p => (
-                                                  <img key={p.id} src={p.url} alt={p.filename} className="w-10 h-10 rounded object-cover border" />
-                                                ))}
-                                              </div>
-                                            ) : (
-                                              <span className="text-gray-400">—</span>
-                                            )}
-                                          </td>
+                                          <td className="px-3 py-1.5 text-sm">{answerCell}</td>
+                                          <td className="px-3 py-1.5 text-sm text-gray-700">{q.type === QuestionType.YES_NO && ans === 'na' && na ? na : ''}</td>
                                         </tr>
                                       )
                                     })}

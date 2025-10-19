@@ -6,11 +6,12 @@ import { Survey, AuditFrequency } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useAuthStore } from '../stores/auth'
-import StatCard from '../components/StatCard'
+import MetricCard from '../components/MetricCard'
 import ResponsiveTable from '../components/ResponsiveTable'
 import { ClipboardDocumentListIcon, CheckCircleIcon, FolderIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
+import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
 
 const ManageSurveyTemplates: React.FC = () => {
   const navigate = useNavigate()
@@ -108,6 +109,19 @@ const ManageSurveyTemplates: React.FC = () => {
         message: `Survey "${survey?.title || 'Survey'}" frequency updated!`, 
         variant: 'success' 
       })
+      // Invoke the scheduler to reconcile for this survey immediately (best effort)
+      try {
+        if (hasSupabaseEnv()) {
+          const supabase = getSupabase()
+          const anon = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string | undefined
+          void supabase.functions.invoke('schedule-weekly-audits', {
+            body: { survey_id: variables.id },
+            headers: anon ? { Authorization: `Bearer ${anon}` } : undefined,
+          })
+          // Refresh audits in dashboards after scheduling
+          queryClient.invalidateQueries({ queryKey: QK.AUDITS('admin') })
+        }
+      } catch {}
     },
     onError: (error) => {
       showToast({ 
@@ -135,9 +149,29 @@ const ManageSurveyTemplates: React.FC = () => {
 
         {/* KPI row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard title="Total Templates" value={surveys.length} subtitle="All templates" variant="primary" icon={<ClipboardDocumentListIcon className="w-6 h-6 text-primary-700" />} />
-          <StatCard title="Active" value={surveys.filter(s => s.isActive).length} subtitle="Usable now" variant="success" icon={<CheckCircleIcon className="w-6 h-6 text-success-700" />} />
-          <StatCard title="Total Sections" value={surveys.reduce((sum, s) => sum + (s.sections?.length || 0), 0)} subtitle="Across templates" variant="neutral" icon={<FolderIcon className="w-6 h-6 text-gray-700" />} />
+          <MetricCard
+            icon={<ClipboardDocumentListIcon className="w-5 h-5" />}
+            value={surveys.length}
+            label="Total Templates"
+            tone="primary"
+          >
+            <p className="text-xs text-gray-500 mt-1">All templates</p>
+          </MetricCard>
+          <MetricCard
+            icon={<CheckCircleIcon className="w-5 h-5" />}
+            value={surveys.filter(s => s.isActive).length}
+            label="Active"
+            tone="success"
+          >
+            <p className="text-xs text-gray-500 mt-1">Usable now</p>
+          </MetricCard>
+          <MetricCard
+            icon={<FolderIcon className="w-5 h-5" />}
+            value={surveys.reduce((sum, s) => sum + (s.sections?.length || 0), 0)}
+            label="Total Sections"
+          >
+            <p className="text-xs text-gray-500 mt-1">Across templates</p>
+          </MetricCard>
         </div>
 
         <div className="card" data-testid="template-library-card">

@@ -1,9 +1,9 @@
-// (moved helpers inside component)
+  // (moved helpers inside component)
 import React from 'react'
 import { useAuthStore } from '../stores/auth'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Audit, Branch, Organization, AuditStatus, UserRole, Zone } from '@trakr/shared'
+import { Audit, Branch, AuditStatus, UserRole, Zone, User } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -13,6 +13,7 @@ import InfoBadge from '@/components/InfoBadge'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon, FunnelIcon, XMarkIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline'
 import { useOrganization } from '../contexts/OrganizationContext'
 import toast from 'react-hot-toast'
+import MetricCard from '../components/MetricCard'
 
 // Admin Organization Onboarding Component
 const AdminOrgOnboarding: React.FC = () => {
@@ -23,10 +24,10 @@ const AdminOrgOnboarding: React.FC = () => {
 
   const createOrgMutation = useMutation({
     mutationFn: async (name: string) => {
-      const org = await api.createOrganization(name)
+      const org = await (api as any).createOrganization(name)
       // Update current user's org_id
       if (user) {
-        await api.updateUser(user.id, { org_id: org.id })
+        await (api as any).updateUser(user.id, { org_id: org.id })
       }
       return org
     },
@@ -41,6 +42,7 @@ const AdminOrgOnboarding: React.FC = () => {
       toast.error(error.message || 'Failed to create organization')
     }
   })
+  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -142,6 +144,8 @@ const AdminOrgOnboarding: React.FC = () => {
             </ul>
           </div>
         </div>
+
+        {/* (Removed preview card here; logs are shown in main DashboardAdmin screen) */}
       </div>
     </DashboardLayout>
   )
@@ -153,37 +157,73 @@ const DashboardAdmin: React.FC = () => {
   const { effectiveOrgId, isSuperAdmin, currentOrg, isLoading: orgLoading } = useOrganization()
 
   const queryClient = useQueryClient()
+
+  // Force a refresh of org-scoped data when user/org/scope changes (prevents stale weekly tiles after login)
+  const lastScopeKey = React.useRef<string>('')
+  React.useEffect(() => {
+    const scopeKey = `${user?.id || 'anon'}|${effectiveOrgId || 'ALL'}|${isSuperAdmin ? 'SA' : 'ORG'}`
+    if (lastScopeKey.current === scopeKey) return
+    lastScopeKey.current = scopeKey
+    queryClient.invalidateQueries({ queryKey: ['audits'] })
+    queryClient.invalidateQueries({ queryKey: ['branches'] })
+    queryClient.invalidateQueries({ queryKey: ['zones'] })
+    queryClient.invalidateQueries({ queryKey: ['users'] })
+    queryClient.invalidateQueries({ queryKey: ['branch-manager-assignments'] })
+  }, [user?.id, effectiveOrgId, isSuperAdmin, queryClient])
   
   // IMPORTANT: Call ALL hooks before any conditional returns (Rules of Hooks)
   const { data: branches = [], isLoading: branchesLoading } = useQuery<Branch[]>({
-    queryKey: ['branches', effectiveOrgId],
+    queryKey: ['branches', effectiveOrgId, user?.id],
     queryFn: () => api.getBranches(effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   })
   const { data: zones = [] } = useQuery<Zone[]>({
-    queryKey: ['zones', effectiveOrgId],
+    queryKey: ['zones', effectiveOrgId, user?.id],
     queryFn: () => api.getZones(effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   })
-  const { data: users = [] } = useQuery({
-    queryKey: ['users', effectiveOrgId],
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ['users', effectiveOrgId, user?.id],
     queryFn: () => (api as any).getUsers(effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   })
-  // surveys query removed from dashboard; not needed for KPIs here
+  // surveys query removed with Unassigned feature
   const { data: audits = [] } = useQuery<Audit[]>({
-    queryKey: ['audits', 'admin', effectiveOrgId],
+    queryKey: ['audits', 'admin', effectiveOrgId, user?.id],
     queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
     enabled: !!effectiveOrgId || isSuperAdmin,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 30000,
   })
+
 
   // Get all branch manager assignments to identify branches without managers
   // NOTE: RLS policies automatically filter by org, no need to pass orgId
-  const { data: branchManagerAssignments = [] } = useQuery({
-    queryKey: ['branch-manager-assignments', effectiveOrgId],
+  const { data: branchManagerAssignments = [] } = useQuery<Array<{ branchId: string; isActive: boolean }>>({
+    queryKey: ['branch-manager-assignments', effectiveOrgId, user?.id],
     queryFn: () => (api as any).getAllBranchManagerAssignments(),
     enabled: !!effectiveOrgId || isSuperAdmin,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   })
+  // auditor assignments and recent assign logs removed with Unassigned feature
 
   // Identify branches without assigned managers (admin needs to approve audits from these)
   const branchesWithoutManagers = React.useMemo(() => {
@@ -224,6 +264,7 @@ const DashboardAdmin: React.FC = () => {
     mutationFn: (payload: { auditId: string; userId: string }) => api.manualArchiveAudit(payload.auditId, payload.userId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QK.AUDITS('admin') }),
   })
+  // (createDraftMutation removed with Unassigned feature)
 
   // Organization settings moved to Settings screen (admin-only)
   // Org-aware period helpers (mirrors server scheduling logic)
@@ -235,7 +276,7 @@ const DashboardAdmin: React.FC = () => {
   const nowTs = Date.now()
   const isOverdue = React.useCallback((a: Audit) => !!a.dueAt && new Date(a.dueAt).getTime() < nowTs && a.status !== AuditStatus.APPROVED && a.status !== AuditStatus.REJECTED, [nowTs])
 
-  // Weekly insights - fixed to current week only
+  // Weekly insights - current org-local week based on schedule, not last update
   const weeklyAudits = React.useMemo(() => {
     const now = new Date()
     const orgNow = getOrgLocalNow(now)
@@ -251,9 +292,15 @@ const DashboardAdmin: React.FC = () => {
     const delta = orgNow.getTime() - now.getTime()
     const adjustedStart = new Date(weekStart.getTime() - delta)
     const adjustedEnd = new Date(weekEnd.getTime() - delta)
-    
+    // Include audits whose scheduled period overlaps with this week window
     return audits.filter(a => {
-      const t = a.periodStart ? new Date(a.periodStart).getTime() : new Date(a.updatedAt).getTime()
+      const ps = a.periodStart ? new Date(a.periodStart).getTime() : undefined
+      const pe = a.periodEnd ? new Date(a.periodEnd).getTime() : undefined
+      if (ps != null && pe != null) {
+        return ps <= adjustedEnd.getTime() && pe >= adjustedStart.getTime()
+      }
+      const ts = a.dueAt ?? a.createdAt
+      const t = ts ? new Date(ts).getTime() : 0
       return t >= adjustedStart.getTime() && t <= adjustedEnd.getTime()
     })
   }, [audits, getOrgLocalNow, org?.weekStartsOn])
@@ -280,6 +327,8 @@ const DashboardAdmin: React.FC = () => {
     }).sort((a, b) => b.scheduled - a.scheduled).slice(0, 5)
     return rows
   }, [zones, weeklyAudits, isOverdue])
+
+  // (unassigned survey derivation removed)
 
   const filteredAudits = React.useMemo(() => {
     const sourceAudits = viewScope === 'week' ? weeklyAudits : audits
@@ -587,7 +636,7 @@ const DashboardAdmin: React.FC = () => {
   // Normal dashboard (has data)
   return (
     <DashboardLayout title="Admin Dashboard">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -596,107 +645,21 @@ const DashboardAdmin: React.FC = () => {
           </div>
           
           <button 
-            className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+            className="btn btn-primary btn-md w-full sm:w-auto"
             onClick={() => navigate('/manage/surveys')}
           >
             + Create Survey Template
           </button>
         </div>
-
+  
         {/* Quick Actions */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <button 
-            className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
-            onClick={() => navigate('/manage/branches')}
-          >
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-              <span className="text-xl">🏢</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{branches.length}</p>
-            <p className="text-sm text-gray-600 mt-1">Branches</p>
-          </button>
-          
-          <button 
-            className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
-            onClick={() => navigate('/manage/zones')}
-          >
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-              <span className="text-xl">🗺️</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{zones.length}</p>
-            <p className="text-sm text-gray-600 mt-1">Zones</p>
-          </button>
-          
-          <button 
-            className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
-            onClick={() => navigate('/manage/users')}
-          >
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
-              <span className="text-xl">👥</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{activeUsersCount}</p>
-            <p className="text-sm text-gray-600 mt-1">Active Users</p>
-          </button>
-          
-          <button 
-            className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
-            onClick={() => navigate('/manage/users')}
-          >
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mb-3">
-              <span className="text-xl">✉️</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{pendingInvitesCount}</p>
-            <p className="text-sm text-gray-600 mt-1">Pending Invites</p>
-          </button>
-
-          {/* Branches Without Managers - Needs Attention */}
-          {branchesWithoutManagers.length > 0 ? (
-            <button 
-              className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
-              onClick={() => navigate('/manage/branches')}
-              title="Branches without assigned managers need attention"
-            >
-              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mb-3">
-                <span className="text-xl">⚠️</span>
-              </div>
-              <p className="text-2xl font-bold text-amber-900">{branchesWithoutManagers.length}</p>
-              <p className="text-sm text-amber-800 font-medium mt-1">No Manager</p>
-            </button>
-          ) : (
-            <div className="bg-white border border-gray-200 rounded-lg p-4 text-left">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                <span className="text-xl">✅</span>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">0</p>
-              <p className="text-sm text-gray-600 mt-1">No Manager</p>
-            </div>
-          )}
-
-          {/* Audits Needing Admin Approval */}
-          {auditsNeedingAdminApproval.length > 0 ? (
-            <button 
-              className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4 text-left hover:shadow-md transition-shadow"
-              onClick={() => {
-                setStatusFilter(AuditStatus.SUBMITTED)
-                setQuickChip('waiting_approval')
-              }}
-              title="Submitted audits from branches without managers need admin approval"
-            >
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-3">
-                <span className="text-xl">🔔</span>
-              </div>
-              <p className="text-2xl font-bold text-red-900">{auditsNeedingAdminApproval.length}</p>
-              <p className="text-sm text-red-800 font-medium mt-1">Need Approval</p>
-            </button>
-          ) : (
-            <div className="bg-white border border-gray-200 rounded-lg p-4 text-left">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
-                <span className="text-xl">✓</span>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">0</p>
-              <p className="text-sm text-gray-600 mt-1">Need Approval</p>
-            </div>
-          )}
+          <MetricCard icon={<span className="text-lg">🏢</span>} value={branches.length} label="Branches" onClick={() => navigate('/manage/branches')} />
+          <MetricCard icon={<span className="text-lg">🗺️</span>} value={zones.length} label="Zones" onClick={() => navigate('/manage/zones')} />
+          <MetricCard icon={<span className="text-lg">👥</span>} value={activeUsersCount} label="Active Users" onClick={() => navigate('/manage/users')} />
+          <MetricCard icon={<span className="text-lg">✉️</span>} value={pendingInvitesCount} label="Pending Invites" tone={pendingInvitesCount > 0 ? 'warning' : 'default'} onClick={() => navigate('/manage/users')} />
+          <MetricCard icon={<span className="text-lg">⚠️</span>} value={branchesWithoutManagers.length} label="No Manager" tone={branchesWithoutManagers.length > 0 ? 'warning' : 'success'} onClick={() => navigate('/manage/branches')} />
+          <MetricCard icon={<span className="text-lg">🔔</span>} value={auditsNeedingAdminApproval.length} label="Need Approval" tone={auditsNeedingAdminApproval.length > 0 ? 'danger' : 'default'} onClick={() => { setStatusFilter(AuditStatus.SUBMITTED); setQuickChip('waiting_approval') }} />
         </div>
 
         {/* Weekly Insights - Fixed to Current Week */}
@@ -710,68 +673,43 @@ const DashboardAdmin: React.FC = () => {
           
           {/* Metrics Grid - Unified Layout */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {/* Overdue Priority */}
-            {overdueCountAll > 0 ? (
-              <div className="col-span-2 sm:col-span-3 lg:col-span-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg p-5 text-white">
-                <p className="text-sm font-medium opacity-90">Overdue</p>
-                <p className="text-4xl font-bold mt-2">{overdueCountAll}</p>
-                <p className="text-sm mt-1 opacity-90">Urgent action required</p>
-              </div>
-            ) : (
-              <div className="bg-white border border-gray-200 rounded-lg p-5">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                  <span className="text-xl">✅</span>
-                </div>
-                <p className="text-3xl font-bold text-gray-900">0</p>
-                <p className="text-sm text-gray-600 mt-1">Overdue</p>
-              </div>
-            )}
-            
-            {/* Due This Week */}
-            <div className="bg-white border border-gray-200 rounded-lg p-5">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mb-3">
-                <span className="text-xl">⏰</span>
-              </div>
-              <p className="text-3xl font-bold text-gray-900">{dueThisWeekCount}</p>
-              <p className="text-sm text-gray-600 mt-1">Due This Week</p>
-            </div>
-
-            {/* Completion Rate */}
-            <div className="bg-white border border-gray-200 rounded-lg p-5">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                <ClipboardDocumentCheckIcon className="w-6 h-6 text-green-600" />
-              </div>
-              <p className="text-3xl font-bold text-gray-900">{completionRate}%</p>
-              <p className="text-sm text-gray-600 mt-1">Completion</p>
+            <MetricCard
+              icon={<span className="text-lg">{overdueCountAll > 0 ? '❗' : '✅'}</span>}
+              value={overdueCountAll}
+              label="Overdue"
+              tone={overdueCountAll > 0 ? 'danger' : 'success'}
+            />
+            <MetricCard
+              icon={<span className="text-lg">⏰</span>}
+              value={dueThisWeekCount}
+              label="Due This Week"
+              tone={dueThisWeekCount > 0 ? 'warning' : 'default'}
+            />
+            <MetricCard
+              icon={<ClipboardDocumentCheckIcon className="w-5 h-5 text-green-600" />}
+              value={`${completionRate}%`}
+              label="Completion"
+              tone="success"
+            >
               <p className="text-xs text-gray-500 mt-1">{completedCount} of {weeklyAudits.length}</p>
-            </div>
-
-            {/* In Progress */}
-            <div className="bg-white border border-gray-200 rounded-lg p-5">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                <span className="text-xl">⚡</span>
-              </div>
-              <p className="text-3xl font-bold text-gray-900">{inProgressCount}</p>
-              <p className="text-sm text-gray-600 mt-1">In Progress</p>
-            </div>
-
-            {/* On-time Rate */}
-            <div className="bg-white border border-gray-200 rounded-lg p-5">
-              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center mb-3">
-                <ClipboardDocumentListIcon className="w-6 h-6 text-primary-600" />
-              </div>
-              <p className="text-3xl font-bold text-gray-900">{onTimeRate}%</p>
-              <p className="text-sm text-gray-600 mt-1">On-time</p>
-            </div>
-
-            {/* Branches Coverage */}
-            <div className="bg-white border border-gray-200 rounded-lg p-5">
-              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mb-3">
-                <span className="text-xl">🏢</span>
-              </div>
-              <p className="text-3xl font-bold text-gray-900">{coverageBranches.size}</p>
-              <p className="text-sm text-gray-600 mt-1">Branches</p>
-            </div>
+            </MetricCard>
+            <MetricCard
+              icon={<span className="text-lg">⚡</span>}
+              value={inProgressCount}
+              label="In Progress"
+              tone="primary"
+            />
+            <MetricCard
+              icon={<ClipboardDocumentListIcon className="w-5 h-5 text-primary-600" />}
+              value={`${onTimeRate}%`}
+              label="On-time"
+              tone="primary"
+            />
+            <MetricCard
+              icon={<span className="text-lg">🏢</span>}
+              value={coverageBranches.size}
+              label="Branches"
+            />
           </div>
         </div>
 
@@ -861,13 +799,18 @@ const DashboardAdmin: React.FC = () => {
                     timestamp = audit.submittedAt ? new Date(audit.submittedAt) : timestamp
                   } else if (audit.status === AuditStatus.COMPLETED) {
                     action = '✔️ Completed'
-                    actor = auditor?.name || 'Unknown Auditor'
+                    const completedByUser = users.find(u => u.id === (audit as any).completedBy)
+                    actor = completedByUser?.name || auditor?.name || 'Unknown Auditor'
                   } else if (audit.status === AuditStatus.IN_PROGRESS) {
                     action = '🔄 In Progress'
-                    actor = auditor?.name || 'Unknown Auditor'
+                    const startedByUser = users.find(u => u.id === (audit as any).startedBy)
+                    actor = startedByUser?.name || auditor?.name || 'Unknown Auditor'
                   } else if (audit.status === AuditStatus.DRAFT) {
                     action = '📝 Draft Created'
-                    actor = auditor?.name || 'Unassigned'
+                    const creator = users.find(u => u.id === (audit as any).createdBy)
+                    actor = (audit as any).createdOrigin === 'SYSTEM_SCHEDULED'
+                      ? 'System'
+                      : (creator?.name || auditor?.name || 'Unassigned')
                   } else {
                     action = '📋 Updated'
                     actor = auditor?.name || 'Unknown'
@@ -897,6 +840,7 @@ const DashboardAdmin: React.FC = () => {
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-semibold text-gray-900">{item.action}</div>
                               <div className="text-sm text-gray-600 mt-1">{item.branch}</div>
+                              <div className="text-xs text-gray-500 mt-0.5">{item.audit?.surveyVersion != null ? `v${item.audit.surveyVersion}` : '—'}</div>
                             </div>
                             <div className="text-xs text-gray-500 whitespace-nowrap">
                               {item.timestamp.toLocaleDateString()}
@@ -937,6 +881,11 @@ const DashboardAdmin: React.FC = () => {
                         render: (item) => (
                           <div className="text-sm text-gray-900">{item.branch}</div>
                         ),
+                      },
+                      {
+                        key: 'version',
+                        header: 'Version',
+                        render: (item) => (item.audit?.surveyVersion != null ? `v${item.audit.surveyVersion}` : '—'),
                       },
                       {
                         key: 'actor',
@@ -993,6 +942,7 @@ const DashboardAdmin: React.FC = () => {
             </div>
           </div>
         </div>
+
 
         {/* This Week's Audits - Full width row */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -1265,6 +1215,10 @@ const DashboardAdmin: React.FC = () => {
                             <span className="text-gray-500">Due Date:</span>
                             <span className="text-gray-900">{a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—'}</span>
                           </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-500">Version:</span>
+                            <span className="text-gray-900">{a.surveyVersion != null ? `v${a.surveyVersion}` : '—'}</span>
+                          </div>
                         </div>
                       </div>
                       
@@ -1358,6 +1312,7 @@ const DashboardAdmin: React.FC = () => {
                     ), 
                     render: (a: Audit) => <StatusBadge status={a.status} /> 
                   },
+                  { key: 'version', header: 'Version', render: (a: Audit) => (a.surveyVersion != null ? `v${a.surveyVersion}` : '—') },
                   { 
                     key: 'due', 
                     header: (

@@ -1,22 +1,28 @@
 # Audit State Management - Usage Guide
 
 This guide shows you how to use the new audit state management system in your components.
-
-## What Was Built
-
-✅ **5 new files created:**
-1. `hooks/useAuditStateMachine.ts` - Permission rules based on status
-2. `hooks/useAuditProgress.ts` - Completion tracking
-3. `components/AuditStatusBanner.tsx` - Visual feedback banners
-4. `components/AuditActionGuard.tsx` - Permission guards for UI elements
-5. `hooks/useAuditAutoSave.ts` - Auto-save functionality
-
----
+4→
+5→## What Was Built
+6→
+7→✅ **5 new files created:**
+8→1. `hooks/useAuditStateMachine.ts` - Permission rules based on status
+9→2. `hooks/useAuditProgress.ts` - Completion tracking
+10→3. `components/AuditStatusBanner.tsx` - Visual feedback banners
+11→4. `components/AuditActionGuard.tsx` - Permission guards for UI elements
+12→5. `hooks/useAuditAutoSave.ts` - Auto-save functionality
+13→
+14→### Implementation Notes
+15→- **Evidence model is section-level only.** Photos are attached to sections (per-page). Per-question photo capture and rendering is deprecated and removed from the UI. Use `audit.sectionPhotos[]` with `sectionId`.
+16→- **Compliance is weighted-only.** All KPIs, charts, and PDF exports display the weighted compliance score computed via `calculateWeightedAuditScore()`. Any previous unweighted labels have been removed.
+17→- **Types deprecation (for compatibility):** `Audit.photos?` and `AuditPhoto.questionId/commentId` remain in `packages/shared/src/types/audit.ts` marked `@deprecated`. Prefer `sectionPhotos`.
+13→
+14→---
 
 ## Quick Start: Integrate into AuditWizard
 
 ### Step 1: Import the hooks and components
 
+{{ ... }}
 ```typescript
 // In apps/web/src/screens/AuditWizard.tsx
 import { useAuditStateMachine } from '../hooks/useAuditStateMachine'

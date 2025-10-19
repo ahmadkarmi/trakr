@@ -71,7 +71,6 @@ export function useOfflineSync() {
         userId: audit.userId || '',
         status: 'pending_sync',
         responses: audit.responses || {},
-        photos: audit.photos || [],
         createdAt: audit.createdAt || new Date(),
         updatedAt: new Date(),
         syncAttempts: 0
@@ -202,7 +201,13 @@ export function useOfflineSync() {
     const formData = new FormData()
     formData.append('file', photo.file)
     formData.append('audit_id', photo.auditId)
-    formData.append('question_id', photo.questionId)
+    if (photo.sectionId) {
+      formData.append('section_id', photo.sectionId)
+    } else if (photo.questionId) {
+      // Legacy fallback (deprecated): server should ignore and client should migrate to section-level
+      console.warn('[offlineSync] Legacy photo without sectionId; skipping questionId-based upload')
+      throw new Error('Legacy photo missing sectionId')
+    }
 
     const response = await fetch('/api/photos/upload', {
       method: 'POST',

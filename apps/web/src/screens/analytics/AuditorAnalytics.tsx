@@ -2,8 +2,7 @@ import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth'
 import { api } from '../../utils/api'
-import { QK } from '../../utils/queryKeys'
-import { Audit, AuditStatus, Survey, calculateAuditScore, calculateWeightedAuditScore } from '@trakr/shared'
+import { Audit, AuditStatus, Survey, calculateWeightedAuditScore } from '@trakr/shared'
 import AnalyticsKPICard from '../../components/analytics/AnalyticsKPICard'
 import AnalyticsChart from '../../components/analytics/AnalyticsChart'
 import PersonalGoalsWidget from '../../components/analytics/PersonalGoalsWidget'
@@ -51,13 +50,9 @@ const AuditorAnalytics: React.FC = () => {
       .map(audit => {
         const survey = surveys.find(s => s.id === audit.surveyId)
         if (!survey) return null
-        // Try weighted score first, fall back to compliance if no weighted questions
         const weightedScore = calculateWeightedAuditScore(audit, survey)
-        if (weightedScore.weightedPossiblePoints > 0) {
-          return weightedScore.weightedCompliancePercentage
-        }
-        const basicScore = calculateAuditScore(audit, survey)
-        return basicScore.compliancePercentage
+        if (weightedScore.weightedPossiblePoints <= 0) return null
+        return weightedScore.weightedCompliancePercentage
       })
       .filter((score): score is number => score !== null)
     
@@ -78,13 +73,9 @@ const AuditorAnalytics: React.FC = () => {
       .map(audit => {
         const survey = surveys.find(s => s.id === audit.surveyId)
         if (!survey) return null
-        // Try weighted score first, fall back to compliance if no weighted questions
         const weightedScore = calculateWeightedAuditScore(audit, survey)
-        if (weightedScore.weightedPossiblePoints > 0) {
-          return weightedScore.weightedCompliancePercentage
-        }
-        const basicScore = calculateAuditScore(audit, survey)
-        return basicScore.compliancePercentage
+        if (weightedScore.weightedPossiblePoints <= 0) return null
+        return weightedScore.weightedCompliancePercentage
       })
       .filter((score): score is number => score !== null)
     
@@ -99,9 +90,9 @@ const AuditorAnalytics: React.FC = () => {
     const now = new Date()
     return auditDate.getMonth() === now.getMonth() && auditDate.getFullYear() === now.getFullYear()
   }).length
-
+  
   return (
-    <div className="mobile-container breathing-room">
+    <div className="space-y-6">
       {/* Personal Overview */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
@@ -117,45 +108,46 @@ const AuditorAnalytics: React.FC = () => {
             </select>
           </div>
         </div>
+      </div>
 
-        {/* Personal KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <AnalyticsKPICard
-            title="My Audits"
-            value={totalMyAudits.toString()}
-            trend="+6"
-            trendDirection="up"
-            icon="📋"
-            description="Total assigned audits"
-          />
-          <AnalyticsKPICard
-            title="Completion Rate"
-            value={`${myCompletionRate}%`}
-            trend={myCompletionRate >= teamCompletionRate ? "+5%" : "-3%"}
-            trendDirection={myCompletionRate >= teamCompletionRate ? "up" : "down"}
-            icon="✅"
-            description={`Team avg: ${teamCompletionRate}%`}
-            variant={myCompletionRate >= teamCompletionRate ? "success" : "warning"}
-          />
-          <AnalyticsKPICard
-            title="Quality Score"
-            value={myAverageScore.toString()}
-            trend={myAverageScore >= teamAverageScore ? "+2.1" : "-1.2"}
-            trendDirection={myAverageScore >= teamAverageScore ? "up" : "down"}
-            icon="⭐"
-            description={`Team avg: ${teamAverageScore}`}
-            variant={myAverageScore >= teamAverageScore ? "success" : "warning"}
-          />
-          <AnalyticsKPICard
-            title="Overdue"
-            value={overdueMyAudits.toString()}
-            trend="-2"
-            trendDirection="down"
-            icon="🚨"
-            description="Past due audits"
-            variant={overdueMyAudits > 0 ? "danger" : "success"}
-          />
-        </div>
+      {/* Personal KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <AnalyticsKPICard
+          title="My Audits"
+          value={totalMyAudits.toString()}
+          trend="+6"
+          trendDirection="up"
+          icon="📋"
+          description="Total assigned audits"
+        />
+        <AnalyticsKPICard
+          title="Completion Rate"
+          value={`${myCompletionRate}%`}
+          trend={myCompletionRate >= teamCompletionRate ? "+5%" : "-3%"}
+          trendDirection={myCompletionRate >= teamCompletionRate ? "up" : "down"}
+          icon="✅"
+          description={`Team avg: ${teamCompletionRate}%`}
+          variant={myCompletionRate >= teamCompletionRate ? "success" : "warning"}
+        />
+        <AnalyticsKPICard
+          title="Quality Score"
+          value={myAverageScore.toString()}
+          trend={myAverageScore >= teamAverageScore ? "+2.1" : "-1.2"}
+          trendDirection={myAverageScore >= teamAverageScore ? "up" : "down"}
+          icon="⭐"
+          description={`Team avg: ${teamAverageScore}`}
+          variant={myAverageScore >= teamAverageScore ? "success" : "warning"}
+        />
+        <AnalyticsKPICard
+          title="Overdue"
+          value={overdueMyAudits.toString()}
+          trend="-2"
+          trendDirection="down"
+          icon="🚨"
+          description="Past due audits"
+          variant={overdueMyAudits > 0 ? "danger" : "success"}
+        />
+      </div>
 
         {/* Personal Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
@@ -181,17 +173,16 @@ const AuditorAnalytics: React.FC = () => {
             compact
           />
         </div>
-      </div>
 
       {/* Charts and Analysis */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
         {/* Personal Performance Trends */}
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Performance Trends</h3>
             <p className="text-sm text-gray-500">Your monthly completion and quality trends</p>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <AnalyticsChart
               type="line"
               data={[
@@ -211,11 +202,11 @@ const AuditorAnalytics: React.FC = () => {
 
         {/* Audit Type Performance */}
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Performance by Audit Type</h3>
             <p className="text-sm text-gray-500">Your scores across different audit categories</p>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <AnalyticsChart
               type="bar"
               data={[
@@ -244,10 +235,10 @@ const AuditorAnalytics: React.FC = () => {
 
       {/* Personal Insights */}
       <div className="card">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">Personal Insights & Development</h3>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="space-y-4">
             {myCompletionRate >= teamCompletionRate && (
               <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg border border-green-200">

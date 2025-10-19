@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import DashboardLayout from '../components/DashboardLayout'
 import ResponsiveTable from '../components/ResponsiveTable'
+import InvitationManager from '../components/InvitationManager'
 import { api } from '../utils/api'
 import { User, UserRole, USER_ROLE_LABELS } from '@trakr/shared'
-import { PlusIcon, PencilIcon, TrashIcon, EnvelopeIcon, ShieldCheckIcon, UserIcon, UserPlusIcon, UserGroupIcon, CheckCircleIcon, PencilSquareIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import StatCard from '../components/StatCard'
+import { TrashIcon, EnvelopeIcon, ShieldCheckIcon, UserGroupIcon, CheckCircleIcon, PencilSquareIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
 import { useAuthStore } from '../stores/auth'
@@ -14,14 +15,15 @@ const ManageUsers: React.FC = () => {
   const queryClient = useQueryClient()
   const { showToast } = useToast()
   const { effectiveOrgId, isSuperAdmin } = useOrganization()
-  const { user } = useAuthStore()
-  const [showInviteModal, setShowInviteModal] = useState(false)
+  const { user: _currentUser } = useAuthStore()
+  const navigate = useNavigate()
   const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [inviteForm, setInviteForm] = useState({
-    email: '',
-    name: '',
-    role: UserRole.AUDITOR
-  })
+  const [coverageBlock, setCoverageBlock] = useState<{ title: string; message: string; branchNames?: string[]; branchIds?: string[]; userId?: string; action?: 'update' | 'delete'; updates?: Partial<User> } | null>(null)
+  const [currentActionUserId, setCurrentActionUserId] = useState<string | null>(null)
+  const [selectedAuditorIds, setSelectedAuditorIds] = useState<string[]>([])
+  const [selectedBranchIds, setSelectedBranchIds] = useState<string[]>([])
+  const [assigning, setAssigning] = useState(false)
+  // InvitationManager handles invite UX; header modal removed per request
   // Fetch users (org-scoped)
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users', effectiveOrgId],
@@ -29,26 +31,8 @@ const ManageUsers: React.FC = () => {
     enabled: !!effectiveOrgId || isSuperAdmin
   })
 
-  // Invite user mutation
-  const inviteUserMutation = useMutation({
-    mutationFn: (data: { email: string; name: string; role: UserRole }) =>
-      api.inviteUser(data.email, data.name, data.role),
-    onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
-      setShowInviteModal(false)
-      setInviteForm({ email: '', name: '', role: UserRole.AUDITOR })
-      showToast({ 
-        message: `Invitation sent to ${variables.email}!`, 
-        variant: 'success' 
-      })
-    },
-    onError: (error) => {
-      showToast({ 
-        message: error instanceof Error ? error.message : 'Failed to send invitation.', 
-        variant: 'error' 
-      })
-    }
-  })
+  // Header invite modal intentionally removed
+
 
   // Update user mutation
   const updateUserMutation = useMutation({
@@ -63,11 +47,20 @@ const ManageUsers: React.FC = () => {
         variant: 'success' 
       })
     },
-    onError: (error) => {
-      showToast({ 
-        message: error instanceof Error ? error.message : 'Failed to update user.', 
-        variant: 'error' 
-      })
+    onError: (error, variables) => {
+      const msg = error instanceof Error ? error.message : 'Failed to update user.'
+      if (msg.includes('leave these active branches without auditors')) {
+        if (currentActionUserId) {
+          api.getUncoveredActiveBranchesIfAuditorRemoved(currentActionUserId).then((res: { ids: string[]; names: string[] }) => {
+            setCoverageBlock({ title: 'Action blocked: Uncovered active branches', message: msg, branchNames: res.names, branchIds: res.ids, userId: currentActionUserId, action: 'update', updates: variables?.updates })
+            setSelectedBranchIds(res.ids)
+          }).catch(() => setCoverageBlock({ title: 'Action blocked: Uncovered active branches', message: msg }))
+        } else {
+          setCoverageBlock({ title: 'Action blocked: Uncovered active branches', message: msg })
+        }
+      } else {
+        showToast({ message: msg, variant: 'error' })
+      }
     }
   })
 
@@ -82,11 +75,19 @@ const ManageUsers: React.FC = () => {
         variant: 'success' 
       })
     },
-    onError: (error) => {
-      showToast({ 
-        message: error instanceof Error ? error.message : 'Failed to delete user.', 
-        variant: 'error' 
-      })
+    onError: (error, userId) => {
+      const msg = error instanceof Error ? error.message : 'Failed to delete user.'
+      if (msg.includes('leave these active branches without auditors')) {
+        setCoverageBlock({ title: 'Deletion blocked: Uncovered active branches', message: msg, userId: String(userId), action: 'delete' })
+        if (userId) {
+          api.getUncoveredActiveBranchesIfAuditorRemoved(String(userId)).then((res: { ids: string[]; names: string[] }) => {
+            setCoverageBlock({ title: 'Deletion blocked: Uncovered active branches', message: msg, userId: String(userId), action: 'delete', branchIds: res.ids, branchNames: res.names })
+            setSelectedBranchIds(res.ids)
+          }).catch(() => {})
+        }
+      } else {
+        showToast({ message: msg, variant: 'error' })
+      }
     }
   })
 
@@ -109,25 +110,67 @@ const ManageUsers: React.FC = () => {
     }
   })
 
-  const handleInviteSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (inviteForm.email && inviteForm.name) {
-      inviteUserMutation.mutate(inviteForm)
-    }
-  }
+  // no-op: header invite removed; InvitationManager provides invites
 
   const handleUpdateUser = (userId: string, updates: Partial<User>) => {
+    setCurrentActionUserId(userId)
     updateUserMutation.mutate({ userId, updates })
   }
 
   const handleDeleteUser = (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      setCurrentActionUserId(userId)
       deleteUserMutation.mutate(userId)
     }
   }
 
   const handleResendInvite = (userId: string) => {
     resendInviteMutation.mutate(userId)
+  }
+
+  const auditors = users.filter((u: User) => u.role === UserRole.AUDITOR)
+
+  const toggleAuditorSel = (id: string) => {
+    setSelectedAuditorIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+  const toggleBranchSel = (id: string) => {
+    setSelectedBranchIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  const handleInlineAssign = async () => {
+    if (!coverageBlock?.branchIds || selectedAuditorIds.length === 0) return
+    setAssigning(true)
+    try {
+      for (const auditorId of selectedAuditorIds) {
+        const existing = await api.getAuditorAssignment(auditorId)
+        const currentBranchIds = existing?.branchIds || []
+        const merged = Array.from(new Set([...currentBranchIds, ...selectedBranchIds]))
+        await api.assignAuditor(auditorId, merged, existing?.zoneIds || [])
+      }
+      showToast({ message: 'Auditors assigned successfully.', variant: 'success' })
+      // Recheck coverage
+      if (coverageBlock.userId) {
+        const res = await api.getUncoveredActiveBranchesIfAuditorRemoved(coverageBlock.userId)
+        if (res.ids.length === 0) {
+          // Auto-retry original action
+          if (coverageBlock.action === 'update' && coverageBlock.updates) {
+            updateUserMutation.mutate({ userId: coverageBlock.userId, updates: coverageBlock.updates })
+          } else if (coverageBlock.action === 'delete') {
+            deleteUserMutation.mutate(coverageBlock.userId)
+          }
+          setCoverageBlock(null)
+          setSelectedAuditorIds([])
+          setSelectedBranchIds([])
+        } else {
+          setCoverageBlock(prev => prev ? { ...prev, branchIds: res.ids, branchNames: res.names } : prev)
+          showToast({ message: 'Some branches still uncovered. Please assign more auditors.', variant: 'info' })
+        }
+      }
+    } catch (err: any) {
+      showToast({ message: err?.message || 'Failed to assign auditors.', variant: 'error' })
+    } finally {
+      setAssigning(false)
+    }
   }
 
   // Calculate stats
@@ -147,20 +190,13 @@ const ManageUsers: React.FC = () => {
 
   return (
     <DashboardLayout title="Manage Users">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Manage Users</h1>
             <p className="text-gray-600 mt-1">{users.length} team members</p>
           </div>
-          <button 
-            className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors inline-flex items-center gap-2"
-            onClick={() => setShowInviteModal(true)}
-          >
-            <UserPlusIcon className="w-5 h-5" />
-            Invite User
-          </button>
         </div>
 
         {/* Stats */}
@@ -172,7 +208,7 @@ const ManageUsers: React.FC = () => {
             <p className="text-2xl font-bold text-gray-900">{users.length}</p>
             <p className="text-xs text-gray-600 mt-1">Total Users</p>
           </div>
-          
+          {/* Header invite modal intentionally removed; InvitationManager provides invites */}
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mb-2">
               <CheckCircleIcon className="w-5 h-5 text-green-600" />
@@ -197,6 +233,9 @@ const ManageUsers: React.FC = () => {
             <p className="text-xs text-gray-600 mt-1">Admins</p>
           </div>
         </div>
+
+        {/* Invitation Manager */}
+        <InvitationManager />
 
         {/* Users table */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -383,77 +422,72 @@ const ManageUsers: React.FC = () => {
         </div>
       </div>
 
-      {/* Invite User Modal */}
-      {showInviteModal && (
+      {/* Coverage Blocking Modal */}
+      {coverageBlock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowInviteModal(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-[92vw] max-w-md mx-auto" role="dialog" aria-modal="true">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <h3 className="text-lg font-semibold">Invite New User</h3>
-              <button 
-                className="btn btn-ghost btn-sm" 
-                onClick={() => setShowInviteModal(false)}
+          <div className="absolute inset-0 bg-black/40" onClick={() => setCoverageBlock(null)} />
+          <div className="relative bg-white rounded-xl shadow-xl w-[92vw] max-w-lg mx-auto p-6" role="dialog" aria-modal="true">
+            <h3 className="text-lg font-semibold text-gray-900">{coverageBlock.title}</h3>
+            <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{coverageBlock.message}</p>
+            {coverageBlock.branchNames && coverageBlock.branchNames.length > 0 && (
+              <div className="mt-3">
+                <p className="text-sm font-medium text-gray-900 mb-2">Affected active branches:</p>
+                <div className="flex flex-wrap gap-2">
+                  {coverageBlock.branchNames.map((name, idx) => (
+                    <label key={name + idx} className={`btn btn-outline btn-xs ${selectedBranchIds.includes(coverageBlock.branchIds?.[idx] || '') ? 'bg-gray-50' : ''}`}>
+                      <input type="checkbox" className="mr-1" checked={selectedBranchIds.includes(coverageBlock.branchIds?.[idx] || '')} onChange={() => toggleBranchSel(coverageBlock.branchIds?.[idx] || '')} />
+                      {name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Auditor selection */}
+            <div className="mt-4">
+              <p className="text-sm font-medium text-gray-900 mb-2">Select auditors to assign</p>
+              {auditors.length === 0 ? (
+                <p className="text-sm text-gray-500">No auditors found. Invite or create auditor users first.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {auditors.map((a: User) => (
+                    <label key={a.id} className={`flex items-center gap-2 p-2 rounded-lg border ${selectedAuditorIds.includes(a.id) ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <input type="checkbox" checked={selectedAuditorIds.includes(a.id)} onChange={() => toggleAuditorSel(a.id)} />
+                      <span className="text-sm text-gray-900 truncate">{a.name}</span>
+                      <span className="text-xs text-gray-500 truncate">{a.email}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 pt-4 mt-2">
+              <button
+                type="button"
+                className="btn btn-outline btn-md"
+                onClick={() => setCoverageBlock(null)}
               >
-                ×
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-md"
+                disabled={assigning || selectedAuditorIds.length === 0 || selectedBranchIds.length === 0}
+                onClick={handleInlineAssign}
+              >
+                {assigning ? 'Assigning…' : 'Assign Auditors'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-md"
+                onClick={() => navigate('/manage/branches')}
+              >
+                Go to Manage Branches
               </button>
             </div>
-
-            <form onSubmit={handleInviteSubmit} className="px-6 py-4 space-y-4">
-              <div>
-                <label className="label">Full Name</label>
-                <input
-                  type="text"
-                  className="input mt-1"
-                  value={inviteForm.name}
-                  onChange={(e) => setInviteForm(prev => ({ ...prev, name: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="label">Email Address</label>
-                <input
-                  type="email"
-                  className="input mt-1"
-                  value={inviteForm.email}
-                  onChange={(e) => setInviteForm(prev => ({ ...prev, email: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="label">Role</label>
-                <select
-                  className="input mt-1"
-                  value={inviteForm.role}
-                  onChange={(e) => setInviteForm(prev => ({ ...prev, role: e.target.value as UserRole }))}
-                >
-                  <option value={UserRole.AUDITOR}>{USER_ROLE_LABELS[UserRole.AUDITOR]}</option>
-                  <option value={UserRole.BRANCH_MANAGER}>{USER_ROLE_LABELS[UserRole.BRANCH_MANAGER]}</option>
-                  <option value={UserRole.ADMIN}>{USER_ROLE_LABELS[UserRole.ADMIN]}</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button 
-                  type="button" 
-                  className="btn btn-outline btn-md"
-                  onClick={() => setShowInviteModal(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary btn-md"
-                  disabled={inviteUserMutation.isPending}
-                >
-                  {inviteUserMutation.isPending ? 'Sending...' : 'Send Invitation'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
+
+      
 
       {/* Edit User Modal */}
       {editingUser && (
@@ -499,14 +533,14 @@ const ManageUsers: React.FC = () => {
               <div className="flex justify-end gap-3 pt-4">
                 <button 
                   type="button" 
-                  className="btn btn-outline btn-md"
+                  className="btn btn-outline btn-lg rounded-xl"
                   onClick={() => setEditingUser(null)}
                 >
                   Cancel
                 </button>
                 <button 
                   type="button" 
-                  className="btn btn-primary btn-md"
+                  className="btn btn-primary btn-lg rounded-xl"
                   onClick={() => handleUpdateUser(editingUser.id, { role: editingUser.role, isActive: editingUser.isActive })}
                   disabled={updateUserMutation.isPending}
                 >

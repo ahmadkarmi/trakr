@@ -1,29 +1,34 @@
 import React from 'react'
-import { User, Audit, AuditStatus } from '@trakr/shared'
+import { User, Audit, AuditStatus, Survey, calculateWeightedAuditScore } from '@trakr/shared'
 
 interface TeamPerformanceTableProps {
   teamMembers: User[]
   audits: Audit[]
+  surveys: Survey[]
 }
 
 const TeamPerformanceTable: React.FC<TeamPerformanceTableProps> = ({
   teamMembers,
-  audits
+  audits,
+  surveys,
 }) => {
   const getMemberMetrics = (userId: string) => {
     const memberAudits = audits.filter(a => a.assignedTo === userId)
     const completed = memberAudits.filter(a => a.status === AuditStatus.COMPLETED || a.status === AuditStatus.APPROVED).length
     const total = memberAudits.length
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
-    // Calculate a mock quality score based on completion rate and responses
-    // In a real implementation, this would use calculateAuditScore with Survey data
-    const averageScore = memberAudits.length > 0 ? 
-      Math.round(memberAudits.reduce((sum, audit) => {
-        // Mock score calculation based on completion and status
-        const responseCount = Object.keys(audit.responses || {}).length
-        const mockScore = responseCount > 0 ? Math.min(100, responseCount * 10 + Math.random() * 20 + 60) : 0
-        return sum + mockScore
-      }, 0) / memberAudits.length) : 0
+    // Calculate real weighted average score using survey definitions
+    const scores = memberAudits
+      .filter(audit => audit.responses && Object.keys(audit.responses).length > 0)
+      .map(audit => {
+        const survey = surveys.find(s => s.id === audit.surveyId)
+        if (!survey) return null
+        const w = calculateWeightedAuditScore(audit, survey)
+        if (w.weightedPossiblePoints <= 0) return null
+        return Math.round(w.weightedCompliancePercentage)
+      })
+      .filter((v): v is number => v !== null)
+    const averageScore = scores.length > 0 ? Math.round(scores.reduce((s, n) => s + n, 0) / scores.length) : 0
     
     const overdue = memberAudits.filter(a => {
       if (!a.dueAt) return false

@@ -44,7 +44,8 @@ export const notificationHelpers = {
         type: NotificationType.AUDIT_SUBMITTED,
         title: '✅ Audit Submitted for Approval',
         message: `${params.auditorName} submitted an audit for ${params.branchName}`,
-        link: `/audits/${params.auditId}/summary`,
+        // Managers should land on the review screen to approve/reject
+        link: `/audit/${params.auditId}/review`,
         relatedId: params.auditId,
         requiresAction: true,
         actionType: 'REVIEW_AUDIT',
@@ -102,7 +103,8 @@ export const notificationHelpers = {
         message: params.reason 
           ? `Your audit for ${params.branchName} was rejected: ${params.reason}`
           : `Your audit for ${params.branchName} was rejected by ${params.rejectorName}`,
-        link: `/audits/${params.auditId}/summary`,
+        // Auditor should be taken to fix it in the wizard
+        link: `/audit/${params.auditId}/wizard`,
         relatedId: params.auditId,
       })
       console.log('✅ Notification created successfully')

@@ -2,17 +2,16 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { User, UserRole, AuditorAssignment } from '@trakr/shared'
 import { api } from '../utils/api'
-import { useAuthStore } from '../stores/auth'
 import { XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 import { useOrganization } from '../contexts/OrganizationContext'
 
 interface BranchAuditorAssignmentsProps {
   branchId: string
   branchName: string
+  isBranchActive?: boolean
 }
 
-export function BranchAuditorAssignments({ branchId, branchName }: BranchAuditorAssignmentsProps) {
-  const { user: currentUser } = useAuthStore()
+export function BranchAuditorAssignments({ branchId, branchName, isBranchActive }: BranchAuditorAssignmentsProps) {
   const { effectiveOrgId, isSuperAdmin } = useOrganization()
   const queryClient = useQueryClient()
   const [showAddAuditor, setShowAddAuditor] = useState(false)
@@ -139,9 +138,11 @@ export function BranchAuditorAssignments({ branchId, branchName }: BranchAuditor
                 </div>
                 <button
                   onClick={() => handleUnassignAuditor(auditor.id)}
-                  disabled={unassignMutation.isPending}
-                  className="text-red-600 hover:text-red-700 p-1 flex-shrink-0"
-                  title="Remove auditor"
+                  disabled={unassignMutation.isPending || !!isBranchActive}
+                  aria-disabled={unassignMutation.isPending || !!isBranchActive}
+                  aria-label={isBranchActive ? 'Remove auditor is disabled while branch is active' : 'Remove auditor'}
+                  className={`p-1 flex-shrink-0 ${isBranchActive ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-700'}`}
+                  title={isBranchActive ? 'Deactivate branch to remove auditors' : 'Remove auditor'}
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>
@@ -219,14 +220,14 @@ export function BranchAuditorAssignments({ branchId, branchName }: BranchAuditor
                     setShowAddAuditor(false)
                     setSelectedAuditorIds([])
                   }}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 btn btn-outline btn-lg rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAssignAuditors}
                   disabled={selectedAuditorIds.length === 0 || assignMutation.isPending}
-                  className="flex-1 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 btn btn-primary btn-lg rounded-xl"
                 >
                   {assignMutation.isPending ? (
                     <div className="flex items-center justify-center gap-2">

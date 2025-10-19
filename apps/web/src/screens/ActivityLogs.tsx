@@ -5,6 +5,7 @@ import { LogEntry, Audit, AuditStatus, User, Branch } from '@trakr/shared'
 import ResponsiveTable from '../components/ResponsiveTable'
 import { api } from '../utils/api'
 import { useOrganization } from '../contexts/OrganizationContext'
+import { decodeUnicodeEscapes } from '@/utils/text'
 
 const ActivityLogs: React.FC = () => {
   const { effectiveOrgId, isSuperAdmin } = useOrganization()
@@ -91,29 +92,40 @@ const ActivityLogs: React.FC = () => {
         })
       }
 
-      // Completed
+      // Completed (use provenance when available)
       if (audit.status === AuditStatus.COMPLETED) {
+        const actorId = (audit as any).completedBy || audit.assignedTo
+        const actorName = getUserName(actorId)
+        const ts = (audit as any).completedAt ? new Date((audit as any).completedAt) : new Date(audit.updatedAt)
         activityLogs.push({
           id: `${audit.id}-completed`,
-          userId: audit.assignedTo,
+          userId: actorId,
           action: 'audit_completed',
-          details: `${getUserName(audit.assignedTo)} completed ${branchName} audit`,
+          details: `${actorName} completed ${branchName} audit`,
           entityType: 'audit',
           entityId: audit.id,
-          timestamp: new Date(audit.updatedAt),
+          timestamp: ts,
         })
       }
 
-      // Created
-      activityLogs.push({
-        id: `${audit.id}-created`,
-        userId: audit.assignedTo,
-        action: 'audit_created',
-        details: `${branchName} audit created and assigned to ${getUserName(audit.assignedTo)}`,
-        entityType: 'audit',
-        entityId: audit.id,
-        timestamp: new Date(audit.createdAt),
-      })
+      // Created (provenance-aware)
+      {
+        const creatorName = audit.createdOrigin === 'SYSTEM_SCHEDULED'
+          ? 'System'
+          : (audit.createdBy ? getUserName(audit.createdBy) : getUserName(audit.assignedTo))
+        const assigneeName = getUserName(audit.assignedTo)
+        activityLogs.push({
+          id: `${audit.id}-created`,
+          userId: audit.createdBy || audit.assignedTo,
+          action: 'audit_created',
+          details: audit.createdOrigin === 'SYSTEM_SCHEDULED'
+            ? `Draft created by System • Assigned to ${assigneeName}`
+            : `Draft created by ${creatorName} • Assigned to ${assigneeName}`,
+          entityType: 'audit',
+          entityId: audit.id,
+          timestamp: new Date(audit.createdAt),
+        })
+      }
     })
 
     // Sort by timestamp descending
@@ -154,7 +166,7 @@ const ActivityLogs: React.FC = () => {
 
   return (
     <DashboardLayout title="Activity Logs">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Activity Logs</h1>
@@ -224,6 +236,7 @@ const ActivityLogs: React.FC = () => {
                                 details = details.replace(new RegExp(user.id, 'g'), user.name || user.email)
                               }
                             })
+                            details = decodeUnicodeEscapes(details)
                             return details
                           })()}
                         </div>
@@ -280,6 +293,7 @@ const ActivityLogs: React.FC = () => {
                         details = details.replace(new RegExp(user.id, 'g'), user.name || user.email)
                       }
                     })
+                    details = decodeUnicodeEscapes(details)
                     return (
                       <div className="text-sm text-gray-700 max-w-md truncate" title={details}>
                         {details}

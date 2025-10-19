@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { User, UserRole, Zone, Branch, AuditorAssignment } from '@trakr/shared'
+import { User, UserRole, Zone, Branch } from '@trakr/shared'
 import { api } from '../utils/api'
 import { XMarkIcon, UserIcon, MapIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
 
@@ -258,7 +258,7 @@ export function ZoneBulkAuditorAssignment({ orgId, onClose }: ZoneBulkAuditorAss
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 btn-outline"
+              className="flex-1 btn btn-outline btn-lg rounded-xl"
               disabled={bulkAssignMutation.isPending}
             >
               Cancel
@@ -266,7 +266,7 @@ export function ZoneBulkAuditorAssignment({ orgId, onClose }: ZoneBulkAuditorAss
             <button
               onClick={handleBulkAssign}
               disabled={!selectedZoneId || selectedAuditorIds.length === 0 || bulkAssignMutation.isPending}
-              className="flex-1 btn-primary"
+              className="flex-1 btn btn-primary btn-lg rounded-xl"
             >
               {bulkAssignMutation.isPending ? (
                 <div className="flex items-center justify-center gap-2">

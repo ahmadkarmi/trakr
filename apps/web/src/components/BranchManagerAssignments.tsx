@@ -164,14 +164,14 @@ export function BranchManagerAssignments({ branchId, branchName }: BranchManager
               <div className="flex gap-3 pt-4 border-t border-gray-200">
                 <button
                   onClick={() => setShowAddManager(false)}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 btn btn-outline btn-lg rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAssignManager}
                   disabled={!selectedManagerId || assignMutation.isPending}
-                  className="flex-1 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 btn btn-primary btn-lg rounded-xl"
                 >
                   {assignMutation.isPending ? (
                     <div className="flex items-center justify-center gap-2">

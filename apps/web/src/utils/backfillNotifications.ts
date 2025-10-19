@@ -84,9 +84,10 @@ async function backfillSubmittedNotifications(
         
         // Check if notification already exists for each manager
         for (const assignment of assignments) {
-          const existingNotifications = await api.getNotifications(assignment.managerId)
+          // Admin-only: fetch all notifications and filter by manager + related audit
+          const existingNotifications = await api.getAllNotifications()
           const hasNotification = existingNotifications.some(
-            n => n.relatedId === audit.id && n.actionType === 'REVIEW_AUDIT'
+            n => n.userId === assignment.managerId && n.relatedId === audit.id && n.actionType === 'REVIEW_AUDIT'
           )
           
           if (hasNotification) {
@@ -132,10 +133,10 @@ async function backfillApprovedNotifications(
       
       if (!auditor || !branch) continue
       
-      // Check if notification already exists
-      const existingNotifications = await api.getNotifications(audit.assignedTo)
+      // Check if notification already exists (admin can see all)
+      const existingNotifications = await api.getAllNotifications()
       const hasNotification = existingNotifications.some(
-        n => n.relatedId === audit.id && n.type === NotificationType.AUDIT_APPROVED
+        n => n.userId === audit.assignedTo && n.relatedId === audit.id && n.type === NotificationType.AUDIT_APPROVED
       )
       
       if (hasNotification) {
@@ -177,10 +178,10 @@ async function backfillRejectedNotifications(
       
       if (!auditor || !branch) continue
       
-      // Check if notification already exists
-      const existingNotifications = await api.getNotifications(audit.assignedTo)
+      // Check if notification already exists (admin can see all)
+      const existingNotifications = await api.getAllNotifications()
       const hasNotification = existingNotifications.some(
-        n => n.relatedId === audit.id && n.type === NotificationType.AUDIT_REJECTED
+        n => n.userId === audit.assignedTo && n.relatedId === audit.id && n.type === NotificationType.AUDIT_REJECTED
       )
       
       if (hasNotification) {

@@ -188,7 +188,8 @@ These are read by vitest and used to call `supabase.auth.signInWithPassword` bef
 - **Multi-platform:** Consistent experience across web and mobile
 - **Role-based Access:** Different dashboards and permissions per role
 - **Audit Wizard:** Step-by-step guided audit completion
-- **Photo Attachments:** Upload and manage audit photos
+- **Section-level Photo Evidence:** Upload and manage section (per-page) photos; per-question photos are deprecated
+- **Weighted Compliance Scoring:** Weighted-only compliance is shown across dashboards, summaries, and PDF exports
 - **PDF Export:** Generate comprehensive audit reports
 - **CSV Export:** Export audit data and analytics
 - **Approval Workflow:** Branch manager review and approval process
@@ -231,6 +232,20 @@ packages/shared/src/
 ├── utils/          # Utility functions
 └── services/       # API and mock data
 ```
+
+## 📊 Scoring & 📷 Evidence Model
+
+- **Weighted-only compliance:** All analytics and reports display the weighted compliance score (primary metric). Unweighted compliance is deprecated.
+  - Web summary: `apps/web/src/screens/AuditSummary.tsx` (KPI and donut labeled “Compliance (Weighted)”).
+  - PDF export: `apps/web/src/utils/pdfGenerator.ts` shows “Compliance (Weighted)”.
+  - Analytics: uses `calculateWeightedAuditScore()` from `@trakr/shared`.
+
+- **Section-level photos (per-page):** Evidence is captured and displayed at the section level.
+  - UI: `AuditWizard.tsx`, `AuditSummary.tsx`, `AuditReviewScreen.tsx` and PDF include section photos only.
+  - Offline: photos are stored in the `photos` store with a `sectionId` index; no photos array on offline audits.
+
+- **Deprecated types (kept for backward compatibility):**
+  - `Audit.photos?` and `AuditPhoto.questionId`/`commentId` in `packages/shared/src/types/audit.ts` are marked `@deprecated`. Use `audit.sectionPhotos` with `sectionId` instead.
 
 ## 📋 Feature Requests
 

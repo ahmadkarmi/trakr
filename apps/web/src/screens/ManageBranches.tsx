@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Branch, Organization, User, UserRole, Zone } from '@trakr/shared'
+import { Branch, User, UserRole, Zone } from '@trakr/shared'
 import ResponsiveTable from '../components/ResponsiveTable'
 import BranchManagerAssignments from '../components/BranchManagerAssignments'
 import BranchAuditorAssignments from '../components/BranchAuditorAssignments'
@@ -11,6 +11,7 @@ import { QK } from '../utils/queryKeys'
 import { UserGroupIcon, UsersIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
+import { useSearchParams } from 'react-router-dom'
 
 const ManageBranches: React.FC = () => {
   const qc = useQueryClient()
@@ -22,6 +23,35 @@ const ManageBranches: React.FC = () => {
     queryFn: () => api.getBranches(effectiveOrgId), 
     enabled: !!effectiveOrgId || isSuperAdmin 
   })
+  const [edit, setEdit] = useState<{ id: string; name: string; address: string } | null>(null)
+  const updateBranchMutation = useMutation({
+    mutationFn: async (payload: { id: string; name: string; address: string }) => {
+      return api.updateBranch(payload.id, { name: payload.name, address: payload.address })
+    },
+    onSuccess: (updated) => {
+      qc.invalidateQueries({ queryKey: QK.BRANCHES(effectiveOrgId) })
+      showToast({ message: `Branch "${updated.name}" updated successfully!`, variant: 'success' })
+      setEdit(null)
+    },
+    onError: (error: any) => {
+      showToast({ message: error?.message || 'Failed to update branch. Please try again.', variant: 'error' })
+    }
+  })
+
+  // Toggle branch active status (enforced by API to require at least one auditor)
+  const setBranchActive = useMutation({
+    mutationFn: async (payload: { id: string; isActive: boolean }) => {
+      return api.updateBranch(payload.id, { isActive: payload.isActive })
+    },
+    onSuccess: (updated, vars) => {
+      qc.invalidateQueries({ queryKey: QK.BRANCHES(effectiveOrgId) })
+      showToast({ message: `Branch "${updated.name}" ${vars.isActive ? 'activated' : 'deactivated'} successfully!`, variant: 'success' })
+    },
+    onError: (error: any) => {
+      const msg = error?.message || 'Failed to update branch status. Ensure at least one auditor is assigned to this branch or via its zone.'
+      showToast({ message: msg, variant: 'error' })
+    }
+  })
   const { data: users = [] } = useQuery<User[]>({ 
     queryKey: ['users', effectiveOrgId], 
     queryFn: () => (api as any).getUsers(effectiveOrgId),
@@ -32,23 +62,22 @@ const ManageBranches: React.FC = () => {
     queryFn: () => api.getZones(effectiveOrgId), 
     enabled: !!effectiveOrgId || isSuperAdmin 
   })
-
-  const managers = useMemo(() => users.filter(u => u.role === UserRole.BRANCH_MANAGER), [users])
-  
-  // Fetch all branch manager assignments
-  // NOTE: RLS policies automatically filter by org, no need to pass orgId
+  // Fetch all branch manager assignments (org-scoped)
   const { data: branchManagerAssignments = [] } = useQuery({
     queryKey: ['branch-manager-assignments', effectiveOrgId],
     queryFn: () => (api as any).getAllBranchManagerAssignments(),
-    enabled: !!effectiveOrgId || isSuperAdmin
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
-
   // Fetch all auditor assignments (org-scoped)
   const { data: auditorAssignments = [] } = useQuery({
-    queryKey: ['assignments', effectiveOrgId],
+    queryKey: ['auditor-assignments', effectiveOrgId],
     queryFn: () => (api as any).getAuditorAssignments(effectiveOrgId),
-    enabled: !!effectiveOrgId || isSuperAdmin
+    enabled: !!effectiveOrgId || isSuperAdmin,
   })
+
+  const managers = useMemo(() => users.filter(u => u.role === UserRole.BRANCH_MANAGER), [users])
+  
+  // (assignment queries defined above)
   
   // Calculate manager counts per branch
   const branchManagerCounts = useMemo(() => {
@@ -64,15 +93,15 @@ const ManageBranches: React.FC = () => {
     const counts: Record<string, number> = {}
     const assignedAuditors = new Set<string>()
     
-    auditorAssignments.forEach(assignment => {
+    auditorAssignments.forEach((assignment: any) => {
       assignedAuditors.add(assignment.userId)
       // Count manual branch assignments
-      ;(assignment.branchIds || []).forEach(branchId => {
+      ;(assignment.branchIds || []).forEach((branchId: string) => {
         counts[branchId] = (counts[branchId] || 0) + 1
       })
       
       // Count zone-based assignments
-      ;(assignment.zoneIds || []).forEach(zoneId => {
+      ;(assignment.zoneIds || []).forEach((zoneId: string) => {
         const zone = zones.find(z => z.id === zoneId)
         zone?.branchIds.forEach(branchId => {
           // Only count if not already manually assigned to this branch
@@ -94,6 +123,32 @@ const ManageBranches: React.FC = () => {
   const [selectedAuditorBranchId, setSelectedAuditorBranchId] = useState<string | null>(null)
   const [showZoneBulkAssignment, setShowZoneBulkAssignment] = useState(false)
   const [activeTab, setActiveTab] = useState<'list' | 'create'>('list')
+  const [searchParams] = useSearchParams()
+  useEffect(() => {
+    const openId = searchParams.get('openAuditorsFor')
+    if (openId && branches.find(b => b.id === openId)) {
+      setSelectedAuditorBranchId(openId)
+    }
+  }, [searchParams, branches])
+  const eligibleToActivate = useMemo(() =>
+    branches.filter(b => !b.isActive && (branchAuditorCounts[b.id] || 0) > 0).map(b => b.id),
+    [branches, branchAuditorCounts]
+  )
+  const bulkActivate = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const results = await Promise.allSettled(ids.map(id => api.updateBranch(id, { isActive: true })))
+      return results
+    },
+    onSuccess: (results) => {
+      qc.invalidateQueries({ queryKey: QK.BRANCHES(effectiveOrgId) })
+      const fulfilled = results.filter(r => r.status === 'fulfilled').length
+      const rejected = results.length - fulfilled
+      showToast({ message: `Activated ${fulfilled} branch${fulfilled !== 1 ? 'es' : ''}. ${rejected > 0 ? rejected + ' failed.' : ''}`, variant: rejected ? 'info' : 'success' })
+    },
+    onError: () => {
+      showToast({ message: 'Bulk activation failed. Please try again.', variant: 'error' })
+    }
+  })
 
   const createBranch = useMutation({
     mutationFn: async (payload: { name: string; address: string; managerId?: string; zoneId?: string }) => {
@@ -168,7 +223,7 @@ const ManageBranches: React.FC = () => {
 
   return (
     <DashboardLayout title="Manage Branches">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -179,29 +234,33 @@ const ManageBranches: React.FC = () => {
 
         {/* Tabs */}
         <div className="border-b border-gray-200">
-          <nav className="flex gap-8" aria-label="Tabs">
+          <nav
+            className="flex flex-nowrap gap-4 sm:gap-8 overflow-x-auto whitespace-nowrap"
+            aria-label="Tabs"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <button
               onClick={() => setActiveTab('list')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`inline-flex items-center gap-2 whitespace-nowrap py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'list'
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              📋 Manage Branches
-              <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">
+              <span>📋 Manage Branches</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">
                 {branches.length}
               </span>
             </button>
             <button
               onClick={() => setActiveTab('create')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`inline-flex items-center gap-2 whitespace-nowrap py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'create'
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              ✨ Create New Branch
+              <span>✨ Create New Branch</span>
             </button>
           </nav>
         </div>
@@ -209,7 +268,7 @@ const ManageBranches: React.FC = () => {
         {/* Tab Content */}
         {activeTab === 'create' && (
           /* Create New Branch */
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="card p-6">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Create New Branch</h2>
             <p className="text-sm text-gray-600 mt-1">Add a new branch location to your organization</p>
@@ -219,7 +278,7 @@ const ManageBranches: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Branch Name</label>
               <input 
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                className="input" 
                 value={form.name} 
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))} 
                 placeholder="Enter branch name" 
@@ -228,7 +287,7 @@ const ManageBranches: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
               <input 
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                className="input" 
                 value={form.address} 
                 onChange={e => setForm(f => ({ ...f, address: e.target.value }))} 
                 placeholder="Enter branch address" 
@@ -237,7 +296,7 @@ const ManageBranches: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Branch Manager</label>
               <select 
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                className="input" 
                 value={form.managerId} 
                 onChange={e => setForm(f => ({ ...f, managerId: e.target.value }))}
               >
@@ -250,7 +309,7 @@ const ManageBranches: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Zone Assignment</label>
               <select 
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                className="input" 
                 value={form.zoneId} 
                 onChange={e => setForm(f => ({ ...f, zoneId: e.target.value }))}
               >
@@ -262,7 +321,7 @@ const ManageBranches: React.FC = () => {
           
           <div className="flex justify-end pt-6 border-t border-gray-200">
             <button 
-              className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50" 
+              className="btn btn-primary btn-md" 
               onClick={() => createBranch.mutate({ name: form.name.trim(), address: form.address.trim(), managerId: form.managerId || undefined, zoneId: form.zoneId || undefined })} 
               disabled={!form.name.trim() || createBranch.isPending}
             >
@@ -307,9 +366,21 @@ const ManageBranches: React.FC = () => {
           </div>
         )}
 
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+        <div className="card overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between gap-3">
             <h2 className="text-lg font-medium text-gray-900">Branches</h2>
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => bulkActivate.mutate(eligibleToActivate)}
+                disabled={eligibleToActivate.length === 0 || bulkActivate.isPending}
+                aria-disabled={eligibleToActivate.length === 0 || bulkActivate.isPending}
+                aria-label={eligibleToActivate.length === 0 ? 'No eligible branches to activate' : `Activate ${eligibleToActivate.length} eligible branches`}
+                title={eligibleToActivate.length === 0 ? 'Assign at least one auditor before activating' : `Activate ${eligibleToActivate.length} eligible branches`}
+              >
+                {bulkActivate.isPending ? 'Activating…' : 'Activate All Eligible'}
+              </button>
+            </div>
           </div>
           <div className="p-4 sm:p-6">
             <ResponsiveTable<Branch>
@@ -319,20 +390,23 @@ const ManageBranches: React.FC = () => {
               mobileItem={(b) => {
                 const branchZone = zones.find(z => z.branchIds?.includes(b.id))
                 return (
-                  <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                  <div className="card p-5 hover:shadow-md transition-shadow">
                     {/* Card Header */}
                     <div className="mb-4">
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-gray-900 text-base truncate">{b.name}</h4>
                           <p className="text-sm text-gray-600 mt-1">{b.address || 'No address'}</p>
-                          {branchZone && (
-                            <div className="mt-2">
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${b.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                              {b.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                            {branchZone && (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                                 🗺️ {branchZone.name}
                               </span>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
                       
@@ -344,7 +418,11 @@ const ManageBranches: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-1.5">
                           <UsersIcon className="w-4 h-4" />
-                          <span>{(branchAuditorCounts[b.id] || 0) > 0 ? `${branchAuditorCounts[b.id]} Auditor${branchAuditorCounts[b.id] !== 1 ? 's' : ''}` : 'No auditors'}</span>
+                          {(branchAuditorCounts[b.id] || 0) > 0 ? (
+                            <span>{`${branchAuditorCounts[b.id]} Auditor${branchAuditorCounts[b.id] !== 1 ? 's' : ''}`}</span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">No auditors</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -353,21 +431,37 @@ const ManageBranches: React.FC = () => {
                     <div className="pt-4 border-t border-gray-200">
                       <div className="flex flex-col gap-2">
                         <button 
-                          className="w-full bg-white border-2 border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                          className="w-full btn btn-outline btn-md flex items-center justify-center gap-2"
+                          onClick={() => setEdit({ id: b.id, name: b.name, address: b.address || '' })}
+                        >
+                          <span>Edit Details</span>
+                        </button>
+                        <button 
+                          className="w-full btn btn-outline btn-md flex items-center justify-center gap-2"
                           onClick={() => setSelectedBranchId(b.id)}
                         >
                           <UserGroupIcon className="w-5 h-5" />
                           <span>Manage Managers</span>
                         </button>
                         <button 
-                          className="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                          className="w-full btn btn-primary btn-md flex items-center justify-center gap-2"
                           onClick={() => setSelectedAuditorBranchId(b.id)}
                         >
                           <UsersIcon className="w-5 h-5" />
                           <span>Manage Auditors</span>
                         </button>
+                        <button
+                          className={`w-full ${b.isActive ? 'btn btn-danger btn-md' : 'btn btn-primary btn-md'}`}
+                          onClick={() => setBranchActive.mutate({ id: b.id, isActive: !b.isActive })}
+                          disabled={setBranchActive.isPending || (!b.isActive && (branchAuditorCounts[b.id] || 0) === 0)}
+                          title={!b.isActive && (branchAuditorCounts[b.id] || 0) === 0 ? 'Assign at least one auditor before activating' : (b.isActive ? 'Deactivate branch' : 'Activate branch')}
+                          aria-disabled={setBranchActive.isPending || (!b.isActive && (branchAuditorCounts[b.id] || 0) === 0)}
+                          aria-label={!b.isActive && (branchAuditorCounts[b.id] || 0) === 0 ? 'Activate is disabled until at least one auditor is assigned' : (b.isActive ? 'Deactivate branch' : 'Activate branch')}
+                        >
+                          <span>{b.isActive ? 'Deactivate' : 'Activate'}</span>
+                        </button>
                         <button 
-                          className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                          className="w-full btn btn-danger btn-md flex items-center justify-center gap-2"
                           onClick={() => { if (window.confirm('Delete this branch?')) deleteBranch.mutate(b.id) }}
                         >
                           <TrashIcon className="w-5 h-5" />
@@ -388,14 +482,27 @@ const ManageBranches: React.FC = () => {
                       <div>
                         <div className="font-medium text-gray-900">{b.name}</div>
                         <div className="text-sm text-gray-600 mt-0.5">{b.address || 'No address'}</div>
-                        {branchZone && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 mt-1">
-                            🗺️ {branchZone.name}
-                          </span>
-                        )}
+                        <div className="mt-1 flex items-center gap-2">
+                          {branchZone && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                              🗺️ {branchZone.name}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )
                   }
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (b) => (
+                    <div>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${b.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                        {b.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  )
                 },
                 { 
                   key: 'managers', 
@@ -433,11 +540,13 @@ const ManageBranches: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <UsersIcon className="w-5 h-5 text-gray-400 group-hover:text-primary-600" />
                           <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {(branchAuditorCounts[b.id] || 0) > 0 
-                                ? `${branchAuditorCounts[b.id]} Auditor${branchAuditorCounts[b.id] !== 1 ? 's' : ''}`
-                                : 'No auditors'}
-                            </div>
+                            {(branchAuditorCounts[b.id] || 0) > 0 ? (
+                              <div className="text-sm font-medium text-gray-900">
+                                {`${branchAuditorCounts[b.id]} Auditor${branchAuditorCounts[b.id] !== 1 ? 's' : ''}`}
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700">No auditors assigned</div>
+                            )}
                             <div className="text-xs text-gray-500 group-hover:text-primary-600">Click to manage →</div>
                           </div>
                         </div>
@@ -450,13 +559,32 @@ const ManageBranches: React.FC = () => {
                   header: '', 
                   className: 'text-right', 
                   render: (b) => (
-                    <button 
-                      className="p-2 hover:bg-red-50 rounded-lg transition-colors group" 
-                      onClick={() => { if (window.confirm(`Delete "${b.name}"?`)) deleteBranch.mutate(b.id) }}
-                      title="Delete branch"
-                    >
-                      <TrashIcon className="w-5 h-5 text-gray-400 group-hover:text-red-600" />
-                    </button>
+                    <div className="flex items-center gap-2 justify-end">
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => setEdit({ id: b.id, name: b.name, address: b.address || '' })}
+                        title="Edit branch"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className={`${b.isActive ? 'btn btn-danger btn-sm' : 'btn btn-primary btn-sm'}`}
+                        onClick={() => setBranchActive.mutate({ id: b.id, isActive: !b.isActive })}
+                        disabled={setBranchActive.isPending || (!b.isActive && (branchAuditorCounts[b.id] || 0) === 0)}
+                        title={!b.isActive && (branchAuditorCounts[b.id] || 0) === 0 ? 'Assign at least one auditor before activating' : (b.isActive ? 'Deactivate branch' : 'Activate branch')}
+                        aria-disabled={setBranchActive.isPending || (!b.isActive && (branchAuditorCounts[b.id] || 0) === 0)}
+                        aria-label={!b.isActive && (branchAuditorCounts[b.id] || 0) === 0 ? 'Activate is disabled until at least one auditor is assigned' : (b.isActive ? 'Deactivate branch' : 'Activate branch')}
+                      >
+                        {b.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button 
+                        className="btn btn-ghost btn-sm" 
+                        onClick={() => { if (window.confirm(`Delete "${b.name}"?`)) deleteBranch.mutate(b.id) }}
+                        title="Delete branch"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    </div>
                   )
                 },
               ]}
@@ -516,7 +644,7 @@ const ManageBranches: React.FC = () => {
                       const event = new CustomEvent('openAddManager', { detail: { branchId: selectedBranchId } })
                       window.dispatchEvent(event)
                     }}
-                    className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3.5 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full btn btn-primary btn-md flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -567,6 +695,7 @@ const ManageBranches: React.FC = () => {
                 <BranchAuditorAssignments
                   branchId={selectedAuditorBranchId}
                   branchName={branches.find(b => b.id === selectedAuditorBranchId)?.name || 'Unknown Branch'}
+                  isBranchActive={!!branches.find(b => b.id === selectedAuditorBranchId)?.isActive}
                 />
               </div>
               
@@ -579,7 +708,7 @@ const ManageBranches: React.FC = () => {
                       const event = new CustomEvent('openAddAuditor', { detail: { branchId: selectedAuditorBranchId } })
                       window.dispatchEvent(event)
                     }}
-                    className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3.5 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full btn btn-primary btn-md flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -598,6 +727,38 @@ const ManageBranches: React.FC = () => {
             orgId={effectiveOrgId}
             onClose={() => setShowZoneBulkAssignment(false)}
           />
+        )}
+
+        {edit && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center sm:justify-center animate-in fade-in duration-200">
+            <div className="absolute inset-0" onClick={() => setEdit(null)} />
+            <div className="relative bg-white w-full sm:max-w-lg sm:rounded-lg shadow-2xl max-h-[92vh] overflow-hidden flex flex-col rounded-t-2xl sm:rounded-b-lg animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Edit Branch</h3>
+                <button onClick={() => setEdit(null)} className="ml-4 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg" aria-label="Close">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="p-4 sm:p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Branch Name</label>
+                  <input className="input" value={edit.name} onChange={(e) => setEdit(v => v ? { ...v, name: e.target.value } : v)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <input className="input" value={edit.address} onChange={(e) => setEdit(v => v ? { ...v, address: e.target.value } : v)} />
+                </div>
+              </div>
+              <div className="flex-shrink-0 border-t border-gray-200 bg-white">
+                <div className="p-4 sm:p-6 flex items-center justify-end gap-2">
+                  <button className="btn btn-outline btn-md" onClick={() => setEdit(null)}>Cancel</button>
+                  <button className="btn btn-primary btn-md disabled:opacity-50" disabled={updateBranchMutation.isPending || !edit.name.trim()} onClick={() => edit && updateBranchMutation.mutate({ id: edit.id, name: edit.name.trim(), address: edit.address.trim() })}>
+                    {updateBranchMutation.isPending ? 'Saving…' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </DashboardLayout>

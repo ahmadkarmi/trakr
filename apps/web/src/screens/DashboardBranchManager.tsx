@@ -11,6 +11,7 @@ import { useOrganization } from '../contexts/OrganizationContext'
 import ResponsiveTable, { Column } from '../components/ResponsiveTable'
 import EmptyState from '../components/EmptyState'
 import ErrorState from '../components/ErrorState'
+import MetricCard from '../components/MetricCard'
 
 const DashboardBranchManager: React.FC = () => {
   const { user } = useAuthStore()
@@ -115,7 +116,7 @@ const DashboardBranchManager: React.FC = () => {
 
   return (
     <DashboardLayout title="Branch Manager Dashboard">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {/* Header with Branch Filter */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -127,7 +128,7 @@ const DashboardBranchManager: React.FC = () => {
             <select 
               value={selectedBranchId}
               onChange={(e) => setSelectedBranchId(e.target.value)}
-              className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-sm font-medium"
+              className="input w-full sm:w-auto"
             >
               <option value="">All Branches ({assignedBranches.length})</option>
               {assignedBranches.map(branch => (
@@ -148,50 +149,38 @@ const DashboardBranchManager: React.FC = () => {
 
         {/* Key Metrics - Responsive Grid */}
         {managedBranchIds.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div 
-            className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-5 text-white cursor-pointer hover:shadow-lg transition-shadow sm:col-span-3 lg:col-span-1"
-            onClick={() => pendingApproval.length > 0 && document.getElementById('pending-approvals')?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-yellow-100 text-sm font-medium uppercase tracking-wide">Needs Approval</p>
-                <p className="text-4xl font-bold mt-2">{pendingApproval.length}</p>
-                <p className="text-yellow-100 text-sm mt-1">{pendingApproval.length === 1 ? 'audit' : 'audits'} pending</p>
-              </div>
-              <div className="w-14 h-14 bg-white/20 rounded-lg flex items-center justify-center">
-                <ExclamationCircleIcon className="w-8 h-8" />
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <MetricCard
+              icon={<ExclamationCircleIcon className="w-5 h-5 text-amber-600" />}
+              value={pendingApproval.length}
+              label="Needs Approval"
+              tone={pendingApproval.length > 0 ? 'warning' : 'success'}
+              onClick={() => pendingApproval.length > 0 && document.getElementById('pending-approvals')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              <p className="text-xs text-gray-500 mt-1">{pendingApproval.length === 1 ? '1 audit' : `${pendingApproval.length} audits`} pending</p>
+            </MetricCard>
+            <MetricCard
+              icon={<ClockIcon className="w-5 h-5 text-blue-600" />}
+              value={inProgress}
+              label="Active Audits"
+              tone="primary"
+            >
+              <p className="text-xs text-gray-500 mt-1">Not yet submitted</p>
+            </MetricCard>
+            <MetricCard
+              icon={<ChartBarIcon className="w-5 h-5 text-green-600" />}
+              value={`${completionRate}%`}
+              label="Finalized"
+              tone="success"
+            >
+              <p className="text-xs text-gray-500 mt-1">Approved or rejected</p>
+            </MetricCard>
           </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <ClockIcon className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{inProgress}</p>
-            <p className="text-sm text-gray-600 mt-1 uppercase tracking-wide">Active Audits</p>
-            <p className="text-xs text-gray-500 mt-0.5">Not yet submitted</p>
-          </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <ChartBarIcon className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{completionRate}%</p>
-            <p className="text-sm text-gray-600 mt-1 uppercase tracking-wide">Finalized</p>
-            <p className="text-xs text-gray-500 mt-0.5">Approved or rejected</p>
-          </div>
-        </div>
         )}
 
         {/* Pending Approval Section */}
         {managedBranchIds.length > 0 && (
-        <div id="pending-approvals" className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div id="pending-approvals" className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -225,6 +214,7 @@ const DashboardBranchManager: React.FC = () => {
                       <div className="mb-3">
                         <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
                         <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                        <p className="text-xs text-gray-500">{audit.surveyVersion != null ? `v${audit.surveyVersion}` : '—'}</p>
                       </div>
                       
                       <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -263,7 +253,7 @@ const DashboardBranchManager: React.FC = () => {
 
         {/* Audit History Section */}
         {managedBranchIds.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -324,6 +314,12 @@ const DashboardBranchManager: React.FC = () => {
                       render: (a) => surveys.find(s => s.id === a.surveyId)?.title || 'Unknown Survey'
                     },
                     {
+                      key: 'version',
+                      header: 'Version',
+                      className: 'px-6 py-4 text-gray-600',
+                      render: (a) => (a.surveyVersion != null ? `v${a.surveyVersion}` : '—')
+                    },
+                    {
                       key: 'submittedBy',
                       header: 'Submitted By',
                       className: 'px-6 py-4 text-gray-600',
@@ -373,6 +369,7 @@ const DashboardBranchManager: React.FC = () => {
                         <div className="mb-3">
                           <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
                           <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
+                          <p className="text-xs text-gray-500">{a.surveyVersion != null ? `v${a.surveyVersion}` : '—'}</p>
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -415,14 +412,14 @@ const DashboardBranchManager: React.FC = () => {
                       <button
                         onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
                         disabled={historyPage === 1}
-                        className="px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                        className="btn btn-outline btn-sm"
                       >
                         ← Previous
                       </button>
                       <button
                         onClick={() => setHistoryPage(p => Math.min(totalHistoryPages, p + 1))}
                         disabled={historyPage === totalHistoryPages}
-                        className="px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                        className="btn btn-outline btn-sm"
                       >
                         Next →
                       </button>

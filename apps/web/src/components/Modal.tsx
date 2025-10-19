@@ -21,6 +21,7 @@ type ModalProps = {
 const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, primaryAction, secondaryAction, initialFocusRef }) => {
   const overlayRef = React.useRef<HTMLDivElement | null>(null)
   const contentRef = React.useRef<HTMLDivElement | null>(null)
+  const [container] = React.useState<HTMLElement | null>(() => (typeof document !== 'undefined' ? document.body : null))
 
   React.useEffect(() => {
     if (!open) return
@@ -33,6 +34,8 @@ const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, primaryAc
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [open, onClose])
+
+  
 
   React.useEffect(() => {
     if (!open) return
@@ -82,10 +85,10 @@ const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, primaryAc
 
   if (!open) return null
 
-  return createPortal(
+  const modalNode = (
     <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby={title ? 'modal-title' : undefined} data-focus-trap>
       <div ref={overlayRef} className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div ref={contentRef} className="relative bg-white rounded-lg shadow-xl w-[92vw] max-w-xl mx-auto p-5">
+      <div ref={contentRef} className="relative bg-white rounded-lg shadow-xl w-[92vw] max-w-xl mx-auto p-5 my-8 max-h-[90vh] overflow-y-auto">
         {title && <h3 className="text-lg font-semibold mb-2" id="modal-title">{title}</h3>}
         <div className="space-y-3">
           {children}
@@ -113,9 +116,18 @@ const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, primaryAc
           </div>
         )}
       </div>
-    </div>,
-    document.body
+    </div>
   )
+
+  const isValidContainer = !!container && (container as any).nodeType === 1
+  if (isValidContainer) {
+    try {
+      return createPortal(modalNode, container as Element)
+    } catch {
+      return modalNode
+    }
+  }
+  return modalNode
 }
 
 export default Modal

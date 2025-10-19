@@ -6,7 +6,6 @@ export interface OfflineAudit {
   userId: string
   status: 'draft' | 'pending_sync'
   responses: Record<string, any>
-  photos: OfflinePhoto[]
   createdAt: Date
   updatedAt: Date
   syncAttempts: number
@@ -15,7 +14,7 @@ export interface OfflineAudit {
 export interface OfflinePhoto {
   id: string
   auditId: string
-  questionId: string
+  sectionId: string
   file: File
   localUrl: string
   uploaded: boolean
@@ -24,7 +23,7 @@ export interface OfflinePhoto {
 class OfflineStorageManager {
   private db: IDBDatabase | null = null
   private readonly DB_NAME = 'TrakrOfflineDB'
-  private readonly DB_VERSION = 1
+  private readonly DB_VERSION = 2
 
   async init(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -52,6 +51,19 @@ class OfflineStorageManager {
           const photoStore = db.createObjectStore('photos', { keyPath: 'id' })
           photoStore.createIndex('auditId', 'auditId', { unique: false })
           photoStore.createIndex('uploaded', 'uploaded', { unique: false })
+          // New in v2: index by sectionId for section-level photos
+          photoStore.createIndex('sectionId', 'sectionId', { unique: false })
+        } else {
+          // v2 upgrade path: add sectionId index if missing
+          try {
+            const tx = (request.transaction as IDBTransaction)
+            const store = tx.objectStore('photos') as any
+            if (!Array.from(store.indexNames || []).includes('sectionId')) {
+              store.createIndex('sectionId', 'sectionId', { unique: false })
+            }
+          } catch {
+            // best-effort; ignore if transaction not available or index exists
+          }
         }
 
         // Sync queue store

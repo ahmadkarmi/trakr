@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
+
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Audit, Survey, AuditStatus, User, Branch } from '@trakr/shared'
+import { Audit, Survey, AuditStatus, User, Branch, QuestionType, UserRole, LogEntry } from '@trakr/shared'
 import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useAuthStore } from '../stores/auth'
@@ -9,6 +10,10 @@ import { useAuditStateMachine } from '../hooks/useAuditStateMachine'
 import { useAuditProgress } from '../hooks/useAuditProgress'
 import { AuditStatusBanner } from '../components/AuditStatusBanner'
 import DashboardLayout from '../components/DashboardLayout'
+import Modal from '../components/Modal'
+import { formatInTimeZone } from '../utils/datetime'
+import { useOrgTimeZone } from '../hooks/useOrg'
+
 import { CheckCircleIcon, XCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import StatusBadge from '@/components/StatusBadge'
 import { notificationHelpers } from '../utils/notifications'
@@ -57,6 +62,8 @@ export default function AuditReviewScreen() {
   const endDraw = () => { drawingRef.current = false; lastPosRef.current = null; if (canvasRef.current) setSignatureDataUrl(canvasRef.current.toDataURL('image/png')) }
   const clearCanvas = () => { const c = canvasRef.current; if (!c) return; const ctx = c.getContext('2d'); if (!ctx) return; ctx.clearRect(0,0,c.width,c.height); setSignatureDataUrl(null) }
 
+  // Using shared Modal component (portaled to body)
+
   // Fetch audit data
   const { data: audit, isLoading: loadingAudit } = useQuery<Audit | null>({
     queryKey: QK.AUDIT(auditId),
@@ -64,12 +71,67 @@ export default function AuditReviewScreen() {
     enabled: !!auditId,
   })
 
-  // Fetch survey template
+  // Fetch survey template (pinned version used by this audit)
   const { data: survey } = useQuery<Survey | null>({
-    queryKey: QK.SURVEY(audit?.surveyId),
-    queryFn: () => (audit?.surveyId ? api.getSurveyById(audit.surveyId) : Promise.resolve(null)),
+    queryKey: QK.SURVEY_VERSION(audit?.surveyId, audit?.surveyVersion as number | undefined),
+    queryFn: () => (audit?.surveyId ? (api as any).getSurveyByIdAndVersion(audit!.surveyId, (audit as any).surveyVersion ?? 1) : Promise.resolve(null)),
     enabled: !!audit?.surveyId,
   })
+
+  // Org time zone for displaying dates consistently
+  const orgTimeZone = useOrgTimeZone()
+
+  // Activity logs and audit history
+  const { data: auditLogs = [] } = useQuery<LogEntry[]>({
+    queryKey: QK.LOGS('audit', auditId),
+    queryFn: () => (auditId ? api.getActivityLogs(auditId) : Promise.resolve([])),
+    enabled: !!auditId,
+  })
+
+  const keyEvents = React.useMemo(() => {
+    const logsFiltered = auditLogs
+      .filter(l => ['audit_submitted', 'audit_approved', 'audit_rejected'].includes(l.action))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    if (logsFiltered.length > 0) return logsFiltered
+    if (!audit) return []
+    const derived: LogEntry[] = []
+    if (audit.submittedAt) {
+      derived.push({
+        id: `${audit.id}-submitted`,
+        userId: audit.submittedBy || audit.assignedTo || 'Unknown',
+        action: 'audit_submitted',
+        details: 'Audit submitted for approval',
+        entityType: 'audit',
+        entityId: audit.id,
+        timestamp: audit.submittedAt,
+      } as any)
+    }
+    if (audit.rejectedAt) {
+      derived.push({
+        id: `${audit.id}-rejected`,
+        userId: audit.rejectedBy || 'Manager',
+        action: 'audit_rejected',
+        details: audit.rejectionNote || 'Audit rejected',
+        entityType: 'audit',
+        entityId: audit.id,
+        timestamp: audit.rejectedAt,
+      } as any)
+    }
+    if (audit.approvedAt) {
+      derived.push({
+        id: `${audit.id}-approved`,
+        userId: audit.approvedBy || 'Manager',
+        action: 'audit_approved',
+        details: audit.approvalNote || 'Audit approved',
+        entityType: 'audit',
+        entityId: audit.id,
+        timestamp: audit.approvedAt,
+      } as any)
+    }
+    return derived.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  }, [auditLogs, audit])
+
+  // First submitted / Resubmitted intentionally not computed (timeline shows submission history)
 
   // Fetch users to get submitter name
   const { data: users = [] } = useQuery<User[]>({
@@ -97,6 +159,16 @@ export default function AuditReviewScreen() {
     user?.role || 'BRANCH_MANAGER' as any,
     progress.completionPercent
   )
+
+  // Branch manager assignment check: Only assigned managers (or admins) can approve/reject
+  const { data: bmAssignments = [] } = useQuery<any[]>({
+    queryKey: ['branch-manager-assignments', audit?.branchId],
+    queryFn: () => api.getBranchManagerAssignments(audit!.branchId),
+    enabled: !!audit?.branchId,
+  })
+  const isAssignedManager = !!user && bmAssignments.some((a: any) => a.managerId === user.id)
+  const isAdminRole = !!user && (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN)
+  const canReviewAudit = isAssignedManager || isAdminRole
 
   // Approve audit mutation
   const approveMutation = useMutation({
@@ -132,18 +204,22 @@ export default function AuditReviewScreen() {
           console.log('✅ Notification action completed (approved)')
           // Invalidate notification queries to update UI
           queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
-          queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS('all') })
+          queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user.id) })
         } catch (error) {
           console.error('Failed to complete notification action:', error)
         }
         
-        // Notify auditor about approval
-        await notificationHelpers.notifyAuditApproved({
-          auditorId: audit.assignedTo,
-          auditId: audit.id,
-          branchName: branch?.name || 'Unknown Branch',
-          approverName: user.name || user.email,
-        })
+        // Notify auditor about approval (best-effort)
+        try {
+          await notificationHelpers.notifyAuditApproved({
+            auditorId: audit.assignedTo,
+            auditId: audit.id,
+            branchName: branch?.name || 'Unknown Branch',
+            approverName: user.name || user.email,
+          })
+        } catch (err) {
+          console.warn('⚠️ Non-blocking: failed to create approval notification (likely RLS).', err)
+        }
       }
       
       navigate('/dashboard/branch-manager')
@@ -173,19 +249,23 @@ export default function AuditReviewScreen() {
           console.log('✅ Notification action completed (rejected)')
           // Invalidate notification queries to update UI
           queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
-          queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS('all') })
+          queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user.id) })
         } catch (error) {
           console.error('Failed to complete notification action:', error)
         }
         
-        // Notify auditor about rejection
-        await notificationHelpers.notifyAuditRejected({
-          auditorId: audit.assignedTo,
-          auditId: audit.id,
-          branchName: branch?.name || 'Unknown Branch',
-          rejectorName: user.name || user.email,
-          reason: rejectReason,
-        })
+        // Notify auditor about rejection (best-effort)
+        try {
+          await notificationHelpers.notifyAuditRejected({
+            auditorId: audit.assignedTo,
+            auditId: audit.id,
+            branchName: branch?.name || 'Unknown Branch',
+            rejectorName: user.name || user.email,
+            reason: rejectReason,
+          })
+        } catch (err) {
+          console.warn('⚠️ Non-blocking: failed to create rejection notification (likely RLS).', err)
+        }
       }
       
       navigate('/dashboard/branch-manager')
@@ -215,7 +295,7 @@ export default function AuditReviewScreen() {
 
   return (
     <DashboardLayout title="Review Audit">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {/* Header with back button */}
         <div className="mb-6">
           <button
@@ -235,6 +315,77 @@ export default function AuditReviewScreen() {
           </div>
         </div>
 
+        {/* Audit History */}
+        {keyEvents.length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 mt-6">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900">📋 Audit History</h3>
+              <p className="text-sm text-gray-600 mt-1">Timeline of key events for this audit</p>
+            </div>
+            <div className="p-6">
+              <div className="flow-root">
+                <ul className="-mb-8">
+                  {keyEvents.map((log, idx) => (
+                    <li key={log.id}>
+                      <div className="relative pb-8">
+                        {idx !== keyEvents.length - 1 && (
+                          <span className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
+                        )}
+                        <div className="relative flex space-x-3">
+                          <div>
+                            <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${
+                              log.action === 'audit_submitted' ? 'bg-blue-500' :
+                              log.action === 'audit_approved' ? 'bg-green-500' :
+                              log.action === 'audit_rejected' ? 'bg-red-500' : 'bg-gray-400'
+                            }`}>
+                              {log.action === 'audit_submitted' && (
+                                <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                              {log.action === 'audit_approved' && (
+                                <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                              {log.action === 'audit_rejected' && (
+                                <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {log.action === 'audit_submitted' && 'Audit Submitted'}
+                                {log.action === 'audit_approved' && 'Audit Approved'}
+                                {log.action === 'audit_rejected' && 'Audit Rejected'}
+                              </p>
+                              {log.userId && (
+                                <p className="mt-0.5 text-sm text-gray-500">
+                                  by {users.find((u: User) => u.id === log.userId)?.name || (typeof log.userId === 'string' && (log.userId as string).startsWith('Manager') ? (log.userId as string) : 'Unknown')}
+                                </p>
+                              )}
+                              {log.details && (
+                                <p className="mt-1 text-sm text-gray-600 bg-gray-50 rounded p-2">{log.details}</p>
+                              )}
+                            </div>
+                            <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                              <time dateTime={new Date(log.timestamp).toISOString()}>
+                                {formatInTimeZone(log.timestamp, orgTimeZone)}
+                              </time>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Status banner */}
         <AuditStatusBanner
           permissions={permissions}
@@ -256,6 +407,7 @@ export default function AuditReviewScreen() {
                 {audit.submittedAt ? new Date(audit.submittedAt).toLocaleDateString() : 'N/A'}
               </p>
             </div>
+            {/* First Submitted / Resubmitted intentionally not shown per requirement */}
             <div>
               <p className="text-sm text-gray-600">Completion</p>
               <div className="flex items-center gap-2">
@@ -319,7 +471,6 @@ export default function AuditReviewScreen() {
                   {section.questions.map((question) => {
                     const answer = audit.responses?.[question.id]
                     const naReason = audit.naReasons?.[question.id]
-                    const questionPhotos = (audit.photos || []).filter(p => p.questionId === question.id)
                     const hasAnswer = answer !== undefined && answer !== null && answer !== ''
 
                     return (
@@ -338,17 +489,35 @@ export default function AuditReviewScreen() {
                           <div className="mt-2">
                             <p className="text-sm text-gray-600 mb-1">Answer:</p>
                             <div className="flex items-center gap-2">
-                              {answer === 'yes' ? (
-                                <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm bg-green-100 text-green-800 font-medium">✓ Yes</span>
-                              ) : answer === 'no' ? (
-                                <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm bg-red-100 text-red-800 font-medium">✗ No</span>
-                              ) : answer === 'na' ? (
-                                <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm bg-gray-200 text-gray-800 font-medium">N/A</span>
-                              ) : (
-                                <span className="text-gray-900 font-medium">{answer}</span>
-                              )}
+                              {(() => {
+                                const t = question.type
+                                if (t === QuestionType.YES_NO) {
+                                  if (answer === 'yes') return <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm bg-green-100 text-green-800 font-medium">✓ Yes</span>
+                                  if (answer === 'no') return <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm bg-red-100 text-red-800 font-medium">✗ No</span>
+                                  if (answer === 'na') return <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm bg-gray-200 text-gray-800 font-medium">N/A</span>
+                                  return <span className="text-gray-900 font-medium">{String(answer)}</span>
+                                }
+                                if (t === QuestionType.DATE) {
+                                  const d = new Date(String(answer))
+                                  const valid = !isNaN(d.getTime())
+                                  return <span className="text-gray-900 font-medium">{valid ? d.toLocaleDateString() : '—'}</span>
+                                }
+                                if (t === QuestionType.CHECKBOX) {
+                                  try {
+                                    const arr = JSON.parse(String(answer) || '[]')
+                                    if (Array.isArray(arr) && arr.length > 0) {
+                                      return <span className="text-gray-900 font-medium">{arr.join(', ')}</span>
+                                    }
+                                    return <span className="text-gray-500">—</span>
+                                  } catch {
+                                    return <span className="text-gray-900 font-medium">{String(answer)}</span>
+                                  }
+                                }
+                                // TEXT, NUMBER, MULTIPLE_CHOICE and others
+                                return <span className="text-gray-900 font-medium">{String(answer)}</span>
+                              })()}
                             </div>
-                            {answer === 'na' && naReason && (
+                            {question.type === QuestionType.YES_NO && answer === 'na' && naReason && (
                               <div className="mt-2 p-2 bg-gray-100 rounded text-sm text-gray-700">
                                 <span className="font-medium">N/A Reason:</span> {naReason}
                               </div>
@@ -358,16 +527,7 @@ export default function AuditReviewScreen() {
                           <p className="text-yellow-700 text-sm italic">Not answered</p>
                         )}
                         
-                        {questionPhotos.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-xs font-medium text-gray-600 mb-1">Photos:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {questionPhotos.map(photo => (
-                                <img key={photo.id} src={photo.url} alt={photo.filename} className="w-16 h-16 rounded object-cover border border-gray-300" />
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        {/* Per-question photos removed; photos are captured at section-level only */}
 
                         {question.type && (
                           <p className="text-xs text-gray-500 mt-2">Type: {question.type}</p>
@@ -385,195 +545,181 @@ export default function AuditReviewScreen() {
         {audit.status === AuditStatus.SUBMITTED && (
           <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold mb-4">Review Decision</h3>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setShowApprovalDialog(true)}
-                className="flex-1 btn btn-primary bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
-              >
-                <CheckCircleIcon className="w-5 h-5" />
-                Approve
-              </button>
-              <button
-                onClick={() => setShowRejectionDialog(true)}
-                className="flex-1 btn btn-danger flex items-center justify-center gap-2"
-              >
-                <XCircleIcon className="w-5 h-5" />
-                Reject
-              </button>
-            </div>
+            {canReviewAudit ? (
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowApprovalDialog(true)}
+                  className="flex-1 btn btn-primary bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
+                >
+                  <CheckCircleIcon className="w-5 h-5" />
+                  Approve
+                </button>
+                <button
+                  onClick={() => setShowRejectionDialog(true)}
+                  className="flex-1 btn btn-danger flex items-center justify-center gap-2"
+                >
+                  <XCircleIcon className="w-5 h-5" />
+                  Reject
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+                Only a branch manager assigned to this branch or an admin can approve or reject this audit.
+              </div>
+            )}
           </div>
         )}
-
+        
         {/* Approval Dialog */}
-        {showApprovalDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-xl font-semibold mb-4">Approve Audit</h3>
-              <p className="text-gray-600 mb-4">
-                Are you sure you want to approve this audit? You can add an optional note and must provide your signature.
-              </p>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Approval note (optional)</label>
-                  <textarea
-                    value={approvalNote}
-                    onChange={(e) => setApprovalNote(e.target.value)}
-                    placeholder="Optional approval note..."
-                    className="w-full p-3 border border-gray-300 rounded-lg"
-                    rows={3}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Signature method</label>
-                  <div className="flex flex-wrap gap-2">
-                    {user?.signatureUrl && (
-                      <button
-                        type="button"
-                        className={`px-3 py-1.5 rounded border text-sm ${approveMode === 'image' ? 'bg-gray-100 border-gray-400' : 'border-gray-300'}`}
-                        onClick={() => setApproveMode('image')}
-                      >
-                        Use saved image
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className={`px-3 py-1.5 rounded border text-sm ${approveMode === 'typed' ? 'bg-gray-100 border-gray-400' : 'border-gray-300'}`}
-                      onClick={() => setApproveMode('typed')}
-                    >
-                      Type name
-                    </button>
-                    <button
-                      type="button"
-                      className={`px-3 py-1.5 rounded border text-sm ${approveMode === 'drawn' ? 'bg-gray-100 border-gray-400' : 'border-gray-300'}`}
-                      onClick={() => setApproveMode('drawn')}
-                    >
-                      Draw signature
-                    </button>
-                  </div>
-                </div>
-                
-                {approveMode === 'image' && (
-                  <div>
-                    {user?.signatureUrl ? (
-                      <div>
-                        <img src={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded p-2 bg-gray-50" />
-                        <p className="text-xs text-gray-500 mt-1">Using saved signature image</p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">No saved signature found. Choose another method.</p>
-                    )}
-                  </div>
-                )}
-                
-                {approveMode === 'typed' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
-                    <input
-                      type="text"
-                      className="w-full p-2 border border-gray-300 rounded-lg"
-                      placeholder="e.g., Jane Manager"
-                      value={typedName}
-                      onChange={(e) => setTypedName(e.target.value)}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Your typed full name will be recorded as your signature.</p>
-                  </div>
-                )}
-                
-                {approveMode === 'drawn' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Draw signature</label>
-                    <div className="border rounded p-2 bg-gray-50">
-                      <canvas
-                        ref={canvasRef}
-                        width={400}
-                        height={120}
-                        className="border rounded bg-white cursor-crosshair w-full"
-                        style={{ touchAction: 'none' }}
-                        onPointerDown={(e) => {
-                          const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
-                          startDraw(e.clientX - rect.left, e.clientY - rect.top)
-                        }}
-                        onPointerMove={(e) => {
-                          if (!drawingRef.current) return
-                          const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
-                          drawTo(e.clientX - rect.left, e.clientY - rect.top)
-                        }}
-                        onPointerUp={endDraw}
-                        onPointerLeave={endDraw}
-                      />
-                      <div className="mt-2 flex items-center gap-2">
-                        <button type="button" className="px-2 py-1 text-sm border border-gray-300 rounded" onClick={clearCanvas}>Clear</button>
-                        {signatureDataUrl && <span className="text-xs text-gray-500">Signature captured</span>}
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Use a mouse, finger or stylus to sign.</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex gap-3 mt-6">
+        <Modal open={showApprovalDialog} onClose={() => setShowApprovalDialog(false)} title="Approve Audit">
+          <p className="text-gray-600">
+            Are you sure you want to approve this audit? You can add an optional note and must provide your signature.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Approval note (optional)</label>
+            <textarea
+              value={approvalNote}
+              onChange={(e) => setApprovalNote(e.target.value)}
+              placeholder="Optional approval note..."
+              className="input"
+              rows={3}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Signature method</label>
+            <div className="flex flex-wrap gap-2">
+              {user?.signatureUrl && (
                 <button
-                  onClick={() => setShowApprovalDialog(false)}
-                  className="flex-1 btn btn-secondary"
-                  disabled={approveMutation.isPending}
+                  type="button"
+                  className={`btn btn-outline btn-sm ${approveMode === 'image' ? 'bg-gray-100 border-gray-400' : ''}`}
+                  onClick={() => setApproveMode('image')}
                 >
-                  Cancel
+                  Use saved image
                 </button>
-                <button
-                  onClick={() => approveMutation.mutate()}
-                  className="flex-1 btn btn-primary bg-green-600 hover:bg-green-700"
-                  disabled={approveMutation.isPending || (approveMode === 'image' && !user?.signatureUrl) || (approveMode === 'typed' && typedName.trim().length === 0) || (approveMode === 'drawn' && !signatureDataUrl)}
-                >
-                  {approveMutation.isPending ? 'Approving...' : 'Confirm Approval'}
-                </button>
-              </div>
+              )}
+              <button
+                type="button"
+                className={`btn btn-outline btn-sm ${approveMode === 'typed' ? 'bg-gray-100 border-gray-400' : ''}`}
+                onClick={() => setApproveMode('typed')}
+              >
+                Type name
+              </button>
+              <button
+                type="button"
+                className={`btn btn-outline btn-sm ${approveMode === 'drawn' ? 'bg-gray-100 border-gray-400' : ''}`}
+                onClick={() => setApproveMode('drawn')}
+              >
+                Draw signature
+              </button>
             </div>
           </div>
-        )}
+          {approveMode === 'image' && (
+            <div>
+              {user?.signatureUrl ? (
+                <div>
+                  <img src={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded p-2 bg-gray-50" />
+                  <p className="text-xs text-gray-500 mt-1">Using saved signature image</p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No saved signature found. Choose another method.</p>
+              )}
+            </div>
+          )}
+          {approveMode === 'typed' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., Jane Manager"
+                value={typedName}
+                onChange={(e) => setTypedName(e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">Your typed full name will be recorded as your signature.</p>
+            </div>
+          )}
+          {approveMode === 'drawn' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Draw signature</label>
+              <div className="border rounded p-2 bg-gray-50">
+                <canvas
+                  ref={canvasRef}
+                  width={400}
+                  height={120}
+                  className="border rounded bg-white cursor-crosshair w-full"
+                  style={{ touchAction: 'none' }}
+                  onPointerDown={(e) => {
+                    const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
+                    startDraw(e.clientX - rect.left, e.clientY - rect.top)
+                  }}
+                  onPointerMove={(e) => {
+                    if (!drawingRef.current) return
+                    const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
+                    drawTo(e.clientX - rect.left, e.clientY - rect.top)
+                  }}
+                  onPointerUp={endDraw}
+                  onPointerLeave={endDraw}
+                />
+                <div className="mt-2 flex items-center gap-2">
+                  <button type="button" className="btn btn-outline btn-xs" onClick={clearCanvas}>Clear</button>
+                  {signatureDataUrl && <span className="text-xs text-gray-500">Signature captured</span>}
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Use a mouse, finger or stylus to sign.</p>
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3 mt-2">
+            <button
+              onClick={() => setShowApprovalDialog(false)}
+              className="btn btn-secondary"
+              disabled={approveMutation.isPending}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => approveMutation.mutate()}
+              className="btn btn-primary"
+              disabled={approveMutation.isPending || (approveMode === 'image' && !user?.signatureUrl) || (approveMode === 'typed' && typedName.trim().length === 0) || (approveMode === 'drawn' && !signatureDataUrl)}
+            >
+              {approveMutation.isPending ? 'Approving...' : 'Confirm Approval'}
+            </button>
+          </div>
+        </Modal>
 
         {/* Rejection Dialog */}
-        {showRejectionDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-xl font-semibold mb-4">Reject Audit</h3>
-              <p className="text-gray-600 mb-4">
-                Please provide feedback explaining why this audit is being rejected.
-              </p>
-              <textarea
-                value={rejectionNote}
-                onChange={(e) => setRejectionNote(e.target.value)}
-                placeholder="Explain what needs to be corrected..."
-                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-                rows={4}
-                required
-              />
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowRejectionDialog(false)}
-                  className="flex-1 btn btn-secondary"
-                  disabled={rejectMutation.isPending}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (!rejectionNote.trim()) {
-                      alert('Please provide feedback for rejection')
-                      return
-                    }
-                    rejectMutation.mutate(rejectionNote.trim())
-                  }}
-                  className="flex-1 btn btn-danger"
-                  disabled={rejectMutation.isPending}
-                >
-                  {rejectMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
-                </button>
-              </div>
-            </div>
+        <Modal open={showRejectionDialog} onClose={() => setShowRejectionDialog(false)} title="Reject Audit">
+          <p className="text-gray-600">Please provide feedback explaining why this audit is being rejected.</p>
+          <textarea
+            value={rejectionNote}
+            onChange={(e) => setRejectionNote(e.target.value)}
+            placeholder="Explain what needs to be corrected..."
+            className="input"
+            rows={4}
+            required
+          />
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={() => setShowRejectionDialog(false)}
+              className="btn btn-secondary"
+              disabled={rejectMutation.isPending}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (!rejectionNote.trim()) {
+                  alert('Please provide feedback for rejection')
+                  return
+                }
+                rejectMutation.mutate(rejectionNote.trim())
+              }}
+              className="btn btn-danger"
+              disabled={rejectMutation.isPending}
+            >
+              {rejectMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
+            </button>
           </div>
-        )}
+        </Modal>
       </div>
     </DashboardLayout>
   )

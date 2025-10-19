@@ -4,7 +4,6 @@ import DashboardLayout from '../components/DashboardLayout'
 import { useQuery } from '@tanstack/react-query'
 import { Audit, Branch, User, AuditStatus, UserRole } from '@trakr/shared'
 import { api } from '../utils/api'
-import { QK } from '../utils/queryKeys'
 import StatusBadge from '@/components/StatusBadge'
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../stores/auth'
@@ -196,7 +195,7 @@ const SearchResults: React.FC = () => {
 
   return (
     <DashboardLayout title="Search Results">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
         {/* Search Header */}
         <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-6 shadow-sm">
           <div className="flex items-center gap-3">

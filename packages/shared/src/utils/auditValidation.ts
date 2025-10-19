@@ -1,4 +1,4 @@
-import { Audit, Survey, Question } from '../types'
+import { Audit, Survey, QuestionType } from '../types'
 
 export interface AuditValidationResult {
   isValid: boolean
@@ -28,20 +28,38 @@ export function validateAuditCompletion(
   // Iterate through all sections and questions
   for (const section of survey.sections) {
     for (const question of section.questions) {
-      // Skip non-required questions if we add that feature later
-      // For now, all questions are required
+      // Only count required questions
+      if (!question.required) continue
       totalRequired++
 
-      const response = audit.responses[question.id]
-      const hasNaReason = audit.naReasons && audit.naReasons[question.id]
+      const raw = audit.responses?.[question.id]
+      const response = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
+      const naReasonRaw = audit.naReasons?.[question.id]
+      const hasNaReason = typeof naReasonRaw === 'string' ? naReasonRaw.trim().length > 0 : !!naReasonRaw
 
-      // Valid if: has a response (Yes/No) OR has N/A with reason
-      if (response === 'Yes' || response === 'No') {
-        answered++
-      } else if (response === 'N/A' && hasNaReason) {
+      // Validity by type
+      const qType = (question.type || QuestionType.YES_NO)
+      let isAnswered = false
+      if (qType === QuestionType.YES_NO) {
+        // Treat N/A as answered regardless of justification to avoid blocking completion
+        if (response === 'yes' || response === 'no') isAnswered = true
+        else if (response === 'n/a' || response === 'na') isAnswered = true
+      } else if (qType === QuestionType.CHECKBOX) {
+        // CHECKBOX stored as JSON array string; require at least one selection
+        try {
+          const arr = JSON.parse((audit.responses?.[question.id] as any) || '[]')
+          isAnswered = Array.isArray(arr) && arr.length > 0
+        } catch {
+          isAnswered = false
+        }
+      } else {
+        // For other types, any non-empty response is considered answered
+        isAnswered = response.length > 0
+      }
+
+      if (isAnswered) {
         answered++
       } else {
-        // Missing or invalid response
         missingResponses.push({
           sectionTitle: section.title,
           questionText: question.text,

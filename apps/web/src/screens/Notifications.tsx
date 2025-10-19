@@ -1,257 +1,61 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Notification, NotificationType, Audit, Branch, User, UserRole } from '@trakr/shared'
+import { useQuery } from '@tanstack/react-query'
+import { Notification, NotificationType, User, UserRole } from '@trakr/shared'
 import { useAuthStore } from '../stores/auth'
-import { QK } from '../utils/queryKeys'
 import { api } from '../utils/api'
-import { BellIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { BellIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, XCircleIcon, DocumentPlusIcon, BuildingOfficeIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline'
 import { SkeletonList } from '@/components/Skeleton'
 import { useOrganization } from '../contexts/OrganizationContext'
+import { useNotificationsEngine } from '../notifications/useNotifications'
 
 const NotificationsScreen: React.FC = () => {
-  const { user } = useAuthStore()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const { effectiveOrgId, isSuperAdmin } = useOrganization()
+  const engine = useNotificationsEngine({ limit: 100, refetchIntervalMs: 30000 })
 
-  // Admins see ALL notifications (super user), others see only their own
-  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
+  // Data is provided by the engine
+  const isLoading = engine.loading
 
-  const { data: allNotifications = [], isLoading } = useQuery<Notification[]>({
-    queryKey: isAdmin ? QK.NOTIFICATIONS('all') : QK.NOTIFICATIONS(user?.id),
-    queryFn: async () => {
-      if (!user?.id) return []
-      
-      if (isAdmin) {
-        console.log(`🔍 [ADMIN] Notifications screen fetching ALL notifications`)
-        return await api.getAllNotifications()
-      } else {
-        return await api.getNotifications(user.id)
-      }
-    },
-    enabled: !!user?.id,
-  })
+  // Reconciliation is handled inside the engine
 
-  // Always fetch audits, branches, and users to derive notifications (org-scoped)
-  const { data: audits = [] } = useQuery<Audit[]>({
-    queryKey: ['audits', 'all', effectiveOrgId],
-    queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
-    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
-  })
+  // Derivation is handled by the engine (org-scoped)
 
-  const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: ['branches', effectiveOrgId],
-    queryFn: () => api.getBranches(effectiveOrgId),
-    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
-  })
+  // Derivation handled in engine
 
-  const { data: users = [] } = useQuery<User[]>({
-    queryKey: ['users', effectiveOrgId],
-    queryFn: () => (api as any).getUsers(effectiveOrgId),
-    enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
-  })
+  // Use engine-provided unified notifications and server-side pagination controls
+  const notifications = engine.uiNotifications
+  const hasMore = engine.hasMore
 
-  // Derive notifications from audits if table is empty
-  const derivedNotifications = React.useMemo((): Notification[] => {
-    if (allNotifications.length > 0 || !user) {
-      return allNotifications
-    }
+  // Local derived state handled by engine
 
-    const notifications: Notification[] = []
-    const userRole = user.role
+  // Actions are provided by the engine
 
-    audits.forEach(audit => {
-      const branch = branches.find(b => b.id === audit.branchId)
-      const branchName = branch?.name || 'Unknown Branch'
-      const auditor = users.find(u => u.id === audit.assignedTo)
-      const auditorName = auditor?.name || 'Unknown Auditor'
-
-      const statusLower = audit.status?.toLowerCase()
-      
-      // Notifications for Branch Managers/Admins/Super Admins: Submitted audits
-      if ((userRole === UserRole.BRANCH_MANAGER || userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN) && 
-          statusLower === 'submitted' && 
-          audit.submittedBy && 
-          audit.submittedAt) {
-        notifications.push({
-          id: `${audit.id}-submitted`,
-          userId: user.id,
-          type: NotificationType.AUDIT_SUBMITTED,
-          title: '✅ Audit Submitted for Approval',
-          message: `${auditorName} submitted an audit for ${branchName}`,
-          link: `/audits/${audit.id}/summary`,
-          isRead: false,
-          createdAt: new Date(audit.submittedAt),
-          relatedId: audit.id,
-          requiresAction: true,
-          actionType: 'REVIEW_AUDIT',
-        })
-      }
-
-      // Notifications for Admins: Approved audits (informational)
-      if ((userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN) && 
-          statusLower === 'approved' && 
-          audit.approvedBy && 
-          audit.approvedAt) {
-        const approver = users.find(u => u.id === audit.approvedBy)
-        notifications.push({
-          id: `${audit.id}-approved-admin`,
-          userId: user.id,
-          type: NotificationType.AUDIT_APPROVED,
-          title: '✅ Audit Approved',
-          message: `${branchName} audit was approved by ${approver?.name || 'Manager'}`,
-          link: `/audits/${audit.id}/summary`,
-          isRead: false,
-          createdAt: new Date(audit.approvedAt),
-          relatedId: audit.id,
-          requiresAction: false,
-        })
-      }
-
-      // Notifications for Auditors: Approved audits
-      if (userRole === UserRole.AUDITOR && 
-          audit.assignedTo === user.id &&
-          statusLower === 'approved' && 
-          audit.approvedBy && 
-          audit.approvedAt) {
-        const approver = users.find(u => u.id === audit.approvedBy)
-        notifications.push({
-          id: `${audit.id}-approved`,
-          userId: user.id,
-          type: NotificationType.AUDIT_APPROVED,
-          title: '✅ Audit Approved',
-          message: `Your audit for ${branchName} was approved by ${approver?.name || 'Manager'}`,
-          link: `/audits/${audit.id}/summary`,
-          isRead: false,
-          createdAt: new Date(audit.approvedAt),
-          relatedId: audit.id,
-          requiresAction: false,
-        })
-      }
-
-      // Notifications for Auditors: Rejected audits
-      if (userRole === UserRole.AUDITOR && 
-          audit.assignedTo === user.id &&
-          statusLower === 'rejected' && 
-          audit.rejectedBy && 
-          audit.rejectedAt) {
-        const rejecter = users.find(u => u.id === audit.rejectedBy)
-        notifications.push({
-          id: `${audit.id}-rejected`,
-          userId: user.id,
-          type: NotificationType.AUDIT_REJECTED,
-          title: '❌ Audit Rejected',
-          message: audit.rejectionNote 
-            ? `Your audit for ${branchName} was rejected by ${rejecter?.name || 'Manager'}: ${audit.rejectionNote}`
-            : `Your audit for ${branchName} was rejected by ${rejecter?.name || 'Manager'}`,
-          link: `/audits/${audit.id}/summary`,
-          isRead: false,
-          createdAt: new Date(audit.rejectedAt),
-          relatedId: audit.id,
-          requiresAction: true,
-          actionType: 'REVIEW_AUDIT',
-        })
-      }
-    })
-
-    // Sort by date descending
-    return notifications.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-  }, [allNotifications, audits, branches, users, user])
-
-  // Show up to 50 most recent notifications
-  const notifications = React.useMemo(() => {
-    return derivedNotifications.slice(0, 50)
-  }, [derivedNotifications])
-
-  // Mark as read mutation with optimistic updates for instant feedback
-  const markAsReadMutation = useMutation({
-    mutationFn: (notificationId: string) => api.markNotificationAsRead(notificationId),
-    onMutate: async (notificationId) => {
-      // Cancel outgoing refetches
-      const queryKey = isAdmin ? QK.NOTIFICATIONS('all') : QK.NOTIFICATIONS(user?.id)
-      await queryClient.cancelQueries({ queryKey })
-      
-      // Snapshot previous value
-      const previousNotifications = queryClient.getQueryData<Notification[]>(queryKey)
-      
-      // Optimistically update the notification
-      queryClient.setQueryData<Notification[]>(queryKey, (old) =>
-        old?.map((n) => 
-          n.id === notificationId ? { ...n, isRead: true } : n
-        ) || []
-      )
-      
-      // Return context with previous value
-      return { previousNotifications, queryKey }
-    },
-    onError: (_err, _notificationId, context) => {
-      // Rollback on error
-      if (context?.previousNotifications) {
-        queryClient.setQueryData(context.queryKey, context.previousNotifications)
-      }
-    },
-    onSuccess: () => {
-      // Invalidate unread count
-      queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user?.id) })
-    },
-  })
-
-  // Mark all as read mutation
-  const markAllAsReadMutation = useMutation({
-    mutationFn: () => {
-      if (!user?.id) throw new Error('No user ID')
-      return api.markAllNotificationsAsRead(user.id)
-    },
-    onMutate: async () => {
-      // Cancel outgoing refetches
-      const queryKey = isAdmin ? QK.NOTIFICATIONS('all') : QK.NOTIFICATIONS(user?.id)
-      await queryClient.cancelQueries({ queryKey })
-      
-      // Snapshot previous value
-      const previousNotifications = queryClient.getQueryData<Notification[]>(queryKey)
-      
-      // Optimistically mark all as read
-      queryClient.setQueryData<Notification[]>(queryKey, (old) =>
-        old?.map((n) => ({ ...n, isRead: true, readAt: new Date() })) || []
-      )
-      
-      return { previousNotifications, queryKey }
-    },
-    onError: (_err, _variables, context) => {
-      // Rollback on error
-      if (context?.previousNotifications) {
-        queryClient.setQueryData(context.queryKey, context.previousNotifications)
-      }
-    },
-    onSuccess: () => {
-      // Invalidate unread count
-      queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user?.id) })
-    },
-  })
+  // Actions are provided by the engine
 
   // Auto-mark disabled - notifications are marked as read when user clicks them
   // This matches the behavior of the notification dropdown
   // Users must explicitly click notifications to mark them as read
 
 
-  const getNotificationIcon = (type: NotificationType) => {
+  const getNotificationIcon = (type: NotificationType): React.ReactNode => {
     switch (type) {
       case NotificationType.AUDIT_SUBMITTED:
-        return '📋'
+        return <ClipboardDocumentCheckIcon className="w-6 h-6 text-indigo-600" />
       case NotificationType.AUDIT_APPROVED:
-        return '✅'
+        return <CheckCircleIcon className="w-6 h-6 text-green-600" />
       case NotificationType.AUDIT_REJECTED:
-        return '❌'
+        return <XCircleIcon className="w-6 h-6 text-red-600" />
       case NotificationType.SURVEY_CREATED:
-        return '📝'
+        return <DocumentPlusIcon className="w-6 h-6 text-blue-600" />
       case NotificationType.BRANCH_ASSIGNED:
-        return '🏢'
+        return <BuildingOfficeIcon className="w-6 h-6 text-slate-600" />
+      case NotificationType.AUDIT_DUE_SOON:
+        return <ClockIcon className="w-6 h-6 text-amber-600" />
+      case NotificationType.AUDIT_OVERDUE:
+        return <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
       default:
-        return '🔔'
+        return <BellIcon className="w-6 h-6 text-gray-500" />
     }
   }
 
@@ -271,13 +75,7 @@ const NotificationsScreen: React.FC = () => {
   }
 
   const handleNotificationAction = (notification: Notification) => {
-    // Mark as read (only for real database notifications with valid UUID)
-    if (!notification.isRead) {
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(notification.id)
-      if (isUUID) {
-        markAsReadMutation.mutate(notification.id)
-      }
-    }
+    if (!notification.isRead) engine.markAsRead(notification.id)
 
     // Navigate to relevant page
     if (notification.link) {
@@ -285,18 +83,16 @@ const NotificationsScreen: React.FC = () => {
     } else if (notification.relatedId && notification.requiresAction) {
       // Smart routing based on action type
       if (notification.actionType === 'REVIEW_AUDIT') {
-        navigate(`/audits/${notification.relatedId}/summary`)
+        navigate(`/audit/${notification.relatedId}/review`)
+      } else if (notification.actionType === 'FIX_AUDIT') {
+        navigate(`/audit/${notification.relatedId}/wizard`)
       }
     }
   }
 
   const handleMarkAsRead = (notificationId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    // Only mark as read if it's a valid UUID
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(notificationId)
-    if (isUUID) {
-      markAsReadMutation.mutate(notificationId)
-    }
+    engine.markAsRead(notificationId)
   }
 
   // Group notifications by date
@@ -315,7 +111,7 @@ const NotificationsScreen: React.FC = () => {
     const weekAgo = new Date(today)
     weekAgo.setDate(weekAgo.getDate() - 7)
 
-    notifications.forEach(notification => {
+    engine.uiNotifications.forEach(notification => {
       const notifDate = new Date(notification.createdAt)
       const notifDay = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
 
@@ -331,13 +127,13 @@ const NotificationsScreen: React.FC = () => {
     })
 
     return groups
-  }, [notifications])
+  }, [engine.uiNotifications])
 
-  const unreadCount = notifications.filter(n => !n.isRead).length
+  const unreadCount = engine.unreadCount
 
   return (
     <DashboardLayout title="Notifications">
-      <div className="mobile-container breathing-room">
+      <div className="space-y-6">
           {/* Header */}
           <div className="mb-6">
             {/* Desktop Layout */}
@@ -350,8 +146,8 @@ const NotificationsScreen: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => markAllAsReadMutation.mutate()}
-                  disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
+                  onClick={() => engine.markAllAsRead()}
+                  disabled={unreadCount === 0}
                   className="btn-secondary text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <CheckCircleIcon className="w-4 h-4" />
@@ -372,8 +168,8 @@ const NotificationsScreen: React.FC = () => {
                   {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'All caught up!'}
                 </p>
                 <button
-                  onClick={() => markAllAsReadMutation.mutate()}
-                  disabled={unreadCount === 0 || markAllAsReadMutation.isPending}
+                  onClick={() => engine.markAllAsRead()}
+                  disabled={unreadCount === 0}
                   className="btn-secondary text-xs px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 flex-shrink-0"
                 >
                   <CheckCircleIcon className="w-3.5 h-3.5" />
@@ -469,6 +265,13 @@ const NotificationsScreen: React.FC = () => {
                   </div>
                 </div>
               )}
+              {hasMore && (
+                <div className="mt-6 flex justify-center">
+                  <button onClick={() => engine.loadMore()} disabled={engine.loadingMore} className="btn-outline px-6 py-2 text-sm disabled:opacity-50">
+                    {engine.loadingMore ? 'Loading...' : 'Load more'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
       </div>
@@ -481,7 +284,7 @@ interface NotificationCardProps {
   onAction: (notification: Notification) => void
   onMarkAsRead: (id: string, e: React.MouseEvent) => void
   formatTime: (date: Date | string) => string
-  getIcon: (type: NotificationType) => string
+  getIcon: (type: NotificationType) => React.ReactNode
 }
 
 const NotificationCard: React.FC<NotificationCardProps> = ({
@@ -500,6 +303,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   })
   const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN
   const needsAction = notification.requiresAction && !notification.actionCompletedAt
+  const isOwner = notification.userId === user?.id
+  const isDb = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(notification.id))
 
   return (
     <div
@@ -510,7 +315,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
     >
       <div className="flex items-start gap-4">
         {/* Icon */}
-        <div className="text-3xl flex-shrink-0">{getIcon(notification.type)}</div>
+        <div className="flex-shrink-0">{getIcon(notification.type)}</div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -561,7 +366,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               {/* Mark as read */}
               {!notification.isRead && (
                 <button
-                  onClick={(e) => onMarkAsRead(notification.id, e)}
+                  onClick={(e) => { if (!(isDb && !isOwner)) onMarkAsRead(notification.id, e) }}
+                  disabled={isDb && !isOwner}
                   className="btn-outline btn-sm text-xs flex items-center gap-1.5"
                   title="Mark as read"
                 >

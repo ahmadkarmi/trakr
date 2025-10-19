@@ -21,7 +21,10 @@ export interface Audit {
   // Optional, per-section notes and photos captured by auditors
   sectionComments?: Record<string, string>; // sectionId -> comment
   sectionPhotos?: AuditPhoto[]; // section photos
-  photos?: AuditPhoto[]; // question/comment photos
+  /**
+   * @deprecated Per-question/comment photos are no longer used. Use `sectionPhotos` instead (per-page evidence).
+   */
+  photos?: AuditPhoto[]; // DEPRECATED: question/comment photos
   // Admin overrides for N/A on weighted questions (points are 0..maxPoints for the question)
   overrideScores?: Record<string, number>; // questionId -> override points
   overrideNotes?: Record<string, string>; // questionId -> note
@@ -41,6 +44,12 @@ export interface Audit {
   rejectedBy?: string;
   rejectedAt?: Date;
   rejectionNote?: string;
+  createdBy?: string;
+  createdOrigin?: 'SYSTEM_SCHEDULED' | 'USER' | 'API';
+  startedBy?: string;
+  startedAt?: Date;
+  completedBy?: string;
+  completedAt?: Date;
   // Scheduling metadata
   periodStart?: Date; // beginning of day/week/month/quarter for this audit based on survey frequency
   periodEnd?: Date;   // end of period for this audit
@@ -64,8 +73,10 @@ export interface AuditComment {
 export interface AuditPhoto {
   id: string;
   auditId: string;
-  sectionId?: string; // optional when photo is tied to a section rather than a question/comment
+  sectionId?: string; // preferred: section-level photo (per-page)
+  /** @deprecated Question-level photos are deprecated in favor of section-level photos. */
   questionId?: string;
+  /** @deprecated Comment-level photos are deprecated in favor of section-level photos. */
   commentId?: string;
   filename: string;
   url: string;

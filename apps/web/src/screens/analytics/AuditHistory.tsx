@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../utils/api'
-import { QK } from '../../utils/queryKeys'
-import { Audit, Branch, Survey, AuditStatus, calculateWeightedAuditScore, calculateAuditScore } from '@trakr/shared'
+import { Audit, Branch, Survey, AuditStatus, calculateWeightedAuditScore } from '@trakr/shared'
 import { format } from 'date-fns'
 import { useOrganization } from '../../contexts/OrganizationContext'
 
@@ -48,15 +47,9 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
         return { ...audit, calculatedScore: null }
       }
       
-      // Try weighted score first, fall back to compliance if no weighted questions
+      // Weighted-only: always use weighted compliance percentage
       const weightedScore = calculateWeightedAuditScore(audit, survey)
-      if (weightedScore.weightedPossiblePoints > 0) {
-        return { ...audit, calculatedScore: Math.round(weightedScore.weightedCompliancePercentage) }
-      }
-      
-      // Fallback to compliance score
-      const basicScore = calculateAuditScore(audit, survey)
-      return { ...audit, calculatedScore: Math.round(basicScore.compliancePercentage) }
+      return { ...audit, calculatedScore: Math.round(weightedScore.weightedCompliancePercentage) }
     })
   }, [audits, surveys])
 
@@ -235,8 +228,7 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
       </div>
 
       {/* Filters */}
-      <div className="card">
-        <div className="p-6">
+      <div className="card p-4 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Survey Template</label>
@@ -315,7 +307,7 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
             <div className="flex items-end">
               <button
                 onClick={exportToCSV}
-                className="btn-secondary flex items-center gap-2"
+                className="btn btn-outline flex items-center gap-2"
                 disabled={filteredAudits.length === 0}
               >
                 <span>📥</span>
@@ -323,7 +315,6 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
               </button>
             </div>
           </div>
-        </div>
       </div>
 
       {/* Table */}
@@ -334,7 +325,7 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
               <tr>
                 <th 
                   onClick={() => handleSort('date')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-4 sm:px-6 py-2.5 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 >
                   <div className="flex items-center gap-2">
                     Date
@@ -345,7 +336,7 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
                 </th>
                 <th 
                   onClick={() => handleSort('branch')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-4 sm:px-6 py-2.5 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 >
                   <div className="flex items-center gap-2">
                     Branch
@@ -354,15 +345,18 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
                     )}
                   </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-2.5 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Survey
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-2.5 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Version
+                </th>
+                <th className="px-4 sm:px-6 py-2.5 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th 
                   onClick={() => handleSort('score')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-4 sm:px-6 py-2.5 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 >
                   <div className="flex items-center gap-2">
                     Score
@@ -371,7 +365,7 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
                     )}
                   </div>
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-2.5 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -379,13 +373,13 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
             <tbody className="bg-white divide-y divide-gray-200">
               {auditsLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 sm:px-6 py-8 sm:py-12 text-center text-gray-500">
                     Loading audit history...
                   </td>
                 </tr>
               ) : filteredAudits.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 sm:px-6 py-8 sm:py-12 text-center text-gray-500">
                     <div className="text-4xl mb-2">📭</div>
                     <div>No audits found matching your filters</div>
                   </td>
@@ -397,22 +391,25 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
                   
                   return (
                     <tr key={audit.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-900">
                         {format(new Date(audit.createdAt), 'MMM dd, yyyy')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {branch?.name || 'Unknown'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">
                         {survey?.title || 'Unknown'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">
+                        {audit.surveyVersion}
+                      </td>
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm">
                         {getStatusBadge(audit.status)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm">
                         {getScoreBadge(audit.calculatedScore)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
                         <a
                           href={`/audit/${audit.id}`}
                           className="text-blue-600 hover:text-blue-900"

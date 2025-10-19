@@ -3,31 +3,8 @@ import { useOrganization } from '../contexts/OrganizationContext'
 export const OrganizationSwitcher = () => {
   const { currentOrg, availableOrgs, switchOrganization, isSuperAdmin } = useOrganization()
   
-  // Debug logging
-  console.log('[OrganizationSwitcher] DEBUG:', {
-    isSuperAdmin,
-    availableOrgsCount: availableOrgs.length,
-    currentOrg: currentOrg?.name,
-    availableOrgs: availableOrgs.map(o => o.name)
-  })
-  
-  // TEMPORARILY SHOW ALWAYS FOR DEBUGGING
-  // Remove this after testing
-  const FORCE_SHOW = true
-  
-  if (!FORCE_SHOW) {
-    // Only show for super admins
-    if (!isSuperAdmin) {
-      console.log('[OrganizationSwitcher] Hidden: Not super admin')
-      return null
-    }
-    
-    // Show if we have any organizations
-    if (availableOrgs.length === 0) {
-      console.log('[OrganizationSwitcher] Hidden: No organizations')
-      return null
-    }
-  }
+  // Only show for super admins with any organizations
+  if (!isSuperAdmin || availableOrgs.length === 0) return null
 
   return (
     <div className="border-b border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-100 px-4 py-3 shadow-sm">
