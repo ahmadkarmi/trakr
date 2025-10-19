@@ -38,13 +38,20 @@ export async function handleOnboardingIfNeeded(page: Page) {
  */
 export async function loginAsAdmin(page: Page) {
   await page.goto('/login')
-  await page.evaluate(() => localStorage.clear())
-  await page.goto('/login')
+  // Clear both localStorage and persisted zustand state
+  await page.evaluate(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+  await page.goto('/login', { waitUntil: 'networkidle' })
+  
+  // Wait for login form to be visible (handle slow rendering of parallax stars)
+  await page.waitForSelector('form, input[type="email"]', { timeout: 15_000 })
   
   try {
     // Try role button first (more reliable)
     const adminRoleButton = page.getByRole('button', { name: /Admin/i }).first()
-    if (await adminRoleButton.isVisible({ timeout: 5_000 })) {
+    if (await adminRoleButton.isVisible({ timeout: 10_000 })) {
       await adminRoleButton.click()
       await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 60_000 })
       await handleOnboardingIfNeeded(page)

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
+import { UserRole } from '@trakr/shared'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
 import { api } from '../utils/api'
 
@@ -56,6 +58,8 @@ const LoginScreen: React.FC = () => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [gyroPos, setGyroPos] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+  const { signIn } = useAuthStore()
 
   // Switch between auth modes
   const switchMode = (mode: AuthMode) => {
@@ -714,7 +718,7 @@ const LoginScreen: React.FC = () => {
       </div>
 
       {/* Vertical Gradient Layer - Desktop Only */}
-      <div className="hidden lg:block absolute inset-0 z-5">
+      <div className="hidden lg:block absolute inset-0 z-0">
         {/* Vertical gradient from black bottom to transparent - extended to 95% */}
         <div className="absolute bottom-0 left-0 w-full h-[95%] bg-gradient-to-t from-black via-slate-900/80 via-slate-800/60 via-slate-700/40 via-slate-600/20 to-transparent"></div>
       </div>
@@ -979,6 +983,57 @@ const LoginScreen: React.FC = () => {
                   )}
                 </button>
               </form>
+
+              {/* Dev/Test Only: Quick Access Role Buttons */}
+              {(import.meta.env.DEV || window.location.hostname === 'localhost') && authMode === 'login' && (
+                <div className="mt-6 pt-6 border-t border-white/20">
+                  <div className="text-center text-white/60 text-xs mb-3">Development Quick Access</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await signIn(UserRole.ADMIN)
+                          navigate('/dashboard/admin')
+                        } catch (e) {
+                          console.error('Quick login failed:', e)
+                        }
+                      }}
+                      className="text-xs bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-3 rounded border border-white/30 transition-all"
+                    >
+                      Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await signIn(UserRole.BRANCH_MANAGER)
+                          navigate('/dashboard/branch-manager')
+                        } catch (e) {
+                          console.error('Quick login failed:', e)
+                        }
+                      }}
+                      className="text-xs bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-3 rounded border border-white/30 transition-all"
+                    >
+                      Manager
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await signIn(UserRole.AUDITOR)
+                          navigate('/dashboard/auditor')
+                        } catch (e) {
+                          console.error('Quick login failed:', e)
+                        }
+                      }}
+                      className="text-xs bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-3 rounded border border-white/30 transition-all"
+                    >
+                      Auditor
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Mode Switch Links - Enhanced CTA */}
               <div className="text-center text-sm">
