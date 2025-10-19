@@ -61,5 +61,13 @@
         }
       }
     }
-  ]
+  ],
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
+  },
+  "yaml.schemaStore.enable": true,
+  "yaml.schemaStore.url": "https://www.schemastore.org/api/json/catalog.json",
+  "yaml.validate": true,
+  "yaml.completion": true,
+  "yaml.hover": true
 }
