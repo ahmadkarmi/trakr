@@ -37,28 +37,55 @@ export async function handleOnboardingIfNeeded(page: Page) {
  * Auto-completes onboarding if user doesn't have orgId.
  */
 export async function loginAsAdmin(page: Page) {
+  // First, ensure we're logged out
   await page.goto('/login')
-  // Clear both localStorage and persisted zustand state
   await page.evaluate(() => {
     localStorage.clear()
     sessionStorage.clear()
+    // Also clear zustand persisted state
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes('trakr') || key.includes('auth')) {
+        localStorage.removeItem(key)
+      }
+    })
   })
+  
+  // Force reload to clear any cached state
   await page.goto('/login', { waitUntil: 'networkidle' })
   
-  // Wait for login form to be visible (handle slow rendering of parallax stars)
-  await page.waitForSelector('form, input[type="email"]', { timeout: 15_000 })
+  // Check if we're already on a dashboard (persisted session)
+  if (page.url().includes('/dashboard')) {
+    console.log('[Auth Helper] Already logged in, logging out first')
+    try {
+      await page.goto('/login', { waitUntil: 'networkidle' })
+    } catch (e) {
+      // Ignore navigation errors
+    }
+  }
+  
+  // Wait for login UI to appear (either form or role buttons)
+  try {
+    await Promise.race([
+      page.waitForSelector('input[type="email"]', { timeout: 15_000 }),
+      page.waitForSelector('button:has-text("Admin")', { timeout: 15_000 })
+    ])
+  } catch (e) {
+    console.error('[Auth Helper] Login UI not found, current URL:', page.url())
+    throw new Error('Login page did not render properly. Check if already logged in or page structure changed.')
+  }
   
   try {
-    // Try role button first (more reliable)
+    // Try role button first (more reliable in dev)
     const adminRoleButton = page.getByRole('button', { name: /Admin/i }).first()
-    if (await adminRoleButton.isVisible({ timeout: 10_000 })) {
+    if (await adminRoleButton.isVisible({ timeout: 2_000 })) {
+      console.log('[Auth Helper] Using role button login')
       await adminRoleButton.click()
       await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 60_000 })
       await handleOnboardingIfNeeded(page)
       return
     }
   } catch (e) {
-    // Role button not available, try email/password
+    console.log('[Auth Helper] Role button not available, using email/password')
   }
   
   // Fallback to email/password
