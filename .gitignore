@@ -76,3 +76,9 @@ apps/mobile/ios/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Database backups (local only - don't commit large files)
+database/backups/local/
+*.sql
+*.sql.gz
+*.sql.zip

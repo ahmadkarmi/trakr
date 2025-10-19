@@ -1,0 +1,107 @@
+name: Automated Database Backup
+
+on:
+  schedule:
+    # Daily at 3 AM UTC (6 AM UAE time)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  backup-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          
+      - name: Create database backup
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          # Format: postgresql://postgres:[password]@[host]:5432/postgres
+        run: |
+          BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+          BACKUP_FILE="trakr-db-backup-${BACKUP_DATE}.sql"
+          
+          echo "Creating backup: ${BACKUP_FILE}"
+          
+          # Full database backup
+          pg_dump "${SUPABASE_DB_URL}" \
+            --no-owner \
+            --no-privileges \
+            --clean \
+            --if-exists \
+            > "${BACKUP_FILE}"
+          
+          # Compress backup
+          gzip "${BACKUP_FILE}"
+          
+          echo "Backup created: ${BACKUP_FILE}.gz"
+          ls -lh "${BACKUP_FILE}.gz"
+          
+      - name: Upload backup to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup-${{ github.run_number }}
+          path: trakr-db-backup-*.sql.gz
+          retention-days: 90 # Keep for 3 months
+          
+      - name: Upload to AWS S3 (optional)
+        if: secrets.AWS_ACCESS_KEY_ID != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          S3_BUCKET: ${{ secrets.S3_BACKUP_BUCKET }}
+        run: |
+          # Install AWS CLI
+          pip install awscli
+          
+          # Upload to S3
+          aws s3 cp trakr-db-backup-*.sql.gz \
+            s3://${S3_BUCKET}/database-backups/ \
+            --storage-class GLACIER_IR
+            
+  backup-schema-only:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          
+      - name: Backup database schema
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+          SCHEMA_FILE="trakr-schema-${BACKUP_DATE}.sql"
+          
+          # Schema-only backup (no data)
+          pg_dump "${SUPABASE_DB_URL}" \
+            --schema-only \
+            --no-owner \
+            --no-privileges \
+            > "${SCHEMA_FILE}"
+          
+          echo "Schema backup created: ${SCHEMA_FILE}"
+          
+      - name: Commit schema to repository
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          mkdir -p database/backups/schemas
+          cp trakr-schema-*.sql database/backups/schemas/latest-schema.sql
+          
+          git add database/backups/schemas/latest-schema.sql
+          git commit -m "chore: automated schema backup $(date +%Y-%m-%d)" || echo "No schema changes"
+          git push || echo "No changes to push"

@@ -1,0 +1,37 @@
+name: Mirror Repository Backup
+
+on:
+  push:
+    branches: [main, production]
+  schedule:
+    # Daily backup at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror to backup location
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url: ${{ secrets.BACKUP_REPO_URL }}
+          ssh_private_key: ${{ secrets.BACKUP_SSH_KEY }}
+          
+  create-archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Create archive
+        run: |
+          git archive --format=tar.gz --prefix=trakr-backup-$(date +%Y%m%d)/ HEAD > trakr-backup-$(date +%Y%m%d).tar.gz
+          
+      - name: Upload to cloud storage
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-backup-${{ github.sha }}
+          path: trakr-backup-*.tar.gz
+          retention-days: 90 # Keep for 3 months
