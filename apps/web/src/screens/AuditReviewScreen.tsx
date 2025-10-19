@@ -18,6 +18,7 @@ import { CheckCircleIcon, XCircleIcon, ArrowLeftIcon } from '@heroicons/react/24
 import StatusBadge from '@/components/StatusBadge'
 import { notificationHelpers } from '../utils/notifications'
 import { useOrganization } from '../contexts/OrganizationContext'
+import { logger } from '../utils/logger'
 
 /**
  * Audit Review Screen for Branch Managers
@@ -201,12 +202,12 @@ export default function AuditReviewScreen() {
         // Complete the actionable notification for this audit
         try {
           await api.completeNotificationAction(audit.id, 'REVIEW_AUDIT')
-          console.log('✅ Notification action completed (approved)')
+          logger.debug('Notification action completed (approved)', { context: 'AuditReviewScreen' })
           // Invalidate notification queries to update UI
           queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
           queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user.id) })
         } catch (error) {
-          console.error('Failed to complete notification action:', error)
+          logger.error('Failed to complete notification action', error, { context: 'AuditReviewScreen' })
         }
         
         // Notify auditor about approval (best-effort)
@@ -218,7 +219,7 @@ export default function AuditReviewScreen() {
             approverName: user.name || user.email,
           })
         } catch (err) {
-          console.warn('⚠️ Non-blocking: failed to create approval notification (likely RLS).', err)
+          logger.warn('Non-blocking: failed to create approval notification (likely RLS)', { context: 'AuditReviewScreen', data: err })
         }
       }
       
@@ -246,12 +247,12 @@ export default function AuditReviewScreen() {
         // Complete the actionable notification for this audit
         try {
           await api.completeNotificationAction(audit.id, 'REVIEW_AUDIT')
-          console.log('✅ Notification action completed (rejected)')
+          logger.debug('Notification action completed (rejected)', { context: 'AuditReviewScreen' })
           // Invalidate notification queries to update UI
           queryClient.invalidateQueries({ queryKey: QK.NOTIFICATIONS(user.id) })
           queryClient.invalidateQueries({ queryKey: QK.UNREAD_NOTIFICATIONS(user.id) })
         } catch (error) {
-          console.error('Failed to complete notification action:', error)
+          logger.error('Failed to complete notification action', error, { context: 'AuditReviewScreen' })
         }
         
         // Notify auditor about rejection (best-effort)
@@ -264,7 +265,7 @@ export default function AuditReviewScreen() {
             reason: rejectReason,
           })
         } catch (err) {
-          console.warn('⚠️ Non-blocking: failed to create rejection notification (likely RLS).', err)
+          logger.warn('Non-blocking: failed to create rejection notification (likely RLS)', { context: 'AuditReviewScreen', data: err })
         }
       }
       
