@@ -6,6 +6,10 @@
       "handle": "filesystem"
     },
     {
+      "src": "/favicon.ico",
+      "dest": "/icon.svg"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
