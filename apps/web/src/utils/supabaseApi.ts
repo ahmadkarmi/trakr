@@ -1,6 +1,7 @@
 import { Audit, AuditStatus, AuditorAssignment, Branch, Organization, User, UserRole, Zone, Survey, UserInvitation, OnboardingProgress } from '@trakr/shared'
 import type { Tables, Enums } from '@trakr/shared'
 import { getSupabase } from './supabaseClient'
+import { logger } from './logger'
 
 // Helpers
 const toDate = (s?: string | null) => (s ? new Date(s) : undefined)
@@ -1325,7 +1326,7 @@ export const supabaseApi = {
       const res2 = await supabase.from('activity_logs').insert(fallback as any)
       error = res2.error
     }
-    if (error) console.error('Failed to create activity log:', error)
+    if (error) logger.error('Failed to create activity log', error, { context: 'SupabaseAPI' })
   },
 
   // Zones CRUD
@@ -1696,7 +1697,7 @@ export const supabaseApi = {
     if (updates.email) {
       const { error: authError } = await supabase.auth.updateUser({ email: updates.email })
       if (authError) {
-        console.error('Failed to update auth user email:', authError)
+        logger.error('Failed to update auth user email', authError, { context: 'SupabaseAPI' })
         // Do not proceed with DB update if auth update fails
         throw authError
       }
@@ -1786,7 +1787,7 @@ export const supabaseApi = {
       .from('public')
       .remove([filePath])
 
-    if (error) console.error('Failed to delete logo:', error)
+    if (error) logger.error('Failed to delete logo', error, { context: 'SupabaseAPI' })
   },
 
   // User management functions
@@ -1851,7 +1852,7 @@ export const supabaseApi = {
     // 3. Edge Function to handle invitation emails
     
     // For now, we'll log this action (can be picked up by monitoring)
-    console.log(`Resend invitation: ${user.email}`)
+    logger.info(`Resend invitation: ${user.email}`, { context: 'SupabaseAPI' })
     
     // In production, implement one of:
     // await supabase.auth.admin.generateLink({ type: 'magiclink', email: user.email })
@@ -2165,11 +2166,13 @@ export const supabaseApi = {
     requiresAction?: boolean
     actionType?: string
   }): Promise<void> {
-    console.log('📤 [Supabase] Creating notification:', {
-      userId: notification.userId,
-      type: notification.type,
-      title: notification.title,
-      requiresAction: notification.requiresAction
+    logger.debug('Creating notification', {
+      context: 'SupabaseAPI',
+      data: {
+        userId: notification.userId,
+        type: notification.type,
+        title: notification.title,
+      }
     })
     
     const supabase = await getSupabase()
@@ -2205,7 +2208,7 @@ export const supabaseApi = {
 
     if (insert.error && insert.error.code === '23503') {
       // Foreign key references public.users in this environment; retry with app user id
-      console.warn('⚠️ [Supabase] FK violation on auth user id; retrying with app user id')
+      logger.warn('FK violation on auth user id; retrying with app user id', { context: 'SupabaseAPI' })
       insert = await supabase
         .from('notifications')
         .insert({
@@ -2225,18 +2228,21 @@ export const supabaseApi = {
 
     if (insert.error) {
       if ((insert.error as any).code === '23505') {
-        console.debug('[Supabase] Duplicate notification ignored', {
-          userId: notification.userId,
-          relatedId: notification.relatedId,
-          type: notification.type,
+        logger.debug('Duplicate notification ignored', {
+          context: 'SupabaseAPI',
+          data: {
+            userId: notification.userId,
+            relatedId: notification.relatedId,
+            type: notification.type,
+          }
         })
         return
       }
-      console.error('❌ [Supabase] Failed to create notification:', insert.error)
+      logger.error('Failed to create notification', insert.error, { context: 'SupabaseAPI' })
       throw insert.error
     }
     
-    console.log('✅ [Supabase] Notification created successfully:', insert.data)
+    logger.debug('Notification created successfully', { context: 'SupabaseAPI', data: insert.data })
   },
 
   async completeNotificationAction(relatedId: string, actionType: string): Promise<void> {

@@ -4,6 +4,8 @@ import { useAuthStore } from '../stores/auth'
 import { UserRole } from '@trakr/shared'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
 import { api } from '../utils/api'
+import { logger } from '../utils/logger'
+import { safeLocalStorage } from '../utils/safeStorage'
 
 type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password'
 type AuthStatus = 'idle' | 'submitting' | 'success' | 'error'
@@ -227,11 +229,11 @@ const LoginScreen: React.FC = () => {
       
       // Set session persistence based on "Remember Me" checkbox
       if (rememberMe) {
-        console.log('[Auth] Remember me enabled - session will persist for 30 days')
+        logger.info('Remember me enabled - session will persist for 30 days', { context: 'LoginScreen' })
         // Store preference for extended session (Supabase handles this via local storage)
-        localStorage.setItem('trakr_remember_me', 'true')
+        safeLocalStorage.setItem('trakr_remember_me', 'true')
       } else {
-        localStorage.removeItem('trakr_remember_me')
+        safeLocalStorage.removeItem('trakr_remember_me')
       }
       
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -255,7 +257,7 @@ const LoginScreen: React.FC = () => {
           appUser = allUsers.value.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
         }
       } catch (apiError) {
-        console.error('[Auth] Parallel lookup failed, trying sequential', apiError)
+        logger.warn('Parallel lookup failed, trying sequential', { context: 'LoginScreen', data: apiError })
         // Fallback to sequential lookup
         try {
           appUser = await api.getUserById(authUser.id)
@@ -478,7 +480,7 @@ const LoginScreen: React.FC = () => {
             window.addEventListener('deviceorientation', handleOrientation, { passive: true })
           }
         } catch (error) {
-          console.log('Device orientation permission denied')
+          logger.debug('Device orientation permission denied', { context: 'LoginScreen' })
         }
       } else {
         // For non-iOS devices
@@ -996,12 +998,12 @@ const LoginScreen: React.FC = () => {
                           await signIn(UserRole.ADMIN)
                           navigate('/dashboard/admin')
                         } catch (e) {
-                          console.error('Quick login failed:', e)
+                          logger.error('Quick login failed', e, { context: 'LoginScreen' })
                         }
                       }}
                       className="text-xs bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-3 rounded border border-white/30 transition-all"
                     >
-                      Admin
+                      Login as Admin
                     </button>
                     <button
                       type="button"
@@ -1010,12 +1012,12 @@ const LoginScreen: React.FC = () => {
                           await signIn(UserRole.BRANCH_MANAGER)
                           navigate('/dashboard/branch-manager')
                         } catch (e) {
-                          console.error('Quick login failed:', e)
+                          logger.error('Quick login failed', e, { context: 'LoginScreen' })
                         }
                       }}
                       className="text-xs bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-3 rounded border border-white/30 transition-all"
                     >
-                      Manager
+                      Login as Branch Manager
                     </button>
                     <button
                       type="button"
@@ -1024,12 +1026,12 @@ const LoginScreen: React.FC = () => {
                           await signIn(UserRole.AUDITOR)
                           navigate('/dashboard/auditor')
                         } catch (e) {
-                          console.error('Quick login failed:', e)
+                          logger.error('Quick login failed', e, { context: 'LoginScreen' })
                         }
                       }}
                       className="text-xs bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-3 rounded border border-white/30 transition-all"
                     >
-                      Auditor
+                      Login as Auditor
                     </button>
                   </div>
                 </div>

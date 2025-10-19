@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useState } from 'react'
+import { logger } from '../utils/logger'
 
 interface PerformanceMetrics {
   // Core Web Vitals
@@ -122,7 +123,7 @@ export function usePerformanceMonitoring() {
       fidObserver.observe({ entryTypes: ['first-input'] })
       clsObserver.observe({ entryTypes: ['layout-shift'] })
     } catch (error) {
-      console.warn('Some performance observers not supported:', error)
+      logger.warn('Some performance observers not supported', { context: 'PerformanceMonitoring', data: error })
     }
 
     // Get initial metrics
@@ -190,19 +191,23 @@ export function usePerformanceMonitoring() {
     // Only log if we have meaningful metrics (at least one metric is available)
     const hasMetrics = metrics.fcp || metrics.lcp || metrics.fid !== null || metrics.cls !== null || metrics.ttfb || metrics.loadTime
     
-    if (process.env.NODE_ENV === 'development' && hasMetrics) {
-      console.group('🚀 Performance Metrics')
-      if (metrics.fcp) console.log('First Contentful Paint:', `${metrics.fcp.toFixed(2)}ms`)
-      if (metrics.lcp) console.log('Largest Contentful Paint:', `${metrics.lcp.toFixed(2)}ms`)
-      if (metrics.fid !== null) console.log('First Input Delay:', `${metrics.fid.toFixed(2)}ms`)
-      if (metrics.cls !== null) console.log('Cumulative Layout Shift:', metrics.cls.toFixed(4))
-      if (metrics.ttfb) console.log('Time to First Byte:', `${metrics.ttfb.toFixed(2)}ms`)
-      if (metrics.loadTime) console.log('Load Time:', `${metrics.loadTime.toFixed(2)}ms`)
-      if (metrics.memoryUsage) console.log('Memory Usage:', `${(metrics.memoryUsage / 1024 / 1024).toFixed(2)}MB`)
-      if (metrics.connectionType) console.log('Connection Type:', metrics.connectionType)
-      const score = getPerformanceScore()
-      if (score) console.log('Performance Score:', score)
-      console.groupEnd()
+    if (hasMetrics) {
+      logger.group('Performance Metrics', () => {
+        if (metrics.fcp) logger.perf('First Contentful Paint', metrics.fcp)
+        if (metrics.lcp) logger.perf('Largest Contentful Paint', metrics.lcp)
+        if (metrics.fid !== null) logger.perf('First Input Delay', metrics.fid)
+        if (metrics.cls !== null) logger.debug(`Cumulative Layout Shift: ${metrics.cls.toFixed(4)}`, { context: 'PerformanceMonitoring' })
+        if (metrics.ttfb) logger.perf('Time to First Byte', metrics.ttfb)
+        if (metrics.loadTime) logger.perf('Load Time', metrics.loadTime)
+        if (metrics.memoryUsage) {
+          logger.debug(`Memory Usage: ${(metrics.memoryUsage / 1024 / 1024).toFixed(2)}MB`, { context: 'PerformanceMonitoring' })
+        }
+        if (metrics.connectionType) {
+          logger.debug(`Connection Type: ${metrics.connectionType}`, { context: 'PerformanceMonitoring' })
+        }
+        const score = getPerformanceScore()
+        if (score) logger.debug(`Performance Score: ${score}`, { context: 'PerformanceMonitoring' })
+      })
     }
   }, [metrics, getPerformanceScore])
 
@@ -241,9 +246,7 @@ export function usePerformanceMonitoring() {
     const endTime = performance.now()
     const duration = startTime ? endTime - startTime : endTime
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`⏱️ ${name}: ${duration.toFixed(2)}ms`)
-    }
+    logger.perf(name, duration)
 
     // You could store custom metrics in state or send to analytics
     return duration

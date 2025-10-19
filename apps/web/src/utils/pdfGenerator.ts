@@ -1,4 +1,5 @@
-import { jsPDF } from 'jspdf'
+import jsPDF from 'jspdf'
+import { logger } from './logger'
 import type { Audit, Branch, User, Survey } from '@trakr/shared'
 import { calculateAuditScore, calculateWeightedAuditScore } from '@trakr/shared'
 
@@ -22,7 +23,7 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
       reader.readAsDataURL(blob)
     })
   } catch (error) {
-    console.error('Failed to load image:', error)
+    logger.error('Failed to load image', error, { context: 'PDFGenerator' })
     return null
   }
 }

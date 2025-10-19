@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { logger } from '../utils/logger'
 
 interface PWAState {
   isOnline: boolean
@@ -33,7 +34,7 @@ export function usePWA() {
     const registerSW = async () => {
       // Skip service worker registration in development
       if (import.meta.env.DEV) {
-        console.log('Service Worker skipped in development mode')
+        logger.info('Service Worker skipped in development mode', { context: 'PWA' })
         return
       }
 
@@ -61,9 +62,9 @@ export function usePWA() {
             }
           })
 
-          console.log('Service Worker registered successfully')
+          logger.info('Service Worker registered successfully', { context: 'PWA' })
         } catch (error) {
-          console.error('Service Worker registration failed:', error)
+          logger.error('Service Worker registration failed', error, { context: 'PWA' })
         }
       }
     }

@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/auth'
 import { api } from '../utils/api'
 import { CheckCircleIcon, BuildingOfficeIcon, UserGroupIcon, MapIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
+import { logger } from '../utils/logger'
 
 interface OnboardingStep {
   id: number
@@ -92,7 +93,7 @@ const AdminOnboarding: React.FC = () => {
       toast.success('Organization created successfully!')
       setCurrentStep(2)
     } catch (error: any) {
-      console.error('Failed to create organization:', error)
+      logger.error('Failed to create organization', error, { context: 'AdminOnboarding' })
       toast.error(error.message || 'Failed to create organization')
     } finally {
       setIsSubmitting(false)
@@ -144,7 +145,7 @@ const AdminOnboarding: React.FC = () => {
       toast.success('Structure set up successfully!')
       setCurrentStep(3)
     } catch (error: any) {
-      console.error('Failed to set up structure:', error)
+      logger.error('Failed to set up structure', error, { context: 'AdminOnboarding' })
       toast.error(error.message || 'Failed to set up structure')
     } finally {
       setIsSubmitting(false)
@@ -196,7 +197,7 @@ const AdminOnboarding: React.FC = () => {
       setCurrentStep(4)
       setTimeout(() => navigate('/dashboard/admin'), 1500)
     } catch (error: any) {
-      console.error('Failed to send invitations:', error)
+      logger.error('Failed to send invitations', error, { context: 'AdminOnboarding' })
       toast.error(error.message || 'Failed to send invitations')
     } finally {
       setIsSubmitting(false)

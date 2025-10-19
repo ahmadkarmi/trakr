@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
 import { api } from '../utils/api'
+import { logger } from '../utils/logger'
 import { 
   CheckCircleIcon, 
   EnvelopeIcon, 
@@ -47,7 +48,7 @@ const UserOnboarding: React.FC = () => {
         setInvitation(inv)
         setIsLoading(false)
       } catch (err: any) {
-        console.error('Failed to load invitation:', err)
+        logger.error('Failed to load invitation', err, { context: 'UserOnboarding' })
         setError('Failed to load invitation')
         setIsLoading(false)
       }
@@ -79,7 +80,7 @@ const UserOnboarding: React.FC = () => {
       toast.success('Invitation accepted!')
       setCurrentStep(2)
     } catch (err: any) {
-      console.error('Failed to accept invitation:', err)
+      logger.error('Failed to accept invitation', err, { context: 'UserOnboarding' })
       toast.error(err.message || 'Failed to accept invitation')
     } finally {
       setIsSubmitting(false)
@@ -134,7 +135,7 @@ const UserOnboarding: React.FC = () => {
         }
       }, 1500)
     } catch (err: any) {
-      console.error('Failed to complete profile:', err)
+      logger.error('Failed to complete profile', err, { context: 'UserOnboarding' })
       toast.error(err.message || 'Failed to complete profile')
     } finally {
       setIsSubmitting(false)

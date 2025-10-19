@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth'
 import { api } from '../../utils/api'
 import { Audit, Branch, User, AuditStatus, UserRole, BranchManagerAssignment, Survey, calculateWeightedAuditScore } from '@trakr/shared'
+import { logger } from '../../utils/logger'
 import AnalyticsChart from '../../components/analytics/AnalyticsChart'
 import TeamPerformanceTable from '../../components/analytics/TeamPerformanceTable'
 import AnalyticsKPICard from '../../components/analytics/AnalyticsKPICard'
@@ -59,9 +60,14 @@ const BranchManagerAnalytics: React.FC = () => {
     branchAudits.some(audit => audit.assignedTo === u.id)
   )
   
-  console.log('[Branch Manager Analytics] My Branch IDs:', myBranchIds)
-  console.log('[Branch Manager Analytics] Branch Audits:', branchAudits.length)
-  console.log('[Branch Manager Analytics] All Audits:', audits.length)
+  logger.debug('Branch manager scope loaded', {
+    context: 'BranchManagerAnalytics',
+    data: {
+      myBranchIds,
+      branchAuditsCount: branchAudits.length,
+      allAuditsCount: audits.length
+    }
+  })
 
   // Calculate branch-specific KPIs
   const totalBranchAudits = branchAudits.length

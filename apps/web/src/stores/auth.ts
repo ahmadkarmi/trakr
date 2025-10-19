@@ -5,6 +5,7 @@ import { api } from '../utils/api'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
 import { preloadDashboardChunk } from '../hooks/useDashboardPrefetch'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
+import { logger } from '../utils/logger'
 
 async function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)) }
 
@@ -124,7 +125,7 @@ export const useAuthStore = create<AuthState>()(
                 appUser = allUsers.value.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
               }
             } catch (parallelError) {
-              console.warn('[Auth] Parallel lookup failed, trying sequential', parallelError)
+              logger.warn('Parallel lookup failed, trying sequential', { context: 'AuthStore', data: parallelError })
               // Fallback to sequential lookup
               try {
                 appUser = await api.getUserById(authUser.id)
@@ -168,7 +169,7 @@ export const useAuthStore = create<AuthState>()(
           const fallback = mockUsers[role]
           preloadDashboardChunk(fallback.role)
           set({ user: fallback, isAuthenticated: true, isLoading: false })
-          console.error('Role-based login failed, using mock fallback:', e)
+          logger.error('Role-based login failed, using mock fallback', e, { context: 'AuthStore' })
         }
       },
 

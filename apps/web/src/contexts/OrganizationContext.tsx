@@ -4,6 +4,8 @@ import { api } from '../utils/api'
 import { useAuthStore } from '../stores/auth'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import { logger } from '../utils/logger'
+import { safeLocalStorage } from '../utils/safeStorage'
 
 interface OrganizationContextType {
   currentOrg: Organization | null
@@ -48,8 +50,8 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         setAvailableOrgs(orgs)
         
         // Load stored preferences
-        const storedOrgId = localStorage.getItem('super_admin_active_org')
-        const viewScope = localStorage.getItem('super_admin_view_scope') || 'ORG'
+        const storedOrgId = safeLocalStorage.getItem('super_admin_active_org')
+        const viewScope = safeLocalStorage.getItem('super_admin_view_scope') || 'ORG'
         const allView = viewScope === 'ALL'
         
         // Validate stored org still exists (auto-heal stale localStorage)
@@ -59,10 +61,11 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         
         if (storedOrgId && !storedOrgStillExists) {
           // Auto-heal: remove invalid localStorage
-          console.warn(
-            `[OrganizationContext] Stored organization ${storedOrgId} no longer exists. Clearing preferences.`
+          logger.warn(
+            `Stored organization ${storedOrgId} no longer exists. Clearing preferences.`,
+            { context: 'OrganizationContext' }
           )
-          localStorage.removeItem('super_admin_active_org')
+          safeLocalStorage.removeItem('super_admin_active_org')
         }
         
         setGlobalViewState(allView)
@@ -80,7 +83,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
           
           // If we auto-switched to first org, update localStorage
           if (activeOrg && activeOrg.id !== storedOrgId) {
-            localStorage.setItem('super_admin_active_org', activeOrg.id)
+            safeLocalStorage.setItem('super_admin_active_org', activeOrg.id)
           }
         }
         
@@ -91,8 +94,10 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         const userOrg = orgs.find(o => o.id === user.orgId)
         
         if (!userOrg && user.orgId) {
-          console.error(
-            `[OrganizationContext] User's organization ${user.orgId} not found in available organizations`
+          logger.error(
+            `User's organization ${user.orgId} not found in available organizations`,
+            undefined,
+            { context: 'OrganizationContext' }
           )
         }
         
@@ -100,10 +105,10 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         setAvailableOrgs(userOrg ? [userOrg] : [])
       }
     } catch (error) {
-      console.error('[OrganizationContext] Failed to load organizations:', error)
+      logger.error('Failed to load organizations', error, { context: 'OrganizationContext' })
       // Auto-heal: clear potentially corrupt localStorage on error
-      localStorage.removeItem('super_admin_active_org')
-      localStorage.removeItem('super_admin_view_scope')
+      safeLocalStorage.removeItem('super_admin_active_org')
+      safeLocalStorage.removeItem('super_admin_view_scope')
       setCurrentOrg(null)
       setAvailableOrgs([])
     } finally {
@@ -117,13 +122,13 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
 
   const switchOrganization = async (orgId: string, force: boolean = false) => {
     if (!isSuperAdmin) {
-      console.warn('[OrganizationContext] Only super admins can switch organizations')
+      logger.warn('Only super admins can switch organizations', { context: 'OrganizationContext' })
       return
     }
     
     // Race condition protection: prevent concurrent switches
     if (isSwitching) {
-      console.warn('[OrganizationContext] Organization switch already in progress, ignoring request')
+      logger.warn('Organization switch already in progress, ignoring request', { context: 'OrganizationContext' })
       return
     }
     
@@ -135,7 +140,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       )
       
       if (!confirmed) {
-        console.log('[OrganizationContext] Org switch cancelled by user (unsaved changes)')
+        logger.info('Org switch cancelled by user (unsaved changes)', { context: 'OrganizationContext' })
         return
       }
     }
@@ -150,9 +155,9 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         
         // Update org state
         setCurrentOrg(org)
-        localStorage.setItem('super_admin_active_org', orgId)
+        safeLocalStorage.setItem('super_admin_active_org', orgId)
         // Ensure we are in ORG scope when selecting a specific org
-        localStorage.setItem('super_admin_view_scope', 'ORG')
+        safeLocalStorage.setItem('super_admin_view_scope', 'ORG')
         setGlobalViewState(false)
         
         // Clear query cache to ensure fresh data for new org
@@ -160,7 +165,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         
         // (audit trail omitted in web client)
         
-        console.log(`[OrganizationContext] Switched to organization: ${org.name} (${orgId})`)
+        logger.info(`Switched to organization: ${org.name} (${orgId})`, { context: 'OrganizationContext' })
         
         // Navigate to admin dashboard instead of reloading
         // This prevents 404 errors and ensures proper routing
@@ -169,7 +174,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         // Reset switching state after navigation
         setTimeout(() => setIsSwitching(false), 100)
       } catch (error) {
-        console.error('[OrganizationContext] Error during org switch:', error)
+        logger.error('Error during org switch', error, { context: 'OrganizationContext' })
         setIsSwitching(false)
         // On error, try to navigate to dashboard anyway
         navigate('/dashboard/admin', { replace: true })
@@ -188,13 +193,13 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       )
       
       if (!confirmed) {
-        console.log('[OrganizationContext] View mode switch cancelled by user (unsaved changes)')
+        logger.info('View mode switch cancelled by user (unsaved changes)', { context: 'OrganizationContext' })
         return
       }
     }
     
     setGlobalViewState(on)
-    localStorage.setItem('super_admin_view_scope', on ? 'ALL' : 'ORG')
+    safeLocalStorage.setItem('super_admin_view_scope', on ? 'ALL' : 'ORG')
     // When switching to ALL, clear currentOrg to avoid confusion
     if (on) {
       setCurrentOrg(null)
@@ -202,7 +207,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     
     // Clear query cache and navigate to dashboard
     queryClient.clear()
-    console.log(`[OrganizationContext] Switched to ${on ? 'global' : 'organization-specific'} view`)
+    logger.info(`Switched to ${on ? 'global' : 'organization-specific'} view`, { context: 'OrganizationContext' })
     navigate('/dashboard/admin', { replace: true })
   }
 

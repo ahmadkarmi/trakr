@@ -2,35 +2,36 @@
 // This can be run in the browser console to test the API
 
 import { api } from './utils/api'
+import { logger } from './utils/logger'
 
 export async function testMultipleBranchManagerSystem() {
-  console.log('🧪 Testing Multiple Branch Manager System Integration...\n')
+  logger.info('Testing Multiple Branch Manager System Integration...', { context: 'IntegrationTest' })
 
   try {
     // Test 1: Get initial data
-    console.log('1️⃣ Getting initial data...')
+    logger.info('1️⃣ Getting initial data...', { context: 'IntegrationTest' })
     const branches = await api.getBranches()
     const users = await api.getUsers()
     
-    console.log(`   Found ${branches.length} branches`)
-    console.log(`   Found ${users.length} users`)
+    logger.info(`Found ${branches.length} branches`, { context: 'IntegrationTest' })
+    logger.info(`Found ${users.length} users`, { context: 'IntegrationTest' })
     
     const branchManagers = users.filter(u => u.role === 'BRANCH_MANAGER' as any)
     const admins = users.filter(u => u.role === 'ADMIN' as any)
     
-    console.log(`   Found ${branchManagers.length} branch managers`)
-    console.log(`   Found ${admins.length} admins`)
+    logger.info(`Found ${branchManagers.length} branch managers`, { context: 'IntegrationTest' })
+    logger.info(`Found ${admins.length} admins`, { context: 'IntegrationTest' })
 
     if (branches.length === 0) {
-      console.log('❌ No branches found for testing')
+      logger.warn('No branches found for testing', { context: 'IntegrationTest' })
       return
     }
 
     const testBranch = branches[0]
-    console.log(`   Testing with branch: ${testBranch.name} (${testBranch.id})`)
+    logger.info(`Testing with branch: ${testBranch.name} (${testBranch.id})`, { context: 'IntegrationTest' })
 
     // Test 2: Test new API methods exist
-    console.log('\n2️⃣ Testing API method availability...')
+    logger.info('2️⃣ Testing API method availability...', { context: 'IntegrationTest' })
     const apiMethods = [
       'getBranchManagerAssignments',
       'assignBranchManager', 
@@ -45,39 +46,39 @@ export async function testMultipleBranchManagerSystem() {
 
     apiMethods.forEach(method => {
       if (typeof (api as any)[method] === 'function') {
-        console.log(`   ✅ ${method} - Available`)
+        logger.info(`✅ ${method} - Available`, { context: 'IntegrationTest' })
       } else {
-        console.log(`   ❌ ${method} - Missing`)
+        logger.warn(`❌ ${method} - Missing`, { context: 'IntegrationTest' })
       }
     })
 
     // Test 3: Test branch manager assignments
-    console.log('\n3️⃣ Testing branch manager assignments...')
+    logger.info('3️⃣ Testing branch manager assignments...', { context: 'IntegrationTest' })
     try {
       const assignments = await api.getBranchManagerAssignments(testBranch.id)
-      console.log(`   ✅ getBranchManagerAssignments: Found ${assignments.length} assignment(s)`)
+      logger.info(`✅ getBranchManagerAssignments: Found ${assignments.length} assignment(s)`, { context: 'IntegrationTest' })
       
       assignments.forEach((assignment, index) => {
         const manager = users.find(u => u.id === assignment.managerId)
-        console.log(`   Assignment ${index + 1}: ${manager?.name || 'Unknown'} (${assignment.managerId})`)
+        logger.info(`Assignment ${index + 1}: ${manager?.name || 'Unknown'} (${assignment.managerId})`, { context: 'IntegrationTest' })
       })
     } catch (error) {
-      console.log(`   ❌ getBranchManagerAssignments failed: ${(error as Error).message}`)
+      logger.error('getBranchManagerAssignments failed', error, { context: 'IntegrationTest' })
     }
 
     // Test 4: Test approval authority
-    console.log('\n4️⃣ Testing approval authority...')
+    logger.info('4️⃣ Testing approval authority...', { context: 'IntegrationTest' })
     
     if (branchManagers.length > 0) {
       try {
         const manager = branchManagers[0]
         const authority = await api.getApprovalAuthority(testBranch.id, manager.id)
-        console.log(`   ✅ Manager authority check:`)
-        console.log(`      Can approve: ${authority.canApprove}`)
-        console.log(`      Authority: ${authority.authority}`)
-        console.log(`      Reason: ${authority.reason}`)
+        logger.info('✅ Manager authority check', { 
+          context: 'IntegrationTest',
+          data: { canApprove: authority.canApprove, authority: authority.authority, reason: authority.reason }
+        })
       } catch (error) {
-        console.log(`   ❌ Manager authority check failed: ${(error as Error).message}`)
+        logger.error('Manager authority check failed', error, { context: 'IntegrationTest' })
       }
     }
 
@@ -85,52 +86,57 @@ export async function testMultipleBranchManagerSystem() {
       try {
         const admin = admins[0]
         const authority = await api.getApprovalAuthority(testBranch.id, admin.id)
-        console.log(`   ✅ Admin authority check:`)
-        console.log(`      Can approve: ${authority.canApprove}`)
-        console.log(`      Authority: ${authority.authority}`)
-        console.log(`      Reason: ${authority.reason}`)
+        logger.info('✅ Admin authority check', {
+          context: 'IntegrationTest',
+          data: { canApprove: authority.canApprove, authority: authority.authority, reason: authority.reason }
+        })
       } catch (error) {
-        console.log(`   ❌ Admin authority check failed: ${(error as Error).message}`)
+        logger.error('Admin authority check failed', error, { context: 'IntegrationTest' })
       }
     }
 
     // Test 5: Test review locks
-    console.log('\n5️⃣ Testing review locks...')
+    logger.info('5️⃣ Testing review locks...', { context: 'IntegrationTest' })
     try {
       const testAuditId = 'test-audit-123'
       const testUserId = users[0]?.id || 'test-user'
       
       // Create a lock
       const lock = await api.createReviewLock(testAuditId, testUserId)
-      console.log(`   ✅ Created review lock: ${lock.auditId}`)
-      console.log(`      Reviewer: ${lock.reviewedBy}`)
-      console.log(`      Expires: ${lock.lockExpiresAt}`)
+      logger.info('✅ Created review lock', {
+        context: 'IntegrationTest',
+        data: { auditId: lock.auditId, reviewer: lock.reviewedBy, expires: lock.lockExpiresAt }
+      })
       
       // Get active lock
       const activeLock = await api.getActiveReviewLock(testAuditId)
-      console.log(`   ✅ Retrieved active lock: ${activeLock ? 'Found' : 'Not found'}`)
+      logger.info(`✅ Retrieved active lock: ${activeLock ? 'Found' : 'Not found'}`, { context: 'IntegrationTest' })
       
       // Release lock
       await api.releaseReviewLock(testAuditId, testUserId)
-      console.log(`   ✅ Released review lock`)
+      logger.info('✅ Released review lock', { context: 'IntegrationTest' })
       
       // Verify lock is gone
       const noLock = await api.getActiveReviewLock(testAuditId)
-      console.log(`   ✅ Lock after release: ${noLock ? 'Still exists' : 'Properly removed'}`)
+      logger.info(`✅ Lock after release: ${noLock ? 'Still exists' : 'Properly removed'}`, { context: 'IntegrationTest' })
       
     } catch (error) {
-      console.log(`   ❌ Review lock test failed: ${(error as Error).message}`)
+      logger.error('Review lock test failed', error, { context: 'IntegrationTest' })
     }
 
-    console.log('\n🎉 Integration test completed!')
-    console.log('\n📋 Next steps:')
-    console.log('   1. Test the UI components in the browser')
-    console.log('   2. Test branch manager assignment workflow')
-    console.log('   3. Test approval authority in real audit scenarios')
-    console.log('   4. Verify audit trail is properly recorded')
+    logger.info('🎉 Integration test completed!', { context: 'IntegrationTest' })
+    logger.info('📋 Next steps:', { 
+      context: 'IntegrationTest',
+      data: [
+        '1. Test the UI components in the browser',
+        '2. Test branch manager assignment workflow',
+        '3. Test approval authority in real audit scenarios',
+        '4. Verify audit trail is properly recorded'
+      ]
+    })
 
   } catch (error) {
-    console.error('❌ Integration test failed:', error)
+    logger.error('❌ Integration test failed', error, { context: 'IntegrationTest' })
   }
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { offlineStorage, OfflineAudit } from '../utils/offlineStorage'
 import { useErrorHandler } from './useErrorHandler'
+import { logger } from '../utils/logger'
 
 interface SyncStatus {
   isOnline: boolean
@@ -143,7 +144,7 @@ export function useOfflineSync() {
             syncProgress: Math.round((completedItems / totalItems) * 100)
           }))
         } catch (error) {
-          console.error(`Failed to sync ${item.type}:`, error)
+          logger.error(`Failed to sync ${item.type}`, error, { context: 'OfflineSync' })
           // Continue with other items even if one fails
         }
       }
@@ -205,7 +206,7 @@ export function useOfflineSync() {
       formData.append('section_id', photo.sectionId)
     } else if (photo.questionId) {
       // Legacy fallback (deprecated): server should ignore and client should migrate to section-level
-      console.warn('[offlineSync] Legacy photo without sectionId; skipping questionId-based upload')
+      logger.warn('Legacy photo without sectionId; skipping questionId-based upload', { context: 'OfflineSync' })
       throw new Error('Legacy photo missing sectionId')
     }
 
@@ -271,7 +272,7 @@ export function useOfflineAudit() {
             return await response.json()
           }
         } catch (error) {
-          console.warn('Online save failed, falling back to offline:', error)
+          logger.warn('Online save failed, falling back to offline', { context: 'OfflineSync', data: error })
         }
       }
 
@@ -295,7 +296,7 @@ export function useOfflineAudit() {
             return await response.json()
           }
         } catch (error) {
-          console.warn('Online fetch failed, falling back to offline:', error)
+          logger.warn('Online fetch failed, falling back to offline', { context: 'OfflineSync', data: error })
         }
       }
 

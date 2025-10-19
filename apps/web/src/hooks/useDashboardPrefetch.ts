@@ -2,8 +2,10 @@ import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/auth'
 import { UserRole } from '@trakr/shared'
-import { api } from '../utils/api'
+import { queryClient } from '../lib/queryClient'
 import { QK } from '../utils/queryKeys'
+import { api } from '../utils/api'
+import { logger } from '../utils/logger'
 
 /**
  * Prefetch dashboard data and component chunks while user is signing in
@@ -32,7 +34,7 @@ export function useDashboardPrefetch() {
         ])
       } catch (error) {
         // Prefetch failures are non-critical; dashboard will fetch on mount
-        console.log('[Prefetch] Background data fetch completed')
+        logger.debug('Background data fetch completed', { context: 'DashboardPrefetch' })
       }
     }
 

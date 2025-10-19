@@ -1,6 +1,7 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../utils/api'
+import { logger } from '../utils/logger'
 import { QK } from '../utils/queryKeys'
 
 interface AutoSaveOptions {
@@ -74,7 +75,7 @@ export function useAuditAutoSave({
           error 
         }))
       }
-      console.error('[AutoSave] Failed to save audit:', error)
+      logger.error('AutoSave failed to save audit', error, { context: 'AuditAutoSave' })
     }
   })
 

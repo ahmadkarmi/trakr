@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { XMarkIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { logger } from '../utils/logger'
+import { safeLocalStorage } from '../utils/safeStorage'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -30,7 +32,7 @@ export default function PWAInstallPrompt() {
       
       // Show prompt after a delay (don't be too aggressive)
       setTimeout(() => {
-        if (!localStorage.getItem('pwa-install-dismissed')) {
+        if (!safeLocalStorage.getItem('pwa-install-dismissed')) {
           setShowPrompt(true)
         }
       }, 10000) // Show after 10 seconds
@@ -38,7 +40,7 @@ export default function PWAInstallPrompt() {
 
     // Listen for app installed event
     const handleAppInstalled = () => {
-      console.log('PWA was installed')
+      logger.info('PWA was installed', { context: 'PWAInstallPrompt' })
       setIsInstalled(true)
       setShowPrompt(false)
       setDeferredPrompt(null)
@@ -60,22 +62,22 @@ export default function PWAInstallPrompt() {
       await deferredPrompt.prompt()
       const { outcome } = await deferredPrompt.userChoice
       
-      console.log(`User ${outcome} the install prompt`)
+      logger.info(`User ${outcome} the install prompt`, { context: 'PWAInstallPrompt' })
       
       setDeferredPrompt(null)
       setShowPrompt(false)
       
       if (outcome === 'dismissed') {
-        localStorage.setItem('pwa-install-dismissed', 'true')
+        safeLocalStorage.setItem('pwa-install-dismissed', 'true')
       }
     } catch (error) {
-      console.error('Error showing install prompt:', error)
+      logger.error('Error showing install prompt', error, { context: 'PWAInstallPrompt' })
     }
   }
 
   const handleDismiss = () => {
     setShowPrompt(false)
-    localStorage.setItem('pwa-install-dismissed', 'true')
+    safeLocalStorage.setItem('pwa-install-dismissed', 'true')
   }
 
   // Don't show if already installed or no prompt available
