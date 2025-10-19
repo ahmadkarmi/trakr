@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../utils/api'
+import { logger } from '../utils/logger'
 import { useAuthStore } from '../stores/auth'
 import { useOrganization } from '../contexts/OrganizationContext'
 import { PaperAirplaneIcon, TrashIcon, ClockIcon } from '@heroicons/react/24/outline'
@@ -48,7 +49,7 @@ const InvitationManager: React.FC = () => {
         toast.success('Invitation link copied to clipboard!')
       }).catch(() => {
         // Fallback: show the link
-        console.log('Invitation link:', inviteUrl)
+        logger.debug('Invitation link', { context: 'InvitationManager', data: { inviteUrl } })
       })
       
       // Reset form

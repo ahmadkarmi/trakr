@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react'
+import { logger } from '../utils/logger'
 import { useNavigate, useParams } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -869,7 +870,7 @@ const AuditWizard: React.FC = () => {
                         await saveProgress.mutateAsync({ responses, naReasons, sectionComments })
                         navigate('/dashboard/auditor')
                       } catch (err) {
-                        console.error('Save error:', err)
+                        logger.error('Save error', err, { context: 'AuditWizard' })
                       }
                     }
                   }}

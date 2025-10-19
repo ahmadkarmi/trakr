@@ -297,7 +297,11 @@ class OfflineStorageManager {
 // Singleton instance
 export const offlineStorage = new OfflineStorageManager()
 
+import { logger } from './logger'
+
 // Initialize on module load
 if (typeof window !== 'undefined') {
-  offlineStorage.init().catch(console.error)
+  offlineStorage.init().catch((error) => {
+    logger.error('Failed to initialize offline storage', error, { context: 'OfflineStorage' })
+  })
 }
