@@ -26,7 +26,7 @@ export const OrganizationSwitcher = () => {
               <option value="">Select Organization...</option>
               {availableOrgs.map(org => (
                 <option key={org.id} value={org.id}>
-                  {org.name} ({(org as any).subscription_status || 'active'})
+                  {org.name} (…{org.id.slice(-6)})
                 </option>
               ))}
             </select>
