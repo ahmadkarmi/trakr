@@ -9,7 +9,7 @@ on:
 
 jobs:
   mirror:
-    if: ${{ secrets.BACKUP_REPO_URL && secrets.BACKUP_SSH_KEY }}
+    if: ${{ secrets.BACKUP_REPO_URL != '' && secrets.BACKUP_SSH_KEY != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Mirror to backup location
