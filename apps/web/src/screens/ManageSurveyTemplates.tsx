@@ -33,9 +33,10 @@ const ManageSurveyTemplates: React.FC = () => {
         description: '',
         sections: [],
         createdBy: user?.id || 'user-3',
+        orgId: effectiveOrgId || '',
       }),
     onSuccess: (created) => {
-      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      queryClient.invalidateQueries({ queryKey: ['surveys', effectiveOrgId] })
       if (created?.id) navigate(`/manage/surveys/${created.id}/edit`)
       showToast({ message: 'New survey created!', variant: 'success' })
     },
@@ -48,7 +49,7 @@ const ManageSurveyTemplates: React.FC = () => {
   })
 
   const duplicateMutation = useMutation({
-    mutationFn: (id: string) => api.duplicateSurvey(id, user?.id || 'user-3'),
+    mutationFn: (id: string) => api.duplicateSurvey(id, user?.id || 'user-3', effectiveOrgId || ''),
     onSuccess: (_result, id) => {
       queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
       const survey = surveys.find(s => s.id === id)
@@ -68,7 +69,7 @@ const ManageSurveyTemplates: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteSurvey(id),
     onSuccess: (_result, id) => {
-      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      queryClient.invalidateQueries({ queryKey: ['surveys', effectiveOrgId] })
       const survey = surveys.find(s => s.id === id)
       showToast({ 
         message: `Survey "${survey?.title || 'Survey'}" deleted successfully!`, 
@@ -84,9 +85,9 @@ const ManageSurveyTemplates: React.FC = () => {
   })
 
   const toggleActiveMutation = useMutation({
-    mutationFn: (s: Survey) => api.updateSurvey(s.id, { isActive: !s.isActive }),
+    mutationFn: (s: Survey) => (api as any).updateSurvey(s.id, { isActive: !s.isActive }, effectiveOrgId),
     onSuccess: (_result, survey) => {
-      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      queryClient.invalidateQueries({ queryKey: ['surveys', effectiveOrgId] })
       showToast({ 
         message: `Survey "${survey.title}" ${!survey.isActive ? 'activated' : 'deactivated'}!`, 
         variant: 'success' 
@@ -101,9 +102,9 @@ const ManageSurveyTemplates: React.FC = () => {
   })
 
   const updateFrequencyMutation = useMutation({
-    mutationFn: (payload: { id: string; frequency: AuditFrequency }) => api.updateSurvey(payload.id, { frequency: payload.frequency }),
+    mutationFn: (payload: { id: string; frequency: AuditFrequency }) => (api as any).updateSurvey(payload.id, { frequency: payload.frequency }, effectiveOrgId),
     onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
+      queryClient.invalidateQueries({ queryKey: ['surveys', effectiveOrgId] })
       const survey = surveys.find(s => s.id === variables.id)
       showToast({ 
         message: `Survey "${survey?.title || 'Survey'}" frequency updated!`, 

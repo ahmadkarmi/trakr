@@ -4,7 +4,6 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Survey, SurveySection, SurveyQuestion, QuestionType, QUESTION_TYPE_LABELS, AuditFrequency } from '@trakr/shared'
 import { api } from '../utils/api'
-import { QK } from '../utils/queryKeys'
 import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon, ChevronUpIcon, ChevronDownIcon, PencilSquareIcon, XMarkIcon, InformationCircleIcon, TrophyIcon, ListBulletIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
@@ -18,9 +17,9 @@ const SurveyTemplateEditor: React.FC = () => {
   const { effectiveOrgId } = useOrganization()
 
   const { data: survey, isLoading } = useQuery<Survey | null>({
-    queryKey: QK.SURVEY(surveyId),
-    queryFn: () => (surveyId ? api.getSurveyById(surveyId) : Promise.resolve(null)),
-    enabled: isEditing,
+    queryKey: ['survey', surveyId, effectiveOrgId],
+    queryFn: () => (surveyId ? (api as any).getSurveyById(surveyId, effectiveOrgId) : Promise.resolve(null)),
+    enabled: isEditing && !!effectiveOrgId,
   })
 
   const { data: publishLogs } = useQuery({
@@ -34,11 +33,12 @@ const SurveyTemplateEditor: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<Pick<Survey, 'title' | 'description' | 'isActive' | 'sections' | 'frequency' | 'applicableBranchIds'>>) => {
       if (!surveyId) throw new Error('No surveyId provided')
-      return api.updateSurvey(surveyId, payload)
+      return (api as any).updateSurvey(surveyId, payload, effectiveOrgId)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QK.SURVEYS })
-      if (surveyId) queryClient.invalidateQueries({ queryKey: QK.SURVEY(surveyId) })
+    onSuccess: (_data, variables) => {
+      if ((variables as any)?.sections) setContentDirty(false)
+      queryClient.invalidateQueries({ queryKey: ['surveys', effectiveOrgId] })
+      if (surveyId) queryClient.invalidateQueries({ queryKey: ['survey', surveyId, effectiveOrgId] })
       if (surveyId && effectiveOrgId) queryClient.invalidateQueries({ queryKey: ['survey_last_published', surveyId, effectiveOrgId] })
       showToast({ message: 'Survey updated successfully!', variant: 'success' })
     },
@@ -63,6 +63,7 @@ const SurveyTemplateEditor: React.FC = () => {
   const [modalErrors, setModalErrors] = React.useState<Record<string, string>>({})
   const [pendingPoints, setPendingPoints] = React.useState<number | null>(null)
   const [pointsInputValue, setPointsInputValue] = React.useState<string>('')
+  const [contentDirty, setContentDirty] = React.useState(false)
 
   React.useEffect(() => {
     if (survey) {
@@ -72,13 +73,27 @@ const SurveyTemplateEditor: React.FC = () => {
       setFrequency(survey.frequency || AuditFrequency.UNLIMITED)
       setApplicableBranchIds(survey.applicableBranchIds || [])
       const nextSections = Array.isArray(survey.sections) ? survey.sections.map(s => ({ ...s })) : []
-      setSections(nextSections)
-      setSelectedSectionId(nextSections[0]?.id || null)
+      // Do not overwrite in-memory edits when only metadata was saved
+      if (!contentDirty) {
+        setSections(nextSections)
+        setSelectedSectionId(nextSections[0]?.id || null)
+      }
     }
-  }, [survey])
+  }, [survey, contentDirty])
 
   const onSave = () => {
     updateMutation.mutate({ title, description, isActive: active, sections, frequency, applicableBranchIds })
+  }
+
+  const onSaveMetadataOnly = () => {
+    if (contentDirty) {
+      const proceed = window.confirm('You have changes to pages/questions. "Save Metadata" does not include content changes. Do you want to publish a new version instead?')
+      if (proceed) {
+        onSave()
+        return
+      }
+    }
+    updateMutation.mutate({ title, description, isActive: active, frequency, applicableBranchIds })
   }
 
   // Helpers
@@ -94,10 +109,12 @@ const SurveyTemplateEditor: React.FC = () => {
     }
     setSections(prev => [...prev, newSection])
     setSelectedSectionId(newSection.id)
+    setContentDirty(true)
   }
 
   const updateSectionField = (sectionId: string, field: keyof Pick<SurveySection, 'title' | 'description'>, value: string) => {
     setSections(prev => prev.map(s => s.id === sectionId ? { ...s, [field]: value } : s))
+    setContentDirty(true)
   }
 
   // Section-level weighting removed; section influence is derived from question points
@@ -112,8 +129,10 @@ const SurveyTemplateEditor: React.FC = () => {
       const tmp = newArr[idx]
       newArr[idx] = newArr[swapWith]
       newArr[swapWith] = tmp
-      return newArr.map((s, i) => ({ ...s, order: i }))
+      const updated = newArr.map((s, i) => ({ ...s, order: i }))
+      return updated
     })
+    setContentDirty(true)
   }
 
   const removeSection = (sectionId: string) => {
@@ -125,6 +144,7 @@ const SurveyTemplateEditor: React.FC = () => {
       }
       return filtered
     })
+    setContentDirty(true)
   }
 
   const addQuestion = (sectionId: string) => {
@@ -159,6 +179,7 @@ const SurveyTemplateEditor: React.FC = () => {
       newQs[swapWith] = tmp
       return { ...s, questions: newQs.map((q, i) => ({ ...q, order: i })) }
     }))
+    setContentDirty(true)
   }
 
   const removeQuestion = (sectionId: string, questionId: string) => {
@@ -166,6 +187,7 @@ const SurveyTemplateEditor: React.FC = () => {
       ...s,
       questions: s.questions.filter(q => q.id !== questionId).map((q, i) => ({ ...q, order: i })),
     } : s))
+    setContentDirty(true)
   }
 
   const openEditQuestion = (sectionId: string, questionId: string) => {
@@ -280,6 +302,7 @@ const SurveyTemplateEditor: React.FC = () => {
         }
       }
     }))
+    setContentDirty(true)
     closeQuestionModal()
   }, [questionModal, validateDraft])
 
@@ -594,8 +617,8 @@ const SurveyTemplateEditor: React.FC = () => {
                   </button>
                   <button 
                     className="btn btn-outline btn-responsive-sm" 
-                    title="Save metadata without creating a new version"
-                    onClick={() => updateMutation.mutate({ title, description, isActive: active, frequency, applicableBranchIds })}
+                    title="Save settings only; does not include page/question changes"
+                    onClick={onSaveMetadataOnly}
                     disabled={updateMutation.isPending}
                   >
                     {updateMutation.isPending ? 'Saving…' : 'Save Metadata'}

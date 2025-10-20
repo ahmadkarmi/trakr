@@ -935,9 +935,11 @@ export const supabaseApi = {
   },
 
   // Surveys
-  async getSurveyById(id: string) {
+  async getSurveyById(id: string, orgId?: string) {
     const supabase = await getSupabase()
-    const { data: s, error } = await supabase.from('surveys').select('*').eq('id', id).maybeSingle()
+    let q = supabase.from('surveys').select('*').eq('id', id)
+    if (orgId) q = q.eq('org_id', orgId)
+    const { data: s, error } = await q.maybeSingle()
     if (error) throw error
     if (!s) return null
     const currentVersion = (s as any).version ?? 1
@@ -1454,19 +1456,10 @@ export const supabaseApi = {
   },
 
   // Surveys CRUD
-  async createSurvey(payload: { title: string; description: string; sections: any[]; createdBy: string; applicableBranchIds?: string[] }): Promise<Partial<Survey> & { id: string }> {
+  async createSurvey(payload: { title: string; description: string; sections: any[]; createdBy: string; orgId: string; applicableBranchIds?: string[] }): Promise<Partial<Survey> & { id: string }> {
     const supabase = await getSupabase()
-    // Resolve org from user; fall back to first organization if user not found (dev convenience)
-    let orgId: string | null = null
-    const { data: user, error: uErr } = await supabase.from('users').select('*').eq('id', payload.createdBy).maybeSingle()
-    if (uErr) throw uErr
-    if (user) orgId = (user as Tables<'users'>).org_id
-    if (!orgId) {
-      const { data: org, error: oErr } = await supabase.from('organizations').select('id').order('created_at', { ascending: true }).limit(1).maybeSingle()
-      if (oErr) throw oErr
-      orgId = (org as any)?.id || null
-    }
-    if (!orgId) throw new Error('No organization available for survey creation')
+    const orgId = payload.orgId
+    if (!orgId) throw new Error('Organization context required for survey creation')
     const now = new Date().toISOString()
     const { data: s, error } = await supabase
       .from('surveys')
@@ -1520,10 +1513,11 @@ export const supabaseApi = {
     }
     return { id: surveyId }
   },
-  async duplicateSurvey(id: string, _userId: string): Promise<void> {
+  async duplicateSurvey(id: string, _userId: string, orgId: string): Promise<void> {
     const supabase = await getSupabase()
     const { data: s, error } = await supabase.from('surveys').select('*').eq('id', id).single()
     if (error || !s) throw error || new Error('Survey not found')
+    if (((s as any).org_id as string) !== orgId) throw new Error('Organization mismatch')
     const currentVersion = (s as any).version ?? 1
     const { data: sections, error: e2 } = await supabase
       .from('survey_sections')
@@ -1547,7 +1541,7 @@ export const supabaseApi = {
     const now = new Date().toISOString()
     // New copy starts at version 1 for a clean history
     const { data: ns, error: nErr } = await supabase.from('surveys').insert({
-      org_id: (s as Tables<'surveys'>).org_id,
+      org_id: orgId,
       title: `Copy of ${(s as Tables<'surveys'>).title}`,
       description: (s as Tables<'surveys'>).description || null,
       is_active: (s as Tables<'surveys'>).is_active,
@@ -1587,9 +1581,13 @@ export const supabaseApi = {
       if (qInsErr) throw qInsErr
     }
   },
-  async updateSurvey(id: string, updates: Partial<{ title: string; description: string; isActive: boolean; sections: any[]; frequency: any; applicableBranchIds: string[] }>): Promise<void> {
+  async updateSurvey(id: string, updates: Partial<{ title: string; description: string; isActive: boolean; sections: any[]; frequency: any; applicableBranchIds: string[] }>, expectedOrgId?: string): Promise<void> {
     const supabase = await getSupabase()
     const now = new Date().toISOString()
+    const { data: orgRow, error: orgErr } = await supabase.from('surveys').select('org_id').eq('id', id).maybeSingle()
+    if (orgErr) throw orgErr
+    if (!orgRow) throw new Error('Survey not found')
+    if (expectedOrgId && ((orgRow as any).org_id as string) !== expectedOrgId) throw new Error('Organization mismatch')
     const base: any = { updated_at: now }
     if (updates.title != null) base.title = updates.title
     if (updates.description != null) base.description = updates.description
@@ -1604,10 +1602,14 @@ export const supabaseApi = {
       }
       return
     }
-    // Sections provided: use atomic RPC to bump version and insert sections/questions
-    const { data: surveyRow } = await supabase.from('surveys').select('org_id').eq('id', id).maybeSingle()
+    // Sections provided: try RPC to bump version; if it fails, fall back to manual versioning
+    const { data: surveyRow } = await supabase.from('surveys').select('org_id, version').eq('id', id).maybeSingle()
     const orgId = (surveyRow as any)?.org_id || null
+    const currentVersion = Number((surveyRow as any)?.version || 0)
     const payloadSections = JSON.parse(JSON.stringify(updates.sections))
+    let newVersionNum: number | null = null
+    let publishedVia: 'rpc' | 'fallback' = 'rpc'
+    // Attempt RPC first
     const { data: rpcVersion, error: rpcErr } = await (supabase as any).rpc('publish_survey_version', {
       p_survey_id: id,
       p_sections: payloadSections,
@@ -1617,15 +1619,58 @@ export const supabaseApi = {
       p_frequency: base.frequency ?? null,
       p_applicable_branch_ids: base.applicable_branch_ids ?? null,
     })
-    if (rpcErr) throw rpcErr
-    const newVersionNum = (rpcVersion as number) || null
+    if (rpcErr) {
+      // Fallback: manual version bump + inserts (best-effort when RPC missing or permission denied)
+      publishedVia = 'fallback'
+      newVersionNum = (currentVersion || 0) + 1
+      // Update surveys row with new version and metadata
+      const { error: updErr } = await supabase.from('surveys').update({
+        ...(base || {}),
+        version: newVersionNum,
+      } as any).eq('id', id)
+      if (updErr) throw updErr
+      // Insert sections and questions for new version
+      const secRows = (payloadSections || []).map((sec: any, idx: number) => ({
+        survey_id: id,
+        title: sec.title || `Page ${idx + 1}`,
+        description: sec.description || null,
+        order_num: idx,
+        version: newVersionNum,
+      }))
+      const { data: insertedSecs, error: sErr } = await supabase.from('survey_sections').insert(secRows as any).select('*')
+      if (sErr) throw sErr
+      // Map questions per inserted section order
+      for (let i = 0; i < (payloadSections || []).length; i++) {
+        const srcSec = payloadSections[i]
+        const dstSec = (insertedSecs || [])[i] as Tables<'survey_sections'>
+        const qRows = (srcSec.questions || []).map((q: any, qIdx: number) => ({
+          survey_id: id,
+          section_id: dstSec.id,
+          question_text: q.text || '',
+          question_type: String(q.type || 'yes_no').toLowerCase(),
+          required: !!q.required,
+          order_num: q.order ?? qIdx,
+          is_weighted: !!q.isWeighted,
+          yes_weight: q.yesWeight ?? 0,
+          no_weight: q.noWeight ?? 0,
+          version: newVersionNum,
+        }))
+        if (qRows.length) {
+          const { error: qErr } = await supabase.from('survey_questions').insert(qRows as any)
+          if (qErr) throw qErr
+        }
+      }
+    } else {
+      newVersionNum = (rpcVersion as number) || null
+    }
+    // Activity log (do not block on errors)
     try {
       const { data: auth } = await supabase.auth.getUser()
       const uid = auth?.user?.id || ''
       await this.createActivityLog(
         uid,
         'SURVEY_PUBLISHED',
-        newVersionNum ? `Published survey version v${newVersionNum}` : 'Published survey',
+        newVersionNum ? `Published survey version v${newVersionNum} (${publishedVia})` : `Published survey (${publishedVia})`,
         'survey',
         id,
         orgId || undefined,
