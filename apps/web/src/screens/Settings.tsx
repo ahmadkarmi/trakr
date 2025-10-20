@@ -394,7 +394,7 @@ const Settings: React.FC = () => {
                     <option value="">{globalView ? 'Global view enabled' : (availableOrgs.length === 0 ? 'No organizations available' : 'Select Organization...')}</option>
                     {availableOrgs.map(org => (
                       <option key={org.id} value={org.id}>
-                        {org.name} ({(org as any).subscription_status || 'active'})
+                        {org.name} (…{org.id.slice(-6)})
                       </option>
                     ))}
                   </select>
