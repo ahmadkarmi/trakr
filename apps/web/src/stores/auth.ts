@@ -187,11 +187,18 @@ export const useAuthStore = create<AuthState>()(
           
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e) {
-          // Last-resort fallback to local mock identity (keeps demo usable)
-          const fallback = mockUsers[role]
-          preloadDashboardChunk(fallback.role)
-          set({ user: fallback, isAuthenticated: true, isLoading: false })
-          logger.error('Role-based login failed, using mock fallback', e, { context: 'AuthStore' })
+          // Last-resort fallback to local mock identity (development only)
+          if (import.meta.env.DEV) {
+            const fallback = mockUsers[role]
+            preloadDashboardChunk(fallback.role)
+            set({ user: fallback, isAuthenticated: true, isLoading: false })
+            logger.error('Role-based login failed, using mock fallback (DEV only)', e, { context: 'AuthStore' })
+          } else {
+            // In production, fail loudly instead of masking the issue
+            set({ isLoading: false })
+            logger.error('Role-based login failed in production', e, { context: 'AuthStore' })
+            throw e
+          }
         }
       },
 
