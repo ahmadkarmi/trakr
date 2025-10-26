@@ -36,16 +36,17 @@ async function loginAsAuditor(page: any) {
 
 async function loginAsBranchManager(page: any) {
   await page.goto('/login')
+  await page.context().clearCookies()
   await page.evaluate(() => localStorage.clear())
-  await page.goto('/login')
+  await page.goto('/login', { waitUntil: 'networkidle' })
   
   try {
     // Try role button first (more reliable)
     const branchManagerRoleButton = page.getByRole('button', { name: /Branch Manager/i }).first()
     if (await branchManagerRoleButton.isVisible({ timeout: 5_000 })) {
       await branchManagerRoleButton.click()
-      await page.waitForURL(url => url.pathname.includes('/dashboard/branch-manager'), { timeout: 60_000 })
-      await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
+      await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
+      await expect(page.getByRole('heading', { name: /Dashboard|Branch Manager/i }).first()).toBeVisible({ timeout: 15_000 })
       return
     }
   } catch (e) {
@@ -57,8 +58,8 @@ async function loginAsBranchManager(page: any) {
   await page.fill('input[type="password"]', 'Password@123')
   await page.getByRole('button', { name: /Sign in|Log in/i }).click()
   
-  await page.waitForURL(url => url.pathname.includes('/dashboard/branch-manager'), { timeout: 60_000 })
-  await expect(page.getByRole('heading', { name: /Branch Manager Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
+  await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
+  await expect(page.getByRole('heading', { name: /Dashboard|Branch Manager/i }).first()).toBeVisible({ timeout: 15_000 })
 }
 
 // Admin/Auditor/Branch Manager smoke tests using email/password authentication

@@ -458,11 +458,18 @@ export const supabaseApi = {
       
       if (error) throw error
     } else {
-      // Create new assignment
+      // Create new assignment - fetch user's org_id first
+      const { data: user } = await supabase
+        .from('users')
+        .select('org_id')
+        .eq('id', userId)
+        .single()
+      
       const { error } = await supabase
         .from('auditor_assignments')
         .insert({
           user_id: userId,
+          org_id: user?.org_id,
           branch_ids: payload.branchIds,
           zone_ids: payload.zoneIds,
         })

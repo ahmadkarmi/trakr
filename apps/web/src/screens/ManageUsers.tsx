@@ -10,6 +10,7 @@ import { TrashIcon, EnvelopeIcon, ShieldCheckIcon, UserGroupIcon, CheckCircleIco
 import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
 import { useAuthStore } from '../stores/auth'
+import { QK } from '../utils/queryKeys'
 
 const ManageUsers: React.FC = () => {
   const queryClient = useQueryClient()
@@ -148,6 +149,8 @@ const ManageUsers: React.FC = () => {
         await api.assignAuditor(auditorId, merged, existing?.zoneIds || [])
       }
       showToast({ message: 'Auditors assigned successfully.', variant: 'success' })
+      // Invalidate cache to refresh UI
+      queryClient.invalidateQueries({ queryKey: QK.ASSIGNMENTS(effectiveOrgId) })
       // Recheck coverage
       if (coverageBlock.userId) {
         const res = await api.getUncoveredActiveBranchesIfAuditorRemoved(coverageBlock.userId)

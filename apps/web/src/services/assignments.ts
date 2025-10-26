@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AuditorAssignment } from '@trakr/shared'
 import { useToast } from '../hooks/useToast'
 import { api } from '../utils/api'
-import { QK } from '../utils/queryKeys'
 
 export type ApplyZoneInput = {
   targetUserId: string
@@ -60,18 +59,18 @@ export function useApplyZoneWithSafeReset() {
       return { ok: true }
     },
     onMutate: async (input) => {
-      await qc.cancelQueries({ queryKey: QK.ASSIGNMENTS })
-      const previous = qc.getQueryData<AuditorAssignment[]>(QK.ASSIGNMENTS)
-      qc.setQueryData<AuditorAssignment[]>(QK.ASSIGNMENTS, (prev) => produceNextAssignments(prev, input))
+      await qc.cancelQueries({ queryKey: ['auditor-assignments'] })
+      const previous = qc.getQueryData<AuditorAssignment[]>(['auditor-assignments'])
+      qc.setQueryData<AuditorAssignment[]>(['auditor-assignments'], (prev) => produceNextAssignments(prev, input))
       return { previous }
     },
     onError: (_err, _input, ctx) => {
-      if (ctx?.previous) qc.setQueryData(QK.ASSIGNMENTS, ctx.previous)
+      if (ctx?.previous) qc.setQueryData(['auditor-assignments'], ctx.previous)
       // Global MutationCache will surface the error; provide an informational toast here.
       showToast({ message: 'Restored previous view after failed zone apply.', variant: 'info' })
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: QK.ASSIGNMENTS })
+      qc.invalidateQueries({ queryKey: ['auditor-assignments'] })
     },
   })
 }
@@ -113,17 +112,17 @@ export function useAssignBranchToAuditor() {
       return { ok: true }
     },
     onMutate: async (input) => {
-      await qc.cancelQueries({ queryKey: QK.ASSIGNMENTS })
-      const previous = qc.getQueryData<AuditorAssignment[]>(QK.ASSIGNMENTS)
-      qc.setQueryData<AuditorAssignment[]>(QK.ASSIGNMENTS, (prev) => produceAssignBranchNext(prev, input))
+      await qc.cancelQueries({ queryKey: ['auditor-assignments'] })
+      const previous = qc.getQueryData<AuditorAssignment[]>(['auditor-assignments'])
+      qc.setQueryData<AuditorAssignment[]>(['auditor-assignments'], (prev) => produceAssignBranchNext(prev, input))
       return { previous }
     },
     onError: (_err, _input, ctx) => {
-      if (ctx?.previous) qc.setQueryData(QK.ASSIGNMENTS, ctx.previous)
+      if (ctx?.previous) qc.setQueryData(['auditor-assignments'], ctx.previous)
       showToast({ message: 'Restored previous view after failed branch assign.', variant: 'info' })
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: QK.ASSIGNMENTS })
+      qc.invalidateQueries({ queryKey: ['auditor-assignments'] })
     },
   })
 }
@@ -152,17 +151,17 @@ export function useClearManualAssignment() {
       return { ok: true }
     },
     onMutate: async (input) => {
-      await qc.cancelQueries({ queryKey: QK.ASSIGNMENTS })
-      const previous = qc.getQueryData<AuditorAssignment[]>(QK.ASSIGNMENTS)
-      qc.setQueryData<AuditorAssignment[]>(QK.ASSIGNMENTS, (prev) => produceClearManualNext(prev, input))
+      await qc.cancelQueries({ queryKey: ['auditor-assignments'] })
+      const previous = qc.getQueryData<AuditorAssignment[]>(['auditor-assignments'])
+      qc.setQueryData<AuditorAssignment[]>(['auditor-assignments'], (prev) => produceClearManualNext(prev, input))
       return { previous }
     },
     onError: (_err, _input, ctx) => {
-      if (ctx?.previous) qc.setQueryData(QK.ASSIGNMENTS, ctx.previous)
+      if (ctx?.previous) qc.setQueryData(['auditor-assignments'], ctx.previous)
       showToast({ message: 'Restored previous view after failed clear.', variant: 'info' })
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: QK.ASSIGNMENTS })
+      qc.invalidateQueries({ queryKey: ['auditor-assignments'] })
     },
   })
 }
