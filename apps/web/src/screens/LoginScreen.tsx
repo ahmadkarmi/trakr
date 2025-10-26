@@ -280,6 +280,70 @@ const LoginScreen: React.FC = () => {
       setAuthError(null)
       
     } catch (err: any) {
+      // Auto-provision fallback: if using default password and user exists in DB but not in Auth, create the Auth user
+      try {
+        const defaultPassword = (import.meta as any).env?.VITE_DEFAULT_PASSWORD || 'Password@123'
+        if (password === defaultPassword) {
+          // Check if this email exists in application DB (public.users)
+          let existsInDb = false
+          try {
+            const users = await api.getUsers()
+            existsInDb = !!users.find((u: any) => (u.email || '').toLowerCase() === email.toLowerCase())
+          } catch (lookupErr) {
+            logger.warn('User DB lookup failed during auto-provision', { context: 'LoginScreen', data: lookupErr })
+          }
+          if (existsInDb) {
+            const supabase = getSupabase()
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password: defaultPassword })
+            if (!signUpError) {
+              // If email confirmation is required, no session will be created
+              if (!signUpData.session || !signUpData.user) {
+                setSuccessMessage({
+                  title: 'Confirm your email',
+                  message: `We created your account. Please check ${email} to verify your email, then log in with your password.`
+                })
+                setAuthStatus('success')
+                return
+              }
+              // Session exists – proceed like normal login
+              const authUser = signUpData.user
+              // Fetch user from database and update auth store
+              let appUser: any = null
+              try {
+                const [userById, allUsers] = await Promise.allSettled([
+                  api.getUserById(authUser.id),
+                  api.getUsers()
+                ])
+                if (userById.status === 'fulfilled' && userById.value) {
+                  appUser = userById.value
+                } else if (allUsers.status === 'fulfilled' && allUsers.value) {
+                  appUser = allUsers.value.find((u: any) => (u.email || '').toLowerCase() === email.toLowerCase())
+                }
+              } catch (apiError) {
+                logger.warn('Parallel lookup failed, trying sequential', { context: 'LoginScreen', data: apiError })
+                try {
+                  appUser = await api.getUserById(authUser.id)
+                } catch {
+                  const users = await api.getUsers()
+                  appUser = users.find((u: any) => (u.email || '').toLowerCase() === email.toLowerCase())
+                }
+              }
+              if (!appUser) {
+                throw new Error('User profile not found in database. Please ensure the database is seeded.')
+              }
+              // Update auth store and exit
+              useAuthStore.setState({ user: appUser, isAuthenticated: true, isLoading: false })
+              setFailedAttempts(0)
+              setAuthStatus('success')
+              setAuthError(null)
+              return
+            }
+          }
+        }
+      } catch (autoProvErr) {
+        logger.warn('Auto-provision login fallback failed', { context: 'LoginScreen', data: autoProvErr })
+      }
+
       // Parse and set error
       const parsedError = parseSupabaseError(err)
       setAuthError(parsedError)

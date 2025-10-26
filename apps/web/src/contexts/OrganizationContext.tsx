@@ -47,7 +47,8 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
       if (isSuperAdmin) {
         // Super admins can see all organizations
         const orgs = await api.getOrganizations()
-        setAvailableOrgs(orgs)
+        const uniqueById = Array.from(new Map(orgs.map(o => [o.id, o])).values())
+        setAvailableOrgs(uniqueById)
         
         // Load stored preferences
         const storedOrgId = safeLocalStorage.getItem('super_admin_active_org')
@@ -76,8 +77,8 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         } else {
           // Org-scoped view: use validated stored org or first available
           const activeOrg = storedOrgStillExists
-            ? orgs.find(o => o.id === storedOrgId)!
-            : orgs[0] || null
+            ? uniqueById.find(o => o.id === storedOrgId)!
+            : uniqueById[0] || null
           
           setCurrentOrg(activeOrg)
           

@@ -94,7 +94,6 @@ export const useAuthStore = create<AuthState>()(
       signIn: async (role: UserRole) => {
         set({ isLoading: true })
         try {
-          // If Supabase is configured, authenticate properly with real auth session
           if (hasSupabaseEnv()) {
             const emailByRole: Record<UserRole, string> = {
               [UserRole.ADMIN]: 'admin@trakr.com',
@@ -103,53 +102,58 @@ export const useAuthStore = create<AuthState>()(
               [UserRole.SUPER_ADMIN]: 'admin@trakr.com',
             }
             const email = emailByRole[role]
-            // Use default password from environment or fallback for development
             const password = (import.meta as any).env?.VITE_DEFAULT_PASSWORD || 'Password@123'
-            
-            // Use the credentials login flow to create a real Supabase session
             const supabase = getSupabase()
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-            if (error) throw error
-            const authUser = data.user
+            let authUser = null as null | { id: string; email?: string | null }
+            try {
+              const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+              if (error) throw error
+              authUser = data.user
+            } catch (signInErr) {
+              // Auto-provision with default password if user exists in DB
+              try {
+                const users = await api.getUsers()
+                const existsInDb = !!users.find(u => (u.email || '').toLowerCase() === email.toLowerCase())
+                if (existsInDb) {
+                  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password })
+                  if (signUpError) throw signUpError
+                  if (!signUpData.session || !signUpData.user) {
+                    throw new Error(`Account created. Check ${email} to verify, then log in.`)
+                  }
+                  authUser = signUpData.user
+                } else {
+                  throw signInErr
+                }
+              } catch (autoErr) {
+                throw autoErr
+              }
+            }
             if (!authUser) throw new Error('No auth user returned')
 
-            // Hydrate application user from DB (parallel lookup for speed)
             let appUser: User | null = null
             try {
               const [userById, allUsers] = await Promise.allSettled([
                 api.getUserById(authUser.id),
                 api.getUsers()
               ])
-              
               if (userById.status === 'fulfilled' && userById.value) {
                 appUser = userById.value
               } else if (allUsers.status === 'fulfilled' && allUsers.value) {
-                appUser = allUsers.value.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
+                appUser = allUsers.value.find(u => (u.email || '').toLowerCase() === (email || '').toLowerCase()) || null
               }
             } catch (parallelError) {
               logger.warn('Parallel lookup failed, trying sequential', { context: 'AuthStore', data: parallelError })
-              // Fallback to sequential lookup
               try {
                 appUser = await api.getUserById(authUser.id)
               } catch {
                 const users = await api.getUsers()
-                appUser = users.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
+                appUser = users.find(u => (u.email || '').toLowerCase() === (email || '').toLowerCase()) || null
               }
             }
-            
             if (!appUser) throw new Error('User profile not found in database')
 
-            // Preload dashboard chunk for faster navigation
             preloadDashboardChunk(appUser.role)
-            
-            // Track user in Sentry for error monitoring
-            setSentryUser({
-              id: appUser.id,
-              email: appUser.email,
-              role: appUser.role,
-              orgId: appUser.orgId
-            })
-            
+            setSentryUser({ id: appUser.id, email: appUser.email, role: appUser.role, orgId: appUser.orgId })
             set({ user: appUser, isAuthenticated: true, isLoading: false })
             return
           }
@@ -183,11 +187,18 @@ export const useAuthStore = create<AuthState>()(
           
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e) {
-          // Last-resort fallback to local mock identity (keeps demo usable)
-          const fallback = mockUsers[role]
-          preloadDashboardChunk(fallback.role)
-          set({ user: fallback, isAuthenticated: true, isLoading: false })
-          logger.error('Role-based login failed, using mock fallback', e, { context: 'AuthStore' })
+          // Last-resort fallback to local mock identity (development only)
+          if (import.meta.env.DEV) {
+            const fallback = mockUsers[role]
+            preloadDashboardChunk(fallback.role)
+            set({ user: fallback, isAuthenticated: true, isLoading: false })
+            logger.error('Role-based login failed, using mock fallback (DEV only)', e, { context: 'AuthStore' })
+          } else {
+            // In production, fail loudly instead of masking the issue
+            set({ isLoading: false })
+            logger.error('Role-based login failed in production', e, { context: 'AuthStore' })
+            throw e
+          }
         }
       },
 
