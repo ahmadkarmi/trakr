@@ -322,9 +322,14 @@ export const supabaseApi = {
 
   async getUserById(id: string): Promise<User | null> {
     const supabase = await getSupabase()
-    const { data, error } = await supabase.from('users').select('*').eq('id', id).maybeSingle()
-    if (error) throw error
-    return data ? mapUser(data as Tables<'users'>) : null
+    // First try by id (app user id)
+    const { data: byId, error: idError } = await supabase.from('users').select('*').eq('id', id).maybeSingle()
+    if (!idError && byId) return mapUser(byId as Tables<'users'>)
+    
+    // Fallback to auth_user_id (Supabase Auth UID)
+    const { data: byAuthId, error: authError } = await supabase.from('users').select('*').eq('auth_user_id', id).maybeSingle()
+    if (authError) throw authError
+    return byAuthId ? mapUser(byAuthId as Tables<'users'>) : null
   },
   async getBranches(orgId?: string): Promise<Branch[]> {
     const supabase = await getSupabase()
