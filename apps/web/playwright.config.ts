@@ -15,7 +15,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3002',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true, // Always reuse to avoid port conflicts
     timeout: 120_000, // 2 minutes for Vite to start
   },
   projects: [
