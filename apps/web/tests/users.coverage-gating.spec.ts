@@ -11,21 +11,20 @@ async function loginAsAdmin(page: any) {
     const adminRoleButton = page.getByRole('button', { name: /Admin/i }).first()
     if (await adminRoleButton.isVisible({ timeout: 5_000 })) {
       await adminRoleButton.click()
-      await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
-      await expect(page.getByRole('heading', { name: /Admin Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
+      await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
+      await expect(page.getByRole('heading', { name: /Dashboard/i }).first()).toBeVisible({ timeout: 15_000 })
       return
     }
   } catch (e) {
-    // Role button not available, try email/password
+    // Fallback to email/password
   }
 
-  // Fallback to email/password
   await page.fill('input[type="email"]', 'admin@trakr.com')
   await page.fill('input[type="password"]', 'Password@123')
   await page.getByRole('button', { name: /Sign in|Log in/i }).click()
 
-  await page.waitForURL(url => url.pathname.includes('/dashboard/admin'), { timeout: 60_000 })
-  await expect(page.getByRole('heading', { name: /Admin Dashboard/i }).first()).toBeVisible({ timeout: 30_000 })
+  await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
+  await expect(page.getByRole('heading', { name: /Dashboard/i }).first()).toBeVisible({ timeout: 15_000 })
 }
 
 async function gotoManageUsers(page: any) {

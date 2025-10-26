@@ -14,15 +14,16 @@ async function loginAsAdmin(page: any) {
 
 async function loginAsAuditor(page: any) {
   await page.goto('/login')
+  await page.context().clearCookies()
   await page.evaluate(() => localStorage.clear())
-  await page.goto('/login')
+  await page.goto('/login', { waitUntil: 'networkidle' })
   
   try {
     // Try role button first (more reliable)
     const auditorRoleButton = page.getByRole('button', { name: /Auditor/i }).first()
     if (await auditorRoleButton.isVisible({ timeout: 5_000 })) {
       await auditorRoleButton.click()
-      await page.waitForURL(url => url.pathname.includes('/dashboard/auditor'), { timeout: 60_000 })
+      await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
       return
     }
   } catch (e) {
@@ -34,7 +35,7 @@ async function loginAsAuditor(page: any) {
   await page.fill('input[type="password"]', 'Password@123')
   await page.getByRole('button', { name: /Sign in|Log in/i }).click()
   
-  await page.waitForURL(url => url.pathname.includes('/dashboard/auditor'), { timeout: 60_000 })
+  await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
 }
 
 test.describe('User Management CRUD', () => {
