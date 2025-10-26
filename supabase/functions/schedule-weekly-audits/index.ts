@@ -125,8 +125,41 @@ Deno.serve(async (req: Request) => {
         }
 
         let assignedTo: string | null = null
-        const { data: assigns } = await admin.from("auditor_branch_assignments").select("user_id, branch_id, period_start, period_end").eq("branch_id", branchId)
-        if (assigns && assigns.length === 1) assignedTo = assigns[0].user_id as string
+        
+        // Check auditor_assignments table (supports both direct branch assignments and zone-based assignments)
+        const { data: assigns } = await admin
+          .from("auditor_assignments")
+          .select("user_id, branch_ids, zone_ids")
+          .eq("org_id", org.id)
+        
+        // Find auditor assigned to this branch (either directly or via zone)
+        if (assigns && assigns.length > 0) {
+          // First, get branch's zone (if any)
+          const { data: zoneBranches } = await admin
+            .from("zone_branches")
+            .select("zone_id")
+            .eq("branch_id", branchId)
+          const branchZoneIds = (zoneBranches || []).map((zb: any) => zb.zone_id)
+          
+          // Find first auditor assigned to this branch (direct or via zone)
+          for (const assign of assigns) {
+            const branchIds = assign.branch_ids || []
+            const zoneIds = assign.zone_ids || []
+            
+            // Check direct branch assignment
+            if (branchIds.includes(branchId)) {
+              assignedTo = assign.user_id as string
+              break
+            }
+            
+            // Check zone assignment
+            if (branchZoneIds.length > 0 && zoneIds.some((zid: string) => branchZoneIds.includes(zid))) {
+              assignedTo = assign.user_id as string
+              break
+            }
+          }
+        }
+        
         // Skip creation if no explicit auditor assignment exists
         if (!assignedTo) { summary.skipped++; orgResult.skipped++; surveyResult.skipped++; continue }
 
