@@ -133,86 +133,35 @@ const mapAudit = (row: Tables<'audits'>): Audit => ({
   updatedAt: new Date(row.updated_at),
 })
 
-// Period helpers (align with mock scheduling logic)
-function startOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
-}
-function endOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999)
-}
-function startOfWeekGeneric(d: Date, weekStartsOn: 0 | 1 = 1): Date {
-  const day = d.getDay()
-  const diff = (day - weekStartsOn + 7) % 7
-  const s = new Date(d)
-  s.setDate(d.getDate() - diff)
-  s.setHours(0, 0, 0, 0)
-  return s
-}
-function endOfWeekGeneric(d: Date, weekStartsOn: 0 | 1 = 1): Date {
-  const s = startOfWeekGeneric(d, weekStartsOn)
-  const e = new Date(s)
-  e.setDate(s.getDate() + 6)
-  e.setHours(23, 59, 59, 999)
-  return e
-}
-function startOfMonth(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0)
-}
-function endOfMonth(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999)
-}
-function startOfQuarter(d: Date): Date {
-  const q = Math.floor(d.getMonth() / 3)
-  return new Date(d.getFullYear(), q * 3, 1, 0, 0, 0, 0)
-}
-function endOfQuarter(d: Date): Date {
-  const q = Math.floor(d.getMonth() / 3)
-  return new Date(d.getFullYear(), (q + 1) * 3, 0, 23, 59, 59, 999)
-}
-function getOrgLocalNow(org: Tables<'organizations'>, now: Date): Date {
-  try {
-    return new Date(now.toLocaleString('en-US', { timeZone: org.time_zone || 'UTC' }))
-  } catch {
-    return new Date(now)
-  }
-}
-function adjustToUTCFromOrgLocal(orgLocal: Date, orgLocalNow: Date, now: Date): Date {
-  const delta = orgLocalNow.getTime() - now.getTime()
-  return new Date(orgLocal.getTime() - delta)
-}
-function getPeriodRangeForOrg(
-  freq: Enums<'audit_frequency'> | null | undefined,
-  now: Date,
-  org: Tables<'organizations'>,
-): { start: Date; end: Date } {
-  const orgNow = getOrgLocalNow(org, now)
-  let localStart: Date
-  let localEnd: Date
-  switch (freq) {
-    case 'DAILY':
-      localStart = startOfDay(orgNow)
-      localEnd = endOfDay(orgNow)
-      break
-    case 'WEEKLY': {
-      const w = ((org.week_starts_on as any) ?? 1) as 0 | 1
-      localStart = startOfWeekGeneric(orgNow, w)
-      localEnd = endOfWeekGeneric(orgNow, w)
-      break
+async function resolveCurrentUserProfile(
+  supabase: ReturnType<typeof getSupabase>,
+  authUserId: string,
+  email?: string | null,
+) {
+  const select = 'id, org_id'
+  const tryLookup = async (column: 'auth_user_id' | 'id' | 'email', value?: string | null) => {
+    if (!value) return null
+    const { data, error } = await supabase.from('users').select(select).eq(column, value).maybeSingle()
+    if (error) {
+      if (error.code && error.code !== 'PGRST116') throw error
+      return null
     }
-    case 'MONTHLY':
-      localStart = startOfMonth(orgNow)
-      localEnd = endOfMonth(orgNow)
-      break
-    case 'QUARTERLY':
-      localStart = startOfQuarter(orgNow)
-      localEnd = endOfQuarter(orgNow)
-      break
-    default:
-      // UNLIMITED or unspecified – make a trivial same-day window
-      localStart = startOfDay(orgNow)
-      localEnd = endOfDay(orgNow)
+    return (data as { id: string; org_id: string | null }) || null
   }
-  return { start: adjustToUTCFromOrgLocal(localStart, orgNow, now), end: adjustToUTCFromOrgLocal(localEnd, orgNow, now) }
+
+  const byAuthId = await tryLookup('auth_user_id', authUserId)
+  if (byAuthId) return byAuthId
+
+  const byId = await tryLookup('id', authUserId)
+  if (byId) return byId
+
+  if (email) {
+    const normalized = email.toLowerCase()
+    const byEmail = await tryLookup('email', normalized)
+    if (byEmail) return byEmail
+  }
+
+  return null
 }
 
 // Upload a data URL to Supabase Storage and return its public URL
@@ -635,9 +584,29 @@ export const supabaseApi = {
   },
   async deleteBranch(id: string): Promise<void> {
     const supabase = await getSupabase()
-    // Clean references best-effort
+
+    // Remove branch from any auditor assignments to avoid stale coverage references
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from('auditor_assignments')
+      .select('user_id, branch_ids')
+      .contains('branch_ids', [id])
+
+    if (assignmentsError) throw assignmentsError
+
+    if (assignments?.length) {
+      await Promise.all(
+        assignments.map(async (assignment: any) => {
+          const filtered = (assignment.branch_ids || []).filter((branchId: string) => branchId !== id)
+          await supabase
+            .from('auditor_assignments')
+            .update({ branch_ids: filtered, updated_at: new Date().toISOString() } as any)
+            .eq('user_id', assignment.user_id)
+        }),
+      )
+    }
+
     await supabase.from('zone_branches').delete().eq('branch_id', id)
-    await supabase.from('auditor_branch_assignments').delete().eq('branch_id', id)
+
     const { error } = await supabase.from('branches').delete().eq('id', id)
     if (error) throw error
   },
@@ -699,8 +668,15 @@ export const supabaseApi = {
     const supabase = await getSupabase()
     const { data, error } = await supabase.rpc('submit_audit', { p_audit_id: auditId, p_submitted_by: submittedBy })
     if (error) throw error
-    // data returns a full row
-    return mapAudit(data as Tables<'audits'>)
+    if (data) {
+      return mapAudit(data as Tables<'audits'>)
+    }
+    const { data: fallback, error: fetchError } = await supabase.from('audits').select('*').eq('id', auditId).maybeSingle()
+    if (fetchError) throw fetchError
+    if (!fallback) {
+      throw new Error('Audit not found after submission')
+    }
+    return mapAudit(fallback as Tables<'audits'>)
   },
 
   async setOverrideScore(
@@ -760,77 +736,23 @@ export const supabaseApi = {
   // Audit creation and progress
   async createAudit(payload: { orgId: string; branchId: string; surveyId: string; assignedTo: string }): Promise<Audit> {
     const supabase = await getSupabase()
-    // Load survey (version, frequency, applicable branches) and org
-    const [{ data: s, error: sErr }, { data: org, error: oErr }] = await Promise.all([
-      supabase.from('surveys').select('id, version, frequency, org_id, applicable_branch_ids').eq('id', payload.surveyId).maybeSingle(),
-      supabase.from('organizations').select('*').eq('id', payload.orgId).maybeSingle(),
-    ])
-    if (sErr) throw sErr
-    if (oErr) throw oErr
-    if (!s) throw new Error('Survey not found')
-    if (!org) throw new Error('Organization not found')
-    
-    // BRANCH ASSIGNMENT VALIDATION: Check if survey applies to this branch
-    const applicableBranchIds = (s as any).applicable_branch_ids || []
-    // Empty array means all branches, otherwise check if branch is in the list
-    if (applicableBranchIds.length > 0 && !applicableBranchIds.includes(payload.branchId)) {
-      throw new Error('This survey is not applicable to the selected branch.')
+
+    const { data, error } = await supabase.rpc('create_audit_with_cycle_guard', {
+      p_org_id: payload.orgId,
+      p_branch_id: payload.branchId,
+      p_survey_id: payload.surveyId,
+      p_assigned_to: payload.assignedTo,
+    })
+
+    if (error) {
+      logger.error('[createAudit] RPC failed', error)
+      throw new Error(error.message || 'Failed to create audit')
     }
-    const now = new Date()
-    const { start, end } = getPeriodRangeForOrg((s as any).frequency, now, org as Tables<'organizations'>)
-    
-    // CYCLE VALIDATION: Check for existing active audits in the current cycle
-    const { data: existingAudits, error: existErr } = await supabase
-      .from('audits')
-      .select('id, status, due_at, period_start, period_end, is_archived')
-      .eq('org_id', payload.orgId)
-      .eq('branch_id', payload.branchId)
-      .eq('survey_id', payload.surveyId)
-      .eq('is_archived', false)
-      .gte('period_end', start.toISOString()) // Overlaps with current cycle
-      .lte('period_start', end.toISOString())
-    
-    if (existErr) throw existErr
-    
-    if (existingAudits && existingAudits.length > 0) {
-      // Check if any existing audit blocks creation
-      for (const existing of existingAudits) {
-        const isDueInFuture = existing.due_at && new Date(existing.due_at) > now
-        const isNotOverdue = isDueInFuture
-        
-        // Block if there's an active, non-overdue audit in this cycle
-        // Allow if: audit is overdue (past due date) OR rejected (needs rework)
-        if (isNotOverdue && existing.status !== 'REJECTED') {
-          throw new Error(
-            `An audit for this survey and branch already exists for the current ${(s as any).frequency.toLowerCase()} cycle. ` +
-            `You cannot create another until the existing audit is overdue or the next cycle begins.`
-          )
-        }
-      }
+
+    if (!data) {
+      throw new Error('Failed to create audit')
     }
-    
-    const { data, error } = await supabase
-      .from('audits')
-      .insert({
-        org_id: payload.orgId,
-        branch_id: payload.branchId,
-        survey_id: payload.surveyId,
-        survey_version: (s as any).version ?? 1,
-        assigned_to: payload.assignedTo,
-        status: 'DRAFT',
-        responses: {},
-        na_reasons: {},
-        section_comments: {},
-        created_at: now.toISOString(),
-        updated_at: now.toISOString(),
-        period_start: start.toISOString(),
-        period_end: end.toISOString(),
-        due_at: end.toISOString(),
-        is_archived: false,
-      } as any)
-      .select('*')
-      .single()
-    if (error) throw error
+
     return mapAudit(data as Tables<'audits'>)
   },
   async saveAuditProgress(
@@ -1460,17 +1382,54 @@ export const supabaseApi = {
 
   async deleteZone(id: string): Promise<void> {
     const supabase = await getSupabase()
-    // Clean links and assignments referencing zone
-    await supabase.from('zone_assignments').delete().eq('zone_id', id)
+
+    // Remove zone references from auditor assignments before deleting the zone
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from('auditor_assignments')
+      .select('user_id, zone_ids')
+      .contains('zone_ids', [id])
+
+    if (assignmentsError) throw assignmentsError
+
+    if (assignments?.length) {
+      await Promise.all(
+        assignments.map(async (assignment: any) => {
+          const filtered = (assignment.zone_ids || []).filter((zoneId: string) => zoneId !== id)
+          await supabase
+            .from('auditor_assignments')
+            .update({ zone_ids: filtered, updated_at: new Date().toISOString() } as any)
+            .eq('user_id', assignment.user_id)
+        }),
+      )
+    }
+
     await supabase.from('zone_branches').delete().eq('zone_id', id)
+
     const { error } = await supabase.from('zones').delete().eq('id', id)
     if (error) throw error
   },
 
   // Surveys CRUD
-  async createSurvey(payload: { title: string; description: string; sections: any[]; createdBy: string; orgId: string; applicableBranchIds?: string[] }): Promise<Partial<Survey> & { id: string }> {
+  async createSurvey(payload: { title: string; description: string; sections: any[]; createdBy?: string; orgId?: string; applicableBranchIds?: string[] }): Promise<Partial<Survey> & { id: string }> {
     const supabase = await getSupabase()
-    const orgId = payload.orgId
+    let orgId = payload.orgId
+    let createdBy = payload.createdBy
+
+    if (!orgId || !createdBy) {
+      const { data: authRes, error: authError } = await supabase.auth.getUser()
+      if (authError) throw authError
+      const authUser = authRes?.user
+      if (!authUser) throw new Error('Not authenticated')
+
+      const profile = await resolveCurrentUserProfile(supabase, authUser.id, authUser.email)
+      if (!profile) throw new Error('User profile not found. Ensure the user exists in the database.')
+      if (!profile.org_id && !orgId) {
+        throw new Error('Organization context required for survey creation')
+      }
+      orgId = orgId || profile.org_id || undefined
+      createdBy = createdBy || profile.id
+    }
+
     if (!orgId) throw new Error('Organization context required for survey creation')
     const now = new Date().toISOString()
     const { data: s, error } = await supabase
@@ -1485,6 +1444,7 @@ export const supabaseApi = {
         applicable_branch_ids: (payload.applicableBranchIds && payload.applicableBranchIds.length ? payload.applicableBranchIds : []) as any,
         created_at: now,
         updated_at: now,
+        created_by: createdBy || null,
       } as any)
       .select('*')
       .single()

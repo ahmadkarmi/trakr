@@ -34,5 +34,8 @@
     "src/**/?(*.)+(spec|test).[tj]s?(x)",
     "src/tests/**"
   ],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "references": [
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.test.json" }
+  ]
 }
