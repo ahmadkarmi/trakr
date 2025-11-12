@@ -1,7 +1,8 @@
-import { describe, it, expect, afterAll } from 'vitest'
+import { describe, it, expect, afterAll, beforeAll } from 'vitest'
 import { api } from '../utils/api'
 import type { Survey } from '@trakr/shared'
-import { QuestionType, AuditStatus } from '@trakr/shared'
+import { QuestionType, AuditStatus, UserRole } from '@trakr/shared'
+import { getSupabaseTestProfile, ensureAuditorCoverage } from '../tests/utils/supabaseFixtures'
 
 // Only run when VITE_BACKEND === 'supabase'
 const isSupabase = ((import.meta as any).env?.VITE_BACKEND || 'mock').toLowerCase() === 'supabase'
@@ -11,32 +12,54 @@ maybe('Supabase integration (assignments + overrides + admin edit)', () => {
   let createdBranchId: string | null = null
   let createdSurveyId: string | null = null
   let createdAuditId: string | null = null
+  let defaultOrgId: string | null = null
+
+  beforeAll(async () => {
+    const { orgId } = await getSupabaseTestProfile()
+    defaultOrgId = orgId
+  })
+
+  const resolveOrgId = async () => {
+    if (defaultOrgId) return defaultOrgId
+    const orgs = await api.getOrganizations()
+    if (!orgs.length) throw new Error('No organizations available in Supabase fixture')
+    return orgs[0].id
+  }
 
   it('reassigns DRAFT audits via reassignUnstartedAuditsForBranches and supports override/admin edit', async () => {
     // Ensure users and orgs
     const users = await api.getUsers()
     expect(users.length).toBeGreaterThan(0)
-    const admin = users.find(u => u.email === 'admin@trakr.com') || users[0]
+    // Find an actual admin user (ADMIN or SUPER_ADMIN role)
+    const admin = users.find(u => u.role === UserRole.ADMIN || u.role === UserRole.SUPER_ADMIN)
+    if (!admin) throw new Error('No admin user found for testing admin edit functionality')
     const anotherUser = users.find(u => u.id !== admin.id) || users[0]
 
     const orgs = await api.getOrganizations()
     expect(orgs.length).toBeGreaterThan(0)
-    const orgId = orgs[0].id
+    const orgId = await resolveOrgId()
 
     // Ensure we have a branch to work with
     const branches = await api.getBranches(orgId)
-    let branchId = branches[0]?.id as string | undefined
+    const branchId: string = branches[0]?.id || (() => {
+      // Branch will be created inline below if needed
+      return ''
+    })()
+    
     if (!branchId) {
       const newBranch = await api.createBranch({ orgId, name: `Test Branch ${Date.now()}` })
       createdBranchId = newBranch.id
-      branchId = newBranch.id
     }
-
+    
+    const finalBranchId = branchId || createdBranchId!
+    await ensureAuditorCoverage(admin.id, orgId, finalBranchId)
+    await ensureAuditorCoverage(anotherUser.id, orgId, finalBranchId)
     // Create a survey with one weighted yes/no question
     const created = await api.createSurvey({
       title: `Integration Survey ${Date.now()}`,
       description: 'tmp',
       createdBy: admin.id,
+      orgId,
       sections: [
         {
           id: 'sec-1',
@@ -60,13 +83,14 @@ maybe('Supabase integration (assignments + overrides + admin edit)', () => {
     })
     expect(created && typeof created.id === 'string').toBe(true)
     createdSurveyId = created.id
+    if (!createdSurveyId) throw new Error('Survey creation failed')
 
     // Create an audit assigned to admin (any user) – DRAFT by default
-    const audit = await api.createAudit({ orgId, branchId: branchId!, surveyId: createdSurveyId, assignedTo: admin.id })
+    const audit = await api.createAudit({ orgId, branchId: finalBranchId, surveyId: createdSurveyId, assignedTo: admin.id })
     createdAuditId = audit.id
 
     // Reassign only DRAFT audits to anotherUser
-    const reassignedCount = await api.reassignUnstartedAuditsForBranches([branchId!], anotherUser.id)
+    const reassignedCount = await api.reassignUnstartedAuditsForBranches([finalBranchId], anotherUser.id)
     expect(reassignedCount).toBeGreaterThan(0)
 
     const afterReassign = await api.getAuditById(audit.id)
@@ -87,6 +111,7 @@ maybe('Supabase integration (assignments + overrides + admin edit)', () => {
 
     // Submit for approval as the assignee
     const submitted = await api.submitAuditForApproval(audit.id, anotherUser.id)
+    expect(submitted).not.toBeNull()
     expect(submitted.status).toBe(AuditStatus.SUBMITTED)
 
     // Admin can edit responses without changing status away from SUBMITTED
@@ -103,18 +128,28 @@ maybe('Supabase integration (assignments + overrides + admin edit)', () => {
 
     const orgs = await api.getOrganizations()
     expect(orgs.length).toBeGreaterThan(0)
-    const orgId = orgs[0].id
+    const orgId = await resolveOrgId()
 
     // Pick existing branch or create one
     const branches = await api.getBranches(orgId)
-    const branchId = branches[0]?.id || (await api.createBranch({ orgId, name: `Reassign Branch ${Date.now()}` })).id
-    if (!branches[0]) createdBranchId = branchId
+    let branchId: string
+    if (branches[0]?.id) {
+      branchId = branches[0].id
+    } else {
+      const created = await api.createBranch({ orgId, name: `Reassign Branch ${Date.now()}` })
+      createdBranchId = created.id
+      branchId = created.id
+    }
+
+    await ensureAuditorCoverage(u1.id, orgId, branchId)
+    await ensureAuditorCoverage(u2.id, orgId, branchId)
 
     // Create a minimal survey
     const s = await api.createSurvey({
       title: `ReassignOpen ${Date.now()}`,
       description: 'tmp',
       createdBy: u1.id,
+      orgId,
       sections: [
         { id: 's1', title: 'P1', description: '', order: 0, questions: [] },
       ],
