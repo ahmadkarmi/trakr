@@ -284,8 +284,7 @@ const AdminAnalytics: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">System Analytics</h2>
-            <p className="text-gray-600">Comprehensive view of audit performance across the organization</p>
+            <p className="text-base text-gray-500 font-medium">Comprehensive view of audit performance across the organization</p>
           </div>
           <div className="flex items-center gap-3">
             <select className="input h-10">

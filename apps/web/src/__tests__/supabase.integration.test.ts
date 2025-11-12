@@ -1,6 +1,7 @@
-import { describe, it, expect, afterAll } from 'vitest'
+import { describe, it, expect, afterAll, beforeAll } from 'vitest'
 import { api } from '../utils/api'
 import type { Zone } from '@trakr/shared'
+import { getSupabaseTestProfile } from '../tests/utils/supabaseFixtures'
 
 // Integration tests that hit the real Supabase backend.
 // These run only when VITE_BACKEND === 'supabase'.
@@ -12,6 +13,19 @@ const maybe = isSupabase ? describe : describe.skip
 maybe('Supabase integration', () => {
   let createdZoneId: string | null = null
   let createdSurveyId: string | null = null
+  let defaultOrgId: string | null = null
+
+  beforeAll(async () => {
+    const { orgId } = await getSupabaseTestProfile()
+    defaultOrgId = orgId
+  })
+
+  const resolveOrgId = async () => {
+    if (defaultOrgId) return defaultOrgId
+    const orgs = await api.getOrganizations()
+    if (!orgs.length) throw new Error('No organizations available in Supabase fixture')
+    return orgs[0].id
+  }
 
   it('reads organizations', async () => {
     const orgs = await api.getOrganizations()
@@ -22,7 +36,7 @@ maybe('Supabase integration', () => {
   it('creates, updates, and deletes a zone', async () => {
     const orgs = await api.getOrganizations()
     expect(orgs.length).toBeGreaterThan(0)
-    const orgId = orgs[0].id
+    const orgId = await resolveOrgId()
 
     const zoneName = `IT Zone ${Date.now()}`
     const z = await api.createZone({ orgId, name: zoneName, description: 'tmp', branchIds: [] })
@@ -51,8 +65,9 @@ maybe('Supabase integration', () => {
     const users = await api.getUsers()
     expect(users.length).toBeGreaterThan(0)
     const creator = users[0]
+    const orgId = await resolveOrgId()
 
-    const res = await api.createSurvey({ title: `IT Survey ${Date.now()}`, description: 'tmp', sections: [], createdBy: creator.id })
+    const res = await api.createSurvey({ title: `IT Survey ${Date.now()}`, description: 'tmp', sections: [], createdBy: creator.id, orgId })
     expect(res && typeof res.id === 'string').toBe(true)
     createdSurveyId = res.id
 

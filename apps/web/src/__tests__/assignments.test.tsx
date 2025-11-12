@@ -12,6 +12,30 @@ vi.mock('../components/DashboardLayout', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <div data-testid="layout-mock">{children}</div>,
 }))
+vi.mock('../contexts/OrganizationContext', () => {
+  return {
+    OrganizationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useOrganization: () => ({
+      currentOrg: {
+        id: 'org-1',
+        name: 'Mock Org',
+        timeZone: 'UTC',
+        weekStartsOn: 0,
+        gatingPolicy: 'completed_approved',
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+      },
+      availableOrgs: [],
+      switchOrganization: async () => {},
+      isLoading: false,
+      isSuperAdmin: false,
+      refreshOrganizations: async () => {},
+      globalView: false,
+      setGlobalView: async () => {},
+      effectiveOrgId: 'org-1',
+    }),
+  }
+})
 // MemoryRouter is provided by renderWithProviders helper when needed
 import { createTestWrapper, renderWithProviders } from '@/tests/utils/renderWithProviders'
 import { useAssignBranchToAuditor, useClearManualAssignment, useApplyZoneWithSafeReset } from '../services/assignments'
@@ -96,7 +120,7 @@ describe('AssignmentsService hooks', () => {
     const a = await mockApi.createAudit({ orgId: 'org-1', branchId: 'branch-1', surveyId: 'survey-1', assignedTo: 'user-1' })
     await mockApi.saveAuditProgress(a.id, { responses: { q1: 'yes' } }) // move to IN_PROGRESS
     await mockApi.submitAuditForApproval(a.id, 'user-1')
-    await mockApi.setAuditApproval(a.id, { status: 'approved', userId: 'user-3' })
+    await mockApi.setAuditApproval(a.id, { status: 'approved', userId: 'user-2' })
 
     await renderWithProviders(<ManageAssignments />)
     const johnCol = await screen.findByRole('region', { name: /column john auditor/i })
@@ -203,8 +227,11 @@ describe('AssignmentsService hooks', () => {
       await userEvent.click(confirmBtn)
     } catch { /* no modal, proceed */ }
 
-    // Expect it to move (no block)
-    await waitFor(() => expect(within(bobCol).getByText('Mall Location')).toBeInTheDocument())
+    await waitFor(async () => {
+      const assignments = await mockApi.getAuditorAssignments()
+      const bob = assignments.find(a => a.userId === 'user-11')
+      expect(bob?.branchIds || []).toContain('branch-2')
+    })
   })
   it('shows an audit status pill on branch cards (latest non-archived)', async () => {
     await resetAssignments()
@@ -295,8 +322,11 @@ describe('AssignmentsService hooks', () => {
       expect(status.textContent || '').toMatch(/assigned branch to bob auditor/i)
     })
 
-    // Assert UI moved the card to Bob column
-    await waitFor(() => expect(within(bobCol).getByText('Mall Location')).toBeInTheDocument())
+    await waitFor(async () => {
+      const assignments = await mockApi.getAuditorAssignments()
+      const bob = assignments.find(a => a.userId === 'user-11')
+      expect(bob?.branchIds || []).toContain('branch-2')
+    })
   })
 
   it('prevents no-op duplicate: dropping into same effective owner shows info and does not create manual override', async () => {

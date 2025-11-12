@@ -11,6 +11,27 @@
   html, body {
     @apply bg-gray-50 text-gray-900 font-sans;
   }
+
+  /* Checkboxes and Radio Buttons - Brand Primary Blue */
+  input[type='checkbox'],
+  input[type='radio'] {
+    @apply border-gray-300 text-primary-600 focus:ring-primary-600 focus:ring-offset-0 rounded transition-colors duration-200;
+  }
+
+  input[type='checkbox']:checked,
+  input[type='radio']:checked {
+    @apply bg-primary-600 border-primary-600;
+  }
+
+  input[type='checkbox']:hover:not(:disabled),
+  input[type='radio']:hover:not(:disabled) {
+    @apply border-gray-400;
+  }
+
+  input[type='checkbox']:focus,
+  input[type='radio']:focus {
+    @apply ring-2 ring-primary-600 ring-offset-0;
+  }
 }
 
 @layer components {
@@ -19,17 +40,17 @@
   .breathing-room { @apply py-6 sm:py-8 lg:py-10; }
 
   /* Cards */
-  .card { @apply bg-white border border-gray-200 rounded-xl shadow-sm; }
-  .card-compact { @apply bg-white border border-gray-200 rounded-xl p-4; }
+  .card { @apply bg-white border border-gray-100 rounded-xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_-2px_rgba(0,0,0,0.1)] transition-all duration-300; }
+  .card-compact { @apply bg-white border border-gray-100 rounded-xl p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_-2px_rgba(0,0,0,0.1)] transition-all duration-300; }
 
   /* Buttons */
-  .btn { @apply inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-target px-3; }
-  .btn-primary { @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-600; }
-  .btn-secondary { @apply bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-900; }
-  .btn-outline { @apply border border-gray-300 text-gray-900 bg-white hover:bg-gray-50 focus:ring-primary-600; }
-  .btn-danger { @apply bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-600; }
-  .btn-ghost { @apply text-gray-600 hover:bg-gray-100; }
+  .btn { @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-target px-3 active:scale-95; }
+  .btn-primary { @apply bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 hover:shadow-lg hover:shadow-primary-500/30 hover:-translate-y-0.5 focus:ring-primary-600; }
+  .btn-outline { @apply border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 hover:shadow-md hover:-translate-y-0.5 focus:ring-primary-600; }
+  .btn-danger { @apply bg-gradient-to-r from-danger-600 to-danger-700 text-white hover:from-danger-700 hover:to-danger-800 hover:shadow-lg hover:shadow-danger-500/30 hover:-translate-y-0.5 focus:ring-danger-600; }
+  .btn-ghost { @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm; }
   .btn-link { @apply text-primary-600 hover:text-primary-700 hover:underline; }
+  .btn-muted { @apply bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm hover:-translate-y-0.5 focus:ring-gray-400; }
   /* Slightly larger buttons on mobile for better touch targets; revert to previous sizes on >=sm */
   .btn-sm { @apply h-9 px-3.5 text-sm sm:h-8 sm:px-3 sm:text-sm; }
   .btn-md { @apply h-11 px-5 text-base sm:h-10 sm:px-4 sm:text-sm; }
@@ -40,8 +61,11 @@
   @screen sm { .btn > svg, .btn .icon { @apply w-5 h-5; } }
 
   /* Inputs and labels */
-  .input { @apply w-full px-3 py-2 rounded-lg border border-gray-300 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent; }
-  .label { @apply block text-sm font-medium text-gray-700 mb-1; }
+  .input { @apply w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white placeholder:text-gray-400 transition-all duration-300 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-600 focus:border-primary-600 focus:bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]; }
+  .input-error { @apply border-danger-300 focus:ring-danger-600 focus:border-danger-600; }
+  .input-success { @apply border-success-300 focus:ring-success-600 focus:border-success-600; }
+  .label { @apply block text-sm font-medium text-gray-700 mb-1.5; }
+  .label-required::after { @apply content-['*'] text-danger-500 ml-1; }
 
   /* Simple section wrapper */
   .section { @apply card p-4 sm:p-6; }

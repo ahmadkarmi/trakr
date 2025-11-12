@@ -13,9 +13,12 @@ export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'animate-pulse rounded-md bg-gray-200',
+        'animate-pulse rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%]',
         className
       )}
+      style={{
+        animation: 'pulse 2s ease-in-out infinite, shimmer 2s linear infinite'
+      }}
     />
   )
 }
@@ -59,21 +62,26 @@ export function SkeletonTable({ rows = 5, className }: SkeletonProps & { rows?: 
   )
 }
 
-export function SkeletonStats({ className }: SkeletonProps) {
+export function SkeletonStats({ count = 3, className }: SkeletonProps & { count?: number }) {
   return (
-    <div className={cn('grid grid-cols-1 md:grid-cols-3 gap-6', className)}>
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="card p-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-8 w-12" />
-              <Skeleton className="h-3 w-20" />
-            </div>
-            <Skeleton className="h-12 w-12 rounded-lg" />
-          </div>
+    <div className={cn('grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4', className)}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="card-compact">
+          <Skeleton className="h-8 w-8 rounded-lg mb-2" />
+          <Skeleton className="h-6 w-16 mb-1" />
+          <Skeleton className="h-3 w-20" />
         </div>
       ))}
+    </div>
+  )
+}
+
+export function SkeletonMetric({ className }: SkeletonProps) {
+  return (
+    <div className={cn('card-compact', className)}>
+      <Skeleton className="h-8 w-8 rounded-lg mb-2" />
+      <Skeleton className="h-7 w-16 mb-1" />
+      <Skeleton className="h-3 w-24" />
     </div>
   )
 }

@@ -637,11 +637,10 @@ const DashboardAdmin: React.FC = () => {
   return (
     <DashboardLayout title="Admin Dashboard">
       <div className="space-y-6">
-        {/* Header */}
+        {/* Header - No heading duplication, only show subtitle */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-1">{branches.length} branches • {audits.length} audits • {user?.name}</p>
+          <div className="flex-1">
+            <p className="text-base text-gray-500 font-medium">{branches.length} branches • {audits.length} audits • {user?.name}</p>
           </div>
           
           <button 
@@ -666,8 +665,8 @@ const DashboardAdmin: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Weekly Insights</h2>
-              <p className="text-sm text-gray-600 mt-1">Current week performance</p>
+              <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Weekly Insights</h2>
+              <p className="text-sm text-gray-500 font-medium mt-0.5">Current week performance</p>
             </div>
           </div>
           

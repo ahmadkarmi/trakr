@@ -28,7 +28,8 @@ describe('Audit lifecycle rules (mock API)', () => {
     const a = await mockApi.createAudit({ orgId: 'org-1', branchId: 'branch-2', surveyId: 'survey-1', assignedTo: 'user-10' })
     await mockApi.saveAuditProgress(a.id, { responses: { q1: 'yes' } }) // move to IN_PROGRESS
     await mockApi.submitAuditForApproval(a.id, 'user-10')
-    await mockApi.setAuditApproval(a.id, { status: 'approved', userId: 'user-3' })
+    // Use branch manager (user-2) in line with new approval authority logic
+    await mockApi.setAuditApproval(a.id, { status: 'approved', userId: 'user-2' })
 
     // Blocked normal save (APPROVED)
     const afterBlocked = await mockApi.saveAuditProgress(a.id, { responses: { q3: 'maybe' } })
@@ -45,7 +46,7 @@ describe('Audit lifecycle rules (mock API)', () => {
     const a = await mockApi.createAudit({ orgId: 'org-1', branchId: 'branch-1', surveyId: 'survey-1', assignedTo: 'user-1' })
     await mockApi.saveAuditProgress(a.id, { responses: { q1: 'yes' } }) // IN_PROGRESS
     await mockApi.submitAuditForApproval(a.id, 'user-1')
-    await mockApi.setAuditApproval(a.id, { status: 'rejected', userId: 'user-3' })
+    await mockApi.setAuditApproval(a.id, { status: 'rejected', userId: 'user-2' })
 
     const afterSave = await mockApi.saveAuditProgress(a.id, { responses: { q2: 'no' } })
     expect(afterSave.status).toBe(AuditStatus.IN_PROGRESS)

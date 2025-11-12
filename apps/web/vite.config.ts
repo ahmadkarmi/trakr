@@ -88,5 +88,6 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ['./src/setupTests.ts'],
     globals: true,
     css: true,
+    exclude: ['tests/**/*.spec.ts'],
   },
 }))

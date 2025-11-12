@@ -163,8 +163,8 @@ const ProfileSignature: React.FC = () => {
                 onPointerLeave={endDraw}
               />
               <div className="mt-2 flex items-center gap-2">
-                <button className="btn-outline btn-xs" onClick={clearCanvas}>Clear</button>
-                <button className="btn-secondary btn-xs disabled:opacity-60" onClick={saveCanvasAsSignature} disabled={uploading}>Save as signature</button>
+                <button className="btn btn-outline btn-xs" onClick={clearCanvas}>Clear</button>
+                <button className="btn btn-primary btn-xs disabled:opacity-60" onClick={saveCanvasAsSignature} disabled={uploading}>Save as signature</button>
               </div>
             </div>
           </div>

@@ -175,8 +175,7 @@ const BranchManagerAnalytics: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Branch Analytics</h2>
-            <p className="text-gray-600">
+            <p className="text-base text-gray-500 font-medium">
               Performance insights for {myBranches.length === 1 ? myBranches[0]?.name : `${myBranches.length} branches`}
             </p>
           </div>

@@ -171,10 +171,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
                     onClick={() => setMobileOpen(false)} 
                     title={item.label}
                     aria-current={active ? 'page' : undefined}
-                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-gray-50 ${active ? 'bg-primary-50 border-l-2 border-primary-600' : ''}`}
+                    className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${active ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-50'}`}
                   >
-                    <span className={`${active ? 'text-primary-700' : 'text-gray-500 group-hover:text-gray-700'} shrink-0`}>{item.icon}</span>
-                    <span className={`text-sm ${active ? 'text-primary-800 font-medium' : 'text-gray-800'} flex items-center gap-2`}>
+                    {/* Left border indicator */}
+                    <div className={`absolute left-0 top-1 bottom-1 w-1 rounded-r-full transition-all duration-200 ${active ? 'bg-primary-600' : 'bg-transparent group-hover:bg-gray-300'}`} />
+                    
+                    <span className={`shrink-0 transition-colors duration-200 ${active ? 'text-primary-700' : 'text-gray-500 group-hover:text-gray-700'}`}>{item.icon}</span>
+                    <span className={`text-sm transition-colors duration-200 ${active ? 'text-primary-800 font-semibold' : 'text-gray-800 group-hover:text-gray-900'}`}>
                       {item.label}
                     </span>
                   </Link>
@@ -274,11 +277,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
                 to={item.to}
                 title={item.label}
                 aria-current={active ? 'page' : undefined}
-                className={`group flex items-center gap-3 ${compact ? 'justify-center' : ''} px-3 py-2.5 rounded-lg transition-colors hover:bg-gray-50 ${active ? 'bg-primary-50 border-l-2 border-primary-600' : ''}`}
+                className={`group relative flex items-center gap-3 ${compact ? 'justify-center' : ''} px-3 py-2.5 rounded-lg transition-all duration-200 ${active ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-50'}`}
               >
-                <span className={`shrink-0 ${active ? 'text-primary-700' : 'text-gray-500 group-hover:text-gray-700'}`}>{item.icon}</span>
+                {/* Left border indicator */}
                 {!compact && (
-                  <span className={`text-sm ${active ? 'text-primary-800 font-medium' : 'text-gray-800'} flex items-center gap-2`}>
+                  <div className={`absolute left-0 top-1 bottom-1 w-1 rounded-r-full transition-all duration-200 ${active ? 'bg-primary-600' : 'bg-transparent group-hover:bg-gray-300'}`} />
+                )}
+                
+                <span className={`shrink-0 transition-colors duration-200 ${active ? 'text-primary-700' : 'text-gray-500 group-hover:text-gray-700'}`}>{item.icon}</span>
+                {!compact && (
+                  <span className={`text-sm transition-colors duration-200 ${active ? 'text-primary-800 font-semibold' : 'text-gray-800 group-hover:text-gray-900'}`}>
                     {item.label}
                   </span>
                 )}
@@ -302,7 +310,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto" style={{ ['--app-header-height' as any]: `${headerHeight}px` }}>
         {/* Modern Enhanced Header */}
-        <header ref={headerRef} className="sticky top-0 z-30 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)]">
+        <header ref={headerRef} className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-[0_1px_3px_rgba(0,0,0,0.02)] pt-[env(safe-area-inset-top)]">
           <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
             {/* Left: Menu Button (Mobile) + Title */}
             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
@@ -314,8 +322,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
                 <Bars3Icon className="w-6 h-6 text-gray-700" />
               </button>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{title}</h1>
-                <p className="hidden sm:block text-sm text-gray-500 mt-0.5">Welcome back, {user?.name?.split(' ')[0]}</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight truncate">{title}</h1>
+                <p className="hidden sm:block text-sm text-gray-500 font-medium mt-0.5">Welcome back, {user?.name?.split(' ')[0]}</p>
               </div>
             </div>
 

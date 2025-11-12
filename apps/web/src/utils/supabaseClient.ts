@@ -1,12 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
+import { ensureClientEnv } from '@trakr/shared'
 
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string | undefined
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string | undefined
+type ViteEnvRecord = Record<string, string | undefined>
+
+const clientEnvResult = ensureClientEnv((key: string) => {
+  return (import.meta.env as ViteEnvRecord)[key]
+})
+
+const supabaseUrl = clientEnvResult.resolved.VITE_SUPABASE_URL
+const supabaseAnonKey = clientEnvResult.resolved.VITE_SUPABASE_ANON_KEY
 
 let supabase: any | null = null
 
 export function hasSupabaseEnv(): boolean {
-  return !!supabaseUrl && !!supabaseAnonKey
+  return clientEnvResult.missing.length === 0
 }
 
 export function getSupabase() {

@@ -863,7 +863,7 @@ const AuditWizard: React.FC = () => {
                   <span className="hidden sm:inline">Previous</span>
                 </button>
                 <button
-                  className="hidden sm:inline-flex btn btn-secondary btn-responsive-sm"
+                  className="hidden sm:inline-flex btn btn-outline btn-responsive-sm"
                   onClick={async () => {
                     if (auditId) {
                       try {

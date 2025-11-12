@@ -194,11 +194,10 @@ const ManageUsers: React.FC = () => {
   return (
     <DashboardLayout title="Manage Users">
       <div className="space-y-6">
-        {/* Header */}
+        {/* Header - No heading duplication, only show subtitle */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Manage Users</h1>
-            <p className="text-gray-600 mt-1">{users.length} team members</p>
+            <p className="text-base text-gray-500 font-medium">{users.length} team members</p>
           </div>
         </div>
 
@@ -208,32 +207,32 @@ const ManageUsers: React.FC = () => {
             <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mb-2">
               <UserGroupIcon className="w-5 h-5 text-primary-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">{users.length}</p>
-            <p className="text-xs text-gray-600 mt-1">Total Users</p>
+            <p className="text-2xl font-bold text-gray-900 tabular-nums">{users.length}</p>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Total Users</p>
           </div>
           {/* Header invite modal intentionally removed; InvitationManager provides invites */}
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mb-2">
               <CheckCircleIcon className="w-5 h-5 text-green-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">{activeUsers}</p>
-            <p className="text-xs text-gray-600 mt-1">Active</p>
+            <p className="text-2xl font-bold text-gray-900 tabular-nums">{activeUsers}</p>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Active</p>
           </div>
           
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mb-2">
               <EnvelopeIcon className="w-5 h-5 text-orange-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">{pendingInvites}</p>
-            <p className="text-xs text-gray-600 mt-1">Pending</p>
+            <p className="text-2xl font-bold text-gray-900 tabular-nums">{pendingInvites}</p>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Pending</p>
           </div>
           
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
               <ShieldCheckIcon className="w-5 h-5 text-gray-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">{adminUsers}</p>
-            <p className="text-xs text-gray-600 mt-1">Admins</p>
+            <p className="text-2xl font-bold text-gray-900 tabular-nums">{adminUsers}</p>
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Admins</p>
           </div>
         </div>
 
@@ -299,7 +298,7 @@ const ManageUsers: React.FC = () => {
                   </button>
                   {!user.emailVerified && (
                     <button 
-                      className="btn btn-secondary btn-sm"
+                      className="btn btn-outline btn-sm"
                       onClick={() => handleResendInvite(user.id)}
                       disabled={resendInviteMutation.isPending}
                     >
@@ -401,7 +400,7 @@ const ManageUsers: React.FC = () => {
                     </button>
                     {!user.emailVerified && (
                       <button 
-                        className="btn btn-secondary btn-sm"
+                        className="btn btn-outline btn-sm"
                         onClick={() => handleResendInvite(user.id)}
                         disabled={resendInviteMutation.isPending}
                         title="Resend invitation"

@@ -198,7 +198,7 @@ const ManageSurveyTemplates: React.FC = () => {
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button data-testid="edit-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => navigate(`/manage/surveys/${s.id}/edit`)}>Edit</button>
-                      <button data-testid="duplicate-template" data-id={s.id} className="btn btn-secondary btn-sm" onClick={() => duplicateMutation.mutate(s.id)} disabled={duplicateMutation.isPending}>Duplicate</button>
+                      <button data-testid="duplicate-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => duplicateMutation.mutate(s.id)} disabled={duplicateMutation.isPending}>Duplicate</button>
                       <button data-testid="toggle-active-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => toggleActiveMutation.mutate(s)} disabled={toggleActiveMutation.isPending}>{s.isActive ? 'Deactivate' : 'Activate'}</button>
                       <button data-testid="delete-template" data-id={s.id} className="btn btn-danger btn-sm" onClick={() => deleteMutation.mutate(s.id)} disabled={deleteMutation.isPending}>Delete</button>
                     </div>
@@ -231,7 +231,7 @@ const ManageSurveyTemplates: React.FC = () => {
                     render: (s) => (
                       <div className="space-x-2">
                         <button data-testid="edit-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => navigate(`/manage/surveys/${s.id}/edit`)}>Edit</button>
-                        <button data-testid="duplicate-template" data-id={s.id} className="btn btn-secondary btn-sm" onClick={() => duplicateMutation.mutate(s.id)} disabled={duplicateMutation.isPending}>Duplicate</button>
+                        <button data-testid="duplicate-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => duplicateMutation.mutate(s.id)} disabled={duplicateMutation.isPending}>Duplicate</button>
                         <button data-testid="toggle-active-template" data-id={s.id} className="btn btn-outline btn-sm" onClick={() => toggleActiveMutation.mutate(s)} disabled={toggleActiveMutation.isPending}>{s.isActive ? 'Deactivate' : 'Activate'}</button>
                         <button data-testid="delete-template" data-id={s.id} className="btn btn-danger btn-sm" onClick={() => deleteMutation.mutate(s.id)} disabled={deleteMutation.isPending}>Delete</button>
                       </div>

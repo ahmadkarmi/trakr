@@ -8,33 +8,27 @@
  */
 
 const { createClient } = require('@supabase/supabase-js')
+const { ensureEnvSet, formatMissing } = require('./utils/env')
 
-// 🔐 SECURE: Load credentials from environment variables only
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY
+// Validate environment variables before continuing
+const { resolved: envVars, missing: missingEnv, usedKeys } = ensureEnvSet('scripts')
+
+if (missingEnv.length > 0) {
+  console.log('\n❌ Missing Supabase credentials!')
+  console.log('Please set the following environment variables:')
+  console.log(formatMissing(missingEnv))
+  console.log('\nYou can set them via shell exports or by creating a .env file in the project root.')
+  process.exit(1)
+}
+
+const SUPABASE_URL = envVars.SUPABASE_URL
+const SUPABASE_KEY = envVars.SUPABASE_SERVICE_KEY
 
 console.log('🌱 Trakr Database Seeding Script')
 console.log('================================')
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.log('\n❌ Missing Supabase credentials!')
-  console.log('Please set environment variables:')
-  console.log('')
-  console.log('Windows (Command Prompt):')
-  console.log('  set SUPABASE_URL=https://your-project-id.supabase.co')
-  console.log('  set SUPABASE_SERVICE_KEY=your-service-role-key')
-  console.log('  node scripts/seed-with-credentials.js')
-  console.log('')
-  console.log('Windows (PowerShell):')
-  console.log('  $env:SUPABASE_URL="https://your-project-id.supabase.co"')
-  console.log('  $env:SUPABASE_SERVICE_KEY="your-service-role-key"')
-  console.log('  node scripts/seed-with-credentials.js')
-  console.log('')
-  console.log('Or create a .env file in the project root with:')
-  console.log('  SUPABASE_URL=https://your-project-id.supabase.co')
-  console.log('  SUPABASE_SERVICE_KEY=your-service-role-key')
-  console.log('')
-  process.exit(1)
+if (usedKeys.SUPABASE_SERVICE_KEY && usedKeys.SUPABASE_SERVICE_KEY !== 'SUPABASE_SERVICE_KEY') {
+  console.log('⚠️  Using fallback key for SUPABASE_SERVICE_KEY (' + usedKeys.SUPABASE_SERVICE_KEY + '). Operations may be limited.')
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)

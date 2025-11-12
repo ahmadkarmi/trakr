@@ -151,7 +151,7 @@ const NotificationDropdown: React.FC = () => {
         >
           <BellIcon className="w-6 h-6 text-gray-700" />
           {badgeCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 rounded-full bg-primary-600 text-white text-[10px] leading-4 text-center">
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 rounded-full bg-primary-600 text-white text-[10px] font-bold leading-4 text-center ring-2 ring-white animate-pulse-subtle shadow-lg shadow-primary-500/50">
               {badgeCount > 9 ? '9+' : badgeCount}
             </span>
           )}
