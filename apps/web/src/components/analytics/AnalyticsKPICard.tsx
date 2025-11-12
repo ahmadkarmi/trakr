@@ -58,14 +58,17 @@ const AnalyticsKPICard: React.FC<AnalyticsKPICardProps> = ({
 
   if (compact) {
     return (
-      <div className={`card-compact ${getVariantStyles()}`}>
+      <div className={`card-compact ${getVariantStyles()} hover:-translate-y-1 transition-all duration-300 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_-2px_rgba(0,0,0,0.12)]`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center">
-            <span className="text-lg">{icon}</span>
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary-400 rounded-lg blur-md opacity-10 group-hover:opacity-20 transition-opacity" />
+            <div className="relative w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center">
+              <span className="text-lg">{icon}</span>
+            </div>
           </div>
           <div className="flex-1">
-            <div className="text-xl font-bold text-gray-900">{value}</div>
-            <div className="text-sm text-gray-600">{title}</div>
+            <div className="text-xl font-bold text-gray-900 tabular-nums">{value}</div>
+            <div className="text-sm font-semibold text-gray-600">{title}</div>
             <div className="text-xs text-gray-500">{description}</div>
           </div>
         </div>
@@ -74,17 +77,20 @@ const AnalyticsKPICard: React.FC<AnalyticsKPICardProps> = ({
   }
 
   return (
-    <div className={`card-compact ${getVariantStyles()}`}>
+    <div className={`group card-compact ${getVariantStyles()} hover:-translate-y-1 transition-all duration-300 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.12)]`}>
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
-          <span className="text-xl">{icon}</span>
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary-400 rounded-lg blur-lg opacity-15 group-hover:opacity-30 transition-opacity" />
+          <div className="relative w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
+            <span className="text-xl">{icon}</span>
+          </div>
         </div>
         <div className="flex-1">
-          <div className="text-2xl font-bold text-gray-900">{value}</div>
-          <div className="text-sm text-gray-600">{title}</div>
+          <div className="text-2xl font-bold text-gray-900 tabular-nums">{value}</div>
+          <div className="text-sm font-semibold text-gray-600">{title}</div>
           <div className="flex items-center gap-2 mt-1">
             {trend && (
-              <span className={`text-xs font-medium ${getTrendColor()}`}>
+              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${getTrendColor() === 'text-green-600' ? 'bg-green-50 text-green-700 ring-1 ring-green-200' : getTrendColor() === 'text-red-600' ? 'bg-red-50 text-red-700 ring-1 ring-red-200' : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'}`}>
                 {getTrendIcon()} {trend}
               </span>
             )}

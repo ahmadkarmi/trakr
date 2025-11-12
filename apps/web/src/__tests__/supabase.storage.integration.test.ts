@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import { api } from '../utils/api'
 import type { Survey } from '@trakr/shared'
+import { getSupabaseTestProfile } from '../tests/utils/supabaseFixtures'
 
 // Only run when VITE_BACKEND === 'supabase'
 const isSupabase = ((import.meta as any).env?.VITE_BACKEND || 'mock').toLowerCase() === 'supabase'
@@ -9,6 +10,22 @@ const maybe = isSupabase ? describe : describe.skip
 const PNG_1x1 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII='
 
 maybe('Supabase storage integration', () => {
+  let defaultOrgId: string | null = null
+  let defaultUserId: string | null = null
+
+  beforeAll(async () => {
+    const { orgId, userId } = await getSupabaseTestProfile()
+    defaultOrgId = orgId
+    defaultUserId = userId
+  })
+
+  const resolveOrgId = async () => {
+    if (defaultOrgId) return defaultOrgId
+    const orgs = await api.getOrganizations()
+    if (!orgs.length) throw new Error('No organizations available in Supabase fixture')
+    return orgs[0].id
+  }
+
   it('updates user avatar and signature via storage uploads', async () => {
     const users = await api.getUsers()
     expect(users.length).toBeGreaterThan(0)
@@ -26,7 +43,7 @@ maybe('Supabase storage integration', () => {
   it('adds a section photo to an audit and returns it from getAuditById', async () => {
     const orgs = await api.getOrganizations()
     expect(orgs.length).toBeGreaterThan(0)
-    const orgId = orgs[0].id
+    const orgId = await resolveOrgId()
 
     const users = await api.getUsers()
     expect(users.length).toBeGreaterThan(0)
@@ -37,6 +54,7 @@ maybe('Supabase storage integration', () => {
       title: `Storage Test ${Date.now()}`,
       description: 'tmp',
       createdBy: u.id,
+      orgId,
       sections: [
         { id: 's1', title: 'P1', description: '', order: 0, questions: [] },
       ],

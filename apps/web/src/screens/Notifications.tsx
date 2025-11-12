@@ -134,48 +134,25 @@ const NotificationsScreen: React.FC = () => {
   return (
     <DashboardLayout title="Notifications">
       <div className="space-y-6">
-          {/* Header */}
+          {/* Header - No heading duplication, unified layout */}
           <div className="mb-6">
-            {/* Desktop Layout */}
-            <div className="hidden sm:flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Notifications</h1>
-                <p className="text-sm text-gray-600 mt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center justify-between sm:justify-start gap-3">
+                <p className="text-base text-gray-500 font-medium">
                   {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'All caught up!'}
                 </p>
+                <BellIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
               </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => engine.markAllAsRead()}
-                  disabled={unreadCount === 0}
-                  className="btn-secondary text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <CheckCircleIcon className="w-4 h-4" />
-                  Mark all as read
-                </button>
-                <BellIcon className="w-8 h-8 text-gray-400" />
-              </div>
-            </div>
-            
-            {/* Mobile Layout - Stacked */}
-            <div className="sm:hidden">
-              <div className="flex items-center justify-between mb-3">
-                <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-                <BellIcon className="w-8 h-8 text-gray-400" />
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-gray-600">
-                  {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'All caught up!'}
-                </p>
-                <button
-                  onClick={() => engine.markAllAsRead()}
-                  disabled={unreadCount === 0}
-                  className="btn-secondary text-xs px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 flex-shrink-0"
-                >
-                  <CheckCircleIcon className="w-3.5 h-3.5" />
-                  Mark all read
-                </button>
-              </div>
+              
+              <button
+                onClick={() => engine.markAllAsRead()}
+                disabled={unreadCount === 0}
+                className="btn btn-outline btn-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto"
+              >
+                <CheckCircleIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Mark all as read</span>
+                <span className="sm:hidden">Mark all</span>
+              </button>
             </div>
           </div>
 

@@ -53,9 +53,9 @@ const Profile: React.FC = () => {
   return (
     <DashboardLayout title="Profile">
       <div className="space-y-6">
+        {/* Header - No heading duplication, only show subtitle */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-600 mt-1">Manage your account information and preferences</p>
+          <p className="text-base text-gray-500 font-medium">Manage your account information and preferences</p>
         </div>
 
         <div className="grid gap-4 sm:gap-6 md:grid-cols-[280px_1fr]">

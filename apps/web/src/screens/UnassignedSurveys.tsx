@@ -177,7 +177,7 @@ const UnassignedSurveys: React.FC = () => {
                     Assign
                   </button>
                   <button
-                    className="btn-secondary btn-sm text-xs"
+                    className="btn btn-outline btn-sm text-xs"
                     disabled={!selected[branchId] || assignMutation.isPending}
                     onClick={() => selected[branchId] && assignMutation.mutate({ auditorId: selected[branchId], branchId, surveyId: undefined, sole: true, branchName })}
                     title="Assign as sole auditor for this branch (removes other auditors for this branch)"

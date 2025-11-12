@@ -224,11 +224,10 @@ const ManageBranches: React.FC = () => {
   return (
     <DashboardLayout title="Manage Branches">
       <div className="space-y-6">
-        {/* Header */}
+        {/* Header - No heading duplication, only show subtitle */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Manage Branches</h1>
-            <p className="text-gray-600 mt-1">{branches.length} branch{branches.length !== 1 ? 'es' : ''} in your organization</p>
+            <p className="text-base text-gray-500 font-medium">{branches.length} branch{branches.length !== 1 ? 'es' : ''} in your organization</p>
           </div>
         </div>
 

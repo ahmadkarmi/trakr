@@ -1,0 +1,19 @@
+{
+  "client": [
+    { "key": "VITE_SUPABASE_URL", "label": "Supabase URL" },
+    { "key": "VITE_SUPABASE_ANON_KEY", "label": "Supabase anon key" }
+  ],
+  "scripts": [
+    {
+      "key": "SUPABASE_URL",
+      "label": "Supabase URL",
+      "fallbacks": ["VITE_SUPABASE_URL"]
+    },
+    {
+      "key": "SUPABASE_SERVICE_KEY",
+      "label": "Supabase service role key",
+      "fallbacks": ["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"],
+      "note": "Service key is preferred; anon key or Vite anon key allowed for limited operations."
+    }
+  ]
+}

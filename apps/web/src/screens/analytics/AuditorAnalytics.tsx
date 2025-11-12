@@ -97,8 +97,7 @@ const AuditorAnalytics: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Personal Analytics</h2>
-            <p className="text-gray-600">Your audit performance and development insights</p>
+            <p className="text-base text-gray-500 font-medium">Your audit performance and development insights</p>
           </div>
           <div className="flex items-center gap-3">
             <select className="input h-10">

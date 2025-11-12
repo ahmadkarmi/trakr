@@ -691,9 +691,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_audit_with_cycle_guard: {
+        Args: {
+          p_org_id: string
+          p_branch_id: string
+          p_survey_id: string
+          p_assigned_to: string
+        }
+        Returns: Tables<'audits'>
+      }
       ensure_current_period_scheduling: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_org_period_bounds: {
+        Args: {
+          p_org_id: string
+          p_frequency: Database['public']['Enums']['audit_frequency']
+        }
+        Returns: {
+          start_at: string
+          end_at: string
+        }[]
       }
     }
     Enums: {

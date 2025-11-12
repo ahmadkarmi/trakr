@@ -33,13 +33,16 @@ export default function MetricCard({ icon, value, label, tone = 'default', size 
   return (
     <Container
       onClick={onClick}
-      className={`bg-white ${colors.border} border rounded-xl p-4 sm:p-5 text-left transition-shadow ${isButton ? 'hover:shadow-md' : ''} ${className}`}
+      className={`group relative bg-white ${colors.border} border rounded-xl p-4 sm:p-5 text-left shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] transition-all duration-300 ${isButton ? 'hover:shadow-[0_4px_16px_-2px_rgba(0,0,0,0.12)] hover:-translate-y-1 cursor-pointer active:scale-95' : 'hover:shadow-[0_4px_16px_-2px_rgba(0,0,0,0.1)]'} ${className}`}
     >
-      <div className={`${iconSize} ${colors.iconBg} rounded-lg flex items-center justify-center mb-2`}>
-        <div className={`${colors.iconText}`}>{icon}</div>
+      <div className="relative mb-2">
+        <div className={`absolute inset-0 ${colors.iconBg} rounded-lg blur-md opacity-0 group-hover:opacity-20 transition-opacity`} />
+        <div className={`relative ${iconSize} ${colors.iconBg} rounded-lg flex items-center justify-center`}>
+          <div className={`${colors.iconText}`}>{icon}</div>
+        </div>
       </div>
-      <p className={`${valueSize} font-bold ${colors.value}`}>{value}</p>
-      <p className={`text-xs ${colors.label} mt-1`}>{label}</p>
+      <p className={`${valueSize} font-bold ${colors.value} tabular-nums`}>{value}</p>
+      <p className={`text-xs font-semibold ${colors.label} uppercase tracking-wide mt-1`}>{label}</p>
       {children}
     </Container>
   )

@@ -8,23 +8,27 @@
  */
 
 const { createClient } = require('@supabase/supabase-js')
+const { ensureEnvSet, formatMissing } = require('./utils/env')
 
-// Load environment variables
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
+const { resolved: envVars, missing: missingEnv, usedKeys } = ensureEnvSet('scripts')
+
+if (missingEnv.length > 0) {
+  console.log('❌ Missing environment variables!')
+  console.log('Please set:')
+  console.log(formatMissing(missingEnv))
+  console.log('\nYou can set them via shell exports or by creating a .env file in the project root.')
+  process.exit(1)
+}
+
+const SUPABASE_URL = envVars.SUPABASE_URL
+const SUPABASE_SERVICE_KEY = envVars.SUPABASE_SERVICE_KEY
 
 console.log('🔐 Setting Passwords for Seeded Users')
 console.log('=====================================')
 console.log('')
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.log('❌ Missing environment variables!')
-  console.log('Please set:')
-  console.log('  SUPABASE_URL=your-supabase-url')
-  console.log('  SUPABASE_SERVICE_KEY=your-service-role-key')
-  console.log('')
-  console.log('Or create .env file in project root with these values.')
-  process.exit(1)
+if (usedKeys.SUPABASE_SERVICE_KEY && usedKeys.SUPABASE_SERVICE_KEY !== 'SUPABASE_SERVICE_KEY') {
+  console.log('⚠️  Using fallback key for SUPABASE_SERVICE_KEY (' + usedKeys.SUPABASE_SERVICE_KEY + '). Operations may be limited.')
 }
 
 // Create Supabase admin client (uses service role key)

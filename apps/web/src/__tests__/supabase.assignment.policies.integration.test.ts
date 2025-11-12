@@ -1,34 +1,59 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import { api } from '../utils/api'
 import { AuditStatus } from '@trakr/shared'
+import { getSupabaseTestProfile, ensureAuditorCoverage } from '../tests/utils/supabaseFixtures'
 
 const isSupabase = ((import.meta as any).env?.VITE_BACKEND || 'mock').toLowerCase() === 'supabase'
 const maybe = isSupabase ? describe : describe.skip
 
 maybe('Supabase assignment policy behavior', () => {
+  let defaultOrgId: string | null = null
+
+  beforeAll(async () => {
+    const { orgId } = await getSupabaseTestProfile()
+    defaultOrgId = orgId
+  })
+
+  const resolveOrgId = async () => {
+    if (defaultOrgId) return defaultOrgId
+    const orgs = await api.getOrganizations()
+    if (!orgs.length) throw new Error('No organizations available in Supabase fixture')
+    return orgs[0].id
+  }
+
   it('does not allow reassigning SUBMITTED audits', async () => {
     const orgs = await api.getOrganizations()
     expect(orgs.length).toBeGreaterThan(0)
-    const orgId = orgs[0].id
+    const orgId = await resolveOrgId()
 
     const users = await api.getUsers()
     expect(users.length).toBeGreaterThan(1)
-    const u1 = users[0]
-    const u2 = users.find(u => u.id !== u1.id) || users[0]
+    const auditors = users.filter(u => (u.role || '').toLowerCase() === 'auditor')
+    const u1 = auditors[0] || users[0]
+    const u2 = auditors.find(u => u.id !== u1.id) || users.find(u => u.id !== u1.id) || users[0]
 
     // ensure branch
     const branches = await api.getBranches(orgId)
-    const branchId = branches[0]?.id || (await api.createBranch({ orgId, name: `Assign Policy Branch ${Date.now()}` })).id
+    let branchId: string | null = branches[0]?.id ?? null
+    if (!branchId) {
+      const created = await api.createBranch({ orgId, name: `Assign Policy Branch ${Date.now()}` })
+      branchId = created.id
+    }
+    if (!branchId) throw new Error('Failed to resolve branch for assignment policy test')
+    await ensureAuditorCoverage(u1.id, orgId, branchId)
+    await ensureAuditorCoverage(u2.id, orgId, branchId)
 
     // create minimal survey
     const s = await api.createSurvey({
       title: `AssignPolicy ${Date.now()}`,
       description: 'tmp',
       createdBy: u1.id,
+      orgId,
       sections: [ { id: 's1', title: 'P1', description: '', order: 0, questions: [] } ],
     })
 
-    const audit = await api.createAudit({ orgId, branchId, surveyId: s.id, assignedTo: u1.id })
+    const resolvedBranchId = branchId
+    const audit = await api.createAudit({ orgId, branchId: resolvedBranchId, surveyId: s.id, assignedTo: u1.id })
     // move to in progress
     await api.saveAuditProgress(audit.id, { responses: {} })
 

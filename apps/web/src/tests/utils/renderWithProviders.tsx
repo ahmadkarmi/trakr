@@ -3,6 +3,7 @@ import { render, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ToastProvider'
+export { MemoryRouter } from 'react-router-dom'
 
 export function createTestClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } })

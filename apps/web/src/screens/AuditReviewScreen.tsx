@@ -672,7 +672,7 @@ export default function AuditReviewScreen() {
           <div className="flex items-center justify-between gap-3 mt-2">
             <button
               onClick={() => setShowApprovalDialog(false)}
-              className="btn btn-secondary"
+              className="btn btn-outline"
               disabled={approveMutation.isPending}
             >
               Cancel
@@ -701,7 +701,7 @@ export default function AuditReviewScreen() {
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={() => setShowRejectionDialog(false)}
-              className="btn btn-secondary"
+              className="btn btn-outline"
               disabled={rejectMutation.isPending}
             >
               Cancel

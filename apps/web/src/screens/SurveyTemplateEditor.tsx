@@ -929,7 +929,7 @@ const SurveyTemplateEditor: React.FC = () => {
                   </ul>
                   <div className="mt-3 flex gap-2">
                     <input className="input flex-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" placeholder="Add option" onKeyDown={(e) => { if (e.key === 'Enter') { addDraftOption((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).value=''; } }} />
-                    <button className="btn btn-secondary btn-sm" onClick={(e) => { const inp = (e.currentTarget.previousElementSibling as HTMLInputElement); if (inp?.value) { addDraftOption(inp.value); inp.value=''; } }}>Add</button>
+                    <button className="btn btn-primary btn-sm" onClick={(e) => { const inp = (e.currentTarget.previousElementSibling as HTMLInputElement); if (inp?.value) { addDraftOption(inp.value); inp.value=''; } }}>Add</button>
                   </div>
                 </div>
               </fieldset>
