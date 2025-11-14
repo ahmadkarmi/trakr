@@ -30,13 +30,12 @@ jobs:
           
           echo "Creating backup: ${BACKUP_FILE}"
           
-          # Full database backup (using --no-psqlrc to avoid IPv6 issues)
-          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL}?options=-c%20jit%3Doff" \
+          # Full database backup
+          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL}" \
             --no-owner \
             --no-privileges \
             --clean \
             --if-exists \
-            --no-psqlrc \
             > "${BACKUP_FILE}"
           
           # Compress backup
@@ -73,11 +72,10 @@ jobs:
           SCHEMA_FILE="trakr-schema-${BACKUP_DATE}.sql"
           
           # Schema-only backup (no data)
-          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL}?options=-c%20jit%3Doff" \
+          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL}" \
             --schema-only \
             --no-owner \
             --no-privileges \
-            --no-psqlrc \
             > "${SCHEMA_FILE}"
           
           echo "Schema backup created: ${SCHEMA_FILE}"
