@@ -30,8 +30,17 @@ jobs:
           
           echo "Creating backup: ${BACKUP_FILE}"
           
+          # Extract host from connection string and resolve to IPv4
+          DB_HOST=$(echo "${SUPABASE_DB_URL}" | sed -n 's/.*@\([^:]*\):.*/\1/p')
+          DB_IPV4=$(getent ahostsv4 "${DB_HOST}" | awk 'NR==1 {print $1}')
+          
+          # Replace hostname with IPv4 address to avoid IPv6 issues
+          SUPABASE_DB_URL_IPV4=$(echo "${SUPABASE_DB_URL}" | sed "s/@${DB_HOST}/@${DB_IPV4}/")
+          
+          echo "Using IPv4 address: ${DB_IPV4}"
+          
           # Full database backup
-          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL}" \
+          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL_IPV4}" \
             --no-owner \
             --no-privileges \
             --clean \
@@ -71,8 +80,17 @@ jobs:
           BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
           SCHEMA_FILE="trakr-schema-${BACKUP_DATE}.sql"
           
+          # Extract host from connection string and resolve to IPv4
+          DB_HOST=$(echo "${SUPABASE_DB_URL}" | sed -n 's/.*@\([^:]*\):.*/\1/p')
+          DB_IPV4=$(getent ahostsv4 "${DB_HOST}" | awk 'NR==1 {print $1}')
+          
+          # Replace hostname with IPv4 address to avoid IPv6 issues
+          SUPABASE_DB_URL_IPV4=$(echo "${SUPABASE_DB_URL}" | sed "s/@${DB_HOST}/@${DB_IPV4}/")
+          
+          echo "Using IPv4 address: ${DB_IPV4}"
+          
           # Schema-only backup (no data)
-          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL}" \
+          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL_IPV4}" \
             --schema-only \
             --no-owner \
             --no-privileges \
