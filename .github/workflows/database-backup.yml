@@ -19,6 +19,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
           
+      - name: DNS debug (Supabase host)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          DB_HOST_PORT="${SUPABASE_DB_URL#*@}"
+          DB_HOST="${DB_HOST_PORT%%:*}"
+          echo "Host: ${DB_HOST}"
+          echo "getent hosts:" && getent hosts "${DB_HOST}" || true
+          echo "getent ahostsv4:" && getent ahostsv4 "${DB_HOST}" || true
+          echo "getent ahostsv6:" && getent ahostsv6 "${DB_HOST}" || true
+          echo "ping -c 1 host:" && ping -c 1 "${DB_HOST}" || true
+          
       - name: Create database backup
         env:
           # IDE may warn about secrets context, but this is correct GitHub Actions syntax
@@ -30,17 +42,22 @@ jobs:
           
           echo "Creating backup: ${BACKUP_FILE}"
           
-          # Extract host from connection string and resolve to IPv4
-          DB_HOST=$(echo "${SUPABASE_DB_URL}" | sed -n 's/.*@\([^:]*\):.*/\1/p')
-          DB_IPV4=$(getent ahostsv4 "${DB_HOST}" | awk 'NR==1 {print $1}')
-          
-          # Replace hostname with IPv4 address to avoid IPv6 issues
-          SUPABASE_DB_URL_IPV4=$(echo "${SUPABASE_DB_URL}" | sed "s/@${DB_HOST}/@${DB_IPV4}/")
-          
-          echo "Using IPv4 address: ${DB_IPV4}"
+          DB_HOST_PORT="${SUPABASE_DB_URL#*@}"
+          DB_HOST="${DB_HOST_PORT%%:*}"
+          DB_IPV4=$(getent hosts "${DB_HOST}" | awk '$1 ~ /^[0-9.]+$/ {print $1; exit}')
+
+          if [ -n "${DB_IPV4}" ]; then
+            SUPABASE_DB_URL_EFFECTIVE="${SUPABASE_DB_URL/@${DB_HOST}/@${DB_IPV4}}"
+            echo "Resolved ${DB_HOST} → ${DB_IPV4}"
+          else
+            SUPABASE_DB_URL_EFFECTIVE="${SUPABASE_DB_URL}"
+            echo "IPv4 lookup failed for ${DB_HOST}; falling back to original host"
+          fi
+
+          echo "Using connection string: ${SUPABASE_DB_URL_EFFECTIVE}" | sed 's/:[^:@]*@/:***@/'
           
           # Full database backup
-          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL_IPV4}" \
+          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL_EFFECTIVE}" \
             --no-owner \
             --no-privileges \
             --clean \
@@ -72,6 +89,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
           
+      - name: DNS debug (Supabase host)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          DB_HOST_PORT="${SUPABASE_DB_URL#*@}"
+          DB_HOST="${DB_HOST_PORT%%:*}"
+          echo "Host: ${DB_HOST}"
+          echo "getent hosts:" && getent hosts "${DB_HOST}" || true
+          echo "getent ahostsv4:" && getent ahostsv4 "${DB_HOST}" || true
+          echo "getent ahostsv6:" && getent ahostsv6 "${DB_HOST}" || true
+          echo "ping -c 1 host:" && ping -c 1 "${DB_HOST}" || true
+          
       - name: Backup database schema
         env:
           # IDE may warn about secrets context, but this is correct GitHub Actions syntax
@@ -80,17 +109,22 @@ jobs:
           BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
           SCHEMA_FILE="trakr-schema-${BACKUP_DATE}.sql"
           
-          # Extract host from connection string and resolve to IPv4
-          DB_HOST=$(echo "${SUPABASE_DB_URL}" | sed -n 's/.*@\([^:]*\):.*/\1/p')
-          DB_IPV4=$(getent ahostsv4 "${DB_HOST}" | awk 'NR==1 {print $1}')
+          DB_HOST_PORT="${SUPABASE_DB_URL#*@}"
+          DB_HOST="${DB_HOST_PORT%%:*}"
+          DB_IPV4=$(getent hosts "${DB_HOST}" | awk '$1 ~ /^[0-9.]+$/ {print $1; exit}')
+
+          if [ -n "${DB_IPV4}" ]; then
+            SUPABASE_DB_URL_EFFECTIVE="${SUPABASE_DB_URL/@${DB_HOST}/@${DB_IPV4}}"
+            echo "Resolved ${DB_HOST} → ${DB_IPV4}"
+          else
+            SUPABASE_DB_URL_EFFECTIVE="${SUPABASE_DB_URL}"
+            echo "IPv4 lookup failed for ${DB_HOST}; falling back to original host"
+          fi
           
-          # Replace hostname with IPv4 address to avoid IPv6 issues
-          SUPABASE_DB_URL_IPV4=$(echo "${SUPABASE_DB_URL}" | sed "s/@${DB_HOST}/@${DB_IPV4}/")
-          
-          echo "Using IPv4 address: ${DB_IPV4}"
+          echo "Using connection string: ${SUPABASE_DB_URL_EFFECTIVE}" | sed 's/:[^:@]*@/:***@/'
           
           # Schema-only backup (no data)
-          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL_IPV4}" \
+          PGOPTIONS='--client-min-messages=warning' pg_dump "${SUPABASE_DB_URL_EFFECTIVE}" \
             --schema-only \
             --no-owner \
             --no-privileges \
