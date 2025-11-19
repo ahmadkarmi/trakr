@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect, Suspense, lazy } from 'react'
+import { useEffect, Suspense, lazy, useRef } from 'react'
 import { useAuthStore } from './stores/auth'
 import { UserRole } from '@trakr/shared'
 import { ToastProvider } from './components/ToastProvider'
@@ -14,6 +14,53 @@ import { usePerformanceMonitoring } from './hooks/usePerformanceMonitoring'
 import { useDashboardPrefetch } from './hooks/useDashboardPrefetch'
 import { testMultipleBranchManagerSystem } from './test-integration'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
+import { useToast } from './hooks/useToast'
+import { ApiHealthBanner } from './components/ApiHealthBanner'
+import { useFocusRefetch } from './hooks/useFocusRefetch'
+
+const SessionWatcher = () => {
+  const sessionError = useAuthStore((state) => state.sessionError)
+  const { showToast } = useToast()
+  const lastMessageRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (sessionError && lastMessageRef.current !== sessionError) {
+      showToast({
+        message: sessionError,
+        variant: 'warning',
+        duration: 7000,
+      })
+      lastMessageRef.current = sessionError
+    }
+  }, [sessionError, showToast])
+
+  return null
+}
+
+const SessionExpiryBanner = () => {
+  const sessionError = useAuthStore((state) => state.sessionError)
+  const acknowledge = useAuthStore((state) => state.acknowledgeSessionError)
+  const signOut = useAuthStore((state) => state.signOut)
+
+  if (!sessionError) return null
+
+  return (
+    <div className="bg-red-50 border-b border-red-200 px-4 py-3 text-sm text-red-800 flex items-center justify-between gap-4">
+      <div>
+        <p className="font-semibold">Session expired</p>
+        <p className="text-red-700">{sessionError}</p>
+      </div>
+      <div className="flex gap-2">
+        <button className="btn btn-danger btn-sm" onClick={() => signOut()}>
+          Log in again
+        </button>
+        <button className="btn btn-outline btn-sm" onClick={() => acknowledge()}>
+          Dismiss
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // Lazy load all screens for code splitting
 const LoginScreen = lazy(() => import('./screens/LoginScreen'))
@@ -45,6 +92,7 @@ const Landing = lazy(() => import('./screens/Landing'))
 
 function App() {
   const { user, isLoading, init } = useAuthStore()
+  useFocusRefetch()
   const { updateAvailable, updateApp } = usePWA()
   const { logMetrics, sendMetricsToAnalytics } = usePerformanceMonitoring()
   
@@ -93,12 +141,16 @@ function App() {
   return (
     <LoadingProvider>
       <ToastProvider>
+        {/** Session error watcher must be inside ToastProvider */}
+        <SessionWatcher />
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <OrganizationProvider>
             <ErrorBoundary>
-          <div className="min-h-screen bg-gray-50">
-            {/* Offline Banner */}
+          <div className="min-h-screen bg-gray-50 flex flex-col">
+            {/* Offline + session + API banners */}
             <OfflineBanner />
+            <SessionExpiryBanner />
+            <ApiHealthBanner />
             
             {/* Update available notification */}
             {updateAvailable && (
@@ -115,6 +167,7 @@ function App() {
               </div>
             )}
             
+            <div className="flex-1">
             <Suspense fallback={<LoadingScreen message="Loading page..." showSkeleton={true} />}>
               <Routes>
                 {/* Public routes */}
@@ -206,10 +259,11 @@ function App() {
                 )}
               </Routes>
             </Suspense>
+            </div>
             
             {/* PWA Install Prompt - only show for authenticated users */}
             {user && <PWAInstallPrompt />}
-            
+
             {/* Global Error Toast Container */}
             <ErrorToastContainer />
           </div>

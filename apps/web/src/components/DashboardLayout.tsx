@@ -4,19 +4,21 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuthStore } from '../stores/auth'
 import { USER_ROLE_LABELS, UserRole } from '@trakr/shared'
-import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, PencilSquareIcon, MapIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon, UsersIcon, PresentationChartLineIcon, BellIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, PencilSquareIcon, MapIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon, UsersIcon, PresentationChartLineIcon, BellIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
 import { useOrganization } from '../contexts/OrganizationContext'
 //
 
 import { Toaster } from 'react-hot-toast'
 import NotificationDropdown from './NotificationDropdown'
+import { APP_VERSION } from '@/utils/appInfo'
 
 interface DashboardLayoutProps {
   title: string
+  subtitle?: string
   children: ReactNode
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, children }) => {
   const { user, signOut } = useAuthStore()
   const location = useLocation()
   const navigate = useNavigate()
@@ -114,6 +116,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
       if (ro) ro.disconnect()
     }
   }, [])
+
+  const currentYear = new Date().getFullYear()
 
   return (
     <div className="h-screen overflow-hidden bg-gray-50 flex flex-col">
@@ -235,6 +239,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
                 <span>Sign Out</span>
               </button>
             </div>
+            <div className="pt-3">
+              <div className="rounded-xl border border-primary-200/70 bg-gradient-to-br from-primary-50 to-white px-4 py-2 text-center shadow-sm">
+                <p className="text-xs font-semibold text-primary-700 tracking-wide">Trakr</p>
+                <p className="text-[11px] text-primary-600/80">© {currentYear} · v{APP_VERSION}</p>
+              </div>
+            </div>
           </div>
         </aside>
       </div>
@@ -294,7 +304,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
             )
           })}
         </nav>
-        <div className="mt-auto px-3 pt-3 border-t border-gray-200">
+        <div className="mt-auto px-3 pt-3 border-t border-gray-200 space-y-2">
           <button
             className="w-full inline-flex items-center justify-center gap-2 text-xs text-gray-600 hover:text-gray-800 bg-white border border-gray-200 rounded-md px-2 py-2 hover:shadow-sm transition"
             onClick={() => setCompact(v => !v)}
@@ -304,6 +314,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
             <span className="text-sm">{compact ? '»' : '«'}</span>
             {!compact && <span>Compact mode</span>}
           </button>
+          {!compact ? (
+            <div className="rounded-xl border border-primary-200/70 bg-gradient-to-br from-primary-50 to-white px-3 py-2 text-[11px] text-primary-600/80 shadow-sm">
+              <p className="font-semibold text-primary-700">Trakr</p>
+              <p className="mt-0.5">© {currentYear} · v{APP_VERSION}</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1 text-[9px] uppercase tracking-wide text-gray-400">
+              <div className="flex items-center justify-center w-9 h-9 rounded-full border border-primary-200 bg-primary-50 text-primary-600" title={`Trakr © ${currentYear} · v${APP_VERSION}`}>
+                <InformationCircleIcon className="w-4 h-4" />
+              </div>
+              <span className="text-primary-600">© {String(currentYear).slice(-2)}</span>
+              <span className="text-primary-600">v{APP_VERSION}</span>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -323,7 +347,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, children }) =>
               </button>
               <div className="min-w-0">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight truncate">{title}</h1>
-                <p className="hidden sm:block text-sm text-gray-500 font-medium mt-0.5">Welcome back, {user?.name?.split(' ')[0]}</p>
+                <p className="hidden sm:block text-sm text-gray-500 font-medium mt-0.5">{subtitle ?? `Welcome back, ${user?.name?.split(' ')[0] || 'Admin'}`}</p>
               </div>
             </div>
 
