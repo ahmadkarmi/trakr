@@ -39,7 +39,7 @@
     "react-native-vector-icons": "^10.0.3",
     "react-native-web": "~0.19.6",
     "vite": "7.1.7",
-    "vitest": "3.2.4",
+    "vitest": "4.0.12",
     "zustand": "^4.4.0"
   },
   "devDependencies": {
