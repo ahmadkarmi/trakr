@@ -38,7 +38,7 @@
     "vite-bundle-analyzer": "^0.7.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.30.0"
+    "@rollup/rollup-linux-x64-gnu": "^4.53.3"
   },
   "engines": {
     "node": ">=18.0.0",
