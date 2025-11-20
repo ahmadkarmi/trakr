@@ -561,7 +561,7 @@ const LoginScreen: React.FC = () => {
                     }}
                     className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
                   >
-                    Manager
+                    Branch Manager
                   </button>
                   <button
                     type="button"
