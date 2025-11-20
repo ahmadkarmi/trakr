@@ -190,6 +190,55 @@ export const supabaseApi = {
     return (data || []).map(mapOrganization)
   },
 
+  async getOrgConfig(orgId?: string) {
+    if (!orgId) throw new Error('Organization ID required')
+    const supabase = await getSupabase()
+    const { data, error } = await supabase.rpc('get_org_config', { p_org_id: orgId })
+    if (error) throw error
+    const payload = (data || {}) as any
+    return {
+      devMode: Boolean(payload?.devMode),
+      exportsEnabled: Boolean(payload?.exportsEnabled),
+      featureFlags: Array.isArray(payload?.featureFlags) ? payload.featureFlags : [],
+    }
+  },
+
+  async updateOrgConfig(orgId: string, updates: Record<string, any>, reason?: string) {
+    if (!orgId) throw new Error('Organization ID required')
+    const supabase = await getSupabase()
+    const { data, error } = await supabase.rpc('set_org_config', {
+      p_org_id: orgId,
+      p_payload: updates,
+      p_reason: reason || null,
+    })
+    if (error) throw error
+    const payload = (data || {}) as any
+    return {
+      devMode: Boolean(payload?.devMode),
+      exportsEnabled: Boolean(payload?.exportsEnabled),
+      featureFlags: Array.isArray(payload?.featureFlags) ? payload.featureFlags : [],
+    }
+  },
+
+  async getDataAccessAudit(orgId?: string) {
+    const supabase = await getSupabase()
+    let query = supabase.from('data_access_audit').select('*').order('created_at', { ascending: false }).limit(100)
+    if (orgId) {
+      query = query.eq('org_id', orgId)
+    }
+    const { data, error } = await query
+    if (error) throw error
+    return (data || []).map((row: Tables<'data_access_audit'> & { export_scope?: any }) => ({
+      id: row.id,
+      orgId: row.org_id,
+      userId: row.user_id || undefined,
+      action: row.action,
+      reason: row.reason || undefined,
+      exportScope: row.export_scope || {},
+      createdAt: new Date(row.created_at),
+    }))
+  },
+
   async getUncoveredActiveBranchesIfAuditorRemoved(userId: string): Promise<{ ids: string[]; names: string[] }> {
     return await this._findUncoveredActiveBranchesIfAuditorRemoved(userId)
   },

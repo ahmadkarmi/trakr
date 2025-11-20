@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
 import { ensureClientEnv } from '@trakr/shared'
+import { createGuardedSupabaseClient } from './guardedSupabase'
 
 type ViteEnvRecord = Record<string, string | undefined>
 
@@ -21,13 +21,7 @@ export function getSupabase() {
     throw new Error('[supabaseClient] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
   }
   if (!supabase) {
-    supabase = createClient(supabaseUrl as string, supabaseAnonKey as string, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    })
+    supabase = createGuardedSupabaseClient(supabaseUrl as string, supabaseAnonKey as string)
   }
   return supabase
 }

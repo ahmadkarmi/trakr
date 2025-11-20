@@ -60,6 +60,51 @@ export type Database = {
           },
         ]
       }
+      data_access_audit: {
+        Row: {
+          id: string
+          org_id: string
+          user_id: string | null
+          action: string
+          reason: string | null
+          export_scope: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          user_id?: string | null
+          action?: string
+          reason?: string | null
+          export_scope?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          user_id?: string | null
+          action?: string
+          reason?: string | null
+          export_scope?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_access_audit_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_access_audit_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       audit_photos: {
         Row: {
           audit_id: string

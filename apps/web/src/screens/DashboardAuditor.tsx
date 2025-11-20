@@ -293,23 +293,32 @@ const DashboardAuditor: React.FC = () => {
         </div>
 
         {/* Quick Metrics - MetricCard */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <MetricCard
-            icon={<span className="text-lg">🚀</span>}
-            value={surveysReadyCount}
-            label="Surveys Ready"
-            tone={surveysReadyActive ? 'primary' : 'default'}
-            onClick={() => { if (surveysReadyActive) { setMainTab('cycle'); startNewAuditRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) } }}
-          >
-            {surveysReadyActive && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-200 mt-1">Start here</span>
-            )}
-          </MetricCard>
-          <MetricCard icon={<ClipboardDocumentCheckIcon className="w-5 h-5 text-blue-600" />} value={statusCounts.draft} label="Draft" tone="primary" />
-          <MetricCard icon={<ClockIcon className="w-5 h-5 text-orange-600" />} value={statusCounts.inProgress} label="In Progress" tone="warning" />
-          <MetricCard icon={<span className="text-lg">📤</span>} value={statusCounts.submitted} label="Submitted" tone="warning" />
-          <MetricCard icon={<CheckCircleIcon className="w-5 h-5 text-green-600" />} value={statusCounts.completed} label="Completed" tone="success" />
-          <MetricCard icon={<span className="text-lg">✅</span>} value={statusCounts.approved} label="Approved" tone="success" />
+        <div className="card">
+          <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+            <p className="heading-micro">My Workload</p>
+            <h2 className="heading-section-title">Cycle Snapshot</h2>
+            <p className="heading-subtitle">Status of all audits assigned to you.</p>
+          </div>
+          <div className="card-body">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              <MetricCard
+                icon={<span className="text-lg">🚀</span>}
+                value={surveysReadyCount}
+                label="Surveys Ready"
+                tone={surveysReadyActive ? 'primary' : 'default'}
+                onClick={() => { if (surveysReadyActive) { setMainTab('cycle'); startNewAuditRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) } }}
+              >
+                {surveysReadyActive && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-200 mt-1">Start here</span>
+                )}
+              </MetricCard>
+              <MetricCard icon={<ClipboardDocumentCheckIcon className="w-5 h-5 text-blue-600" />} value={statusCounts.draft} label="Draft" tone="primary" />
+              <MetricCard icon={<ClockIcon className="w-5 h-5 text-orange-600" />} value={statusCounts.inProgress} label="In Progress" tone="warning" />
+              <MetricCard icon={<span className="text-lg">📤</span>} value={statusCounts.submitted} label="Submitted" tone="warning" />
+              <MetricCard icon={<CheckCircleIcon className="w-5 h-5 text-green-600" />} value={statusCounts.completed} label="Completed" tone="success" />
+              <MetricCard icon={<span className="text-lg">✅</span>} value={statusCounts.approved} label="Approved" tone="success" />
+            </div>
+          </div>
         </div>
 
         {/* Resume Audit Card */}
@@ -342,9 +351,9 @@ const DashboardAuditor: React.FC = () => {
         )}
 
         {/* Main Tabbed Section: This Cycle | Rejected Audits | Audit History */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="card overflow-hidden">
           {/* Main Tabs */}
-          <div className="border-b border-gray-200 px-4 sm:px-6 overflow-x-auto">
+          <div className="border-b border-gray-100 px-4 sm:px-6 overflow-x-auto">
             <nav className="flex gap-8 min-w-max" aria-label="Tabs">
               <button
                 onClick={() => setMainTab('cycle')}

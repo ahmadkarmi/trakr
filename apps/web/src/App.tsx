@@ -45,18 +45,29 @@ const SessionExpiryBanner = () => {
   if (!sessionError) return null
 
   return (
-    <div className="bg-red-50 border-b border-red-200 px-4 py-3 text-sm text-red-800 flex items-center justify-between gap-4">
-      <div>
-        <p className="font-semibold">Session expired</p>
-        <p className="text-red-700">{sessionError}</p>
-      </div>
-      <div className="flex gap-2">
-        <button className="btn btn-danger btn-sm" onClick={() => signOut()}>
-          Log in again
-        </button>
-        <button className="btn btn-outline btn-sm" onClick={() => acknowledge()}>
-          Dismiss
-        </button>
+    <div className="fixed top-0 left-0 right-0 z-50 bg-red-50 border-b border-red-200 px-4 py-3 text-sm text-red-800 shadow-md">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <p className="font-semibold">Session expired</p>
+          <p className="text-red-700">{sessionError}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="btn btn-danger btn-sm" onClick={() => signOut()}>
+            Log in again
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={() => acknowledge()}>
+            Dismiss
+          </button>
+          <button
+            onClick={() => acknowledge()}
+            className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors"
+            aria-label="Close"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   )

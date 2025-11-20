@@ -1,0 +1,37 @@
+name: Synthetic Uptime
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  uptime:
+    runs-on: ubuntu-latest
+    env:
+      SYNTHETIC_LOGIN_URL: https://trakr-mobile.vercel.app/login
+      SYNTHETIC_SUPABASE_URL: ${{ secrets.SYNTHETIC_SUPABASE_URL }}
+      SYNTHETIC_SUPABASE_ANON_KEY: ${{ secrets.SYNTHETIC_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run synthetic checks
+        run: node scripts/check-uptime.mjs
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "❌ Synthetic uptime checks failed on ${{ github.workflow }} run ${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

@@ -7,11 +7,47 @@ import App from './App.tsx'
 import './index.css'
 import { emitToast } from './utils/toastBus'
 import { apiErrorMessage } from './utils/apiError'
-import { initSentry } from './utils/sentry'
+import { initSentry, captureMessage } from './utils/sentry'
 import { ensureClientEnv, formatMissingHtml } from '@trakr/shared'
+import { useApiHealthStore, monitoredQueryLabel } from './stores/apiHealth'
 
 // Initialize Sentry error tracking (production only)
 initSentry()
+setupChunkLoadMonitoring()
+
+function setupChunkLoadMonitoring() {
+  if (typeof window === 'undefined') return
+  let notified = false
+  const notify = (detail?: string) => {
+    if (!notified) {
+      notified = true
+      emitToast({
+        message: 'A new version is available. Please hard refresh (Ctrl+Shift+R).',
+        variant: 'warning',
+        duration: 10000,
+      })
+      captureMessage(detail ? `Chunk load failure detected: ${detail}` : 'Chunk load failure detected', 'error')
+    }
+  }
+  const handleError = (event: ErrorEvent) => {
+    const target = event.target as HTMLElement | null
+    const isScript = target instanceof HTMLScriptElement && target.src.includes('/assets/')
+    const isDynamicImport = typeof event.message === 'string' && event.message.includes('Failed to fetch dynamically imported module')
+    if (isScript || isDynamicImport) {
+      const src = target instanceof HTMLScriptElement ? target.src : undefined
+      const detail = src ? `${event.message || 'Chunk load error'} (${src})` : event.message
+      notify(detail)
+    }
+  }
+  const handleRejection = (event: PromiseRejectionEvent) => {
+    const reasonMessage = typeof event.reason?.message === 'string' ? event.reason.message : String(event.reason || '')
+    if (reasonMessage.includes('Failed to fetch dynamically imported module')) {
+      notify(reasonMessage)
+    }
+  }
+  window.addEventListener('error', handleError, true)
+  window.addEventListener('unhandledrejection', handleRejection)
+}
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -20,6 +56,16 @@ const queryClient = new QueryClient({
       // Avoid spamming for background prefetches
       if (query.state.status === 'error') {
         emitToast({ message: apiErrorMessage(error, 'Something went wrong'), variant: 'error' })
+      }
+      const label = monitoredQueryLabel(query.queryKey)
+      if (label) {
+        useApiHealthStore.getState().setIssue(label, apiErrorMessage(error, `${label} failed`))
+      }
+    },
+    onSuccess: (_data, query) => {
+      const label = monitoredQueryLabel(query.queryKey)
+      if (label) {
+        useApiHealthStore.getState().clearIssue(label)
       }
     },
   }),
@@ -68,7 +114,7 @@ if (clientEnv.missing.length > 0) {
   throw new Error(`Missing required environment variables: ${names}`)
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
       <App />
