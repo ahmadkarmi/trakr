@@ -42,7 +42,7 @@
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
     "react-plotly.js": "^2.6.0",
-    "react-router-dom": "^6.20.0",
+    "react-router-dom": "^7.9.6",
     "recharts": "^2.15.4",
     "tailwind-merge": "^2.0.0",
     "zustand": "^4.4.0"
