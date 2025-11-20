@@ -444,29 +444,36 @@ const AuditSummary: React.FC = () => {
   return (
     <DashboardLayout title="Audit Summary">
       <div className="space-y-4 sm:space-y-6">
-        <div className="card p-5 sm:p-6">
-          {/* Title Section */}
-          <div className="mb-5">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Audit Summary</h2>
-            {branch && (
-              <div className="text-sm sm:text-base text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-gray-400">📍</span>
-                <span className="font-medium break-words">{branch.name}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              {audit && (<StatusBadge status={audit.status} />)}
-              {audit && (
-                <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-                  ID: <span className="font-mono text-gray-700">{auditId?.slice(0, 8)}</span>
-                </span>
-              )}
-            </div>
+        <div className="card">
+          <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+            <p className="heading-micro">Audit Overview</p>
+            <h2 className="heading-section-title">Summary & actions</h2>
+            <p className="heading-subtitle">
+              {branch ? `Review ${branch.name}’s audit status, exports, and approvals.` : 'Review audit status, exports, and approvals.'}
+            </p>
           </div>
+          <div className="card-body">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-3">
+                {audit && <StatusBadge status={audit.status} />}
+                {branch && (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1 text-sm text-gray-700">
+                    <span className="text-gray-400">📍</span>
+                    <span className="font-medium">{branch.name}</span>
+                  </div>
+                )}
+                {audit && (
+                  <span className="text-xs sm:text-sm text-gray-500">
+                    ID: <span className="font-mono text-gray-700">{auditId?.slice(0, 8)}</span>
+                  </span>
+                )}
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate(-1)}>← Back</button>
+            </div>
 
-          {/* Actions Section */}
-          <div className="pt-4 border-t border-gray-200">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2">
+            {/* Actions Section */}
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2">
               {isAuditor && (
                 <>
                   {(() => {
@@ -482,7 +489,6 @@ const AuditSummary: React.FC = () => {
                       </button>
                     )
                   })()}
-                  <button className="btn btn-ghost btn-sm whitespace-nowrap" onClick={() => navigate(-1)}>← Back</button>
                 </>
               )}
               {isManager && (
@@ -576,6 +582,7 @@ const AuditSummary: React.FC = () => {
                   )}
                 </div>
               )}
+            </div>
             </div>
           </div>
 
@@ -727,89 +734,104 @@ const AuditSummary: React.FC = () => {
                 return (
                   <>
                     {/* KPI Row (weighted compliance only) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
-                      <MetricCard
-                        icon={<span className="text-lg">📊</span>}
-                        value={`${progress.completionPercent}%`}
-                        label="Completion"
-                        tone="primary"
-                      >
-                        <p className="text-xs text-gray-500 mt-1">{progress.answeredQuestions}/{progress.totalQuestions} answered</p>
-                      </MetricCard>
-                      <MetricCard
-                        icon={<span className="text-lg">✅</span>}
-                        value={`${weightedCompliance}%`}
-                        label="Compliance"
-                        tone="success"
-                      >
-                        <p className="text-xs text-gray-500 mt-1">Weighted score</p>
-                      </MetricCard>
-                      <MetricCard
-                        icon={<span className="text-lg">ℹ️</span>}
-                        value={base.naAnswers}
-                        label="N/A Selected"
-                      >
-                        <p className="text-xs text-gray-500 mt-1">Across all sections</p>
-                      </MetricCard>
+                    <div className="card mb-6">
+                      <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+                        <p className="heading-micro">Audit Health</p>
+                        <h3 className="heading-section-title">Key Metrics</h3>
+                        <p className="heading-subtitle">Completion, compliance, and N/A selections.</p>
+                      </div>
+                      <div className="card-body">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                          <MetricCard
+                            icon={<span className="text-lg">📊</span>}
+                            value={`${progress.completionPercent}%`}
+                            label="Completion"
+                            tone="primary"
+                          >
+                            <p className="text-xs text-gray-500 mt-1">{progress.answeredQuestions}/{progress.totalQuestions} answered</p>
+                          </MetricCard>
+                          <MetricCard
+                            icon={<span className="text-lg">✅</span>}
+                            value={`${weightedCompliance}%`}
+                            label="Compliance"
+                            tone="success"
+                          >
+                            <p className="text-xs text-gray-500 mt-1">Weighted score</p>
+                          </MetricCard>
+                          <MetricCard
+                            icon={<span className="text-lg">ℹ️</span>}
+                            value={base.naAnswers}
+                            label="N/A Selected"
+                          >
+                            <p className="text-xs text-gray-500 mt-1">Across all sections</p>
+                          </MetricCard>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Overview + Donut */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="card p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Overview</h3>
-                        <div className="text-sm text-gray-600 flex items-center gap-2">Status: <StatusBadge status={audit.status} /></div>
-                        {audit.status === AuditStatus.SUBMITTED && (
-                          <p className="text-sm text-amber-700 mt-1">Submitted for approval on {audit.submittedAt ? formatInTimeZone(audit.submittedAt, orgTimeZone) : ''}</p>
-                        )}
-                        {/* First submitted / Resubmitted intentionally not shown per requirement */}
-                        {audit.status === AuditStatus.APPROVED && (
-                          <div className="text-sm text-green-700 mt-2">
-                            <p>Approved on {audit.approvedAt ? formatInTimeZone(audit.approvedAt, orgTimeZone) : ''}</p>
-                            <div className="mt-2">
-                              {audit.approvalSignatureType === 'typed' && audit.approvalName ? (
-                                <span className="text-2xl italic text-gray-900">{audit.approvalName}</span>
-                              ) : audit.approvalSignatureUrl ? (
-                                <img src={audit.approvalSignatureUrl} alt="Manager signature" className="h-12 object-contain" />
-                              ) : null}
-                              {audit.approvalSignatureType && (
-                                <div className="text-xs text-gray-500">Signature {audit.approvalSignatureType === 'typed' ? `(typed${audit.approvalName ? `: ${audit.approvalName}` : ''})` : audit.approvalSignatureType === 'drawn' ? '(drawn)' : '(image)'}</div>
+                      <div className="card h-full">
+                        <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+                          <p className="heading-micro">Overview</p>
+                          <h3 className="heading-section-title">Status & Context</h3>
+                          <p className="heading-subtitle">Submission state, survey info, and approvals.</p>
+                        </div>
+                        <div className="card-body space-y-3 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">Status: <StatusBadge status={audit.status} /></div>
+                          {audit.status === AuditStatus.SUBMITTED && (
+                            <p className="text-amber-700">Submitted for approval on {audit.submittedAt ? formatInTimeZone(audit.submittedAt, orgTimeZone) : ''}</p>
+                          )}
+                          {audit.status === AuditStatus.APPROVED && (
+                            <div className="text-green-700 space-y-2">
+                              <p>Approved on {audit.approvedAt ? formatInTimeZone(audit.approvedAt, orgTimeZone) : ''}</p>
+                              <div>
+                                {audit.approvalSignatureType === 'typed' && audit.approvalName ? (
+                                  <span className="text-2xl italic text-gray-900">{audit.approvalName}</span>
+                                ) : audit.approvalSignatureUrl ? (
+                                  <img src={audit.approvalSignatureUrl} alt="Manager signature" className="h-12 object-contain" />
+                                ) : null}
+                                {audit.approvalSignatureType && (
+                                  <div className="text-xs text-gray-500">Signature {audit.approvalSignatureType === 'typed' ? `(typed${audit.approvalName ? `: ${audit.approvalName}` : ''})` : audit.approvalSignatureType === 'drawn' ? '(drawn)' : '(image)'}</div>
+                                )}
+                              </div>
+                              {audit.approvalNote && (
+                                <p className="text-gray-800">Approval note: <span className="font-medium">{audit.approvalNote}</span></p>
                               )}
                             </div>
-                            {audit.approvalNote && (
-                              <p className="mt-1 text-gray-800">Approval note: <span className="font-medium">{audit.approvalNote}</span></p>
-                            )}
-                          </div>
-                        )}
-                        <p className="text-sm text-gray-600">Survey: {survey.title} (v{survey.version})</p>
-                        <p className="text-sm text-gray-600">Updated: {formatInTimeZone(audit.updatedAt, orgTimeZone)}</p>
-                      </div>
-                      <div className="card p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Print-friendly Approval</h3>
-                        <div className="text-sm text-gray-600">This block will appear in PDF printouts.</div>
-                        <div className="mt-3 p-3 border rounded">
-                          <div className="text-sm text-gray-700">Branch Manager Signature</div>
-                          <div className="h-16 bg-gray-50 border rounded mt-2 flex items-center justify-center">
-                            {audit.status === AuditStatus.APPROVED ? (
-                              audit.approvalSignatureType === 'typed' && audit.approvalName ? (
-                                <span className="text-2xl italic text-gray-900">{audit.approvalName}</span>
-                              ) : audit.approvalSignatureUrl ? (
-                                <img src={audit.approvalSignatureUrl} alt="Signature" className="h-14 object-contain" />
-                              ) : (
-                                <span className="text-xs text-gray-400">Approved</span>
-                              )
-                            ) : (
-                              <span className="text-xs text-gray-400">Signature will appear here after approval</span>
-                            )}
-                          </div>
-                          {audit.approvalName && (
-                            <div className="mt-2 text-xs text-gray-500">Approved by: {audit.approvalName}</div>
                           )}
-                          {audit.approvalNote && (
-                            <div className="mt-2 text-xs text-gray-700">Approval note: {audit.approvalNote}</div>
-                          )}
+                          <p>Survey: {survey.title} (v{survey.version})</p>
+                          <p>Updated: {formatInTimeZone(audit.updatedAt, orgTimeZone)}</p>
                         </div>
-                        <div className="mt-4 flex items-center justify-center">
-                          <div className="flex flex-col items-center">
+                      </div>
+                      <div className="card h-full">
+                        <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+                          <p className="heading-micro">Print Layout</p>
+                          <h3 className="heading-section-title">Approval Block</h3>
+                          <p className="heading-subtitle">Matches the PDF-friendly signature panel.</p>
+                        </div>
+                        <div className="card-body space-y-4">
+                          <div className="text-sm text-gray-600">This block will appear in PDF printouts.</div>
+                          <div className="p-3 border rounded">
+                            <div className="text-sm text-gray-700">Branch Manager Signature</div>
+                            <div className="h-16 bg-gray-50 border rounded mt-2 flex items-center justify-center">
+                              {audit.status === AuditStatus.APPROVED ? (
+                                audit.approvalSignatureType === 'typed' && audit.approvalName ? (
+                                  <span className="text-2xl italic text-gray-900">{audit.approvalName}</span>
+                                ) : audit.approvalSignatureUrl ? (
+                                  <img src={audit.approvalSignatureUrl} alt="Signature" className="h-14 object-contain" />
+                                ) : (
+                                  <span className="text-xs text-gray-400">Approved</span>
+                                )
+                              ) : (
+                                <span className="text-xs text-gray-400">Pending approval</span>
+                              )}
+                            </div>
+                            {audit.approvalSignatureType && audit.status === AuditStatus.APPROVED && (
+                              <p className="text-xs text-gray-500 mt-2">Signature {audit.approvalSignatureType === 'typed' ? '(typed)' : audit.approvalSignatureType === 'drawn' ? '(drawn)' : '(image)'}</p>
+                            )}
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center">
                             <ProgressDonut value={weightedCompliance} label="Compliance (Weighted)" />
                             <p className="mt-2 text-sm text-gray-600">Compliance (Weighted)</p>
                           </div>
@@ -818,10 +840,13 @@ const AuditSummary: React.FC = () => {
                     </div>
 
                     {/* Responses by Section */}
-                    <div className="card p-4 mt-6">
-                      <h3 className="text-lg font-semibold text-gray-900">Responses by Section</h3>
-                      <p className="text-sm text-gray-600 mb-2">Review each question's answer and see any section comments or attachments.</p>
-                      <div className="divide-y divide-gray-200">
+                    <div className="card mt-6">
+                      <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+                        <p className="heading-micro">Responses</p>
+                        <h3 className="heading-section-title">Section walkthrough</h3>
+                        <p className="heading-subtitle">Detailed answers, attachments, and NA notes per section.</p>
+                      </div>
+                      <div className="card-body divide-y divide-gray-100">
                         {survey.sections.map((sec, sIdx) => {
                           const secPhotos = (audit.sectionPhotos || []).filter(p => p.sectionId === sec.id)
                           const secComment = audit.sectionComments?.[sec.id]
@@ -918,12 +943,13 @@ const AuditSummary: React.FC = () => {
 
               {/* Audit History Section - Always at the end */}
               {keyEvents.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-6">
-                  <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                    <h3 className="text-lg font-semibold text-gray-900">📋 Audit History</h3>
-                    <p className="text-sm text-gray-600 mt-1">Timeline of key events for this audit</p>
+                <div className="card mt-6">
+                  <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+                    <p className="heading-micro">History</p>
+                    <h3 className="heading-section-title">Audit timeline</h3>
+                    <p className="heading-subtitle">Submission, approvals, and rejections in chronological order.</p>
                   </div>
-                  <div className="p-6">
+                  <div className="card-body">
                     <div className="flow-root">
                       <ul className="-mb-8">
                         {keyEvents.map((log, idx) => (

@@ -9,6 +9,7 @@ import { QK } from '../utils/queryKeys'
 import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
 import { DocumentTextIcon, BuildingOffice2Icon, MapIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { OrgConfigPanel } from '../components/OrgConfigPanel'
 
 type SettingsTab = 'profile' | 'organization' | 'notifications' | 'super-admin'
 
@@ -16,7 +17,7 @@ const Settings: React.FC = () => {
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const { showToast } = useToast()
-  const { currentOrg, availableOrgs, switchOrganization, isSuperAdmin, globalView, setGlobalView } = useOrganization()
+  const { currentOrg, availableOrgs, switchOrganization, isSuperAdmin, globalView, setGlobalView, effectiveOrgId } = useOrganization()
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
   
   const isAdmin = user?.role === UserRole.ADMIN || isSuperAdmin
@@ -90,6 +91,12 @@ const Settings: React.FC = () => {
     })
     return map
   }, [timeZones])
+
+  const { data: dataAccessAudit = [], isFetching: auditLoading } = useQuery({
+    queryKey: ['data-access-audit', effectiveOrgId, globalView],
+    queryFn: () => api.getDataAccessAudit(globalView ? undefined : effectiveOrgId),
+    enabled: Boolean(isSuperAdmin),
+  })
   const filteredTimeZones = React.useMemo<string[]>(() => {
     const q = tzQuery.trim().toLowerCase()
     let list = timeZones
@@ -296,12 +303,6 @@ const Settings: React.FC = () => {
   return (
     <DashboardLayout title="Settings">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600 mt-1">Manage your preferences and configuration</p>
-        </div>
-
         {/* Tab Navigation */}
         <div className="border-b border-gray-200 overflow-x-auto">
           <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Settings tabs">
@@ -430,7 +431,7 @@ const Settings: React.FC = () => {
           <div className="card p-4 sm:p-6">
             <div className="mb-4">
               <div className="flex items-start justify-between gap-3 mb-2">
-                <h2 className="text-lg font-semibold text-gray-900">Manage Organizations</h2>
+                <h2 className="heading-section-title">Manage Organizations</h2>
                 <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full whitespace-nowrap flex-shrink-0">
                   {availableOrgs.length} {availableOrgs.length === 1 ? 'Org' : 'Orgs'}
                 </span>
@@ -510,6 +511,65 @@ const Settings: React.FC = () => {
             </ul>
           </div>
         ) : null}
+
+        <OrgConfigPanel />
+
+        <div className="card">
+          <div className="px-6 py-5 flex items-center justify-between border-b border-gray-100">
+            <div>
+              <p className="heading-micro mb-1">Recent Data Access</p>
+              <h3 className="heading-section-title">Config + Export Trail</h3>
+              <p className="heading-subtitle mt-1">Exports and config changes scoped to this view.</p>
+            </div>
+            {auditLoading && <span className="text-xs text-gray-500">Refreshing…</span>}
+          </div>
+          <div className="px-6 py-6">
+            {dataAccessAudit.length === 0 ? (
+              <div className="card-section text-sm text-gray-500">No recent audit entries.</div>
+            ) : (
+              <div className="overflow-hidden border border-gray-100 rounded-2xl">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                      <tr>
+                        <th className="px-4 py-3 text-left">When</th>
+                        <th className="px-4 py-3 text-left">Action</th>
+                        <th className="px-4 py-3 text-left">User</th>
+                        <th className="px-4 py-3 text-left">Reason</th>
+                        <th className="px-4 py-3 text-left">Scope</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {dataAccessAudit.map((entry: { id: string; createdAt: string | Date; action: string; userId?: string; reason?: string; exportScope?: Record<string, any> & { tables?: string[] } }) => (
+                        <tr key={entry.id} className="hover:bg-gray-50/70">
+                          <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs font-medium">
+                            {new Date(entry.createdAt).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-gray-900 font-medium capitalize">
+                            {entry.action.replace(/_/g, ' ')}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 text-xs">
+                            {entry.userId ? entry.userId.slice(0, 8) : 'System'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {entry.reason || '—'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 text-xs">
+                            {Array.isArray(entry.exportScope?.tables)
+                              ? entry.exportScope.tables.join(', ')
+                              : (entry.exportScope && Object.keys(entry.exportScope).length > 0
+                                  ? JSON.stringify(entry.exportScope)
+                                  : '—')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         </>
         )}
 
@@ -519,37 +579,34 @@ const Settings: React.FC = () => {
         {/* Organization Profile (visible when not in global view) */}
         {!globalView && (currentOrg || org) && (
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Organization Profile</h2>
-            <p className="text-gray-600 mt-1">Manage your organization's information and branding</p>
+            <h2 className="heading-section-title">Organization Profile</h2>
+            <p className="heading-subtitle mt-1">Manage your organization's information and branding</p>
             
             <div className="mt-6 space-y-6">
               {/* Logo Upload */}
               <div>
                 <label className="label">Organization Logo</label>
-                <div className="mt-2 flex items-center gap-4">
-                  {logoPreview ? (
-                    <div className="relative">
-                      <img
-                        src={logoPreview}
-                        alt="Organization logo"
-                        className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200"
-                      />
+                <div className="mt-3 flex items-center gap-5">
+                  <div className="relative w-28 h-28 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden">
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Organization logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center text-gray-400 text-xs px-3">
+                        <p className="font-medium text-gray-500">No Logo</p>
+                        <p>Drop or upload</p>
+                      </div>
+                    )}
+                    {logoPreview && (
                       <button
                         type="button"
                         onClick={handleRemoveLogo}
-                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 text-gray-600 shadow hover:text-red-600 hover:bg-white"
                         title="Remove logo"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        ✕
                       </button>
-                    </div>
-                  ) : (
-                    <div className="w-24 h-24 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">No logo</span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   <div className="flex-1">
                     <input
                       type="file"
@@ -558,13 +615,18 @@ const Settings: React.FC = () => {
                       className="hidden"
                       id="logo-upload"
                     />
-                    <label
-                      htmlFor="logo-upload"
-                      className="btn btn-outline btn-sm cursor-pointer inline-block"
-                    >
+                    <label htmlFor="logo-upload" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-sm hover:shadow-md transition cursor-pointer">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v11" />
+                      </svg>
                       {logoPreview ? 'Change Logo' : 'Upload Logo'}
                     </label>
-                    <p className="text-xs text-gray-500 mt-1">PNG, JPG or GIF (max. 2MB)</p>
+                    <p className="text-xs text-gray-500 mt-2">PNG, JPG or GIF • max 2MB</p>
+                    {logoPreview && (
+                      <button type="button" className="text-xs text-gray-500 underline mt-1" onClick={handleRemoveLogo}>
+                        Remove current logo
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -610,8 +672,8 @@ const Settings: React.FC = () => {
         {/* Admin-only: Organization Settings (Super Admin acts as Admin when not in global view and an org is selected) */}
         {(user?.role === UserRole.ADMIN || (isSuperAdmin && !globalView && currentOrg)) ? (
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Organization Settings</h2>
-            <p className="text-gray-600 mt-1">Timezone and scheduling policies affect due dates and period boundaries. Gating controls whether starting a new audit is blocked by any audit in the period or only by Completed/Approved.</p>
+            <h2 className="heading-section-title">Organization Settings</h2>
+            <p className="heading-subtitle mt-1">Timezone and scheduling policies affect due dates and period boundaries. Gating controls whether starting a new audit is blocked by any audit in the period or only by Completed/Approved.</p>
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="label">Timezone (IANA)</label>
@@ -696,8 +758,8 @@ const Settings: React.FC = () => {
         <>
         {/* Profile Settings */}
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Profile Settings</h2>
-          <p className="text-gray-600 mt-1">Update your name and email address.</p>
+          <h2 className="heading-section-title">Profile Settings</h2>
+          <p className="heading-subtitle mt-1">Update your name and email address.</p>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="label">Full Name</label>
@@ -730,7 +792,7 @@ const Settings: React.FC = () => {
 
         {/* Signature quick access */}
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Signature</h2>
+          <h2 className="heading-section-title">Signature</h2>
           <p className="text-sm text-gray-600 mt-1">Manage your saved signature for approvals in your profile.</p>
           <div className="mt-3">
             <Link to="/profile/signature" className="btn btn-outline btn-sm">Open Profile · Signature</Link>
@@ -744,8 +806,8 @@ const Settings: React.FC = () => {
         <>
         {/* Notification Preferences */}
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Notification Preferences</h2>
-          <p className="text-gray-600 mt-1">Choose how you want to be notified</p>
+          <h2 className="heading-section-title">Notification Preferences</h2>
+          <p className="heading-subtitle mt-1">Choose how you want to be notified</p>
           
           <div className="mt-6 space-y-4">
             <div className="flex items-center justify-between py-3 border-b border-gray-200">

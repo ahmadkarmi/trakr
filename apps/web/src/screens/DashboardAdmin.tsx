@@ -652,63 +652,71 @@ const DashboardAdmin: React.FC = () => {
         </div>
   
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <MetricCard icon={<span className="text-lg">🏢</span>} value={branches.length} label="Branches" onClick={() => navigate('/manage/branches')} />
-          <MetricCard icon={<span className="text-lg">🗺️</span>} value={zones.length} label="Zones" onClick={() => navigate('/manage/zones')} />
-          <MetricCard icon={<span className="text-lg">👥</span>} value={activeUsersCount} label="Active Users" onClick={() => navigate('/manage/users')} />
-          <MetricCard icon={<span className="text-lg">✉️</span>} value={pendingInvitesCount} label="Pending Invites" tone={pendingInvitesCount > 0 ? 'warning' : 'default'} onClick={() => navigate('/manage/users')} />
-          <MetricCard icon={<span className="text-lg">⚠️</span>} value={branchesWithoutManagers.length} label="No Manager" tone={branchesWithoutManagers.length > 0 ? 'warning' : 'success'} onClick={() => navigate('/manage/branches')} />
-          <MetricCard icon={<span className="text-lg">🔔</span>} value={auditsNeedingAdminApproval.length} label="Need Approval" tone={auditsNeedingAdminApproval.length > 0 ? 'danger' : 'default'} onClick={() => { setStatusFilter(AuditStatus.SUBMITTED); setQuickChip('waiting_approval') }} />
+        <div className="card">
+          <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+            <p className="heading-micro">Quick Actions</p>
+            <h2 className="heading-section-title">Manage your org at a glance</h2>
+            <p className="heading-subtitle">Jump into the most common admin tasks.</p>
+          </div>
+          <div className="card-body">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              <MetricCard icon={<span className="text-lg">🏢</span>} value={branches.length} label="Branches" onClick={() => navigate('/manage/branches')} />
+              <MetricCard icon={<span className="text-lg">🗺️</span>} value={zones.length} label="Zones" onClick={() => navigate('/manage/zones')} />
+              <MetricCard icon={<span className="text-lg">👥</span>} value={activeUsersCount} label="Active Users" onClick={() => navigate('/manage/users')} />
+              <MetricCard icon={<span className="text-lg">✉️</span>} value={pendingInvitesCount} label="Pending Invites" tone={pendingInvitesCount > 0 ? 'warning' : 'default'} onClick={() => navigate('/manage/users')} />
+              <MetricCard icon={<span className="text-lg">⚠️</span>} value={branchesWithoutManagers.length} label="No Manager" tone={branchesWithoutManagers.length > 0 ? 'warning' : 'success'} onClick={() => navigate('/manage/branches')} />
+              <MetricCard icon={<span className="text-lg">🔔</span>} value={auditsNeedingAdminApproval.length} label="Need Approval" tone={auditsNeedingAdminApproval.length > 0 ? 'danger' : 'default'} onClick={() => { setStatusFilter(AuditStatus.SUBMITTED); setQuickChip('waiting_approval') }} />
+            </div>
+          </div>
         </div>
 
         {/* Weekly Insights - Fixed to Current Week */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Weekly Insights</h2>
-              <p className="text-sm text-gray-500 font-medium mt-0.5">Current week performance</p>
-            </div>
+        <div className="card">
+          <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+            <p className="heading-micro">Performance</p>
+            <h2 className="heading-section-title">Weekly Insights</h2>
+            <p className="heading-subtitle">Current week performance</p>
           </div>
-          
-          {/* Metrics Grid - Unified Layout */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            <MetricCard
-              icon={<span className="text-lg">{overdueCountAll > 0 ? '❗' : '✅'}</span>}
-              value={overdueCountAll}
-              label="Overdue"
-              tone={overdueCountAll > 0 ? 'danger' : 'success'}
-            />
-            <MetricCard
-              icon={<span className="text-lg">⏰</span>}
-              value={dueThisWeekCount}
-              label="Due This Week"
-              tone={dueThisWeekCount > 0 ? 'warning' : 'default'}
-            />
-            <MetricCard
-              icon={<ClipboardDocumentCheckIcon className="w-5 h-5 text-green-600" />}
-              value={`${completionRate}%`}
-              label="Completion"
-              tone="success"
-            >
-              <p className="text-xs text-gray-500 mt-1">{completedCount} of {weeklyAudits.length}</p>
-            </MetricCard>
-            <MetricCard
-              icon={<span className="text-lg">⚡</span>}
-              value={inProgressCount}
-              label="In Progress"
-              tone="primary"
-            />
-            <MetricCard
-              icon={<ClipboardDocumentListIcon className="w-5 h-5 text-primary-600" />}
-              value={`${onTimeRate}%`}
-              label="On-time"
-              tone="primary"
-            />
-            <MetricCard
-              icon={<span className="text-lg">🏢</span>}
-              value={coverageBranches.size}
-              label="Branches"
-            />
+          <div className="card-body">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              <MetricCard
+                icon={<span className="text-lg">{overdueCountAll > 0 ? '❗' : '✅'}</span>}
+                value={overdueCountAll}
+                label="Overdue"
+                tone={overdueCountAll > 0 ? 'danger' : 'success'}
+              />
+              <MetricCard
+                icon={<span className="text-lg">⏰</span>}
+                value={dueThisWeekCount}
+                label="Due This Week"
+                tone={dueThisWeekCount > 0 ? 'warning' : 'default'}
+              />
+              <MetricCard
+                icon={<ClipboardDocumentCheckIcon className="w-5 h-5 text-green-600" />}
+                value={`${completionRate}%`}
+                label="Completion"
+                tone="success"
+              >
+                <p className="text-xs text-gray-500 mt-1">{completedCount} of {weeklyAudits.length}</p>
+              </MetricCard>
+              <MetricCard
+                icon={<span className="text-lg">⚡</span>}
+                value={inProgressCount}
+                label="In Progress"
+                tone="primary"
+              />
+              <MetricCard
+                icon={<ClipboardDocumentListIcon className="w-5 h-5 text-primary-600" />}
+                value={`${onTimeRate}%`}
+                label="On-time"
+                tone="primary"
+              />
+              <MetricCard
+                icon={<span className="text-lg">🏢</span>}
+                value={coverageBranches.size}
+                label="Branches"
+              />
+            </div>
           </div>
         </div>
 
@@ -717,12 +725,13 @@ const DashboardAdmin: React.FC = () => {
         {/* Zone coverage + Recent activity row */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
           {/* Zone coverage */}
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <h3 className="text-lg font-medium text-gray-900">Weekly Zone Coverage</h3>
+          <div className="card h-full">
+            <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+              <p className="heading-micro">Coverage</p>
+              <h3 className="heading-section-title">Weekly Zone Coverage</h3>
               <span className="text-xs text-gray-500">This week • Top 5</span>
             </div>
-            <div className="p-4 sm:p-6">
+            <div className="card-body">
               {zoneRows.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-100 mb-3">
@@ -776,11 +785,12 @@ const DashboardAdmin: React.FC = () => {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+          <div className="card h-full">
+            <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+              <p className="heading-micro">Timeline</p>
+              <h3 className="heading-section-title">Recent Activity</h3>
             </div>
-            <div className="p-4 sm:p-6">
+            <div className="card-body p-0">
               {(() => {
                 // Derive activity from recent audits with detailed information
                 const recentAudits = [...audits]

@@ -5,7 +5,7 @@ import { useAuthStore } from '../stores/auth'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { logger } from '../utils/logger'
-import { safeLocalStorage } from '../utils/safeStorage'
+import { readOrgPreference, writeOrgPreference, removeOrgPreference, ORG_PREF_KEYS, clearOrgPreferences } from '../utils/orgPreferences'
 
 interface OrganizationContextType {
   currentOrg: Organization | null
@@ -51,8 +51,8 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         setAvailableOrgs(uniqueById)
         
         // Load stored preferences
-        const storedOrgId = safeLocalStorage.getItem('super_admin_active_org')
-        const viewScope = safeLocalStorage.getItem('super_admin_view_scope') || 'ORG'
+        const storedOrgId = readOrgPreference(ORG_PREF_KEYS.activeOrg)
+        const viewScope = readOrgPreference(ORG_PREF_KEYS.viewScope) || 'ORG'
         const allView = viewScope === 'ALL'
         
         // Validate stored org still exists (auto-heal stale localStorage)
@@ -66,7 +66,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
             `Stored organization ${storedOrgId} no longer exists. Clearing preferences.`,
             { context: 'OrganizationContext' }
           )
-          safeLocalStorage.removeItem('super_admin_active_org')
+          removeOrgPreference(ORG_PREF_KEYS.activeOrg)
         }
         
         setGlobalViewState(allView)
@@ -79,12 +79,12 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
           const activeOrg = storedOrgStillExists
             ? uniqueById.find(o => o.id === storedOrgId)!
             : uniqueById[0] || null
-          
+
           setCurrentOrg(activeOrg)
-          
-          // If we auto-switched to first org, update localStorage
+
+          // If we auto-switched to first org, update localStorage with TTL
           if (activeOrg && activeOrg.id !== storedOrgId) {
-            safeLocalStorage.setItem('super_admin_active_org', activeOrg.id)
+            writeOrgPreference(ORG_PREF_KEYS.activeOrg, activeOrg.id, { ttlMs: 60 * 60 * 1000 }) // 1 hour TTL
           }
         }
         
@@ -108,8 +108,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       logger.error('Failed to load organizations', error, { context: 'OrganizationContext' })
       // Auto-heal: clear potentially corrupt localStorage on error
-      safeLocalStorage.removeItem('super_admin_active_org')
-      safeLocalStorage.removeItem('super_admin_view_scope')
+      clearOrgPreferences()
       setCurrentOrg(null)
       setAvailableOrgs([])
     } finally {
@@ -156,9 +155,9 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
         
         // Update org state
         setCurrentOrg(org)
-        safeLocalStorage.setItem('super_admin_active_org', orgId)
+        writeOrgPreference(ORG_PREF_KEYS.activeOrg, orgId)
         // Ensure we are in ORG scope when selecting a specific org
-        safeLocalStorage.setItem('super_admin_view_scope', 'ORG')
+        writeOrgPreference(ORG_PREF_KEYS.viewScope, 'ORG')
         setGlobalViewState(false)
         
         // Clear query cache to ensure fresh data for new org
@@ -200,7 +199,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     }
     
     setGlobalViewState(on)
-    safeLocalStorage.setItem('super_admin_view_scope', on ? 'ALL' : 'ORG')
+    writeOrgPreference(ORG_PREF_KEYS.viewScope, on ? 'ALL' : 'ORG')
     // When switching to ALL, clear currentOrg to avoid confusion
     if (on) {
       setCurrentOrg(null)

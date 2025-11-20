@@ -40,6 +40,9 @@ interface AuthState {
   setLoading: (loading: boolean) => void
   updateUser: (user: User) => void
   init: () => Promise<void>
+  sessionError: string | null
+  acknowledgeSessionError: () => void
+  isManualSignOut: boolean
 }
 
 // Mock users for different roles
@@ -90,6 +93,8 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      sessionError: null,
+      isManualSignOut: false,
 
       signIn: async (role: UserRole) => {
         set({ isLoading: true })
@@ -263,18 +268,28 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signOut: async () => {
-        try { 
+        set({ isManualSignOut: true })
+        try {
           if (hasSupabaseEnv()) {
             await getSupabase().auth.signOut()
           }
-          // Clear persisted auth state from localStorage
+        } catch {}
+
+        // Clear persisted auth state from localStorage
+        try {
           localStorage.removeItem('trakr-auth')
         } catch {}
-        
+
         // Clear Sentry user context
         clearSentryUser()
-        
-        set({ user: null, isAuthenticated: false, isLoading: false })
+
+        set({ 
+          user: null, 
+          isAuthenticated: false, 
+          isLoading: false, 
+          sessionError: null, 
+          isManualSignOut: false,
+        })
       },
 
       setLoading: (loading: boolean) => {
@@ -325,11 +340,18 @@ export const useAuthStore = create<AuthState>()(
             }
           }
           // Subscribe to auth changes
-          supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
+          supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
             const u = session?.user
             if (!u) {
+              const wasManual = _get().isManualSignOut
+              const hadUser = !!_get().user
+              if (!wasManual && hadUser && event !== 'INITIAL_SESSION') {
+                set({ sessionError: 'Your session expired. Please sign in again.' })
+              } else {
+                set({ sessionError: null })
+              }
               clearSentryUser()
-              set({ user: null, isAuthenticated: false })
+              set({ user: null, isAuthenticated: false, isManualSignOut: false })
               return
             }
             const appUser = await fetchAppUserWithRetry(u.id, u.email || '', 6, 350)
@@ -347,6 +369,7 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: false })
         }
       },
+      acknowledgeSessionError: () => set({ sessionError: null }),
     }),
     {
       name: 'trakr-auth',

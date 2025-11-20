@@ -5,7 +5,7 @@ export type ToastOptions = {
   actionLabel?: string
   onAction?: () => void
   duration?: number
-  variant?: 'info' | 'success' | 'error'
+  variant?: 'info' | 'success' | 'error' | 'warning'
 }
 
 export type ToastItem = ToastOptions & { id: string }
@@ -68,16 +68,20 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {/* Mobile-Optimized Toast Container */}
       <div className="fixed bottom-0 left-0 right-0 sm:bottom-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 px-4 pb-4 sm:px-0 sm:pb-0 space-y-2 max-w-full sm:max-w-md pointer-events-none">
         {toasts.map(t => {
-          const bgColor = t.variant === 'success' 
-            ? 'bg-green-600' 
-            : t.variant === 'error' 
-            ? 'bg-red-600' 
+          const bgColor = t.variant === 'success'
+            ? 'bg-green-600'
+            : t.variant === 'error'
+            ? 'bg-red-600'
+            : t.variant === 'warning'
+            ? 'bg-amber-500'
             : 'bg-gray-900'
-          
+
           const icon = t.variant === 'success'
             ? '✓'
             : t.variant === 'error'
             ? '!'
+            : t.variant === 'warning'
+            ? '⚠'
             : 'ℹ'
           
           return (
@@ -91,7 +95,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               <div className="flex items-start gap-3 p-4">
                 {/* Icon */}
                 <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-bold ${
-                  t.variant === 'success' ? 'bg-green-700' : t.variant === 'error' ? 'bg-red-700' : 'bg-gray-800'
+                  t.variant === 'success'
+                    ? 'bg-green-700'
+                    : t.variant === 'error'
+                    ? 'bg-red-700'
+                    : t.variant === 'warning'
+                    ? 'bg-amber-600'
+                    : 'bg-gray-800'
                 }`}>
                   {icon}
                 </div>

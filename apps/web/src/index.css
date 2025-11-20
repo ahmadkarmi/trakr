@@ -40,8 +40,12 @@
   .breathing-room { @apply py-6 sm:py-8 lg:py-10; }
 
   /* Cards */
-  .card { @apply bg-white border border-gray-100 rounded-xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_-2px_rgba(0,0,0,0.1)] transition-all duration-300; }
-  .card-compact { @apply bg-white border border-gray-100 rounded-xl p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_-2px_rgba(0,0,0,0.1)] transition-all duration-300; }
+  .card { @apply bg-white border border-gray-100 rounded-2xl shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] transition-all duration-300 overflow-hidden; }
+  .card-compact { @apply bg-white border border-gray-100 rounded-2xl p-4 shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] transition-all duration-300; }
+  .card-body { @apply px-6 py-5 space-y-4; }
+  .card-title { @apply heading-card-title; }
+  .card-subtitle { @apply heading-subtitle; }
+  .card-section { @apply border border-gray-200 rounded-xl bg-gray-50/60 p-4; }
 
   /* Buttons */
   .btn { @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-target px-3 active:scale-95; }
@@ -70,6 +74,13 @@
   /* Simple section wrapper */
   .section { @apply card p-4 sm:p-6; }
   .section-header { @apply flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200; }
+
+  /* Heading utility classes */
+  .heading-page-title { @apply text-3xl font-semibold tracking-tight text-gray-900; }
+  .heading-section-title { @apply text-2xl font-semibold text-gray-900; }
+  .heading-card-title { @apply text-lg font-semibold text-gray-900; }
+  .heading-subtitle { @apply text-sm text-gray-600; }
+  .heading-micro { @apply text-xs font-semibold uppercase tracking-wide text-gray-500; }
 }
 
 @layer utilities {

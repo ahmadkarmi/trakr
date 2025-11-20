@@ -1,11 +1,17 @@
-const CACHE_NAME = 'trakr-v1'
-const STATIC_CACHE = 'trakr-static-v1'
-const DYNAMIC_CACHE = 'trakr-dynamic-v1'
+const SW_VERSION = (() => {
+  try {
+    const url = new URL(self.location.href)
+    return url.searchParams.get('v') || 'dev'
+  } catch {
+    return 'dev'
+  }
+})()
+
+const STATIC_CACHE = `trakr-static-${SW_VERSION}`
+const DYNAMIC_CACHE = `trakr-dynamic-${SW_VERSION}`
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
-  '/',
-  '/login',
   '/manifest.json',
   // Add your main CSS and JS files here when built
 ]
@@ -44,6 +50,12 @@ self.addEventListener('install', (event) => {
         }
       })
   )
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
 })
 
 // Activate event - clean up old caches
@@ -99,20 +111,22 @@ async function handleFetch(request) {
   const url = new URL(request.url)
   
   try {
-    // Strategy 1: Static assets - Cache First
-    if (STATIC_ASSETS.some(asset => url.pathname === asset) || 
+    // Strategy 1: HTML pages - Network First
+    // This ensures index.html and route responses are always fresh when online,
+    // preventing stale HTML from referencing non-existent hashed chunks.
+    if (request.headers.get('accept')?.includes('text/html')) {
+      return await networkFirst(request, DYNAMIC_CACHE)
+    }
+
+    // Strategy 2: Static assets (JS/CSS/images/fonts) - Cache First
+    if (STATIC_ASSETS.some(asset => url.pathname === asset) ||
         url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$/)) {
       return await cacheFirst(request, STATIC_CACHE)
     }
 
-    // Strategy 2: API calls - Network First with cache fallback
-    if (url.pathname.startsWith('/api/') || 
+    // Strategy 3: API calls - Network First with cache fallback
+    if (url.pathname.startsWith('/api/') ||
         API_CACHE_PATTERNS.some(pattern => pattern.test(url.pathname))) {
-      return await networkFirst(request, DYNAMIC_CACHE)
-    }
-
-    // Strategy 3: Pages - Network First
-    if (url.pathname.startsWith('/') && request.headers.get('accept')?.includes('text/html')) {
       return await networkFirst(request, DYNAMIC_CACHE)
     }
 
@@ -124,8 +138,8 @@ async function handleFetch(request) {
     
     // Fallback for HTML pages when offline
     if (request.headers.get('accept')?.includes('text/html')) {
-      const cache = await caches.open(STATIC_CACHE)
-      const cachedResponse = await cache.match('/')
+      const cache = await caches.open(DYNAMIC_CACHE)
+      const cachedResponse = await cache.match(request)
       if (cachedResponse) {
         return cachedResponse
       }

@@ -53,7 +53,7 @@ const DashboardBranchManager: React.FC = () => {
       const assignments = await api.getManagerBranchAssignments(user.id)
       
       // Return branches that this manager is assigned to
-      const assignedBranchIds = assignments.map(a => a.branchId)
+      const assignedBranchIds = assignments.map((assignment: { branchId: string }) => assignment.branchId)
       return allBranches.filter(b => assignedBranchIds.includes(b.id))
     },
     enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
@@ -149,32 +149,41 @@ const DashboardBranchManager: React.FC = () => {
 
         {/* Key Metrics - Responsive Grid */}
         {managedBranchIds.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <MetricCard
-              icon={<ExclamationCircleIcon className="w-5 h-5 text-amber-600" />}
-              value={pendingApproval.length}
-              label="Needs Approval"
-              tone={pendingApproval.length > 0 ? 'warning' : 'success'}
-              onClick={() => pendingApproval.length > 0 && document.getElementById('pending-approvals')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              <p className="text-xs text-gray-500 mt-1">{pendingApproval.length === 1 ? '1 audit' : `${pendingApproval.length} audits`} pending</p>
-            </MetricCard>
-            <MetricCard
-              icon={<ClockIcon className="w-5 h-5 text-blue-600" />}
-              value={inProgress}
-              label="Active Audits"
-              tone="primary"
-            >
-              <p className="text-xs text-gray-500 mt-1">Not yet submitted</p>
-            </MetricCard>
-            <MetricCard
-              icon={<ChartBarIcon className="w-5 h-5 text-green-600" />}
-              value={`${completionRate}%`}
-              label="Finalized"
-              tone="success"
-            >
-              <p className="text-xs text-gray-500 mt-1">Approved or rejected</p>
-            </MetricCard>
+          <div className="card">
+            <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+              <p className="heading-micro">Branch Health</p>
+              <h2 className="heading-section-title">Operational Snapshot</h2>
+              <p className="heading-subtitle">Track approvals, active audits, and outcomes.</p>
+            </div>
+            <div className="card-body">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <MetricCard
+                  icon={<ExclamationCircleIcon className="w-5 h-5 text-amber-600" />}
+                  value={pendingApproval.length}
+                  label="Needs Approval"
+                  tone={pendingApproval.length > 0 ? 'warning' : 'success'}
+                  onClick={() => pendingApproval.length > 0 && document.getElementById('pending-approvals')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  <p className="text-xs text-gray-500 mt-1">{pendingApproval.length === 1 ? '1 audit' : `${pendingApproval.length} audits`} pending</p>
+                </MetricCard>
+                <MetricCard
+                  icon={<ClockIcon className="w-5 h-5 text-blue-600" />}
+                  value={inProgress}
+                  label="Active Audits"
+                  tone="primary"
+                >
+                  <p className="text-xs text-gray-500 mt-1">Not yet submitted</p>
+                </MetricCard>
+                <MetricCard
+                  icon={<ChartBarIcon className="w-5 h-5 text-green-600" />}
+                  value={`${completionRate}%`}
+                  label="Finalized"
+                  tone="success"
+                >
+                  <p className="text-xs text-gray-500 mt-1">Approved or rejected</p>
+                </MetricCard>
+              </div>
+            </div>
           </div>
         )}
 

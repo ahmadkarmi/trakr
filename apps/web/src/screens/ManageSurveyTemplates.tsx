@@ -149,30 +149,39 @@ const ManageSurveyTemplates: React.FC = () => {
         </div>
 
         {/* KPI row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <MetricCard
-            icon={<ClipboardDocumentListIcon className="w-5 h-5" />}
-            value={surveys.length}
-            label="Total Templates"
-            tone="primary"
-          >
-            <p className="text-xs text-gray-500 mt-1">All templates</p>
-          </MetricCard>
-          <MetricCard
-            icon={<CheckCircleIcon className="w-5 h-5" />}
-            value={surveys.filter(s => s.isActive).length}
-            label="Active"
-            tone="success"
-          >
-            <p className="text-xs text-gray-500 mt-1">Usable now</p>
-          </MetricCard>
-          <MetricCard
-            icon={<FolderIcon className="w-5 h-5" />}
-            value={surveys.reduce((sum, s) => sum + (s.sections?.length || 0), 0)}
-            label="Total Sections"
-          >
-            <p className="text-xs text-gray-500 mt-1">Across templates</p>
-          </MetricCard>
+        <div className="card">
+          <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
+            <p className="heading-micro">Library Health</p>
+            <h2 className="heading-section-title">Template Overview</h2>
+            <p className="heading-subtitle">Monitor total assets and activation status.</p>
+          </div>
+          <div className="card-body">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <MetricCard
+                icon={<ClipboardDocumentListIcon className="w-5 h-5" />}
+                value={surveys.length}
+                label="Total Templates"
+                tone="primary"
+              >
+                <p className="text-xs text-gray-500 mt-1">All templates</p>
+              </MetricCard>
+              <MetricCard
+                icon={<CheckCircleIcon className="w-5 h-5" />}
+                value={surveys.filter(s => s.isActive).length}
+                label="Active"
+                tone="success"
+              >
+                <p className="text-xs text-gray-500 mt-1">Usable now</p>
+              </MetricCard>
+              <MetricCard
+                icon={<FolderIcon className="w-5 h-5" />}
+                value={surveys.reduce((sum, s) => sum + (s.sections?.length || 0), 0)}
+                label="Total Sections"
+              >
+                <p className="text-xs text-gray-500 mt-1">Across templates</p>
+              </MetricCard>
+            </div>
+          </div>
         </div>
 
         <div className="card" data-testid="template-library-card">
