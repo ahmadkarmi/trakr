@@ -4,7 +4,6 @@ import { useAuthStore } from '../../stores/auth'
 import { api } from '../../utils/api'
 import { Audit, AuditStatus, Survey, calculateWeightedAuditScore } from '@trakr/shared'
 import AnalyticsKPICard from '../../components/analytics/AnalyticsKPICard'
-import AnalyticsChart from '../../components/analytics/AnalyticsChart'
 import PersonalGoalsWidget from '../../components/analytics/PersonalGoalsWidget'
 import { useOrganization } from '../../contexts/OrganizationContext'
 
@@ -83,8 +82,6 @@ const AuditorAnalytics: React.FC = () => {
     return Math.round(scoresWithData.reduce((sum, score) => sum + score, 0) / scoresWithData.length)
   }, [teamAudits, surveys])
 
-  // Calculate average time per audit (mock data for now)
-  const avgTimePerAudit = "2.3h"
   const thisMonthAudits = myAudits.filter(a => {
     const auditDate = new Date(a.updatedAt)
     const now = new Date()
@@ -97,7 +94,8 @@ const AuditorAnalytics: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-base text-gray-500 font-medium">Your audit performance and development insights</p>
+            <p className="heading-micro">Personal Analytics</p>
+            <p className="heading-subtitle">Your audit performance and development insights.</p>
           </div>
           <div className="flex items-center gap-3">
             <select className="input h-10">
@@ -114,16 +112,12 @@ const AuditorAnalytics: React.FC = () => {
         <AnalyticsKPICard
           title="My Audits"
           value={totalMyAudits.toString()}
-          trend="+6"
-          trendDirection="up"
           icon="📋"
           description="Total assigned audits"
         />
         <AnalyticsKPICard
           title="Completion Rate"
           value={`${myCompletionRate}%`}
-          trend={myCompletionRate >= teamCompletionRate ? "+5%" : "-3%"}
-          trendDirection={myCompletionRate >= teamCompletionRate ? "up" : "down"}
           icon="✅"
           description={`Team avg: ${teamCompletionRate}%`}
           variant={myCompletionRate >= teamCompletionRate ? "success" : "warning"}
@@ -131,8 +125,6 @@ const AuditorAnalytics: React.FC = () => {
         <AnalyticsKPICard
           title="Quality Score"
           value={myAverageScore.toString()}
-          trend={myAverageScore >= teamAverageScore ? "+2.1" : "-1.2"}
-          trendDirection={myAverageScore >= teamAverageScore ? "up" : "down"}
           icon="⭐"
           description={`Team avg: ${teamAverageScore}`}
           variant={myAverageScore >= teamAverageScore ? "success" : "warning"}
@@ -140,38 +132,22 @@ const AuditorAnalytics: React.FC = () => {
         <AnalyticsKPICard
           title="Overdue"
           value={overdueMyAudits.toString()}
-          trend="-2"
-          trendDirection="down"
           icon="🚨"
           description="Past due audits"
           variant={overdueMyAudits > 0 ? "danger" : "success"}
         />
       </div>
 
-        {/* Personal Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <AnalyticsKPICard
-            title="This Month"
-            value={thisMonthAudits.toString()}
-            icon="📅"
-            description="Audits completed"
-            compact
-          />
-          <AnalyticsKPICard
-            title="Avg Time"
-            value={avgTimePerAudit}
-            icon="⏱️"
-            description="Per audit"
-            compact
-          />
-          <AnalyticsKPICard
-            title="Consistency"
-            value="92%"
-            icon="🎯"
-            description="Score variance"
-            compact
-          />
-        </div>
+      {/* Personal Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <AnalyticsKPICard
+          title="This Month"
+          value={thisMonthAudits.toString()}
+          icon="📅"
+          description="Audits completed"
+          compact
+        />
+      </div>
 
       {/* Charts and Analysis */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
@@ -182,20 +158,9 @@ const AuditorAnalytics: React.FC = () => {
             <p className="text-sm text-gray-500">Your monthly completion and quality trends</p>
           </div>
           <div className="p-4 sm:p-6">
-            <AnalyticsChart
-              type="line"
-              data={[
-                { name: 'Jan', completion: 88, quality: 85, teamAvg: 82 },
-                { name: 'Feb', completion: 92, quality: 87, teamAvg: 84 },
-                { name: 'Mar', completion: 89, quality: 83, teamAvg: 81 },
-                { name: 'Apr', completion: 95, quality: 91, teamAvg: 85 },
-                { name: 'May', completion: 91, quality: 88, teamAvg: 83 },
-                { name: 'Jun', completion: 97, quality: 93, teamAvg: 86 },
-              ]}
-              xKey="name"
-              yKeys={['completion', 'quality', 'teamAvg']}
-              colors={['#10B981', '#3B82F6', '#9CA3AF']}
-            />
+            <p className="text-sm text-gray-500">
+              Performance trends will appear once you have more completed audits.
+            </p>
           </div>
         </div>
 
@@ -206,18 +171,9 @@ const AuditorAnalytics: React.FC = () => {
             <p className="text-sm text-gray-500">Your scores across different audit categories</p>
           </div>
           <div className="p-4 sm:p-6">
-            <AnalyticsChart
-              type="bar"
-              data={[
-                { name: 'Safety', score: 92, count: 15 },
-                { name: 'Quality', score: 88, count: 12 },
-                { name: 'Compliance', score: 85, count: 8 },
-                { name: 'Environmental', score: 90, count: 10 },
-              ]}
-              xKey="name"
-              yKeys={['score']}
-              colors={['#3B82F6']}
-            />
+            <p className="text-sm text-gray-500">
+              Performance by audit type will appear once you have more completed audits.
+            </p>
           </div>
         </div>
       </div>

@@ -120,8 +120,7 @@ const DashboardBranchManager: React.FC = () => {
         {/* Header with Branch Filter */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Branch Manager Dashboard</h1>
-            <p className="text-gray-600 mt-1">Manage {assignedBranches.length} branch{assignedBranches.length !== 1 ? 'es' : ''} • {user?.name}</p>
+            <p className="heading-subtitle">Manage {assignedBranches.length} branch{assignedBranches.length !== 1 ? 'es' : ''} • {user?.name}</p>
           </div>
           
           {assignedBranches.length > 1 && (

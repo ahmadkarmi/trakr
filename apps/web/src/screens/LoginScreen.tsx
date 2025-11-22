@@ -6,6 +6,7 @@ import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
 import { api } from '../utils/api'
 import { logger } from '../utils/logger'
 import { safeLocalStorage } from '../utils/safeStorage'
+import BrandLogo from '../components/BrandLogo'
 
 type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password'
 type AuthStatus = 'idle' | 'submitting' | 'success' | 'error'
@@ -510,11 +511,8 @@ const LoginScreen: React.FC = () => {
           <div className="w-full max-w-sm lg:max-w-md">
             {/* Logo */}
             <div className="mb-8">
-              <div className="inline-flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                  T
-                </div>
-                <span className="text-2xl font-semibold tracking-tight text-gray-900">Trakr</span>
+              <div className="origin-left scale-125 sm:scale-150">
+                <BrandLogo />
               </div>
             </div>
 

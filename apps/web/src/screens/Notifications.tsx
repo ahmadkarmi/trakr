@@ -23,8 +23,8 @@ const NotificationsScreen: React.FC = () => {
 
   // Derivation handled in engine
 
-  // Use engine-provided unified notifications and server-side pagination controls
-  const notifications = engine.uiNotifications
+  // Use engine-provided full-page notifications (read + unread history)
+  const notifications = engine.pageNotifications
   const hasMore = engine.hasMore
 
   // Local derived state handled by engine
@@ -111,7 +111,7 @@ const NotificationsScreen: React.FC = () => {
     const weekAgo = new Date(today)
     weekAgo.setDate(weekAgo.getDate() - 7)
 
-    engine.uiNotifications.forEach(notification => {
+    notifications.forEach(notification => {
       const notifDate = new Date(notification.createdAt)
       const notifDay = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
 
@@ -127,7 +127,7 @@ const NotificationsScreen: React.FC = () => {
     })
 
     return groups
-  }, [engine.uiNotifications])
+  }, [notifications])
 
   const unreadCount = engine.unreadCount
 
@@ -282,6 +282,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   const needsAction = notification.requiresAction && !notification.actionCompletedAt
   const isOwner = notification.userId === user?.id
   const isDb = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(notification.id))
+  const canMarkRead = !isDb || isOwner || isAdmin
 
   return (
     <div
@@ -343,8 +344,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               {/* Mark as read */}
               {!notification.isRead && (
                 <button
-                  onClick={(e) => { if (!(isDb && !isOwner)) onMarkAsRead(notification.id, e) }}
-                  disabled={isDb && !isOwner}
+                  onClick={(e) => { if (canMarkRead) onMarkAsRead(notification.id, e) }}
+                  disabled={!canMarkRead}
                   className="btn-outline btn-sm text-xs flex items-center gap-1.5"
                   title="Mark as read"
                 >
