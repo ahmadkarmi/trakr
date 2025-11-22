@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import BrandLogo from '../components/BrandLogo'
 import toast from 'react-hot-toast'
 import { ClipboardDocumentCheckIcon, ClipboardDocumentListIcon, CameraIcon, CheckCircleIcon, ChartBarIcon, GlobeAltIcon, PlayCircleIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
@@ -271,8 +272,7 @@ const Landing: React.FC = () => {
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-gray-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
-            <span className="text-lg font-semibold tracking-tight">Trakr</span>
+            <BrandLogo className="h-10 sm:h-11" />
           </div>
           <nav className="hidden sm:flex items-center gap-2">
             <a href="#about" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">About</a>
@@ -616,8 +616,7 @@ const Landing: React.FC = () => {
             {/* Brand Column */}
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
-                <span className="font-semibold text-gray-900 text-lg">Trakr</span>
+                <BrandLogo className="h-14 sm:h-16" />
               </div>
               <p className="text-sm text-gray-600 mb-4">
                 Modern audit management for multi-location businesses. Complete audits faster, track compliance, and drive operational excellence.

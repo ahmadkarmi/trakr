@@ -588,20 +588,37 @@ const AuditSummary: React.FC = () => {
 
           {/* Recent Activity */}
           {keyEvents.length > 0 && (
-            <div className="mt-5 pt-5 border-t border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Recent Activity</h4>
-              <ul className="flex flex-wrap gap-3 text-xs text-gray-700">
-                {keyEvents.map(ev => (
-                  <li key={ev.id} className="inline-flex items-center gap-2">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full ring-1 ring-inset ${ev.action === 'audit_approved' ? 'bg-green-50 text-green-700 ring-green-600/20' : ev.action === 'audit_rejected' ? 'bg-red-50 text-red-700 ring-red-600/20' : 'bg-amber-50 text-amber-800 ring-amber-600/20' }`}>
-                      {ev.action === 'audit_approved' ? '\u2713 Approved' : ev.action === 'audit_rejected' ? '\u2715 Rejected' : '\u2192 Submitted'}
-                    </span>
-                    <span className="text-gray-600">{formatInTimeZone(ev.timestamp, orgTimeZone)}</span>
-                    <span className="text-gray-400">•</span>
-                    <span className="text-gray-700">{decodeUnicodeEscapes(ev.details)}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-4 border-t border-gray-100">
+              <div className="px-6 pt-3 pb-2">
+                <p className="heading-micro mb-0.5 text-gray-600 tracking-wide">Recent activity</p>
+                <ul className="space-y-1 text-xs text-gray-700">
+                  {keyEvents.map(ev => (
+                    <li key={ev.id} className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full ring-1 ring-inset text-[11px] ${
+                            ev.action === 'audit_approved'
+                              ? 'bg-green-50 text-green-700 ring-green-600/20'
+                              : ev.action === 'audit_rejected'
+                              ? 'bg-red-50 text-red-700 ring-red-600/20'
+                              : 'bg-amber-50 text-amber-800 ring-amber-600/20'
+                          }`}
+                        >
+                          {ev.action === 'audit_approved'
+                            ? '\u2713 Approved'
+                            : ev.action === 'audit_rejected'
+                            ? '\u2715 Rejected'
+                            : '\u2192 Submitted'}
+                        </span>
+                        <span className="truncate text-gray-700">{decodeUnicodeEscapes(ev.details)}</span>
+                      </div>
+                      <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                        {formatInTimeZone(ev.timestamp, orgTimeZone)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
         </div>

@@ -274,6 +274,41 @@ const DashboardAuditor: React.FC = () => {
   const surveysReadyCount = availableSurveys.length
   const surveysReadyActive = surveysReadyCount > 0
 
+  const nextWindowAt = React.useMemo<Date | null>(() => {
+    if (availableSurveys.length > 0) return null
+    if (surveys.length === 0 || assignedBranches.length === 0) return null
+
+    const now = Date.now()
+    let next: Date | null = null
+
+    surveys.forEach((survey) => {
+      const freq = survey.frequency || AuditFrequency.UNLIMITED
+      if (freq === AuditFrequency.UNLIMITED) return
+
+      assignedBranches.forEach((branch) => {
+        const periodAudits = allAudits.filter(a =>
+          a.branchId === branch.id &&
+          a.surveyId === survey.id &&
+          a.periodStart &&
+          a.dueAt &&
+          new Date(a.periodStart).getTime() <= now &&
+          now <= new Date(a.dueAt).getTime()
+        )
+
+        periodAudits.forEach((a) => {
+          if (!a.dueAt) return
+          const ts = new Date(a.dueAt as any).getTime()
+          if (!Number.isFinite(ts)) return
+          if (ts >= now && (!next || ts < next.getTime())) {
+            next = new Date(ts)
+          }
+        })
+      })
+    })
+
+    return next
+  }, [availableSurveys, surveys, assignedBranches, allAudits])
+
   // Auto-select first available survey if current selection is not available
   React.useEffect(() => {
     if (availableSurveys.length > 0) {
@@ -288,8 +323,9 @@ const DashboardAuditor: React.FC = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Auditor Dashboard</h1>
-          <p className="text-gray-600 mt-1">{assignedBranches.length} branches • {myCycleAudits.length} this cycle • {audits.length} total audits • {user?.name} • {surveysReadyCount} surveys ready</p>
+          <p className="heading-subtitle">
+            {assignedBranches.length} branches • {myCycleAudits.length} this cycle • {audits.length} total audits • {user?.name} • {surveysReadyCount} surveys ready
+          </p>
         </div>
 
         {/* Quick Metrics - MetricCard */}
@@ -808,8 +844,11 @@ const DashboardAuditor: React.FC = () => {
           <div ref={startNewAuditRef} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             {/* Header */}
             <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-blue-50">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-4">
                 <h3 className="text-xl font-semibold text-gray-900">Start New Audit</h3>
+                <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                  {availableSurveys.length} surveys available
+                </div>
               </div>
               
               {/* Survey Selection */}
@@ -963,21 +1002,31 @@ const DashboardAuditor: React.FC = () => {
 
         {availableSurveys.length === 0 && (
           <div className="card-spacious border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="text-center px-4 sm:px-6 py-4">
+              <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <CalendarDaysIcon className="w-10 h-10 text-amber-500" />
               </div>
               {surveys.length === 0 ? (
                 <>
-                  <h3 className="text-lg font-semibold text-amber-800 mb-2">No Survey Templates</h3>
-                  <p className="text-amber-700 mb-4">Ask an admin to create survey templates to get started</p>
+                  <h3 className="text-lg font-semibold text-amber-800 mb-1">No Survey Templates</h3>
+                  <p className="text-amber-700 mb-2 text-sm">Ask an admin to create survey templates to get started</p>
                 </>
               ) : (
                 <>
-                  <h3 className="text-lg font-semibold text-amber-800 mb-2">No Audits Available</h3>
-                  <p className="text-amber-700 mb-2">All surveys have been completed for this period</p>
-                  <p className="text-sm text-amber-600">
+                  <h3 className="text-lg font-semibold text-amber-800 mb-1">No Audits Available</h3>
+                  <p className="text-amber-700 mb-1 text-sm">All surveys have been completed for this period</p>
+                  <p className="text-sm text-amber-600 mt-1">
                     {surveys.length} survey{surveys.length !== 1 ? 's' : ''} exist but frequency policy prevents new audits
+                    {assignedBranches.length > 0 && nextWindowAt && (
+                      <>
+                        {' '}
+                        Your next audit window opens on{' '}
+                        <span className="font-semibold">
+                          {nextWindowAt.toLocaleDateString()}
+                        </span>
+                        .
+                      </>
+                    )}
                   </p>
                 </>
               )}

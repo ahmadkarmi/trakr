@@ -11,6 +11,7 @@ import { useOrganization } from '../contexts/OrganizationContext'
 import { Toaster } from 'react-hot-toast'
 import NotificationDropdown from './NotificationDropdown'
 import { APP_VERSION } from '@/utils/appInfo'
+import BrandLogo from './BrandLogo'
 
 interface DashboardLayoutProps {
   title: string
@@ -133,8 +134,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
           {/* Enhanced mobile header */}
           <div className="h-20 px-6 flex items-center justify-between border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
-              <span className="text-xl font-bold tracking-wide text-gray-900">Trakr</span>
+              <BrandLogo className="h-11" />
             </div>
             <button className="touch-target p-2 hover:bg-gray-100 rounded-lg text-gray-700" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
               <XMarkIcon className="w-6 h-6" />
@@ -252,8 +252,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
       <aside className={`hidden md:flex ${compact ? 'md:w-16' : 'md:w-64 lg:w-72'} flex-col bg-white border-r border-gray-200 text-gray-900 pb-9 overflow-y-auto transition-all duration-200 md:relative md:z-20 md:shadow-lg`}>
         <div className="h-18 px-5 flex items-center justify-between">
           <Link to={isAdmin ? '/dashboard/admin' : '/'} className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">T</div>
-            {!compact && <span className="text-xl font-bold tracking-wide">Trakr</span>}
+            <BrandLogo compact={compact} />
           </Link>
         </div>
         <div className="px-3">

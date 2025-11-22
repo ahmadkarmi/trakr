@@ -18,6 +18,7 @@ export interface NotificationsEngine {
   allNotifications: Notification[]
   uiNotifications: Notification[]
   dropdownNotifications: Notification[]
+  pageNotifications: Notification[]
 
   // counts
   badgeCount: number
@@ -200,7 +201,8 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
           type: NotificationType.AUDIT_SUBMITTED,
           title: '✅ Audit Submitted for Approval',
           message: `${auditorName} submitted an audit for ${branchName}`,
-          link: `/audits/${audit.id}/summary`,
+          // Managers should land on the review screen to approve/reject
+          link: `/audit/${audit.id}/review`,
           isRead: false,
           createdAt: new Date((audit.submittedAt as any) || (audit.updatedAt as any) || (audit.createdAt as any)),
           relatedId: audit.id,
@@ -231,12 +233,13 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
           type: NotificationType.AUDIT_REJECTED,
           title: '❌ Audit Rejected',
           message: audit.rejectionNote ? `Your audit for ${branchName} was rejected: ${audit.rejectionNote}` : `Your audit for ${branchName} was rejected${(rejecter as any)?.name ? ` by ${(rejecter as any)?.name}` : ''}`,
-          link: `/audits/${audit.id}/summary`,
+          // Auditors should be taken to fix it in the wizard
+          link: `/audit/${audit.id}/wizard`,
           isRead: false,
           createdAt: new Date((audit.rejectedAt as any) || (audit.updatedAt as any) || (audit.createdAt as any)),
           relatedId: audit.id,
           requiresAction: true,
-          actionType: 'REVIEW_AUDIT',
+          actionType: 'FIX_AUDIT',
         } as any)
       }
     })
@@ -252,16 +255,43 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
     return derivedCandidates
   }, [unreadNotifications, allNotifications, derivedCandidates])
 
-  // Local read-tracking for derived notifications
-  const [derivedReadIds, setDerivedReadIds] = React.useState<Set<string>>(() => {
-    try { return new Set<string>(JSON.parse(localStorage.getItem('derivedReadNotifications') || '[]')) } catch { return new Set<string>() }
+  // Shared read-tracking for derived notifications (panel + page stay in sync, per user)
+  const derivedReadKey = React.useMemo(
+    () => ['notifications', 'derivedRead', user?.id || 'anonymous'] as const,
+    [user?.id],
+  )
+  const derivedReadQuery = useQuery<Set<string>>({
+    queryKey: derivedReadKey,
+    queryFn: () => {
+      const storageKey = `derivedReadNotifications:${user?.id || 'anonymous'}`
+      try {
+        return new Set<string>(JSON.parse(localStorage.getItem(storageKey) || '[]'))
+      } catch {
+        return new Set<string>()
+      }
+    },
+    staleTime: Infinity,
+    enabled: true,
   })
-  const persistDerivedReads = React.useCallback((next: Set<string>) => {
-    localStorage.setItem('derivedReadNotifications', JSON.stringify(Array.from(next)))
-  }, [])
-  const markDerivedAsReadLocal = React.useCallback((id: string) => {
-    setDerivedReadIds(prev => { const n = new Set(prev); n.add(id); persistDerivedReads(n); return n })
-  }, [persistDerivedReads])
+  const derivedReadIds = derivedReadQuery.data || new Set<string>()
+
+  const markDerivedAsReadLocal = React.useCallback(
+    (id: string) => {
+      const storageKey = `derivedReadNotifications:${user?.id || 'anonymous'}`
+      queryClient.setQueryData<Set<string>>(derivedReadKey, (prev) => {
+        const base = prev || new Set<string>()
+        const next = new Set(base)
+        next.add(id)
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(Array.from(next)))
+        } catch {
+          // ignore storage errors
+        }
+        return next
+      })
+    },
+    [queryClient, derivedReadKey, user?.id],
+  )
 
   // Attention lists
   const dbAttentionList = React.useMemo(() => {
@@ -284,8 +314,26 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
     return (Array.isArray(allNotifications) ? allNotifications : [])
   }, [dbAttentionList, derivedAttentionList, unreadNotifications, allNotifications, derivedFallback])
 
-  // UI list applies local derived read state
-  const uiNotifications = React.useMemo(() => (Array.isArray(base) ? base : []).map(n => !isUUID(n.id) && derivedReadIds.has(n.id) ? { ...n, isRead: true, readAt: n.readAt || new Date() } : n), [base, derivedReadIds, isUUID])
+  // UI list applies local derived read state (used for dropdown / attention view)
+  const uiNotifications = React.useMemo(
+    () => (Array.isArray(base) ? base : []).map(n => (!isUUID(n.id) && derivedReadIds.has(n.id))
+      ? { ...n, isRead: true, readAt: n.readAt || new Date() }
+      : n,
+    ),
+    [base, derivedReadIds, isUUID],
+  )
+
+  // Full-page list: keep full history (read + unread). When there are no DB notifications,
+  // fall back to derived candidates so /notifications is never empty if there is derived activity.
+  const pageNotifications = React.useMemo(() => {
+    const dbList = Array.isArray(allNotifications) ? allNotifications : []
+    if (dbList.length > 0) return dbList
+    const derived = Array.isArray(derivedCandidates) ? derivedCandidates : []
+    return derived.map(n => (!isUUID(n.id) && derivedReadIds.has(n.id))
+      ? { ...n, isRead: true, readAt: n.readAt || new Date() }
+      : n,
+    )
+  }, [allNotifications, derivedCandidates, derivedReadIds, isUUID])
 
   // Badge and permissions
   const dbAttentionCount = React.useMemo(() => {
@@ -355,13 +403,18 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
       const prevUnread = queryClient.getQueryData<Notification[]>(unreadKey)
       const prevSelfInf = queryClient.getQueryData<InfiniteData<Notification[]>>(selfInfKey)
       const prevAdminInf = queryClient.getQueryData<InfiniteData<Notification[]>>(adminInfKey)
-      // mark derived currently shown as read locally
       try {
-        setDerivedReadIds(prevSet => {
-          const next = new Set(prevSet)
+        const storageKey = `derivedReadNotifications:${user?.id || 'anonymous'}`
+        queryClient.setQueryData<Set<string>>(derivedReadKey, (prevSet) => {
+          const base = prevSet || new Set<string>()
+          const next = new Set(base)
           const curr = Array.isArray(uiNotifications) ? uiNotifications : []
           curr.forEach(n => { if (!isUUID(n.id)) next.add(n.id) })
-          persistDerivedReads(next)
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(Array.from(next)))
+          } catch {
+            // ignore storage errors
+          }
           return next
         })
       } catch {}
@@ -402,15 +455,16 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
     allNotifications,
     uiNotifications,
     dropdownNotifications,
+    pageNotifications,
     badgeCount,
     canMarkAll,
     unreadCount,
     markAsRead: (id: string) => {
       if (isUUID(id)) {
-        const ownIds = new Set((selfAll || []).map(n => n.id))
-        if (!ownIds.has(id)) return // do not mark others' DB notifications
+        // DB-backed notification: mark as read server-side and update caches
         markAsReadMutation.mutate(id)
       } else {
+        // Derived notification: track read state locally per user
         markDerivedAsReadLocal(id)
       }
     },
