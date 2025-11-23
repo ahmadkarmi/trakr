@@ -441,13 +441,23 @@ export const supabaseApi = {
       }
     }
 
-    // Check if assignment exists
+    // Resolve existing assignment + org context
     const { data: existing } = await supabase
       .from('auditor_assignments')
-      .select('id')
+      .select('id, org_id')
       .eq('user_id', userId)
-      .single()
-    
+      .maybeSingle()
+
+    let userOrgId: string | null = existing?.org_id ?? null
+    if (!userOrgId) {
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('org_id')
+        .eq('id', userId)
+        .maybeSingle()
+      userOrgId = userRow?.org_id ?? null
+    }
+
     if (existing) {
       // Update existing assignment
       const { error } = await supabase
@@ -456,23 +466,17 @@ export const supabaseApi = {
           branch_ids: payload.branchIds,
           zone_ids: payload.zoneIds,
           updated_at: new Date().toISOString(),
+          ...(existing.org_id ? {} : { org_id: userOrgId }),
         })
         .eq('user_id', userId)
       
       if (error) throw error
     } else {
-      // Create new assignment - fetch user's org_id first
-      const { data: user } = await supabase
-        .from('users')
-        .select('org_id')
-        .eq('id', userId)
-        .single()
-      
       const { error } = await supabase
         .from('auditor_assignments')
         .insert({
           user_id: userId,
-          org_id: user?.org_id,
+          org_id: userOrgId,
           branch_ids: payload.branchIds,
           zone_ids: payload.zoneIds,
         })

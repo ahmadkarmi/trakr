@@ -728,8 +728,8 @@ const DashboardAdmin: React.FC = () => {
           <div className="card h-full">
             <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-1">
               <p className="heading-micro">Coverage</p>
-              <h3 className="heading-section-title">Weekly Zone Coverage</h3>
-              <span className="text-xs text-gray-500">This week • Top 5</span>
+              <h3 className="heading-section-title">Your Week At A Glance</h3>
+              <span className="text-xs text-gray-500">Current week highlights</span>
             </div>
             <div className="card-body">
               {zoneRows.length === 0 ? (
