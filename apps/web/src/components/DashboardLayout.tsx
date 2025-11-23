@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuthStore } from '../stores/auth'
 import { USER_ROLE_LABELS, UserRole } from '@trakr/shared'
-import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, PencilSquareIcon, MapIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon, UsersIcon, PresentationChartLineIcon, BellIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, PencilSquareIcon, PencilIcon, MapIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon, UsersIcon, UserIcon, PresentationChartLineIcon, BellIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
 import { useOrganization } from '../contexts/OrganizationContext'
 //
 
@@ -189,9 +189,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               })}
             </nav>
           </div>
-          
+
           {/* Enhanced user section - Fixed at bottom */}
-          <div className="flex-shrink-0 p-6 pb-8 border-t border-gray-200 space-y-4">
+          <div className="flex-shrink-0 p-6 pb-8 border-t border-primary-100/80 space-y-4 bg-gradient-to-br from-white via-primary-50/80 to-white">
             <div className="flex items-center gap-4">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
@@ -206,37 +206,38 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               </div>
             </div>
             
-            {/* Mobile-optimized action buttons - Compact layout */}
-            <div className="space-y-1">
+            {/* Mobile-optimized action buttons - Icon grid */}
+            <div className="grid grid-cols-4 gap-3">
               <Link 
                 to="/profile" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 touch-target w-full text-sm text-gray-700"
+                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white"
+                title="Profile"
               >
-                <span>Profile</span>
+                <UserIcon className="w-5 h-5" />
               </Link>
               <Link 
                 to="/profile/signature" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 touch-target w-full text-sm text-gray-700"
+                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white"
+                title="Signature"
               >
-                <PencilSquareIcon className="w-4 h-4" />
-                <span>Signature</span>
+                <PencilIcon className="w-5 h-5" />
               </Link>
               <Link 
                 to="/settings" 
                 onClick={() => setMobileOpen(false)} 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 touch-target w-full text-sm text-gray-700"
+                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white"
+                title="Settings"
               >
-                <Cog6ToothIcon className="w-4 h-4" />
-                <span>Settings</span>
+                <Cog6ToothIcon className="w-5 h-5" />
               </Link>
               <button 
                 onClick={signOut} 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 touch-target w-full text-sm text-gray-700"
+                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white"
+                title="Sign Out"
               >
-                <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                <span>Sign Out</span>
+                <ArrowRightOnRectangleIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="pt-3">
