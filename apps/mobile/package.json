@@ -19,7 +19,7 @@
     "@react-native-async-storage/async-storage": "1.21.0",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.9.23",
-    "@tanstack/react-query": "^5.8.0",
+    "@tanstack/react-query": "^5.90.10",
     "@trakr/shared": "file:../../packages/shared",
     "@ui-kitten/components": "^5.3.1",
     "date-fns": "^3.0.0",
