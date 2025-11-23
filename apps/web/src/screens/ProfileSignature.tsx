@@ -115,6 +115,30 @@ const ProfileSignature: React.FC = () => {
     setSignatureMutation.mutate({ signatureUrl: dataUrl })
   }
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    const rect = e.currentTarget.getBoundingClientRect()
+    startDraw(e.clientX - rect.left, e.clientY - rect.top)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return
+    e.preventDefault()
+    const rect = e.currentTarget.getBoundingClientRect()
+    drawTo(e.clientX - rect.left, e.clientY - rect.top)
+  }
+
+  const handlePointerEnd = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      // Ignore if pointer capture was not set
+    }
+    endDraw()
+  }
+
   return (
     <DashboardLayout title="Profile · Signature">
       <div className="space-y-6 max-w-3xl mx-auto">
@@ -150,17 +174,12 @@ const ProfileSignature: React.FC = () => {
                 width={800}
                 height={180}
                 className="w-full h-44 bg-white rounded border"
-                onPointerDown={(e) => {
-                  const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
-                  startDraw(e.clientX - rect.left, e.clientY - rect.top)
-                }}
-                onPointerMove={(e) => {
-                  if (!drawingRef.current) return
-                  const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
-                  drawTo(e.clientX - rect.left, e.clientY - rect.top)
-                }}
-                onPointerUp={endDraw}
-                onPointerLeave={endDraw}
+                style={{ touchAction: 'none' }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerEnd}
+                onPointerLeave={handlePointerEnd}
+                onPointerCancel={handlePointerEnd}
               />
               <div className="mt-2 flex items-center gap-2">
                 <button className="btn btn-outline btn-xs" onClick={clearCanvas}>Clear</button>
