@@ -38,7 +38,7 @@ All dependencies are already installed:
 | Variable | Value | Notes |
 |----------|-------|-------|
 | `VITE_SENTRY_DSN` | `https://ae7294dfb9d712a4e539199b824346dc@o4510217719185408.ingest.de.sentry.io/4510217756475472` | Your Sentry DSN (already generated) |
-| `VITE_APP_VERSION` | `1.0.0` | Tracks which version has bugs |
+| `VITE_APP_VERSION` | `2025.11.24+build.1` (example) | **Must change every deploy** to bust the service-worker cache |
 
 **Optional (Source Maps - Better Stack Traces):**
 
@@ -121,6 +121,11 @@ Make sure these are set in Vercel → Settings → General:
 - **Check:** Environment variables are set correctly in Vercel
 - **Fix:** Double-check variable names (case-sensitive!)
 - **Remember:** Redeploy after adding variables
+
+### "Users still see the old UI"
+- **Check:** Did `VITE_APP_VERSION` change for this deploy? (It now controls cache versioning.)
+- **Fix:** Bump the value—recommended format `YYYY.MM.DD+<short-sha>` (e.g., `2025.11.24+abc123`)
+- **Tip:** On Vercel you can automate this by setting `VITE_APP_VERSION=$VERCEL_GIT_COMMIT_SHA` in the project settings or build command
 
 ### "Sentry not capturing errors"
 - **Check:** Did you install the packages?

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { APP_VERSION } from '../utils/appInfo'
 import { logger } from '../utils/logger'
 
 interface PWAState {
@@ -40,7 +41,8 @@ export function usePWA() {
 
       if ('serviceWorker' in navigator) {
         try {
-          const registration = await navigator.serviceWorker.register('/sw.js')
+          const versionedSWUrl = `/sw.js?v=${encodeURIComponent(APP_VERSION)}`
+          const registration = await navigator.serviceWorker.register(versionedSWUrl)
           
           setState(prev => ({
             ...prev,
