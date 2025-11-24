@@ -63,6 +63,30 @@ export default function AuditReviewScreen() {
   const endDraw = () => { drawingRef.current = false; lastPosRef.current = null; if (canvasRef.current) setSignatureDataUrl(canvasRef.current.toDataURL('image/png')) }
   const clearCanvas = () => { const c = canvasRef.current; if (!c) return; const ctx = c.getContext('2d'); if (!ctx) return; ctx.clearRect(0,0,c.width,c.height); setSignatureDataUrl(null) }
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    const rect = e.currentTarget.getBoundingClientRect()
+    startDraw(e.clientX - rect.left, e.clientY - rect.top)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return
+    e.preventDefault()
+    const rect = e.currentTarget.getBoundingClientRect()
+    drawTo(e.clientX - rect.left, e.clientY - rect.top)
+  }
+
+  const handlePointerEnd = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      // Pointer capture may not be set in some environments
+    }
+    endDraw()
+  }
+
   // Using shared Modal component (portaled to body)
 
   // Fetch audit data
@@ -649,17 +673,11 @@ export default function AuditReviewScreen() {
                   height={120}
                   className="border rounded bg-white cursor-crosshair w-full"
                   style={{ touchAction: 'none' }}
-                  onPointerDown={(e) => {
-                    const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
-                    startDraw(e.clientX - rect.left, e.clientY - rect.top)
-                  }}
-                  onPointerMove={(e) => {
-                    if (!drawingRef.current) return
-                    const rect = (e.target as HTMLCanvasElement).getBoundingClientRect()
-                    drawTo(e.clientX - rect.left, e.clientY - rect.top)
-                  }}
-                  onPointerUp={endDraw}
-                  onPointerLeave={endDraw}
+                  onPointerDown={handlePointerDown}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerEnd}
+                  onPointerLeave={handlePointerEnd}
+                  onPointerCancel={handlePointerEnd}
                 />
                 <div className="mt-2 flex items-center gap-2">
                   <button type="button" className="btn btn-outline btn-xs" onClick={clearCanvas}>Clear</button>
