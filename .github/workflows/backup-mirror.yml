@@ -32,7 +32,7 @@ jobs:
           git archive --format=tar.gz --prefix=trakr-backup-$(date +%Y%m%d)/ HEAD > trakr-backup-$(date +%Y%m%d).tar.gz
           
       - name: Upload to cloud storage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: code-backup-${{ github.sha }}
           path: trakr-backup-*.tar.gz
