@@ -119,7 +119,7 @@ const AdminOnboarding: React.FC = () => {
     setIsSubmitting(true)
     try {
       // Create zone
-      const zone = await api.createZone({
+      await api.createZone({
         name: zoneName.trim(),
         description: '',
         orgId: user.orgId!,

@@ -1,6 +1,5 @@
-import React from 'react'
-import { 
-  ExclamationTriangleIcon, 
+import {
+  ExclamationTriangleIcon,
   InformationCircleIcon, 
   CheckCircleIcon,
   XCircleIcon 

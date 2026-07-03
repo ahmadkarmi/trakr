@@ -32,7 +32,7 @@ const ManageAssignments: React.FC = () => {
   const { data: branches = [] } = useBranches(effectiveOrgId)
   const { data: zones = [] } = useZones(effectiveOrgId)
   const { data: users = [] } = useUsers()
-  const { data: assignments = [] } = useAssignments()
+  const { data: assignments = [] } = useAssignments(effectiveOrgId)
   const { data: audits = [] } = useAudits('assignments')
 
   const auditors = React.useMemo(() => users.filter(u => u.role === UserRole.AUDITOR), [users])
@@ -200,11 +200,11 @@ const ManageAssignments: React.FC = () => {
 
   // Optimistic cache helper (placed before any usage)
   const applyLocalAssignments = React.useCallback((updater: (prev: AuditorAssignment[]) => AuditorAssignment[]) => {
-    qc.setQueryData<AuditorAssignment[]>(QK.ASSIGNMENTS, (prev) => {
+    qc.setQueryData<AuditorAssignment[]>(QK.ASSIGNMENTS(effectiveOrgId), (prev) => {
       const base = prev ?? assignments
       return updater(base)
     })
-  }, [qc, assignments])
+  }, [qc, assignments, effectiveOrgId])
 
   // Undo snapshot state (for toast action)
   const [undoData, setUndoData] = React.useState<{ prevAssignments: AuditorAssignment[]; prevAudits: Record<string, string> } | null>(null)

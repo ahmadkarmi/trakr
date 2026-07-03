@@ -6,6 +6,7 @@ import { Route, Routes } from 'react-router-dom'
 import SurveyTemplateEditor from '../SurveyTemplateEditor'
 import { QuestionType } from '@trakr/shared'
 import { ensureSurveyTemplateFixture, renderWithSupabaseContext, type SurveyFixture } from '@/tests/utils/supabaseFixtures'
+import { hasSupabaseEnv } from '@/utils/supabaseClient'
 
 // Mock DashboardLayout to avoid React Router context issues in tests
 vi.mock('@/components/DashboardLayout', () => ({
@@ -25,7 +26,8 @@ const renderEditor = async () => {
   )
 }
 
-describe('SurveyTemplateEditor', () => {
+// Integration suite: requires a live Supabase env, like the src/__tests__ suites
+describe.skipIf(!hasSupabaseEnv())('SurveyTemplateEditor', () => {
   beforeAll(async () => {
     fixture = await ensureSurveyTemplateFixture()
   })

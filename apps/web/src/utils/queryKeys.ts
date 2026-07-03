@@ -8,7 +8,7 @@ export const QK = {
   AUDIT: (id?: string) => ['audit', id] as const,
   BRANCHES: (orgId?: string) => ['branches', orgId] as const,
   ZONES: (orgId?: string) => ['zones', orgId] as const,
-  ASSIGNMENTS: (orgId?: string) => ['auditor-assignments', orgId] as const,
+  ASSIGNMENTS: (orgId?: string) => (orgId ? (['auditor-assignments', orgId] as const) : (['auditor-assignments'] as const)),
   LOGS: (entityType: 'audit' | 'survey' | 'user' | 'branch' | 'organization', id?: string) => ['logs', entityType, id] as const,
   SURVEYS: ['surveys'] as const,
   SURVEY: (id?: string) => ['survey', id] as const,

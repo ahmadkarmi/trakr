@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # TEMP: non-blocking until the pre-existing lint debt is burned down
+      # (531 errors, mostly no-explicit-any — tracked as a follow-up)
+      - name: Lint (advisory)
+        run: npm run lint --workspace @trakr/web
+        continue-on-error: true
+
+      - name: Type check
+        run: npm run type-check --workspace @trakr/shared && npm run type-check --workspace @trakr/web
+
+      - name: Unit tests
+        run: npm run test:run --workspace @trakr/web
+
+      - name: Build
+        run: npm run build --workspace @trakr/web
+        env:
+          VITE_BACKEND: supabase
+          VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}

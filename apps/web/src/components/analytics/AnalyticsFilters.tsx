@@ -18,8 +18,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
   filters,
   onChange,
   branches = [],
-  zones = [],
-  auditors = []
+  zones = []
 }) => {
   const [showDatePicker, setShowDatePicker] = useState(false)
 
@@ -31,20 +30,6 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
         end: ranges.selection.endDate
       }
     })
-  }
-
-  const handleBranchToggle = (branchId: string) => {
-    const newBranches = filters.branchIds.includes(branchId)
-      ? filters.branchIds.filter(id => id !== branchId)
-      : [...filters.branchIds, branchId]
-    onChange({ ...filters, branchIds: newBranches })
-  }
-
-  const handleZoneToggle = (zoneId: string) => {
-    const newZones = filters.zoneIds.includes(zoneId)
-      ? filters.zoneIds.filter(id => id !== zoneId)
-      : [...filters.zoneIds, zoneId]
-    onChange({ ...filters, zoneIds: newZones })
   }
 
   const handleStatusToggle = (status: AuditStatus) => {

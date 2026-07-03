@@ -1,5 +1,5 @@
 import { api } from './api'
-import { AuditStatus, NotificationType } from '@trakr/shared'
+import { AuditStatus, Notification, NotificationType } from '@trakr/shared'
 import { logger } from './logger'
 
 /**
@@ -94,7 +94,7 @@ async function backfillSubmittedNotifications(
           // Admin-only: fetch all notifications and filter by manager + related audit
           const existingNotifications = await api.getAllNotifications()
           const hasNotification = existingNotifications.some(
-            n => n.userId === assignment.managerId && n.relatedId === audit.id && n.actionType === 'REVIEW_AUDIT'
+            (n: Notification) => n.userId === assignment.managerId && n.relatedId === audit.id && n.actionType === 'REVIEW_AUDIT'
           )
           
           if (hasNotification) {
@@ -143,7 +143,7 @@ async function backfillApprovedNotifications(
       // Check if notification already exists (admin can see all)
       const existingNotifications = await api.getAllNotifications()
       const hasNotification = existingNotifications.some(
-        n => n.userId === audit.assignedTo && n.relatedId === audit.id && n.type === NotificationType.AUDIT_APPROVED
+        (n: Notification) => n.userId === audit.assignedTo && n.relatedId === audit.id && n.type === NotificationType.AUDIT_APPROVED
       )
       
       if (hasNotification) {
@@ -188,7 +188,7 @@ async function backfillRejectedNotifications(
       // Check if notification already exists (admin can see all)
       const existingNotifications = await api.getAllNotifications()
       const hasNotification = existingNotifications.some(
-        n => n.userId === audit.assignedTo && n.relatedId === audit.id && n.type === NotificationType.AUDIT_REJECTED
+        (n: Notification) => n.userId === audit.assignedTo && n.relatedId === audit.id && n.type === NotificationType.AUDIT_REJECTED
       )
       
       if (hasNotification) {
