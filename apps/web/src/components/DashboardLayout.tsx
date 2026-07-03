@@ -4,8 +4,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuthStore } from '../stores/auth'
 import { USER_ROLE_LABELS, UserRole } from '@trakr/shared'
-import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, PencilSquareIcon, PencilIcon, MapIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon, UsersIcon, UserIcon, PresentationChartLineIcon, BellIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ClockIcon, BuildingOffice2Icon, PencilSquareIcon, PencilIcon, MapIcon, DocumentTextIcon, ChartBarIcon, Cog6ToothIcon, UsersIcon, UserIcon, PresentationChartLineIcon, BellIcon, InformationCircleIcon, SunIcon, MoonIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 import { useOrganization } from '../contexts/OrganizationContext'
+import { useTheme } from '../contexts/ThemeContext'
 //
 
 import { Toaster } from 'react-hot-toast'
@@ -30,6 +31,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [compact, setCompact] = useState<boolean>(false)
   const userMenuRef = useRef<HTMLDivElement | null>(null)
+  const { resolvedTheme, setPreference } = useTheme()
 
   // Close the overflow menu on outside click
   useEffect(() => {
@@ -67,7 +69,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
     return () => document.removeEventListener('click', onDocClick)
   }, [userMenuOpen])
 
-  const { isSuperAdmin } = useOrganization()
+  const { isSuperAdmin, globalView, setGlobalView } = useOrganization()
   const isAdmin = !!user && (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN || isSuperAdmin)
   const isBranchManager = !!user && user.role === UserRole.BRANCH_MANAGER
   const isAuditor = !!user && user.role === UserRole.AUDITOR
@@ -121,7 +123,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
   const currentYear = new Date().getFullYear()
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50 flex flex-col">
+    <div className="min-h-screen overflow-hidden flex flex-col" style={{ backgroundColor: 'var(--color-page)' }}>
       <Toaster position="bottom-center" toastOptions={{ className: 'text-sm rounded-full px-4 py-2' }} />
       <div className="flex flex-1 overflow-hidden">
       {/* Mobile Drawer */}
@@ -130,7 +132,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
           className={`fixed inset-0 z-40 bg-black/30 transition-opacity ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => setMobileOpen(false)}
         />
-        <aside className={`fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 text-gray-900 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col max-h-screen overflow-hidden`}>
+        <aside className={`sidebar-panel fixed inset-y-0 left-0 z-50 w-80 border-r border-gray-200 text-gray-900 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col max-h-screen overflow-hidden bg-white dark:bg-[var(--color-sidebar)] dark:border-white/5`}>
           {/* Enhanced mobile header */}
           <div className="h-20 px-6 flex items-center justify-between border-b border-gray-200">
             <div className="flex items-center gap-3">
@@ -145,7 +147,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {/* Mobile-optimized search */}
             <div className="px-6 py-4">
-              <div className="rounded-md flex items-center px-3 py-2 border border-gray-200">
+              <div className="rounded-md flex items-center px-3 py-2 border border-gray-200 dark:border-white/5">
                 <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
                 <input 
                   placeholder="Search" 
@@ -166,6 +168,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
             {/* Enhanced navigation with better touch targets */}
             <nav className="px-4 space-y-2 pb-4" aria-label="Primary">
               <div className="px-1 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Navigation</div>
+              {isSuperAdmin && (
+                <button
+                  onClick={() => { setGlobalView(!globalView); setMobileOpen(false) }}
+                  className={`group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all duration-200 ${globalView ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-white/5'}`}
+                >
+                  <GlobeAltIcon className={`shrink-0 w-5 h-5 ${globalView ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500'}`} />
+                  <span className={`text-sm ${globalView ? 'font-semibold text-amber-800 dark:text-amber-200' : 'text-gray-800'}`}>
+                    {globalView ? 'Global View (All Orgs)' : 'Global View'}
+                  </span>
+                </button>
+              )}
               {nav.map(item => {
                 const active = location.pathname.startsWith(item.to)
                 return (
@@ -175,13 +188,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
                     onClick={() => setMobileOpen(false)} 
                     title={item.label}
                     aria-current={active ? 'page' : undefined}
-                    className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${active ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-50'}`}
+                    className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${active ? 'bg-primary-50 text-primary-700 dark:bg-white/10 dark:text-white' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-white/5'}`}
                   >
                     {/* Left border indicator */}
                     <div className={`absolute left-0 top-1 bottom-1 w-1 rounded-r-full transition-all duration-200 ${active ? 'bg-primary-600' : 'bg-transparent group-hover:bg-gray-300'}`} />
                     
-                    <span className={`shrink-0 transition-colors duration-200 ${active ? 'text-primary-700' : 'text-gray-500 group-hover:text-gray-700'}`}>{item.icon}</span>
-                    <span className={`text-sm transition-colors duration-200 ${active ? 'text-primary-800 font-semibold' : 'text-gray-800 group-hover:text-gray-900'}`}>
+                    <span className={`shrink-0 transition-colors duration-200 ${active ? 'text-primary-700 dark:text-white' : 'text-gray-500 group-hover:text-gray-700 dark:text-slate-400 dark:group-hover:text-slate-200'}`}>{item.icon}</span>
+                    <span className={`text-sm transition-colors duration-200 ${active ? 'text-primary-800 font-semibold dark:text-slate-100' : 'text-gray-800 group-hover:text-gray-900 dark:text-slate-200'}`}>
                       {item.label}
                     </span>
                   </Link>
@@ -191,18 +204,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
           </div>
 
           {/* Enhanced user section - Fixed at bottom */}
-          <div className="flex-shrink-0 p-6 pb-8 border-t border-primary-100/80 space-y-4 bg-gradient-to-br from-white via-primary-50/80 to-white">
+          <div className="flex-shrink-0 p-6 pb-8 border-t border-primary-100/80 space-y-4 bg-gradient-to-br from-white via-primary-50/80 to-white dark:border-white/10 dark:bg-gradient-to-br dark:from-[#0b1126] dark:via-[#141d3a] dark:to-[#1c2850]">
             <div className="flex items-center gap-4">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-lg font-medium border-2 border-gray-200">
+                <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-lg font-medium border-2 border-gray-200 dark:bg-white/10 dark:text-white dark:border-white/15">
                   {user?.name?.charAt(0) || '?'}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-gray-900 font-semibold text-base truncate">{user?.name}</div>
-                <div className="text-gray-500 text-sm">{user?.role && USER_ROLE_LABELS[user.role]}</div>
+                <div className="text-gray-900 font-semibold text-base truncate dark:text-white">{user?.name}</div>
+                <div className="text-gray-500 text-sm dark:text-slate-300">{user?.role && USER_ROLE_LABELS[user.role]}</div>
               </div>
             </div>
             
@@ -211,7 +224,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               <Link 
                 to="/profile" 
                 onClick={() => setMobileOpen(false)} 
-                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white"
+                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
                 title="Profile"
               >
                 <UserIcon className="w-5 h-5" />
@@ -219,7 +232,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               <Link 
                 to="/profile/signature" 
                 onClick={() => setMobileOpen(false)} 
-                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white"
+                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
                 title="Signature"
               >
                 <PencilIcon className="w-5 h-5" />
@@ -227,30 +240,30 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               <Link 
                 to="/settings" 
                 onClick={() => setMobileOpen(false)} 
-                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white"
+                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
                 title="Settings"
               >
                 <Cog6ToothIcon className="w-5 h-5" />
               </Link>
               <button 
                 onClick={signOut} 
-                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white"
+                className="aspect-square rounded-2xl bg-white/90 border border-primary-100 shadow-[0_6px_18px_rgba(16,24,40,0.05)] flex items-center justify-center text-primary-600 hover:bg-white dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
                 title="Sign Out"
               >
                 <ArrowRightOnRectangleIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="pt-3">
-              <div className="rounded-xl border border-primary-200/70 bg-gradient-to-br from-primary-50 to-white px-4 py-2 text-center shadow-sm">
-                <p className="text-xs font-semibold text-primary-700 tracking-wide">Trakr</p>
-                <p className="text-[11px] text-primary-600/80">© {currentYear} · v{APP_VERSION}</p>
+              <div className="rounded-xl border border-primary-200/70 bg-gradient-to-br from-primary-50 to-white px-4 py-2 text-center shadow-sm dark:border-white/10 dark:bg-gradient-to-br dark:from-white/5 dark:via-white/0 dark:to-white/5">
+                <p className="text-xs font-semibold text-primary-700 tracking-wide dark:text-white">Trakr</p>
+                <p className="text-[11px] text-primary-600/80 dark:text-slate-300"> {currentYear} · v{APP_VERSION}</p>
               </div>
             </div>
           </div>
         </aside>
       </div>
       {/* Sidebar */}
-      <aside className={`hidden md:flex ${compact ? 'md:w-16' : 'md:w-64 lg:w-72'} flex-col bg-white border-r border-gray-200 text-gray-900 pb-9 overflow-y-auto transition-all duration-200 md:relative md:z-20 md:shadow-lg`}>
+      <aside className={`sidebar-panel hidden md:flex ${compact ? 'md:w-16' : 'md:w-64 lg:w-72'} flex-col border-r border-gray-200 text-gray-900 pb-9 overflow-y-auto transition-all duration-200 md:relative md:z-20 md:shadow-lg bg-white dark:bg-[var(--color-sidebar)] dark:border-white/5`}>
         <div className="h-18 px-5 flex items-center justify-between">
           <Link to={isAdmin ? '/dashboard/admin' : '/'} className="flex items-center gap-3">
             <BrandLogo compact={compact} />
@@ -279,6 +292,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
           {!compact && (
             <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Navigation</div>
           )}
+          {isSuperAdmin && (
+            <button
+              onClick={() => setGlobalView(!globalView)}
+              title={globalView ? 'Switch to org view' : 'Switch to global view'}
+              className={`group relative flex items-center gap-3 ${compact ? 'justify-center' : ''} w-full px-3 py-2.5 rounded-lg transition-all duration-200 ${globalView ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-white/5'}`}
+            >
+              <GlobeAltIcon className={`shrink-0 w-5 h-5 ${globalView ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 group-hover:text-gray-700 dark:text-slate-400 dark:group-hover:text-slate-200'}`} />
+              {!compact && (
+                <span className={`text-sm ${globalView ? 'font-semibold text-amber-800 dark:text-amber-200' : 'text-gray-800 group-hover:text-gray-900 dark:text-slate-200'}`}>
+                  {globalView ? 'Global View (All Orgs)' : 'Global View'}
+                </span>
+              )}
+            </button>
+          )}
           {nav.map(item => {
             const active = location.pathname.startsWith(item.to)
             return (
@@ -287,16 +314,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
                 to={item.to}
                 title={item.label}
                 aria-current={active ? 'page' : undefined}
-                className={`group relative flex items-center gap-3 ${compact ? 'justify-center' : ''} px-3 py-2.5 rounded-lg transition-all duration-200 ${active ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-50'}`}
+                className={`group relative flex items-center gap-3 ${compact ? 'justify-center' : ''} px-3 py-2.5 rounded-lg transition-all duration-200 ${active ? 'bg-primary-50 text-primary-700 dark:bg-white/10 dark:text-white' : 'text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-white/5'}`}
               >
                 {/* Left border indicator */}
                 {!compact && (
                   <div className={`absolute left-0 top-1 bottom-1 w-1 rounded-r-full transition-all duration-200 ${active ? 'bg-primary-600' : 'bg-transparent group-hover:bg-gray-300'}`} />
                 )}
                 
-                <span className={`shrink-0 transition-colors duration-200 ${active ? 'text-primary-700' : 'text-gray-500 group-hover:text-gray-700'}`}>{item.icon}</span>
+                <span className={`shrink-0 transition-colors duration-200 ${active ? 'text-primary-700 dark:text-white' : 'text-gray-500 group-hover:text-gray-700 dark:text-slate-400 dark:group-hover:text-slate-200'}`}>{item.icon}</span>
                 {!compact && (
-                  <span className={`text-sm transition-colors duration-200 ${active ? 'text-primary-800 font-semibold' : 'text-gray-800 group-hover:text-gray-900'}`}>
+                  <span className={`text-sm transition-colors duration-200 ${active ? 'text-primary-800 font-semibold dark:text-white' : 'text-gray-800 group-hover:text-gray-900 dark:text-slate-200'}`}>
                     {item.label}
                   </span>
                 )}
@@ -304,9 +331,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
             )
           })}
         </nav>
-        <div className="mt-auto px-3 pt-3 border-t border-gray-200 space-y-2">
+        <div className="mt-auto px-3 pt-3 border-t border-gray-200 dark:border-white/5 space-y-2">
           <button
-            className="w-full inline-flex items-center justify-center gap-2 text-xs text-gray-600 hover:text-gray-800 bg-white border border-gray-200 rounded-md px-2 py-2 hover:shadow-sm transition"
+            className="w-full inline-flex items-center justify-center gap-2 text-xs text-gray-600 hover:text-gray-800 bg-white border border-gray-200 rounded-md px-2 py-2 hover:shadow-sm transition dark:bg-white/10 dark:text-white dark:border-white/10 dark:hover:bg-white/15"
             onClick={() => setCompact(v => !v)}
             aria-label="Toggle compact sidebar"
             title={compact ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -315,9 +342,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
             {!compact && <span>Compact mode</span>}
           </button>
           {!compact ? (
-            <div className="rounded-xl border border-primary-200/70 bg-gradient-to-br from-primary-50 to-white px-3 py-2 text-[11px] text-primary-600/80 shadow-sm">
-              <p className="font-semibold text-primary-700">Trakr</p>
-              <p className="mt-0.5">© {currentYear} · v{APP_VERSION}</p>
+            <div className="rounded-xl border border-primary-200/70 bg-gradient-to-br from-primary-50 to-white px-3 py-2 text-[11px] text-primary-600/80 shadow-sm dark:border-white/8 dark:bg-[var(--color-card)] dark:bg-none">
+              <p className="font-semibold text-primary-700 dark:text-white">Trakr</p>
+              <p className="mt-0.5 text-primary-600/80 dark:text-slate-300">© {currentYear} · v{APP_VERSION}</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-1 text-[9px] uppercase tracking-wide text-gray-400">
@@ -334,8 +361,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto" style={{ ['--app-header-height' as any]: `${headerHeight}px` }}>
         {/* Modern Enhanced Header */}
-        <header ref={headerRef} className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-[0_1px_3px_rgba(0,0,0,0.02)] pt-[env(safe-area-inset-top)]">
-          <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
+        <header ref={headerRef} className="header-panel sticky top-0 z-30 border-b border-gray-200/80 dark:border-white/5 pt-[env(safe-area-inset-top)]">
+          <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4 border-b border-gray-200/80 dark:border-white/5">
             {/* Left: Menu Button (Mobile) + Title */}
             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
               <button 
@@ -384,6 +411,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               {/* Notifications */}
               <NotificationDropdown />
 
+              {/* Theme toggle */}
+              <button
+                type="button"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors text-gray-600 dark:text-slate-300"
+                onClick={() => setPreference(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {resolvedTheme === 'dark' ? (
+                  <SunIcon className="w-5 h-5" />
+                ) : (
+                  <MoonIcon className="w-5 h-5" />
+                )}
+              </button>
+
               {/* Help (Desktop) */}
               <Link 
                 to="/help" 
@@ -394,7 +435,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               </Link>
 
               {/* Divider */}
-              <div className="hidden sm:block w-px h-8 bg-gray-200"></div>
+              <div className="hidden sm:block w-px h-8 bg-gray-200 dark:bg-white/10"></div>
 
               {/* User Menu */}
               <div ref={userMenuRef} className="relative">
@@ -422,20 +463,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
                 </button>
                 
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200" role="menu">
+                  <div className="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 dark:border-white/10 dark:bg-[var(--color-card)]" role="menu">
                     {/* User Info */}
-                    <div className="px-4 py-3 bg-gradient-to-br from-gray-50 to-gray-100 border-b border-gray-200">
+                    <div className="px-4 py-3 bg-gradient-to-br from-gray-50 to-gray-100 border-b border-gray-200 dark:bg-gradient-to-br dark:from-white/5 dark:via-white/0 dark:to-white/5 dark:border-white/5">
                       <div className="flex items-center gap-3">
                         {user?.avatarUrl ? (
                           <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-base font-semibold ring-2 ring-white">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-base font-semibold ring-2 ring-white/80">
                             {user?.name?.charAt(0) || '?'}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold text-gray-900 truncate">{user?.name}</div>
-                          <div className="text-xs text-gray-600 truncate">{user?.email}</div>
+                          <div className="text-sm font-semibold text-gray-900 truncate dark:text-white">{user?.name}</div>
+                          <div className="text-xs text-gray-600 truncate dark:text-slate-300">{user?.email}</div>
                         </div>
                       </div>
                     </div>

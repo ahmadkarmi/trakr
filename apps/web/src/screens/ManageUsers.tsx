@@ -203,47 +203,47 @@ const ManageUsers: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mb-2">
+          <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4">
+            <div className="w-8 h-8 bg-primary-100 dark:bg-primary-500/20 rounded-lg flex items-center justify-center mb-2">
               <UserGroupIcon className="w-5 h-5 text-primary-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900 tabular-nums">{users.length}</p>
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Total Users</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{users.length}</p>
+            <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mt-1">Total Users</p>
           </div>
           {/* Header invite modal intentionally removed; InvitationManager provides invites */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mb-2">
+          <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4">
+            <div className="w-8 h-8 bg-green-100 dark:bg-green-500/20 rounded-lg flex items-center justify-center mb-2">
               <CheckCircleIcon className="w-5 h-5 text-green-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900 tabular-nums">{activeUsers}</p>
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Active</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{activeUsers}</p>
+            <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mt-1">Active</p>
           </div>
           
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mb-2">
+          <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4">
+            <div className="w-8 h-8 bg-orange-100 dark:bg-orange-500/20 rounded-lg flex items-center justify-center mb-2">
               <EnvelopeIcon className="w-5 h-5 text-orange-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900 tabular-nums">{pendingInvites}</p>
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Pending</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{pendingInvites}</p>
+            <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mt-1">Pending</p>
           </div>
           
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+          <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4">
+            <div className="w-8 h-8 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center mb-2">
               <ShieldCheckIcon className="w-5 h-5 text-gray-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900 tabular-nums">{adminUsers}</p>
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Admins</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{adminUsers}</p>
+            <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mt-1">Admins</p>
           </div>
         </div>
 
-        {/* Invitation Manager */}
+        {/* InvitationManager Component */}
         <InvitationManager />
 
         {/* Users table */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Team Members</h3>
-            <p className="text-sm text-gray-600 mt-1">Manage user roles, permissions, and account status.</p>
+        <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Team Members</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">Manage user roles, permissions, and account status.</p>
           </div>
           
           <ResponsiveTable
@@ -251,7 +251,7 @@ const ManageUsers: React.FC = () => {
             keyField={(user: User) => user.id}
             empty={<p className="text-gray-500 py-8">No users found.</p>}
             mobileItem={(user: User) => (
-              <div className="card-compact bg-white border border-gray-200">
+              <div className="card-compact bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     {user.avatarUrl ? (
@@ -428,12 +428,12 @@ const ManageUsers: React.FC = () => {
       {coverageBlock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setCoverageBlock(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-[92vw] max-w-lg mx-auto p-6" role="dialog" aria-modal="true">
-            <h3 className="text-lg font-semibold text-gray-900">{coverageBlock.title}</h3>
-            <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{coverageBlock.message}</p>
+          <div className="relative bg-white dark:bg-[var(--color-card)] rounded-xl shadow-xl border border-transparent dark:border-white/10 w-[92vw] max-w-lg mx-auto p-6" role="dialog" aria-modal="true">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{coverageBlock.title}</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-300 mt-2 whitespace-pre-wrap">{coverageBlock.message}</p>
             {coverageBlock.branchNames && coverageBlock.branchNames.length > 0 && (
               <div className="mt-3">
-                <p className="text-sm font-medium text-gray-900 mb-2">Affected active branches:</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Affected active branches:</p>
                 <div className="flex flex-wrap gap-2">
                   {coverageBlock.branchNames.map((name, idx) => (
                     <label key={name + idx} className={`btn btn-outline btn-xs ${selectedBranchIds.includes(coverageBlock.branchIds?.[idx] || '') ? 'bg-gray-50' : ''}`}>
@@ -446,16 +446,16 @@ const ManageUsers: React.FC = () => {
             )}
             {/* Auditor selection */}
             <div className="mt-4">
-              <p className="text-sm font-medium text-gray-900 mb-2">Select auditors to assign</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Select auditors to assign</p>
               {auditors.length === 0 ? (
-                <p className="text-sm text-gray-500">No auditors found. Invite or create auditor users first.</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">No auditors found. Invite or create auditor users first.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                   {auditors.map((a: User) => (
-                    <label key={a.id} className={`flex items-center gap-2 p-2 rounded-lg border ${selectedAuditorIds.includes(a.id) ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <label key={a.id} className={`flex items-center gap-2 p-2 rounded-lg border ${selectedAuditorIds.includes(a.id) ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'}`}>
                       <input type="checkbox" checked={selectedAuditorIds.includes(a.id)} onChange={() => toggleAuditorSel(a.id)} />
-                      <span className="text-sm text-gray-900 truncate">{a.name}</span>
-                      <span className="text-xs text-gray-500 truncate">{a.email}</span>
+                      <span className="text-sm text-gray-900 dark:text-white truncate">{a.name}</span>
+                      <span className="text-xs text-gray-500 dark:text-slate-400 truncate">{a.email}</span>
                     </label>
                   ))}
                 </div>
@@ -495,8 +495,8 @@ const ManageUsers: React.FC = () => {
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setEditingUser(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-[92vw] max-w-md mx-auto" role="dialog" aria-modal="true">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div className="relative bg-white dark:bg-[var(--color-card)] rounded-xl shadow-xl border border-transparent dark:border-white/10 w-[92vw] max-w-md mx-auto" role="dialog" aria-modal="true">
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-white/10">
               <h3 className="text-lg font-semibold">Edit User</h3>
               <button 
                 className="btn btn-ghost btn-sm" 

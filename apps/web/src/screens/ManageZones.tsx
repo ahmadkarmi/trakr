@@ -110,13 +110,13 @@ const ManageZones: React.FC = () => {
         <div>
         <div className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Zones</h2>
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white">Zones</h2>
           </div>
           <div className="p-4 sm:p-6">
             <ResponsiveTable<Zone>
               items={zones}
               keyField={(z) => z.id}
-              empty={<p className="text-gray-500 text-center py-8">No zones found.</p>}
+              empty={<p className="text-gray-500 dark:text-slate-400 text-center py-8">No zones found.</p>}
               mobileItem={(z) => (
                 <div className="card p-5 hover:shadow-md transition-shadow">
                   <div className="mb-4">
@@ -124,9 +124,9 @@ const ManageZones: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xl">🗺️</span>
-                          <h4 className="font-semibold text-gray-900 text-base truncate">{z.name}</h4>
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-base truncate">{z.name}</h4>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{z.description || 'No description'}</p>
+                        <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">{z.description || 'No description'}</p>
                         <div className="mt-2">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                             {z.branchIds.length} {z.branchIds.length === 1 ? 'branch' : 'branches'}
@@ -137,15 +137,15 @@ const ManageZones: React.FC = () => {
                     
                     {z.branchIds.length > 0 && (
                       <div className="mt-3">
-                        <label className="text-xs font-medium text-gray-500">Branches:</label>
+                        <label className="text-xs font-medium text-gray-500 dark:text-slate-400">Branches:</label>
                         <div className="mt-1 flex flex-wrap gap-1">
                           {z.branchIds.slice(0, 3).map(bid => (
-                            <span key={bid} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">
+                            <span key={bid} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300">
                               {branchName[bid] || bid}
                             </span>
                           ))}
                           {z.branchIds.length > 3 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-500">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-slate-400">
                               +{z.branchIds.length - 3} more
                             </span>
                           )}
@@ -198,9 +198,9 @@ const ManageZones: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-lg">🗺️</span>
-                        <div className="font-medium text-gray-900">{z.name}</div>
+                        <div className="font-medium text-gray-900 dark:text-white">{z.name}</div>
                       </div>
-                      <div className="text-sm text-gray-600 mt-0.5">{z.description || 'No description'}</div>
+                      <div className="text-sm text-gray-600 dark:text-slate-300 mt-0.5">{z.description || 'No description'}</div>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 mt-1">
                         {z.branchIds.length} {z.branchIds.length === 1 ? 'branch' : 'branches'}
                       </span>
@@ -212,16 +212,16 @@ const ManageZones: React.FC = () => {
                   header: 'Branches', 
                   render: (z) => (
                     <button
-                      className="text-left hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors group"
+                      className="text-left hover:bg-gray-50 dark:hover:bg-white/5 px-3 py-2 rounded-lg transition-colors group"
                       onClick={() => setEditingZoneId(z.id)}
                     >
                       <div className="flex items-center gap-2">
                         <MapIcon className="w-5 h-5 text-gray-400 group-hover:text-primary-600" />
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {z.branchIds.length === 0 ? 'No branches' : `${z.branchIds.length} ${z.branchIds.length === 1 ? 'branch' : 'branches'}`}
                           </div>
-                          <div className="text-xs text-gray-500 group-hover:text-primary-600">Click to manage →</div>
+                          <div className="text-xs text-gray-500 dark:text-slate-400 group-hover:text-primary-600">Click to manage →</div>
                         </div>
                       </div>
                     </button>
@@ -234,7 +234,7 @@ const ManageZones: React.FC = () => {
                   render: (z) => (
                     <div className="flex gap-2 justify-end">
                       <button 
-                        className="p-2 hover:bg-gray-50 rounded-lg transition-colors group" 
+                        className="p-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors group" 
                         onClick={() => {
                           const newName = prompt('Rename zone', z.name)
                           if (newName && newName.trim()) {
@@ -269,15 +269,15 @@ const ManageZones: React.FC = () => {
         <div>
         <div className="card overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Create New Zone</h2>
-            <p className="text-sm text-gray-600 mt-1">Group branches together for easier auditor assignments</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Create New Zone</h2>
+            <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">Group branches together for easier auditor assignments</p>
           </div>
           
           <div className="p-4 sm:p-6 space-y-6">
             {/* Zone Details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Zone Name *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">Zone Name *</label>
                 <input 
                   className="input" 
                   value={form.name} 
@@ -286,7 +286,7 @@ const ManageZones: React.FC = () => {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description (Optional)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">Description (Optional)</label>
                 <input 
                   className="input" 
                   value={form.description} 
@@ -300,8 +300,8 @@ const ManageZones: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900">Assign Branches</label>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <label className="block text-sm font-semibold text-gray-900 dark:text-white">Assign Branches</label>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
                     {form.branchIds.length === 0 ? 'No branches selected' : `${form.branchIds.length} ${form.branchIds.length === 1 ? 'branch' : 'branches'} selected`}
                   </p>
                 </div>
@@ -317,9 +317,9 @@ const ManageZones: React.FC = () => {
               </div>
               
               {branches.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <p className="text-sm text-gray-600">No branches available</p>
-                  <p className="text-xs text-gray-500 mt-1">Create branches first to assign them to zones</p>
+                <div className="text-center py-8 bg-gray-50 dark:bg-[var(--color-card-muted)] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
+                  <p className="text-sm text-gray-600 dark:text-slate-300">No branches available</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Create branches first to assign them to zones</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -328,8 +328,8 @@ const ManageZones: React.FC = () => {
                       key={b.id}
                       className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                         form.branchIds.includes(b.id)
-                          ? 'border-primary-500 bg-primary-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
+                          : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 bg-white dark:bg-[var(--color-card)]'
                       }`}
                     >
                       <input
@@ -339,9 +339,9 @@ const ManageZones: React.FC = () => {
                         className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-gray-900 truncate">{b.name}</p>
+                        <p className="font-medium text-sm text-gray-900 dark:text-white truncate">{b.name}</p>
                         {b.address && (
-                          <p className="text-xs text-gray-500 truncate">{b.address}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{b.address}</p>
                         )}
                       </div>
                     </label>

@@ -174,16 +174,13 @@ const AdminOnboarding: React.FC = () => {
 
     setIsSubmitting(true)
     try {
-      // Send invitations
+      // Send invitations via Edge Function (creates auth user + sends email)
       await Promise.all(
-        validEmails.map(inv =>
-          api.createInvitation({
-            orgId: user.orgId!,
-            email: inv.email.trim(),
-            role: inv.role,
-            invitedBy: user.id
-          })
-        )
+        validEmails.map(inv => {
+          const emailLocal = inv.email.trim().split('@')[0] || inv.email.trim()
+          const name = emailLocal.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+          return (api as any).inviteUser(inv.email.trim(), name, inv.role)
+        })
       )
 
       await api.updateOnboardingProgress({

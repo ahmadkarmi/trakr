@@ -87,9 +87,9 @@ const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, primaryAc
 
   const modalNode = (
     <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby={title ? 'modal-title' : undefined} data-focus-trap>
-      <div ref={overlayRef} className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div ref={contentRef} className="relative bg-white rounded-lg shadow-xl w-[92vw] max-w-xl mx-auto p-5 my-8 max-h-[90vh] overflow-y-auto">
-        {title && <h3 className="text-lg font-semibold mb-2" id="modal-title">{title}</h3>}
+      <div ref={overlayRef} className="absolute inset-0 bg-black/40 dark:bg-black/60" onClick={onClose} />
+      <div ref={contentRef} className="relative bg-white dark:bg-[var(--color-card)] rounded-lg shadow-xl border border-transparent dark:border-white/10 w-[92vw] max-w-xl mx-auto p-5 my-8 max-h-[90vh] overflow-y-auto">
+        {title && <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white" id="modal-title">{title}</h3>}
         <div className="space-y-3">
           {children}
         </div>

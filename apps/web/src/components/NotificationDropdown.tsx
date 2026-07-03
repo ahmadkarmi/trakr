@@ -147,9 +147,9 @@ const NotificationDropdown: React.FC = () => {
           type="button"
           aria-label="Notifications"
           onClick={() => setIsOpen(v => !v)}
-          className="relative inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="relative inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
-          <BellIcon className="w-6 h-6 text-gray-700" />
+          <BellIcon className="w-6 h-6 text-gray-700 dark:text-slate-300" />
           {badgeCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 rounded-full bg-primary-600 text-white text-[10px] font-bold leading-4 text-center ring-2 ring-white animate-pulse-subtle shadow-lg shadow-primary-500/50">
               {badgeCount > 9 ? '9+' : badgeCount}
@@ -160,10 +160,10 @@ const NotificationDropdown: React.FC = () => {
         {/* Desktop Dropdown */}
         {isOpen && !isMobile && (
           <div className="absolute right-0 mt-2 w-[380px] max-h-[80vh] z-[101]">
-            <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-[var(--color-card)] rounded-xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden">
               {/* Header */}
-              <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-base font-bold text-gray-900">Notifications</h3>
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">Notifications</h3>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => engine.markAllAsRead()}
@@ -174,10 +174,10 @@ const NotificationDropdown: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-1.5 hover:bg-gray-100 rounded-lg"
+                    className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg"
                     aria-label="Close"
                   >
-                    <XMarkIcon className="w-5 h-5 text-gray-600" />
+                    <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-slate-300" />
                   </button>
                 </div>
               </div>
@@ -186,31 +186,31 @@ const NotificationDropdown: React.FC = () => {
               <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
                 {dropdownNotifications.length === 0 ? (
                   <div className="px-4 py-10 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-white/10 rounded-full mx-auto mb-4 flex items-center justify-center">
                       <BellIcon className="w-8 h-8 text-gray-400" />
                     </div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">All caught up!</h3>
-                    <p className="text-gray-500 text-sm">We'll notify you when there's something new</p>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">All caught up!</h3>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm">We'll notify you when there's something new</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-100 dark:divide-white/10">
                     {dropdownNotifications.map(notification => {
                       const needsAction = notification.requiresAction && !notification.actionCompletedAt
                       return (
                         <button
                           key={notification.id}
                           onClick={() => handleNotificationClick(notification)}
-                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${!notification.isRead ? 'bg-blue-50/30' : ''}`}
+                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${!notification.isRead ? 'bg-blue-50/30 dark:bg-primary-500/10' : ''}`}
                         >
                           <div className="flex items-start gap-3">
                             {/* Icon */}
-                            <div className="flex-shrink-0 mt-0.5 w-6 h-6 flex justify-center items-center rounded-full bg-gray-100">
+                            <div className="flex-shrink-0 mt-0.5 w-6 h-6 flex justify-center items-center rounded-full bg-gray-100 dark:bg-white/10">
                               {getNotificationIcon(notification.type)}
                             </div>
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                <h4 className="text-sm font-semibold text-gray-900">{notification.title}</h4>
+                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{notification.title}</h4>
                                 {needsAction && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-600/20">Action Required</span>
                                 )}
@@ -218,9 +218,9 @@ const NotificationDropdown: React.FC = () => {
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800 ring-1 ring-inset ring-blue-600/20">New</span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600 line-clamp-2">{notification.message}</p>
+                              <p className="text-sm text-gray-600 dark:text-slate-300 line-clamp-2">{notification.message}</p>
                               <div className="mt-2 flex items-center justify-between gap-3">
-                                <span className="text-xs text-gray-500 flex items-center gap-1">
+                                <span className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1">
                                   <ClockIcon className="w-3.5 h-3.5" />
                                   {formatTime(notification.createdAt)}
                                 </span>
@@ -238,7 +238,7 @@ const NotificationDropdown: React.FC = () => {
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+              <div className="px-4 py-2 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--color-card-muted)]">
                 {dropdownNotifications.length > 0 ? (
                   <div className="flex items-center justify-between">
                     <button onClick={() => { navigate('/notifications'); setIsOpen(false) }} className="text-sm text-primary-600 hover:text-primary-700 font-medium">View all</button>
@@ -259,25 +259,25 @@ const NotificationDropdown: React.FC = () => {
       {isOpen && isMobile && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/50 z-[100] md:hidden" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[100] md:hidden" onClick={() => setIsOpen(false)} />
 
           {/* Bottom Sheet */}
           <div className="fixed inset-x-0 bottom-0 z-[101] md:hidden animate-slide-up">
-            <div className="bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="bg-white dark:bg-[var(--color-card)] rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
               {/* Handle Bar & Header - Swipeable Area */}
               <div className="touch-none select-none" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
                 {/* Handle Bar */}
                 <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
-                  <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                  <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-500 rounded-full" />
                 </div>
 
                 {/* Header */}
-                <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-gray-900">Notifications</h3>
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Notifications</h3>
                   <div className="flex items-center gap-2">
                     <button onClick={(e) => { e.stopPropagation(); engine.markAllAsRead() }} disabled={!canMarkAll} className="text-xs text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400">Mark all read</button>
-                    <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Close">
-                      <XMarkIcon className="w-5 h-5 text-gray-600" />
+                    <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors" aria-label="Close">
+                      <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-slate-300" />
                     </button>
                   </div>
                 </div>
@@ -287,31 +287,31 @@ const NotificationDropdown: React.FC = () => {
               <div className="overflow-y-auto flex-1">
                 {dropdownNotifications.length === 0 ? (
                   <div className="px-4 py-16 text-center">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-white/10 rounded-full mx-auto mb-4 flex items-center justify-center">
                       <BellIcon className="w-10 h-10 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h3>
-                    <p className="text-gray-500 text-sm">We'll notify you when there's something new</p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">All caught up!</h3>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm">We'll notify you when there's something new</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-100 dark:divide-white/10">
                     {dropdownNotifications.map(notification => {
                       const needsAction = notification.requiresAction && !notification.actionCompletedAt
                       return (
-                        <div key={notification.id} className={`px-4 py-4 active:bg-gray-100 transition-colors ${!notification.isRead ? 'bg-blue-50/30' : ''}`} onClick={() => handleNotificationClick(notification)}>
+                        <div key={notification.id} className={`px-4 py-4 active:bg-gray-100 dark:active:bg-white/10 transition-colors ${!notification.isRead ? 'bg-blue-50/30 dark:bg-primary-500/10' : ''}`} onClick={() => handleNotificationClick(notification)}>
                           <div className="flex items-start gap-3">
                             {/* Icon */}
-                            <div className="flex-shrink-0 mt-0.5 w-6 h-6 flex justify-center items-center rounded-full bg-gray-100">{getNotificationIcon(notification.type)}</div>
+                            <div className="flex-shrink-0 mt-0.5 w-6 h-6 flex justify-center items-center rounded-full bg-gray-100 dark:bg-white/10">{getNotificationIcon(notification.type)}</div>
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                <h4 className="text-base font-semibold text-gray-900">{notification.title}</h4>
+                                <h4 className="text-base font-semibold text-gray-900 dark:text-white">{notification.title}</h4>
                                 {needsAction && (<span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-600/20">Action Required</span>)}
                                 {!notification.isRead && !needsAction && (<span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ring-1 ring-inset ring-blue-600/20">New</span>)}
                               </div>
-                              <p className="text-sm text-gray-600 mb-3 leading-relaxed">{notification.message}</p>
+                              <p className="text-sm text-gray-600 dark:text-slate-300 mb-3 leading-relaxed">{notification.message}</p>
                               <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs text-gray-500 flex items-center gap-1"><ClockIcon className="w-3.5 h-3.5" />{formatTime(notification.createdAt)}</span>
+                                <span className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1"><ClockIcon className="w-3.5 h-3.5" />{formatTime(notification.createdAt)}</span>
                                 {needsAction && (<button onClick={(e) => { e.stopPropagation(); handleNotificationClick(notification) }} className="text-xs px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">Review Now</button>)}
                               </div>
                             </div>
@@ -324,7 +324,7 @@ const NotificationDropdown: React.FC = () => {
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+              <div className="px-4 py-3 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--color-card-muted)]">
                 {dropdownNotifications.length > 0 ? (
                   <div className="space-y-2">
                     <button onClick={() => { navigate('/notifications'); setIsOpen(false) }} className="w-full py-2.5 text-sm text-primary-600 hover:text-primary-700 font-semibold">View all notifications</button>

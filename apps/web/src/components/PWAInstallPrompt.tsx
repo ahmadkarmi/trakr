@@ -120,7 +120,7 @@ export default function PWAInstallPrompt() {
           </button>
           <button
             onClick={handleDismiss}
-            className="flex-1 bg-gray-100 text-gray-700 text-sm font-medium py-2 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            className="flex-1 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300 text-sm font-medium py-2 px-4 rounded-md hover:bg-gray-200 dark:hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
             Not now
           </button>

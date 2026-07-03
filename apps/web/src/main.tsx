@@ -4,6 +4,7 @@ import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import App from './App.tsx'
+import { ThemeProvider } from './contexts/ThemeContext'
 import './index.css'
 import { emitToast } from './utils/toastBus'
 import { apiErrorMessage } from './utils/apiError'
@@ -117,7 +118,9 @@ if (clientEnv.missing.length > 0) {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </PersistQueryClientProvider>
   </React.StrictMode>,
 )

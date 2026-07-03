@@ -19,6 +19,7 @@ import StatusBadge from '@/components/StatusBadge'
 import { notificationHelpers } from '../utils/notifications'
 import { useOrganization } from '../contexts/OrganizationContext'
 import { logger } from '../utils/logger'
+import toast from 'react-hot-toast'
 
 /**
  * Audit Review Screen for Branch Managers
@@ -247,10 +248,10 @@ export default function AuditReviewScreen() {
         }
       }
       
-      navigate('/dashboard/branch-manager')
+      navigate(isAdminRole ? '/dashboard/admin' : '/dashboard/branch-manager')
     },
     onError: (error: Error) => {
-      alert(`Failed to approve audit: ${error.message}`)
+      toast.error(`Failed to approve audit: ${error.message}`)
     },
   })
 
@@ -293,10 +294,10 @@ export default function AuditReviewScreen() {
         }
       }
       
-      navigate('/dashboard/branch-manager')
+      navigate(isAdminRole ? '/dashboard/admin' : '/dashboard/branch-manager')
     },
     onError: (error: Error) => {
-      alert(`Failed to reject audit: ${error.message}`)
+      toast.error(`Failed to reject audit: ${error.message}`)
     },
   })
 
@@ -318,13 +319,25 @@ export default function AuditReviewScreen() {
     )
   }
 
+  // Cross-org access guard: prevent non-super-admins from reviewing audits outside their org
+  if (!isSuperAdmin && effectiveOrgId && (audit as any).orgId && (audit as any).orgId !== effectiveOrgId) {
+    return (
+      <DashboardLayout title="Review Audit">
+        <div className="text-center py-12">
+          <p className="text-red-600 font-medium">Access denied: this audit belongs to a different organization.</p>
+          <button onClick={() => navigate(-1)} className="mt-4 text-sm text-gray-600 underline">Go back</button>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
   return (
     <DashboardLayout title="Review Audit">
       <div className="space-y-6">
         {/* Header with back button */}
         <div className="mb-6">
           <button
-            onClick={() => navigate('/dashboard/branch-manager')}
+            onClick={() => navigate(isAdminRole ? '/dashboard/admin' : '/dashboard/branch-manager')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeftIcon className="w-5 h-5" />
@@ -726,11 +739,12 @@ export default function AuditReviewScreen() {
             </button>
             <button
               onClick={() => {
-                if (!rejectionNote.trim()) {
-                  alert('Please provide feedback for rejection')
+                const note = rejectionNote.trim()
+                if (note.length < 10) {
+                  toast.error('Please provide at least 10 characters of feedback for rejection')
                   return
                 }
-                rejectMutation.mutate(rejectionNote.trim())
+                rejectMutation.mutate(note)
               }}
               className="btn btn-danger"
               disabled={rejectMutation.isPending}

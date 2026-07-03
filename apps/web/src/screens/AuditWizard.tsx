@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { logger } from '../utils/logger'
 import { useNavigate, useParams } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
@@ -107,11 +107,18 @@ const AuditWizard: React.FC = () => {
     return n
   }, [currentSection, responses])
 
-  // Current section unanswered count (for modal messaging)
+  // Current section unanswered count (for modal messaging) — uses same type-aware logic as goNext
   const currentUnansweredCount = useMemo(() => {
     const sec = currentSection
     if (!sec) return 0
-    return sec.questions.filter(q => !responses[q.id]).length
+    return sec.questions.filter(q => {
+      const ans = responses[q.id]
+      if (q.type === QuestionType.YES_NO) return !ans
+      if (q.type === QuestionType.CHECKBOX) {
+        try { const arr = JSON.parse(ans || '[]'); return !(Array.isArray(arr) && arr.length > 0) } catch { return !ans }
+      }
+      return !ans
+    }).length
   }, [currentSection, responses])
 
   // Overall audit progress across all sections
@@ -183,6 +190,10 @@ const AuditWizard: React.FC = () => {
       const server = audit.sectionComments || {}
       return (prev && Object.keys(prev).length > 0) ? { ...server, ...prev } : server
     })
+    setNaReasons(prev => {
+      const server = audit.naReasons || {}
+      return Object.keys(prev).length > 0 ? { ...server, ...prev } : server
+    })
   }, [audit])
 
   // Offline/online detection
@@ -242,6 +253,15 @@ const AuditWizard: React.FC = () => {
       },
     })
 
+  // Auto-save every 30 seconds when there are unsaved changes
+  React.useEffect(() => {
+    if (!auditId || !unsavedChanges || saveProgress.isPending) return
+    const timer = setInterval(() => {
+      saveProgress.mutate({ responses, naReasons, sectionComments })
+    }, 30_000)
+    return () => clearInterval(timer)
+  }, [auditId, unsavedChanges, saveProgress.isPending, responses, naReasons, sectionComments])
+
   const setAnswer = (questionId: string, value: 'yes' | 'no' | 'na') => {
     setResponses(prev => ({ ...prev, [questionId]: value }))
     if (value !== 'na') {
@@ -254,7 +274,7 @@ const AuditWizard: React.FC = () => {
     setUnsavedChanges(true)
   }
 
-  const proceedToNext = async () => {
+  const proceedToNext = useCallback(async () => {
     if (auditId) {
       try {
         await saveProgress.mutateAsync({ responses, naReasons, sectionComments })
@@ -309,9 +329,9 @@ const AuditWizard: React.FC = () => {
         addAlert('error', `Failed to complete audit: ${message}`)
       }
     }
-  }
+  }, [auditId, responses, naReasons, sectionComments, survey, sectionIndex, saveProgress, addAlert, navigate, queryClient])
 
-  const goNext = () => {
+  const goNext = useCallback(() => {
     // Warn if current section has unanswered questions via modal
     const curUnanswered = (currentSection?.questions || []).filter(q => {
       const ans = responses[q.id]
@@ -327,7 +347,7 @@ const AuditWizard: React.FC = () => {
       return
     }
     void proceedToNext()
-  }
+  }, [currentSection, responses, proceedToNext])
 
   const goPrev = () => {
     if (sectionIndex > 0) {
@@ -408,7 +428,7 @@ const AuditWizard: React.FC = () => {
           await api.addSectionPhoto(audit.id, currentSection.id, {
             filename: result.file.name,
             url,
-            uploadedBy: audit.assignedTo,
+            uploadedBy: user?.id || audit.assignedTo,
           })
           successCount++
         } catch (err: unknown) {

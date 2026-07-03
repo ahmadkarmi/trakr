@@ -1,5 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
+import { useTheme } from '../contexts/ThemeContext'
 
 interface BrandLogoProps {
   compact?: boolean
@@ -8,7 +9,9 @@ interface BrandLogoProps {
 }
 
 const BrandLogo: React.FC<BrandLogoProps> = ({ compact, onDark, className }) => {
-  const src = onDark ? '/icons/TrakrLogoDarkMode.svg' : '/icons/TrakrLogoLightMode.svg'
+  const { resolvedTheme } = useTheme()
+  const effectiveOnDark = typeof onDark === 'boolean' ? onDark : resolvedTheme === 'dark'
+  const src = effectiveOnDark ? '/icons/TrakrLogoDarkMode.svg' : '/icons/TrakrLogoLightMode.svg'
 
   return (
     <img

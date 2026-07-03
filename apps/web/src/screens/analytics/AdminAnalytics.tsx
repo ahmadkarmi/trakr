@@ -358,41 +358,41 @@ const AdminAnalytics: React.FC = () => {
 
         {/* Secondary KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200 dark:bg-[var(--color-card)] dark:border-white/10 dark:bg-none">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center dark:bg-white/10">
                 <span className="text-lg">🏢</span>
               </div>
               <div className="flex-1">
-                <div className="text-xl font-bold text-gray-900">{activeBranches}</div>
-                <div className="text-sm text-gray-600">Active Branches</div>
-                <div className="text-xs text-gray-500">Operational locations</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-white">{activeBranches}</div>
+                <div className="text-sm text-gray-600 dark:text-slate-300">Active Branches</div>
+                <div className="text-xs text-gray-500 dark:text-slate-400">Operational locations</div>
               </div>
             </div>
           </div>
           
-          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200 dark:bg-[var(--color-card)] dark:border-white/10 dark:bg-none">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center dark:bg-white/10">
                 <span className="text-lg">👥</span>
               </div>
               <div className="flex-1">
-                <div className="text-xl font-bold text-gray-900">{activeAuditors}</div>
-                <div className="text-sm text-gray-600">Active Auditors</div>
-                <div className="text-xs text-gray-500">Team members</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-white">{activeAuditors}</div>
+                <div className="text-sm text-gray-600 dark:text-slate-300">Active Auditors</div>
+                <div className="text-xs text-gray-500 dark:text-slate-400">Team members</div>
               </div>
             </div>
           </div>
           
-          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200 dark:bg-[var(--color-card)] dark:border-white/10 dark:bg-none">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center dark:bg-white/10">
                 <span className="text-lg">🗺️</span>
               </div>
               <div className="flex-1">
-                <div className="text-xl font-bold text-gray-900">{zones.length}</div>
-                <div className="text-sm text-gray-600">Active Zones</div>
-                <div className="text-xs text-gray-500">Geographic areas</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-white">{zones.length}</div>
+                <div className="text-sm text-gray-600 dark:text-slate-300">Active Zones</div>
+                <div className="text-xs text-gray-500 dark:text-slate-400">Geographic areas</div>
               </div>
             </div>
           </div>

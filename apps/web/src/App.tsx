@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useEffect, Suspense, lazy, useRef } from 'react'
 import { useAuthStore } from './stores/auth'
 import { UserRole } from '@trakr/shared'
@@ -17,6 +17,38 @@ import PWAInstallPrompt from './components/PWAInstallPrompt'
 import { useToast } from './hooks/useToast'
 import { ApiHealthBanner } from './components/ApiHealthBanner'
 import { useFocusRefetch } from './hooks/useFocusRefetch'
+import { logger } from './utils/logger'
+
+// Per-route error fallback — contained, not full-screen, preserves nav chrome
+const RouteFallback = ({ error, retry }: { error: Error; retry: () => void }) => {
+  const navigate = useNavigate()
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
+      <div className="max-w-sm w-full">
+        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+          <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Page failed to load</h2>
+        <p className="text-sm text-gray-500 mb-6">{error.message || 'An unexpected error occurred on this page.'}</p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={retry} className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors">
+            Try again
+          </button>
+          <button onClick={() => navigate(-1)} className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors">
+            Go back
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Wraps a route element in its own ErrorBoundary so failures are page-scoped
+const RouteBoundary = ({ children }: { children: React.ReactNode }) => (
+  <ErrorBoundary fallback={RouteFallback}>{children}</ErrorBoundary>
+)
 
 const SessionWatcher = () => {
   const sessionError = useAuthStore((state) => state.sessionError)
@@ -119,7 +151,7 @@ function App() {
 
   // Hydrate auth session (Supabase) and subscribe to changes
   useEffect(() => {
-    init().catch(() => {})
+    init().catch((e) => logger.error('Auth init failed', e, { context: 'App' }))
     
     // Log performance metrics after app loads
     setTimeout(() => {
@@ -157,7 +189,7 @@ function App() {
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <OrganizationProvider>
             <ErrorBoundary>
-          <div className="min-h-screen bg-gray-50 flex flex-col">
+          <div className="app-shell">
             {/* Offline + session + API banners */}
             <OfflineBanner />
             <SessionExpiryBanner />
@@ -219,36 +251,36 @@ function App() {
                   <>
                     
                     {/* Dashboard routes */}
-                    <Route path="/dashboard/auditor" element={<DashboardAuditor />} />
-                    <Route path="/dashboard/branch-manager" element={<DashboardBranchManager />} />
-                    <Route path="/dashboard/admin" element={<DashboardAdmin />} />
-                    <Route path="/notifications" element={<Notifications />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/activity/logs" element={<ActivityLogs />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/profile/signature" element={<ProfileSignature />} />
-                    <Route path="/help" element={<Help />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/search" element={<SearchResults />} />
-                    <Route path="/dev/backend-check" element={<DevBackendCheck />} />
+                    <Route path="/dashboard/auditor" element={<RouteBoundary><DashboardAuditor /></RouteBoundary>} />
+                    <Route path="/dashboard/branch-manager" element={<RouteBoundary><DashboardBranchManager /></RouteBoundary>} />
+                    <Route path="/dashboard/admin" element={<RouteBoundary><DashboardAdmin /></RouteBoundary>} />
+                    <Route path="/notifications" element={<RouteBoundary><Notifications /></RouteBoundary>} />
+                    <Route path="/analytics" element={<RouteBoundary><Analytics /></RouteBoundary>} />
+                    <Route path="/activity/logs" element={<RouteBoundary><ActivityLogs /></RouteBoundary>} />
+                    <Route path="/settings" element={<RouteBoundary><Settings /></RouteBoundary>} />
+                    <Route path="/profile/signature" element={<RouteBoundary><ProfileSignature /></RouteBoundary>} />
+                    <Route path="/help" element={<RouteBoundary><Help /></RouteBoundary>} />
+                    <Route path="/profile" element={<RouteBoundary><Profile /></RouteBoundary>} />
+                    <Route path="/search" element={<RouteBoundary><SearchResults /></RouteBoundary>} />
+                    <Route path="/dev/backend-check" element={<RouteBoundary><DevBackendCheck /></RouteBoundary>} />
 
                     {/* Audit routes */}
-                    <Route path="/audit/:auditId/wizard" element={<AuditWizard />} />
-                    <Route path="/audit/:auditId/review" element={<AuditReviewScreen />} />
-                    <Route path="/audit/:auditId" element={<AuditDetail />} />
-                    <Route path="/audit/:auditId/summary" element={<AuditSummary />} />
-                    <Route path="/audits/:auditId/summary" element={<AuditSummary />} />
+                    <Route path="/audit/:auditId/wizard" element={<RouteBoundary><AuditWizard /></RouteBoundary>} />
+                    <Route path="/audit/:auditId/review" element={<RouteBoundary><AuditReviewScreen /></RouteBoundary>} />
+                    <Route path="/audit/:auditId" element={<RouteBoundary><AuditDetail /></RouteBoundary>} />
+                    <Route path="/audit/:auditId/summary" element={<RouteBoundary><AuditSummary /></RouteBoundary>} />
+                    <Route path="/audits/:auditId/summary" element={<RouteBoundary><AuditSummary /></RouteBoundary>} />
 
                     {/* Template management routes (Admin & Super Admin only) */}
                     {isAdmin ? (
                       <>
-                        <Route path="/manage/surveys" element={<ManageSurveyTemplates />} />
-                        <Route path="/manage/surveys/create" element={<SurveyTemplateEditor />} />
-                        <Route path="/manage/surveys/:surveyId/edit" element={<SurveyTemplateEditor />} />
-                        <Route path="/manage/branches" element={<ManageBranches />} />
-                        <Route path="/manage/zones" element={<ManageZones />} />
-                        <Route path="/manage/assignments" element={<ManageAssignments />} />
-                        <Route path="/manage/users" element={<ManageUsers />} />
+                        <Route path="/manage/surveys" element={<RouteBoundary><ManageSurveyTemplates /></RouteBoundary>} />
+                        <Route path="/manage/surveys/create" element={<RouteBoundary><SurveyTemplateEditor /></RouteBoundary>} />
+                        <Route path="/manage/surveys/:surveyId/edit" element={<RouteBoundary><SurveyTemplateEditor /></RouteBoundary>} />
+                        <Route path="/manage/branches" element={<RouteBoundary><ManageBranches /></RouteBoundary>} />
+                        <Route path="/manage/zones" element={<RouteBoundary><ManageZones /></RouteBoundary>} />
+                        <Route path="/manage/assignments" element={<RouteBoundary><ManageAssignments /></RouteBoundary>} />
+                        <Route path="/manage/users" element={<RouteBoundary><ManageUsers /></RouteBoundary>} />
                       </>
                     ) : (
                       <>
