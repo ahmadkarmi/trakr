@@ -220,6 +220,14 @@ packages/shared/src/
 - **Deprecated types (kept for backward compatibility):**
   - `Audit.photos?` and `AuditPhoto.questionId`/`commentId` in `packages/shared/src/types/audit.ts` are marked `@deprecated`. Use `audit.sectionPhotos` with `sectionId` instead.
 
+## 📚 Documentation
+
+- `ARCHITECTURE.md` — system overview, auth/invite flow, RLS model, audit state machine
+- `PRD.md` — product requirements (skeleton, owner-maintained)
+- `docs/DEPLOYMENT.md` — environments, env-var matrix, pipeline, migration procedure
+- `docs/BACKUP_STRATEGY.md` — backups and restore drills
+- `docs/memory.md` — running decision log
+
 ## 📋 Feature Requests
 
 Use the template in `docs/FEATURE_REQUEST.md` to propose new features.
