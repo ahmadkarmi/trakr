@@ -1,89 +1,46 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-node_modules
-
-# Expo / React Native caches
-.expo/
-.expo-shared/
-**/.expo/
-**/.expo-shared/
-**/.cache/
+# Dependencies
+node_modules/
 
 # Build outputs
 **/dist/
 **/build/
-web-build/
+*.tsbuildinfo
 
-# Node modules (all workspaces)
-**/node_modules/
+# Environment (never commit credentials)
+.env
+.env.*
+!.env.example
+!.env.sentry.example
 
-# Managed native projects (do not commit in Expo managed workflow)
+# Test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# Tooling state
+supabase/.temp/
+.vercel/
+.claude/
+.expo/
+**/.expo/
+**/.cache/
+
+# Expo managed native projects
 apps/mobile/android/
 apps/mobile/ios/
 
-# Environment variables (NEVER commit credentials!)
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Database dumps (local only)
+database/backups/local/
+*.sql.gz
+*.sql.zip
 
 # Logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Database backups (local only - don't commit large files)
-database/backups/local/
-*.sql
-*.sql.gz
-*.sql.zip
-
-# EXCEPTION: Allow Supabase migrations (critical for schema versioning)
-!supabase/migrations/*.sql
-!supabase/migrations/**/*.sql
-.vercel
+# Editor / OS
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
