@@ -1,8 +1,6 @@
-# trakr
-
 # Trakr - Modern Audit Management
 
-A comprehensive audit management platform built with React (web) and React Native (mobile) in a monorepo architecture.
+A comprehensive multi-tenant audit management platform built with React and Supabase in a monorepo architecture. The web app is a PWA and covers mobile use; a native mobile app is parked in git history until it becomes a priority.
 
 ## 🏗️ Architecture
 
@@ -11,10 +9,10 @@ This project uses a monorepo structure with npm workspaces:
 ```
 Trakr/
 ├── apps/
-│   ├── web/          # React web application (Vite)
-│   └── mobile/       # React Native mobile app (Expo)
+│   └── web/          # React web application (Vite, PWA)
 ├── packages/
 │   └── shared/       # Shared types, utilities, and services
+├── supabase/         # Migrations and edge functions
 └── docs/             # Documentation and feature requests
 ```
 
@@ -22,9 +20,8 @@ Trakr/
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 20+ (see .nvmrc)
 - npm 9+
-- For mobile development: Expo CLI
 
 ### Installation
 
@@ -39,13 +36,7 @@ npm run install:all
 ### Development
 
 ```bash
-# Start web development server
-npm run dev:web
-
-# Start mobile development server  
-npm run dev:mobile
-
-# Start both simultaneously (root workspace)
+# Start the web development server (port 3002)
 npm run dev
 ```
 
@@ -54,9 +45,6 @@ npm run dev
 ```bash
 # Build web application
 npm run build:web
-
-# Build mobile application
-npm run build:mobile
 ```
 
 ## 📱 Applications
@@ -68,14 +56,6 @@ npm run build:mobile
 - **Data Fetching:** TanStack Query
 - **Routing:** React Router v6
 - **UI Components:** Headless UI + custom components
-
-### Mobile App (`apps/mobile`)
-- **Framework:** React Native + Expo
-- **Design System:** UI Kitten + Eva Design
-- **Navigation:** Expo Router
-- **State Management:** Zustand
-- **Data Fetching:** TanStack Query
-- **UI:** UI Kitten components with custom theme
 
 ### Shared Package (`packages/shared`)
 - **Types:** TypeScript interfaces for all data models
@@ -185,7 +165,7 @@ These are read by vitest and used to call `supabase.auth.signInWithPassword` bef
 
 ## 🎯 Key Features
 
-- **Multi-platform:** Consistent experience across web and mobile
+- **PWA:** Installable web app with a mobile-first experience
 - **Role-based Access:** Different dashboards and permissions per role
 - **Audit Wizard:** Step-by-step guided audit completion
 - **Section-level Photo Evidence:** Upload and manage section (per-page) photos; per-question photos are deprecated
@@ -220,13 +200,6 @@ apps/web/src/
 ├── stores/         # Zustand state stores
 └── styles/         # Global styles and themes
 
-apps/mobile/
-├── app/            # Expo Router pages
-└── src/
-    ├── components/ # React Native components
-    ├── stores/     # Zustand state stores
-    └── styles/     # React Native styles
-
 packages/shared/src/
 ├── types/          # TypeScript interfaces
 ├── utils/          # Utility functions
@@ -254,4 +227,3 @@ Use the template in `docs/FEATURE_REQUEST.md` to propose new features.
 ## 📄 License
 
 MIT License - see LICENSE file for details.
-# CI/CD Pipeline Test
