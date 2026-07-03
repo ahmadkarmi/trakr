@@ -9,6 +9,7 @@ import {
   ensureAuditFor,
   setAuditSubmitted,
   getAuditStatus,
+  deleteAudits,
 } from './helpers/e2eSetup'
 
 // Core review workflow: SUBMITTED → APPROVED and SUBMITTED → REJECTED,
@@ -42,6 +43,13 @@ test.describe('Audit approval workflow', () => {
     await ensureBranchManagerAssigned(managerId, branchId)
   })
 
+  const createdAuditIds: string[] = []
+
+  test.afterAll(async () => {
+    // Shrink blast radius for parallel spec files sharing this database
+    await deleteAudits(createdAuditIds)
+  })
+
   async function loginAsBranchManager(page: Page) {
     await page.goto('/login')
     await page.context().clearCookies()
@@ -66,6 +74,7 @@ test.describe('Audit approval workflow', () => {
 
   async function openSubmittedAudit(page: Page): Promise<string> {
     const audit = await ensureAuditFor(auditorId, orgId, branchId, surveyId)
+    createdAuditIds.push(audit.id)
     await setAuditSubmitted(audit.id, auditorId)
     await page.goto(`/audits/${audit.id}/summary`, { waitUntil: 'networkidle' })
     return audit.id

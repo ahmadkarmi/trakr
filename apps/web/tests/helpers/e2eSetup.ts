@@ -100,6 +100,17 @@ export async function setAuditSubmitted(auditId: string, submittedBy: string) {
   if (error) throw error
 }
 
+export async function deleteAudits(auditIds: string[]) {
+  if (!auditIds.length) return
+  const supa = getAdminClient()
+  // Approve/reject flows fan out notifications keyed by related_id; remove
+  // them too so downstream spec files see an unpolluted notification list
+  const { error: nErr } = await supa.from('notifications').delete().in('related_id', auditIds)
+  if (nErr) throw nErr
+  const { error } = await supa.from('audits').delete().in('id', auditIds)
+  if (error) throw error
+}
+
 export async function getAuditStatus(auditId: string): Promise<string | null> {
   const supa = getAdminClient()
   const { data, error } = await supa.from('audits').select('status').eq('id', auditId).maybeSingle()

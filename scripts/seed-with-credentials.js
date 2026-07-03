@@ -75,6 +75,11 @@ async function seedDatabase() {
     const clearOrder = [
       'audit_photos',
       'audit_comments',
+      // users are recreated with new ids below; notifications and activity
+      // logs would otherwise survive with dangling user references and leak
+      // into tests as stale rows visible to super-admin sessions
+      'notifications',
+      'activity_logs',
       'audits',
       'auditor_assignments',
       'surveys',
