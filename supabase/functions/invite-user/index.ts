@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     // Check caller is admin or super admin
     const { data: callerData } = await supabase
       .from('users')
-      .select('role, org_id')
+      .select('id, role, org_id')
       .or(`id.eq.${user.id},auth_user_id.eq.${user.id}`)
       .single()
 
@@ -53,12 +53,14 @@ Deno.serve(async (req) => {
       throw new Error('Admins can only invite users into their own organization')
     }
 
-    // Rate limit: max INVITE_RATE_LIMIT invites per org per hour
+    // Rate limit: max INVITE_RATE_LIMIT invites per org per hour, counted from
+    // logged invite events (user-row counts also matched signups/edits)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     const { count: recentInviteCount } = await supabase
-      .from('users')
+      .from('activity_logs')
       .select('*', { count: 'exact', head: true })
       .eq('org_id', orgId)
+      .eq('action', 'user_invited')
       .gte('created_at', oneHourAgo)
 
     if ((recentInviteCount ?? 0) >= INVITE_RATE_LIMIT) {
@@ -96,6 +98,15 @@ Deno.serve(async (req) => {
       await supabase.auth.admin.deleteUser(authUser.user!.id)
       throw new Error('User record not found after invite — trigger may have failed')
     }
+
+    await supabase.from('activity_logs').insert({
+      org_id: orgId,
+      user_id: callerData.id,
+      action: 'user_invited',
+      entity_type: 'user',
+      entity_id: newUser.id,
+      details: `Invited ${email} as ${role}`,
+    })
 
     return new Response(
       JSON.stringify({ success: true, user: newUser, message: `Invitation sent to ${email}` }),

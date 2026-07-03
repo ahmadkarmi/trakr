@@ -282,6 +282,25 @@ async function seedDatabase() {
     console.log('  • 8 Branches (Manhattan, Brooklyn, Miami, Atlanta, LA, SF, Dallas, Houston)')
     console.log('  • 7 Users (1 admin, 3 branch managers, 3 auditors)')
     
+    // Link freshly seeded public.users rows to their auth accounts. The seed
+    // recreates rows with new ids; without auth_user_id the org-scoped RLS
+    // policies hide every row from the logged-in user and login fails.
+    console.log('\n🔗 Linking users to auth accounts...')
+    const { data: authList, error: authListError } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+    if (authListError) throw authListError
+    let linked = 0
+    for (const authUser of authList.users) {
+      if (!authUser.email) continue
+      const { data: updated, error: linkError } = await supabase
+        .from('users')
+        .update({ auth_user_id: authUser.id })
+        .ilike('email', authUser.email)
+        .select('id')
+      if (linkError) throw linkError
+      linked += (updated || []).length
+    }
+    console.log(`✅ Linked ${linked} user rows to auth accounts`)
+
     console.log('\n🔐 Test User Accounts:')
     console.log('  Super Admin: admin@trakr.com')
     console.log('  Admin: admin@retailchain.com')
