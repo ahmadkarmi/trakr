@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import clsx from 'clsx'
 import DashboardLayout from '../components/DashboardLayout'
 import { useAuthStore } from '../stores/auth'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -8,10 +9,43 @@ import { api } from '../utils/api'
 import { QK } from '../utils/queryKeys'
 import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
-import { DocumentTextIcon, BuildingOffice2Icon, MapIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { DocumentTextIcon, BuildingOffice2Icon, MapIcon, UsersIcon, SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline'
 import { OrgConfigPanel } from '../components/OrgConfigPanel'
+import { useTheme, type ThemePreference } from '../contexts/ThemeContext'
 
 type SettingsTab = 'profile' | 'organization' | 'notifications' | 'super-admin'
+
+type ThemeOption = {
+  value: ThemePreference
+  title: string
+  description: string
+  preview: string
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
+}
+
+const APPEARANCE_OPTIONS: ThemeOption[] = [
+  {
+    value: 'light',
+    title: 'Light',
+    description: 'Bright surfaces with crisp contrast for well-lit spaces.',
+    preview: 'from-white via-slate-100 to-slate-200',
+    icon: SunIcon,
+  },
+  {
+    value: 'dark',
+    title: 'Dark',
+    description: 'Midnight workspace with #33334a primary chrome.',
+    preview: 'from-[#0f172a] via-[#1d2034] to-[#33334a]',
+    icon: MoonIcon,
+  },
+  {
+    value: 'system',
+    title: 'System',
+    description: 'Automatically follows your device preference.',
+    preview: 'from-white via-slate-100 to-[#33334a]',
+    icon: ComputerDesktopIcon,
+  },
+]
 
 const Settings: React.FC = () => {
   const { user } = useAuthStore()
@@ -19,6 +53,7 @@ const Settings: React.FC = () => {
   const { showToast } = useToast()
   const { currentOrg, availableOrgs, switchOrganization, isSuperAdmin, globalView, setGlobalView, effectiveOrgId } = useOrganization()
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
+  const { preference: themePref, setPreference: setThemePref } = useTheme()
   
   const isAdmin = user?.role === UserRole.ADMIN || isSuperAdmin
 
@@ -787,6 +822,59 @@ const Settings: React.FC = () => {
             >
               {updateProfile.isPending ? 'Saving Profile…' : 'Save Profile'}
             </button>
+          </div>
+        </div>
+
+        {/* Appearance Preferences */}
+        <div className="card p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 className="heading-section-title">Appearance</h2>
+              <p className="heading-subtitle mt-1">Choose how Trakr looks on your device.</p>
+            </div>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: 'var(--color-card-muted)', color: 'var(--color-text-muted)' }}>
+              Active: {themePref === 'system' ? 'System Default' : themePref === 'dark' ? 'Dark' : 'Light'}
+            </span>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {APPEARANCE_OPTIONS.map(option => {
+              const Icon = option.icon
+              const active = themePref === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setThemePref(option.value)}
+                  className={clsx('text-left theme-option focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500', active && 'theme-option--active')}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500/10 to-primary-500/5">
+                        <Icon className="w-5 h-5 text-primary-600 dark:text-primary-300" />
+                      </span>
+                      <div>
+                        <p className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{option.title}</p>
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{option.description}</p>
+                      </div>
+                    </div>
+                    {active && (
+                      <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ backgroundColor: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}>
+                        Selected
+                      </span>
+                    )}
+                  </div>
+                  <div className={clsx('mt-4 h-24 rounded-xl border overflow-hidden bg-gradient-to-br shadow-inner', option.preview)} />
+                </button>
+              )
+            })}
+          </div>
+
+          <p className="text-xs mt-4" style={{ color: 'var(--color-text-muted)' }}>
+            “System” keeps Trakr in sync with your OS preference, automatically switching between light and dark as your device changes modes.
+          </p>
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/80 text-amber-900 text-xs p-3 dark:border-white/10 dark:bg-white/5 dark:text-amber-200">
+            <strong>Heads up:</strong> dark mode is still experimental and a work in progress. Expect occasional UI gaps while we finish the polish.
           </div>
         </div>
 

@@ -139,8 +139,8 @@ const ManageSurveyTemplates: React.FC = () => {
         <div className="card p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Survey Templates</h2>
-              <p className="text-gray-600">Create, duplicate, and manage your audit templates.</p>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Survey Templates</h2>
+              <p className="text-gray-600 dark:text-slate-300">Create, duplicate, and manage your audit templates.</p>
             </div>
             <button data-testid="create-template" className="btn btn-primary btn-md" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
               {createMutation.isPending ? 'Creating…' : 'Create New Template'}
@@ -186,7 +186,7 @@ const ManageSurveyTemplates: React.FC = () => {
 
         <div className="card" data-testid="template-library-card">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Template Library</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Template Library</h3>
           </div>
           <div className="p-6" data-testid="template-table-container">
             {isLoading ? (
@@ -195,14 +195,14 @@ const ManageSurveyTemplates: React.FC = () => {
               <ResponsiveTable
                 items={surveys}
                 keyField={(s) => s.id}
-                empty={<p className="text-gray-500 py-8">No templates found.</p>}
+                empty={<p className="text-gray-500 dark:text-slate-400 py-8">No templates found.</p>}
                 mobileItem={(s) => (
-                  <div className="card-compact card-interactive bg-white border border-gray-200">
+                  <div className="card-compact card-interactive bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{s.title}</p>
-                        <p className="text-xs text-gray-500">v{s.version} • {s.sections?.length || 0} sections • {s.isActive ? 'Active' : 'Inactive'}</p>
-                        <p className="text-xs text-gray-400">Updated {new Date(s.updatedAt).toLocaleDateString()}</p>
+                        <p className="font-medium text-gray-900 dark:text-white truncate">{s.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">v{s.version} • {s.sections?.length || 0} sections • {s.isActive ? 'Active' : 'Inactive'}</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500">Updated {new Date(s.updatedAt).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">

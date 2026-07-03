@@ -38,19 +38,19 @@ function ResponsiveTable<T>({ items, keyField, columns, mobileItem, empty }: Res
 
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="w-full min-w-full divide-y divide-gray-200 dark:divide-white/10">
+          <thead className="bg-gray-50 dark:bg-white/5">
             <tr>
               {columns.map((c) => (
-                <th key={c.key} className={`px-3 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${c.className ?? ''}`}>{c.header}</th>
+                <th key={c.key} className={`px-3 py-1.5 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider ${c.className ?? ''}`}>{c.header}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-[var(--color-card)] divide-y divide-gray-200 dark:divide-white/10">
             {items.map((row) => (
-              <tr key={keyField(row)} className="hover:bg-gray-50 transition-colors">
+              <tr key={keyField(row)} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                 {columns.map((c) => (
-                  <td key={c.key} className={`px-3 py-2 whitespace-nowrap text-sm text-gray-900 ${c.className ?? ''}`}>
+                  <td key={c.key} className={`px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-white ${c.className ?? ''}`}>
                     {c.render(row)}
                   </td>
                 ))}

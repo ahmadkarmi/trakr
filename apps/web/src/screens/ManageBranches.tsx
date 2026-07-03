@@ -346,7 +346,7 @@ const ManageBranches: React.FC = () => {
         {zones.length > 0 && (
           <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-5 text-white">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-white/20 dark:bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-2xl">🗺️</span>
               </div>
               <div className="flex-1">
@@ -356,7 +356,7 @@ const ManageBranches: React.FC = () => {
                 </p>
                 <button
                   onClick={() => setShowZoneBulkAssignment(true)}
-                  className="bg-white text-primary-600 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="bg-white dark:bg-white/90 text-primary-600 hover:bg-gray-100 dark:hover:bg-white font-medium py-2 px-4 rounded-lg transition-colors"
                 >
                   Bulk Assign by Zone
                 </button>
@@ -603,17 +603,17 @@ const ManageBranches: React.FC = () => {
             />
             
             {/* Bottom Sheet */}
-            <div className="relative bg-white w-full sm:max-w-2xl sm:rounded-lg shadow-2xl max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col rounded-t-2xl sm:rounded-b-lg animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
+            <div className="relative bg-white dark:bg-[var(--color-card)] w-full sm:max-w-2xl sm:rounded-lg shadow-2xl max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col rounded-t-2xl sm:rounded-b-lg animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
               {/* Drag Handle (Mobile Only) */}
               <div className="sm:hidden flex justify-center pt-3 pb-2">
-                <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+                <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-500 rounded-full"></div>
               </div>
               
               {/* Header */}
-              <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between flex-shrink-0">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate">Branch Manager Assignments</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">{branches.find(b => b.id === selectedBranchId)?.name}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">Branch Manager Assignments</h3>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{branches.find(b => b.id === selectedBranchId)?.name}</p>
                 </div>
                 <button
                   onClick={() => setSelectedBranchId(null)}
@@ -666,17 +666,17 @@ const ManageBranches: React.FC = () => {
             />
             
             {/* Bottom Sheet */}
-            <div className="relative bg-white w-full sm:max-w-3xl sm:rounded-lg shadow-2xl max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col rounded-t-2xl sm:rounded-b-lg animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
+            <div className="relative bg-white dark:bg-[var(--color-card)] w-full sm:max-w-3xl sm:rounded-lg shadow-2xl max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col rounded-t-2xl sm:rounded-b-lg animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
               {/* Drag Handle (Mobile Only) */}
               <div className="sm:hidden flex justify-center pt-3 pb-2">
-                <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+                <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-500 rounded-full"></div>
               </div>
               
               {/* Header */}
-              <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-slate-600 flex items-center justify-between flex-shrink-0">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate">Auditor Assignments</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">{branches.find(b => b.id === selectedAuditorBranchId)?.name}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">Auditor Assignments</h3>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{branches.find(b => b.id === selectedAuditorBranchId)?.name}</p>
                 </div>
                 <button
                   onClick={() => setSelectedAuditorBranchId(null)}
@@ -731,24 +731,24 @@ const ManageBranches: React.FC = () => {
         {edit && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center sm:justify-center animate-in fade-in duration-200">
             <div className="absolute inset-0" onClick={() => setEdit(null)} />
-            <div className="relative bg-white w-full sm:max-w-lg sm:rounded-lg shadow-2xl max-h-[92vh] overflow-hidden flex flex-col rounded-t-2xl sm:rounded-b-lg animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
-              <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Edit Branch</h3>
+            <div className="relative bg-white dark:bg-[var(--color-card)] w-full sm:max-w-lg sm:rounded-lg shadow-2xl max-h-[92vh] overflow-hidden flex flex-col rounded-t-2xl sm:rounded-b-lg animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Edit Branch</h3>
                 <button onClick={() => setEdit(null)} className="ml-4 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg" aria-label="Close">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
               <div className="p-4 sm:p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Branch Name</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Branch Name</label>
                   <input className="input" value={edit.name} onChange={(e) => setEdit(v => v ? { ...v, name: e.target.value } : v)} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Address</label>
                   <input className="input" value={edit.address} onChange={(e) => setEdit(v => v ? { ...v, address: e.target.value } : v)} />
                 </div>
               </div>
-              <div className="flex-shrink-0 border-t border-gray-200 bg-white">
+              <div className="flex-shrink-0 border-t border-gray-200 dark:border-white/10 bg-white dark:bg-[var(--color-card)]">
                 <div className="p-4 sm:p-6 flex items-center justify-end gap-2">
                   <button className="btn btn-outline btn-md" onClick={() => setEdit(null)}>Cancel</button>
                   <button className="btn btn-primary btn-md disabled:opacity-50" disabled={updateBranchMutation.isPending || !edit.name.trim()} onClick={() => edit && updateBranchMutation.mutate({ id: edit.id, name: edit.name.trim(), address: edit.address.trim() })}>

@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import BrandLogo from '../components/BrandLogo'
 import toast from 'react-hot-toast'
-import { ClipboardDocumentCheckIcon, ClipboardDocumentListIcon, CameraIcon, CheckCircleIcon, ChartBarIcon, GlobeAltIcon, PlayCircleIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { ClipboardDocumentCheckIcon, ClipboardDocumentListIcon, CameraIcon, CheckCircleIcon, ChartBarIcon, GlobeAltIcon, PlayCircleIcon, ChevronLeftIcon, ChevronRightIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
+import { useTheme } from '../contexts/ThemeContext'
 
 const Landing: React.FC = () => {
   const [mouse, setMouse] = useState({ x: 0, y: 0 })
@@ -48,7 +49,7 @@ const Landing: React.FC = () => {
   const [teamSize, setTeamSize] = useState('1-10')
   const [useCase, setUseCase] = useState('')
   const [submitted, setSubmitted] = useState(false)
-  
+  const { resolvedTheme, setPreference } = useTheme()
 
   const steps = [
     {
@@ -268,58 +269,74 @@ const Landing: React.FC = () => {
   }
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-white">
-      <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-gray-100">
+    <div ref={containerRef} className="min-h-screen" style={{ backgroundColor: 'var(--color-page)' }}>
+      <header className="sticky top-0 z-30 border-b bg-white dark:bg-[var(--color-card)] shadow-lg transition-colors">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BrandLogo className="h-10 sm:h-11" />
           </div>
           <nav className="hidden sm:flex items-center gap-2">
-            <a href="#about" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">About</a>
-            <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">How Trakr Works</a>
-            <a href="#features" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">Features</a>
-            <a href="#industries" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded">Industries</a>
-            <a href="#beta" aria-label="Request Access to Trakr Private Beta" data-analytics="cta:header_request_access" className="text-sm text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-md font-semibold">Request Access</a>
+            <a href="#about" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded">About</a>
+            <a href="#how-it-works" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded">How Trakr Works</a>
+            <a href="#features" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded">Features</a>
+            <a href="#industries" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded">Industries</a>
+            <a href="#beta" aria-label="Request Access to Trakr Private Beta" data-analytics="cta:header_request_access" className="text-sm text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-md font-semibold shadow-[0_8px_20px_rgba(37,99,235,0.25)]">Request Access</a>
+            <button
+              type="button"
+              onClick={() => setPreference(resolvedTheme === 'dark' ? 'light' : 'dark')}
+              className="ml-2 inline-flex items-center justify-center rounded-full p-2 text-gray-600 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/10 transition"
+              aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {resolvedTheme === 'dark' ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
+            </button>
           </nav>
+          <button
+            type="button"
+            onClick={() => setPreference(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="sm:hidden inline-flex items-center justify-center rounded-full p-2 text-gray-600 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/10 transition"
+            aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {resolvedTheme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+          </button>
         </div>
       </header>
 
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-100 via-cyan-50 to-white" aria-hidden />
-        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-400/30 blur-3xl" style={{ transform: `translate(${mouse.x}px, ${mouse.y}px)` }} />
-        <div className="pointer-events-none absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-cyan-400/30 blur-3xl" style={{ transform: `translate(${-mouse.x}px, ${-mouse.y}px)` }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-100/70 via-cyan-50/60 to-white dark:from-[#131834] dark:via-[#101223] dark:to-[var(--color-page)]" aria-hidden />
+        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-400/30 dark:bg-blue-500/20 blur-3xl" style={{ transform: `translate(${mouse.x}px, ${mouse.y}px)` }} />
+        <div className="pointer-events-none absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-cyan-400/30 dark:bg-violet-500/20 blur-3xl" style={{ transform: `translate(${-mouse.x}px, ${-mouse.y}px)` }} />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
             <div data-animate>
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200/70 bg-primary-50/70 dark:border-white/10 dark:bg-white/5 px-3 py-1 text-xs font-medium text-primary-700 dark:text-white">
                 Private Beta
-                <span className="text-primary-700/70">Join the early access</span>
+                <span className="text-primary-700/70 dark:text-slate-200">Join the early access</span>
               </div>
-              <h1 className="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900">
+              <h1 className="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white">
                 Audit and Compliance Software for Multi-Site Teams
-                <span className="mt-2 block italic font-light text-3xl sm:text-4xl text-gray-800">Audit. Prove. Resolve.</span>
+                <span className="mt-2 block italic font-light text-3xl sm:text-4xl text-gray-800 dark:text-slate-200">Audit. Prove. Resolve.</span>
               </h1>
-              <p className="mt-4 text-base sm:text-lg leading-7 text-gray-600 max-w-xl">Run mobile audits, document critical issues, and track corrective actions in one place.</p>
-              <div className="mt-2 text-xs text-primary-700/80">Private beta is limited. We onboard a few teams each week.</div>
+              <p className="mt-4 text-base sm:text-lg leading-7 text-gray-600 dark:text-slate-300 max-w-xl">Run mobile audits, document critical issues, and track corrective actions in one place.</p>
+              <div className="mt-2 text-xs text-primary-700/80 dark:text-primary-200">Private beta is limited. We onboard a few teams each week.</div>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <a
                   href="#beta"
                   aria-label="Request Access to Trakr Private Beta"
                   data-analytics="cta:hero_request_access"
-                  className="inline-flex items-center justify-center rounded-md bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                  className="inline-flex items-center justify-center rounded-md bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                 >
                   Request Access
                 </a>
                 <a
                   href="#demo"
                   data-analytics="cta:hero_see_demo"
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-white dark:bg-[var(--color-card)] px-5 py-3 text-sm font-semibold text-gray-900 dark:text-white ring-1 ring-inset ring-gray-300 dark:ring-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
                 >
                   <PlayCircleIcon className="w-5 h-5 text-primary-600" />
                   <span>Demo Reel</span>
                 </a>
               </div>
-              <div className="mt-6 flex items-center gap-4 text-xs text-gray-500">
+              <div className="mt-6 flex items-center gap-4 text-xs text-gray-500 dark:text-slate-400">
                 <div className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-emerald-500" /><span>Secure by design</span></div>
                 <div className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-blue-500" /><span>Fast and accurate</span></div>
               </div>
@@ -347,9 +364,9 @@ const Landing: React.FC = () => {
       <div className="h-px w-full bg-gradient-to-r from-transparent via-primary-200/60 to-transparent" aria-hidden />
 
       {demoVideo && (
-        <section id="demo" className="relative py-12 sm:py-16 bg-white border-t border-gray-100">
+        <section id="demo" className="relative py-12 sm:py-16 bg-white dark:bg-[var(--color-card)] border-t border-gray-100 dark:border-white/10">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8" data-animate>
-            <div className="relative w-full rounded-2xl overflow-hidden bg-gray-900">
+            <div className="relative w-full rounded-2xl overflow-hidden bg-gray-900 dark:bg-black">
               <div className="pt-[56.25%]"></div>
               <iframe
                 src={demoVideo}
@@ -368,25 +385,25 @@ const Landing: React.FC = () => {
 
       
 
-      <section id="about" className="relative py-14 sm:py-20 border-t border-gray-100 bg-white">
+      <section id="about" className="relative py-14 sm:py-20 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-[var(--color-card)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
             <div className="lg:col-span-1" data-animate>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900"><span className="mr-2" aria-hidden>🧭</span>What Is Trakr?</h2>
-              <p className="mt-3 text-gray-600">Trakr standardizes audits, captures section level proof, scores compliance, and turns findings into tracked actions across every location.</p>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white"><span className="mr-2" aria-hidden>🧭</span>What Is Trakr?</h2>
+              <p className="mt-3 text-gray-600 dark:text-slate-300">Trakr standardizes audits, captures section level proof, scores compliance, and turns findings into tracked actions across every location.</p>
             </div>
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6" data-animate>
-              <div className="group rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><ClipboardDocumentCheckIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold">Audit</h3><p className="mt-2 text-sm text-gray-600">Use consistent checklists by location type.</p></div>
-              <div className="group rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CameraIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold">Evidence</h3><p className="mt-2 text-sm text-gray-600">Attach photos and notes at the right section.</p></div>
-              <div className="group rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CheckCircleIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold">Actions</h3><p className="mt-2 text-sm text-gray-600">Assign owners and due dates that drive closure.</p></div>
+              <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/50 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><ClipboardDocumentCheckIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Audit</h3><p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Use consistent checklists by location type.</p></div>
+              <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/50 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CameraIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Evidence</h3><p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Attach photos and notes at the right section.</p></div>
+              <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/50 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CheckCircleIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Actions</h3><p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Assign owners and due dates that drive closure.</p></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="how-it-works" ref={howRef} className="relative py-14 sm:py-20 bg-gradient-to-b from-blue-100/60 via-cyan-50/50 to-white border-t border-gray-100">
+      <section id="how-it-works" ref={howRef} className="relative py-14 sm:py-20 bg-gradient-to-b from-blue-100/60 via-cyan-50/50 to-white dark:from-[#101223] dark:via-[#141733] dark:to-[var(--color-page)] border-t border-gray-100 dark:border-white/5">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900" data-animate><span className="mr-2" aria-hidden>⚙️</span>How Trakr Works</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white" data-animate><span className="mr-2" aria-hidden>⚙️</span>How Trakr Works</h2>
           <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="hidden lg:block order-2 lg:order-1 lg:col-span-5">
               <div className="space-y-6 pt-6 md:pt-8 pb-[55vh]">
@@ -398,14 +415,14 @@ const Landing: React.FC = () => {
                     className={`min-h-[72vh] md:min-h-[60vh] flex items-end`}
                   >
                     <div className={`w-full rounded-xl border p-6 transform-gpu will-change-transform motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none ${
-                      activeStep === i ? 'bg-white border-primary-200 shadow-md scale-[1.01]' : 'bg-white/70 border-gray-200 scale-100'
+                      activeStep === i ? 'bg-white dark:bg-[var(--color-card)] border-primary-200 dark:border-primary-300/60 shadow-xl scale-[1.01]' : 'bg-white/70 dark:bg-white/5 border-gray-200 dark:border-white/10 scale-100'
                     }`}>
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900">{i + 1}. {s.title}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${activeStep === i ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200' : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'}`}>Step {i + 1} of {steps.length}</span>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{i + 1}. {s.title}</h3>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${activeStep === i ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200 dark:bg-white/10 dark:text-white dark:ring-white/20' : 'bg-gray-50 text-gray-600 dark:bg-white/5 dark:text-slate-300 ring-1 ring-gray-200 dark:ring-white/10'}`}>Step {i + 1} of {steps.length}</span>
                       </div>
-                      <p className="mt-2 text-sm text-gray-600">{s.description}</p>
-                      <p className="mt-3 text-sm text-gray-700">{s.value}</p>
+                      <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">{s.description}</p>
+                      <p className="mt-3 text-sm text-gray-700 dark:text-slate-200">{s.value}</p>
                     </div>
                   </div>
                 ))}
@@ -456,13 +473,13 @@ const Landing: React.FC = () => {
                   <div className="mt-4 relative block lg:hidden overflow-x-auto snap-x snap-mandatory no-scrollbar" ref={mobileOuterRef}>
                     <div ref={mobileInnerRef} className="flex gap-3">
                       {steps.map((s, i) => (
-                        <div key={`m-${s.key}`} className={`shrink-0 w-[90%] rounded-xl border p-4 bg-white/90 ${i === activeStep ? 'border-primary-200 shadow-md' : 'border-gray-200'} motion-safe:transition-all snap-start`}>
+                        <div key={`m-${s.key}`} className={`shrink-0 w-[90%] rounded-xl border p-4 bg-white/90 dark:bg-white/5 ${i === activeStep ? 'border-primary-200 dark:border-primary-300/60 shadow-md' : 'border-gray-200 dark:border-white/10'} motion-safe:transition-all snap-start`}>
                           <div className="flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-gray-900">{i + 1}. {s.title}</h3>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${i === activeStep ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200' : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'}`}>Step {i + 1}/{steps.length}</span>
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">{i + 1}. {s.title}</h3>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${i === activeStep ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200 dark:bg-white/10 dark:text-white dark:ring-white/20' : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200 dark:bg-white/5 dark:text-slate-300 dark:ring-white/10'}`}>Step {i + 1}/{steps.length}</span>
                           </div>
-                          <p className="mt-2 text-xs text-gray-600">{s.description}</p>
-                          <p className="mt-2 text-xs text-gray-700">{s.value}</p>
+                          <p className="mt-2 text-xs text-gray-600 dark:text-slate-300">{s.description}</p>
+                          <p className="mt-2 text-xs text-gray-700 dark:text-slate-200">{s.value}</p>
                         </div>
                       ))}
                       <div aria-hidden className="shrink-0" style={{ width: tailPad }} />
@@ -475,66 +492,66 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <section id="features" className="relative py-14 sm:py-20 border-t border-gray-100 bg-white">
+      <section id="features" className="relative py-14 sm:py-20 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-[var(--color-card)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900" data-animate><span className="mr-2" aria-hidden>🛡️</span>Strengthen Compliance With Trakr</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white" data-animate><span className="mr-2" aria-hidden>🛡️</span>Strengthen Compliance With Trakr</h2>
           <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="group rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><ClipboardDocumentListIcon className="w-5 h-5" /></div>
-              <h3 className="mt-3 font-semibold">Standardized Audits and Checklists</h3>
-              <p className="mt-2 text-sm text-gray-600">Versioned templates with role guidance for consistent execution.</p>
+              <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Standardized Audits and Checklists</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Versioned templates with role guidance for consistent execution.</p>
             </div>
-            <div className="group rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CameraIcon className="w-5 h-5" /></div>
-              <h3 className="mt-3 font-semibold">Section Level Evidence and Photos</h3>
-              <p className="mt-2 text-sm text-gray-600">Attach photos and justifications where they matter.</p>
+              <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Section Level Evidence and Photos</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Attach photos and justifications where they matter.</p>
             </div>
-            <div className="group rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><ChartBarIcon className="w-5 h-5" /></div>
-              <h3 className="mt-3 font-semibold">Weighted Scoring and Metrics</h3>
-              <p className="mt-2 text-sm text-gray-600">Accurate section and overall scores with trend views.</p>
+              <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Weighted Scoring and Metrics</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Accurate section and overall scores with trend views.</p>
             </div>
-            <div className="group rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CheckCircleIcon className="w-5 h-5" /></div>
-              <h3 className="mt-3 font-semibold">Corrective Actions and Follow Ups</h3>
-              <p className="mt-2 text-sm text-gray-600">Owners, due dates, and approvals that unblock locations.</p>
+              <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Corrective Actions and Follow Ups</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Owners, due dates, and approvals that unblock locations.</p>
             </div>
-            <div className="group rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><GlobeAltIcon className="w-5 h-5" /></div>
-              <h3 className="mt-3 font-semibold">Multi Site Rollups and Benchmarking</h3>
-              <p className="mt-2 text-sm text-gray-600">Compare sites, regions, and periods at a glance.</p>
+              <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Multi Site Rollups and Benchmarking</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Compare sites, regions, and periods at a glance.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="industries" className="relative py-14 sm:py-20 border-t border-gray-100 bg-white">
+      <section id="industries" className="relative py-14 sm:py-20 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-[var(--color-card)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900" data-animate><span className="mr-2" aria-hidden>🏭</span>Who Uses Trakr?</h2>
-          <p className="mt-2 text-gray-600">Built for multi site teams in regulated or brand critical operations.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white" data-animate><span className="mr-2" aria-hidden>🏭</span>Who Uses Trakr?</h2>
+          <p className="mt-2 text-gray-600 dark:text-slate-300">Built for multi site teams in regulated or brand critical operations.</p>
           <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5" data-animate>
-              <h3 className="font-semibold">Retail and QSR</h3>
-              <p className="mt-1 text-sm text-gray-600">Brand standards, food safety, and daily ops.</p>
-              <ul className="mt-3 text-sm text-gray-600 list-disc pl-5 space-y-1">
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Retail and QSR</h3>
+              <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">Brand standards, food safety, and daily ops.</p>
+              <ul className="mt-3 text-sm text-gray-600 dark:text-slate-300 list-disc pl-5 space-y-1">
                 <li>Higher visit coverage</li>
                 <li>Fewer critical findings</li>
                 <li>Faster fixes</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5" data-animate>
-              <h3 className="font-semibold">Facilities and Field Ops</h3>
-              <p className="mt-1 text-sm text-gray-600">Safety walks, inspections, and PM programs.</p>
-              <ul className="mt-3 text-sm text-gray-600 list-disc pl-5 space-y-1">
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Facilities and Field Ops</h3>
+              <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">Safety walks, inspections, and PM programs.</p>
+              <ul className="mt-3 text-sm text-gray-600 dark:text-slate-300 list-disc pl-5 space-y-1">
                 <li>Standardized passes</li>
                 <li>Photo proof for vendors</li>
                 <li>Clear thresholds</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5" data-animate>
-              <h3 className="font-semibold">Financial Services and Banking</h3>
-              <p className="mt-1 text-sm text-gray-600">Branch audits, KYC and AML, operational risk.</p>
-              <ul className="mt-3 text-sm text-gray-600 list-disc pl-5 space-y-1">
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Financial Services and Banking</h3>
+              <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">Branch audits, KYC and AML, operational risk.</p>
+              <ul className="mt-3 text-sm text-gray-600 dark:text-slate-300 list-disc pl-5 space-y-1">
                 <li>Evidence history</li>
                 <li>Regulatory readiness</li>
                 <li>Executive rollups</li>
@@ -544,7 +561,7 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <section id="beta" className="relative py-16 sm:py-20 bg-gradient-to-br from-blue-600 to-cyan-500">
+      <section id="beta" className="relative py-16 sm:py-20 bg-gradient-to-br from-blue-600 to-cyan-500 dark:from-[#262d67] dark:to-[#2d678b]">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-white">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight" data-animate><span className="mr-2" aria-hidden>✉️</span>Request Access To The Private Beta</h2>
           <p className="mt-2 text-white/90" data-animate>Tell us about your team and use case. We will reach out with next steps.</p>
@@ -590,27 +607,27 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <section id="contact" className="relative py-12 sm:py-16 bg-white border-t border-gray-100">
+      <section id="contact" className="relative py-12 sm:py-16 bg-white dark:bg-[var(--color-card)] border-t border-gray-100 dark:border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6" data-animate>
-            <div className="rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5">
-              <h3 className="font-semibold">Contact</h3>
-              <p className="mt-2 text-sm text-gray-600">Email us at</p>
-              <a className="mt-1 inline-block text-blue-700 hover:underline" href={`mailto:${emailTo}`}>{emailTo}</a>
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Contact</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Email us at</p>
+              <a className="mt-1 inline-block text-blue-700 dark:text-primary-200 hover:underline" href={`mailto:${emailTo}`}>{emailTo}</a>
             </div>
-            <div className="rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5">
-              <h3 className="font-semibold">Availability</h3>
-              <p className="mt-2 text-sm text-gray-600">Private beta with rolling invites each week.</p>
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Availability</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Private beta with rolling invites each week.</p>
             </div>
-            <div className="rounded-xl border border-gray-200 p-6 bg-white shadow-sm transition duration-200 hover:shadow-md hover:border-primary-200 transform-gpu hover:-translate-y-0.5">
-              <h3 className="font-semibold">Follow</h3>
-              <p className="mt-2 text-sm text-gray-600">Product updates are coming soon.</p>
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Follow</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Product updates are coming soon.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <footer className="bg-gray-50 border-t border-gray-200">
+      <footer className="bg-gray-50 dark:bg-[#111325] border-t border-gray-200 dark:border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
             {/* Brand Column */}
@@ -618,45 +635,45 @@ const Landing: React.FC = () => {
               <div className="flex items-center gap-3 mb-4">
                 <BrandLogo className="h-14 sm:h-16" />
               </div>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">
                 Modern audit management for multi-location businesses. Complete audits faster, track compliance, and drive operational excellence.
               </p>
-              <a href="#beta" className="inline-block text-sm text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-md font-semibold transition-colors">
+              <a href="#beta" className="inline-block text-sm text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-md font-semibold transition-colors shadow-[0_10px_25px_rgba(37,99,235,0.35)]">
                 Request Access
               </a>
             </div>
 
             {/* Product Column */}
             <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Product</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Product</h3>
               <ul className="space-y-3">
-                <li><a href="#about" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">About</a></li>
-                <li><a href="#features" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">How It Works</a></li>
-                <li><a href="#industries" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">Industries</a></li>
+                <li><a href="#about" className="text-sm text-gray-600 dark:text-slate-300 hover:text-primary-600 transition-colors">About</a></li>
+                <li><a href="#features" className="text-sm text-gray-600 dark:text-slate-300 hover:text-primary-600 transition-colors">Features</a></li>
+                <li><a href="#how-it-works" className="text-sm text-gray-600 dark:text-slate-300 hover:text-primary-600 transition-colors">How It Works</a></li>
+                <li><a href="#industries" className="text-sm text-gray-600 dark:text-slate-300 hover:text-primary-600 transition-colors">Industries</a></li>
               </ul>
             </div>
 
             {/* Resources Column */}
             <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Resources</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Resources</h3>
               <ul className="space-y-3">
-                <li><Link to="/login" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">Login</Link></li>
-                <li><a href="#beta" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">Request Access</a></li>
+                <li><Link to="/login" className="text-sm text-gray-600 dark:text-slate-300 hover:text-primary-600 transition-colors">Login</Link></li>
+                <li><a href="#beta" className="text-sm text-gray-600 dark:text-slate-300 hover:text-primary-600 transition-colors">Request Access</a></li>
               </ul>
             </div>
 
             {/* Connect Column */}
             <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Connect</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Connect</h3>
               <div className="flex items-center gap-4">
-                <a href="#beta" className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Twitter">
+                <a href="#beta" className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-white transition-colors" aria-label="Twitter">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/></svg>
                 </a>
-                <a href="#beta" className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="LinkedIn">
+                <a href="#beta" className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-white transition-colors" aria-label="LinkedIn">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                 </a>
-                <a href="#beta" className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="GitHub">
+                <a href="#beta" className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-white transition-colors" aria-label="GitHub">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd"/></svg>
                 </a>
               </div>
@@ -664,8 +681,8 @@ const Landing: React.FC = () => {
           </div>
 
           {/* Bottom Bar */}
-          <div className="mt-12 pt-8 border-t border-gray-200 text-center">
-            <p className="text-sm text-gray-500">
+          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-white/10 text-center">
+            <p className="text-sm text-gray-500 dark:text-slate-400">
               © {new Date().getFullYear()} Trakr. All rights reserved.
             </p>
           </div>

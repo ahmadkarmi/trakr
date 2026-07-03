@@ -11,6 +11,7 @@ import InfoBadge from '@/components/InfoBadge'
 import MobileAuditCard from '@/components/MobileAuditCard'
 import ResponsiveTable, { Column } from '@/components/ResponsiveTable'
 import { SkeletonAuditCard } from '@/components/Skeleton'
+import ErrorState from '../components/ErrorState'
 import { ClipboardDocumentCheckIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { useOrganization } from '../contexts/OrganizationContext'
@@ -25,7 +26,7 @@ const DashboardAuditor: React.FC = () => {
   const queryClient = useQueryClient()
   // Guard flags handled after all hooks to preserve hook order across renders
 
-  const { data: audits = [], isLoading } = useQuery<Audit[]>({
+  const { data: audits = [], isLoading, isError: auditsError } = useQuery<Audit[]>({
     queryKey: QK.AUDITS(`auditor-${user?.id || ''}`),
     queryFn: () => {
       const { start } = getQuarterRange(new Date())
@@ -35,33 +36,33 @@ const DashboardAuditor: React.FC = () => {
   })
 
   // For assignments & frequency gating - org-scoped
-  const { data: orgs = [] } = useQuery<Organization[]>({ 
-    queryKey: QK.ORGANIZATIONS, 
+  const { data: orgs = [] } = useQuery<Organization[]>({
+    queryKey: QK.ORGANIZATIONS,
     queryFn: api.getOrganizations,
     enabled: !!effectiveOrgId || isSuperAdmin
   })
-  const { data: branches = [] } = useQuery<Branch[]>({ 
-    queryKey: ['branches', effectiveOrgId], 
-    queryFn: () => api.getBranches(effectiveOrgId), 
-    enabled: !!effectiveOrgId || isSuperAdmin 
+  const { data: branches = [], isError: branchesError } = useQuery<Branch[]>({
+    queryKey: ['branches', effectiveOrgId],
+    queryFn: () => api.getBranches(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
-  const { data: zones = [] } = useQuery<Zone[]>({ 
-    queryKey: ['zones', effectiveOrgId], 
-    queryFn: () => api.getZones(effectiveOrgId), 
-    enabled: !!effectiveOrgId || isSuperAdmin 
+  const { data: zones = [] } = useQuery<Zone[]>({
+    queryKey: ['zones', effectiveOrgId],
+    queryFn: () => api.getZones(effectiveOrgId),
+    enabled: !!effectiveOrgId || isSuperAdmin
   })
-  const { data: assignments = [] } = useQuery<AuditorAssignment[]>({ 
-    queryKey: ['assignments', effectiveOrgId], 
+  const { data: assignments = [], isError: assignmentsError } = useQuery<AuditorAssignment[]>({
+    queryKey: ['assignments', effectiveOrgId],
     queryFn: () => (api as any).getAuditorAssignments(effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin
   })
-  const { data: allAudits = [] } = useQuery<Audit[]>({ 
-    queryKey: ['audits', 'all', effectiveOrgId], 
+  const { data: allAudits = [] } = useQuery<Audit[]>({
+    queryKey: ['audits', 'all', effectiveOrgId],
     queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
     enabled: !!effectiveOrgId || isSuperAdmin
   })
 
-  const { data: surveys = [] } = useQuery<Survey[]>({
+  const { data: surveys = [], isError: surveysError } = useQuery<Survey[]>({
     queryKey: ['surveys', effectiveOrgId],
     queryFn: () => (api as any).getSurveys(effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin
@@ -113,15 +114,21 @@ const DashboardAuditor: React.FC = () => {
     .filter(a => a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS)
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
 
+  // Derive the current user's org (correct for SUPER_ADMIN viewing a specific org)
+  const userOrg = React.useMemo(
+    () => orgs.find(o => o.id === (effectiveOrgId || user?.orgId)) || orgs[0] || null,
+    [orgs, effectiveOrgId, user?.orgId]
+  )
+
   // This cycle groupings for the signed-in auditor
-  const nowTs = Date.now()
   const myCycleAudits = React.useMemo(() => {
+    const nowTs = Date.now()
     return allAudits.filter(a => (
       a.assignedTo === (user?.id || '') &&
       !!a.periodStart && !!a.dueAt &&
       new Date(a.periodStart).getTime() <= nowTs && nowTs <= new Date(a.dueAt).getTime()
     ))
-  }, [allAudits, user?.id, nowTs])
+  }, [allAudits, user?.id])
   
   // Count from myCycleAudits for consistency with "This Cycle" section
   const statusCounts = React.useMemo(() => {
@@ -192,7 +199,7 @@ const DashboardAuditor: React.FC = () => {
     const freq = selectedSurvey?.frequency || AuditFrequency.UNLIMITED
     if (freq === AuditFrequency.UNLIMITED) return assignedBranches
     const surveyId = selectedSurvey?.id
-    const gating = orgs[0]?.gatingPolicy || 'completed_approved'
+    const gating = userOrg?.gatingPolicy || 'completed_approved'
     const now = new Date().getTime()
     return assignedBranches.filter(b => {
       const periodAudits = allAudits.filter(a => a.branchId === b.id && a.surveyId === surveyId && a.periodStart && a.dueAt && new Date(a.periodStart).getTime() <= now && now <= new Date(a.dueAt).getTime())
@@ -248,7 +255,7 @@ const DashboardAuditor: React.FC = () => {
     if (approved) return `Already approved this ${frequencyLabel[freq].toLowerCase()} period`
     if (completed) return `Already completed this ${frequencyLabel[freq].toLowerCase()} period`
     // If org gating policy is 'any', any audit (including draft/in-progress) blocks new starts
-    const gating = orgs[0]?.gatingPolicy || 'completed_approved'
+    const gating = userOrg?.gatingPolicy || 'completed_approved'
     if (gating === 'any') return `An audit already exists this ${frequencyLabel[freq].toLowerCase()} period`
     return null
   }, [selectedSurvey, allAudits, orgs, frequencyLabel])
@@ -259,7 +266,7 @@ const DashboardAuditor: React.FC = () => {
       const freq = survey.frequency || AuditFrequency.UNLIMITED
       if (freq === AuditFrequency.UNLIMITED) return assignedBranches.length > 0
       
-      const gating = orgs[0]?.gatingPolicy || 'completed_approved'
+      const gating = userOrg?.gatingPolicy || 'completed_approved'
       const now = new Date().getTime()
       
       const surveyAllowedBranches = assignedBranches.filter(b => {
@@ -318,6 +325,22 @@ const DashboardAuditor: React.FC = () => {
     }
   }, [availableSurveys, selectedSurveyId])
 
+  if (auditsError || branchesError || assignmentsError || surveysError) {
+    return (
+      <DashboardLayout title="Auditor Dashboard">
+        <ErrorState
+          message="Some data failed to load. Please try again."
+          retry={() => {
+            queryClient.invalidateQueries({ queryKey: QK.AUDITS(`auditor-${user?.id || ''}`) })
+            queryClient.invalidateQueries({ queryKey: ['branches', effectiveOrgId] })
+            queryClient.invalidateQueries({ queryKey: ['assignments', effectiveOrgId] })
+            queryClient.invalidateQueries({ queryKey: ['surveys', effectiveOrgId] })
+          }}
+        />
+      </DashboardLayout>
+    )
+  }
+
   return (
     <DashboardLayout title="Auditor Dashboard">
       <div className="space-y-6">
@@ -372,13 +395,13 @@ const DashboardAuditor: React.FC = () => {
               })()}
             </p>
             <div className="mb-4">
-              <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white text-primary-700">
+              <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white dark:bg-white/10 text-primary-700 dark:text-primary-300">
                 <span>Due:</span>
                 <span>{latestEditable.dueAt ? new Date(latestEditable.dueAt).toLocaleDateString() : '—'}</span>
               </div>
             </div>
             <button
-              className="bg-white text-primary-600 hover:bg-gray-100 font-medium py-2.5 px-4 rounded-lg transition-colors"
+              className="bg-white dark:bg-[var(--color-card)] text-primary-600 hover:bg-gray-100 dark:hover:bg-white/10 font-medium py-2.5 px-4 rounded-lg transition-colors"
               onClick={() => navigate(`/audit/${latestEditable.id}/wizard`)}
             >
               Resume Audit
@@ -400,7 +423,7 @@ const DashboardAuditor: React.FC = () => {
                 }`}
               >
                 📋 This Cycle
-                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300">
                   {openCycleAudits.length + completedCycleAudits.length}
                 </span>
               </button>
@@ -415,7 +438,7 @@ const DashboardAuditor: React.FC = () => {
                 {rejectedAudits.length > 0 && <ExclamationTriangleIcon className="w-4 h-4" />}
                 Rejected Audits
                 <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                  rejectedAudits.length > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                  rejectedAudits.length > 0 ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300'
                 }`}>
                   {rejectedAudits.length}
                 </span>
@@ -429,7 +452,7 @@ const DashboardAuditor: React.FC = () => {
                 }`}
               >
                 📚 Audit History
-                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300">
                   {audits.length}
                 </span>
               </button>
@@ -439,16 +462,16 @@ const DashboardAuditor: React.FC = () => {
           {/* Cycle Tab Sub-tabs */}
           {mainTab === 'cycle' && (
             <>
-              <div className="px-4 sm:px-6 py-3 border-b border-gray-200 bg-gray-50">
-                <div className="inline-flex items-center bg-white border border-gray-200 rounded-lg p-1">
+              <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--color-card-muted)]">
+                <div className="inline-flex items-center bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-1">
                   <button
-                    className={`${cycleTab === 'open' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
+                    className={`${cycleTab === 'open' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/5'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
                     onClick={() => setCycleTab('open')}
                   >
                     Open ({openCycleAudits.length})
                   </button>
                   <button
-                    className={`${cycleTab === 'completed' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
+                    className={`${cycleTab === 'completed' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/5'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
                     onClick={() => setCycleTab('completed')}
                   >
                     Completed ({completedCycleAudits.length})
@@ -479,10 +502,10 @@ const DashboardAuditor: React.FC = () => {
             {/* This Cycle Content */}
             {mainTab === 'cycle' && (cycleTab === 'open' ? (
               openCycleAudits.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center py-8 bg-gray-50 dark:bg-[var(--color-card-muted)] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
                   <div className="text-4xl mb-2">📋</div>
-                  <p className="text-gray-600 font-medium">No open audits</p>
-                  <p className="text-sm text-gray-500 mt-1">All audits for this cycle are completed</p>
+                  <p className="text-gray-600 dark:text-slate-300 font-medium">No open audits</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">All audits for this cycle are completed</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -504,7 +527,7 @@ const DashboardAuditor: React.FC = () => {
                     const btnConfig = getButtonConfig()
                     
                     return (
-                      <div key={a.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div key={a.id} className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
@@ -551,10 +574,10 @@ const DashboardAuditor: React.FC = () => {
               )
             ) : (
               completedCycleAudits.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center py-8 bg-gray-50 dark:bg-[var(--color-card-muted)] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
                   <div className="text-4xl mb-2">✅</div>
-                  <p className="text-gray-600 font-medium">No completed audits yet</p>
-                  <p className="text-sm text-gray-500 mt-1">Complete audits will appear here</p>
+                  <p className="text-gray-600 dark:text-slate-300 font-medium">No completed audits yet</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Complete audits will appear here</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -567,9 +590,9 @@ const DashboardAuditor: React.FC = () => {
                       <div key={a.id} className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
-                            <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}{a.surveyVersion != null ? ` (v${a.surveyVersion})` : ''}</p>
-                            <p className="text-xs text-gray-500 mt-1">Completed {completedAt.toLocaleDateString()}</p>
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                            <p className="text-sm text-gray-600 dark:text-slate-300 truncate">{survey?.title || 'Unknown Survey'}{a.surveyVersion != null ? ` (v${a.surveyVersion})` : ''}</p>
+                            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Completed {completedAt.toLocaleDateString()}</p>
                           </div>
                         </div>
                         
@@ -599,10 +622,10 @@ const DashboardAuditor: React.FC = () => {
             {/* Rejected Audits Content */}
             {mainTab === 'rejected' && (
               rejectedAudits.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center py-12 bg-gray-50 dark:bg-[var(--color-card-muted)] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
                   <div className="text-4xl mb-2">✅</div>
-                  <p className="text-gray-600 font-medium">No rejected audits</p>
-                  <p className="text-sm text-gray-500 mt-1">All your audits have been approved!</p>
+                  <p className="text-gray-600 dark:text-slate-300 font-medium">No rejected audits</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">All your audits have been approved!</p>
                 </div>
               ) : (
                 <ResponsiveTable
@@ -668,9 +691,9 @@ const DashboardAuditor: React.FC = () => {
                     return (
                       <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="mb-3">
-                          <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
-                          <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
-                          <p className="text-xs text-gray-500">{a.surveyVersion != null ? `v${a.surveyVersion}` : '—'}</p>
+                          <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                          <p className="text-sm text-gray-600 dark:text-slate-300 truncate">{survey?.title || 'Unknown Survey'}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-400">{a.surveyVersion != null ? `v${a.surveyVersion}` : '—'}</p>
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -683,9 +706,9 @@ const DashboardAuditor: React.FC = () => {
                         </div>
                         
                         {a.rejectionNote && (
-                          <div className="mb-3 p-3 bg-white rounded-lg border border-red-200">
-                            <p className="text-xs font-medium text-gray-700 mb-1">Rejection Reason:</p>
-                            <p className="text-sm text-gray-900">{a.rejectionNote}</p>
+                          <div className="mb-3 p-3 bg-white dark:bg-white/5 rounded-lg border border-red-200 dark:border-red-500/30">
+                            <p className="text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">Rejection Reason:</p>
+                            <p className="text-sm text-gray-900 dark:text-white">{a.rejectionNote}</p>
                           </div>
                         )}
                         

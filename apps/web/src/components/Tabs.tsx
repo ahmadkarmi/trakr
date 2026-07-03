@@ -71,8 +71,8 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, defaultTab, children, onChange
                   <span className={`
                     ml-2 py-0.5 px-2 rounded-full text-xs font-semibold
                     ${isActive
-                      ? 'bg-blue-100 text-blue-600'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300'
+                      : 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-slate-300'
                     }
                   `}>
                     {tab.badge}

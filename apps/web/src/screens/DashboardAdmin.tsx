@@ -14,6 +14,7 @@ import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon, MagnifyingGlassI
 import { useOrganization } from '../contexts/OrganizationContext'
 import toast from 'react-hot-toast'
 import MetricCard from '../components/MetricCard'
+import ErrorState from '../components/ErrorState'
 
 // Admin Organization Onboarding Component
 const AdminOrgOnboarding: React.FC = () => {
@@ -55,20 +56,20 @@ const AdminOrgOnboarding: React.FC = () => {
   return (
     <DashboardLayout title="Welcome to Trakr">
       <div className="max-w-2xl mx-auto py-12 px-4">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-white dark:bg-[var(--color-card)] rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
               <BuildingOffice2Icon className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
               Welcome, {user?.name}!
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gray-600 dark:text-slate-300">
               Let's get started by creating your organization
             </p>
           </div>
 
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+          <div className="bg-blue-50 dark:bg-blue-500/20 border-l-4 border-blue-500 p-4 mb-6">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -76,7 +77,7 @@ const AdminOrgOnboarding: React.FC = () => {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-blue-700">
+                <p className="text-sm text-blue-700 dark:text-blue-200">
                   As an Admin, you'll be able to manage branches, surveys, users, and audits within your organization.
                   Any users you invite will automatically join your organization.
                 </p>
@@ -86,7 +87,7 @@ const AdminOrgOnboarding: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="orgName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="orgName" className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                 Organization Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -95,11 +96,11 @@ const AdminOrgOnboarding: React.FC = () => {
                 value={orgName}
                 onChange={(e) => setOrgName(e.target.value)}
                 placeholder="e.g., Acme Corporation"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-white/15 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-white/5 dark:text-white"
                 required
                 disabled={isSubmitting}
               />
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
                 This will be the name of your organization across the platform
               </p>
             </div>
@@ -122,9 +123,9 @@ const AdminOrgOnboarding: React.FC = () => {
             </div>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">What's next?</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">What's next?</h3>
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-slate-300">
               <li className="flex items-start gap-2">
                 <span className="text-blue-500 mt-0.5">✓</span>
                 <span>Set up your branches and locations</span>
@@ -172,45 +173,32 @@ const DashboardAdmin: React.FC = () => {
   }, [user?.id, effectiveOrgId, isSuperAdmin, queryClient])
   
   // IMPORTANT: Call ALL hooks before any conditional returns (Rules of Hooks)
-  const { data: branches = [], isLoading: branchesLoading } = useQuery<Branch[]>({
+  const { data: branches = [], isLoading: branchesLoading, isError: branchesError } = useQuery<Branch[]>({
     queryKey: ['branches', effectiveOrgId, user?.id],
     queryFn: () => api.getBranches(effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    staleTime: 2 * 60 * 1000,
   })
   const { data: zones = [] } = useQuery<Zone[]>({
     queryKey: ['zones', effectiveOrgId, user?.id],
     queryFn: () => api.getZones(effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    staleTime: 2 * 60 * 1000,
   })
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ['users', effectiveOrgId, user?.id],
     queryFn: () => (api as any).getUsers(effectiveOrgId),
     enabled: !!effectiveOrgId || isSuperAdmin,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    staleTime: 2 * 60 * 1000,
   })
   // surveys query removed with Unassigned feature
-  const { data: audits = [] } = useQuery<Audit[]>({
+  const { data: audits = [], isError: auditsError } = useQuery<Audit[]>({
     queryKey: ['audits', 'admin', effectiveOrgId, user?.id],
     queryFn: () => api.getAudits({ orgId: effectiveOrgId }),
     enabled: !!effectiveOrgId || isSuperAdmin,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchInterval: 30000,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
   })
-
 
   // Get all branch manager assignments to identify branches without managers
   // NOTE: RLS policies automatically filter by org, no need to pass orgId
@@ -218,10 +206,7 @@ const DashboardAdmin: React.FC = () => {
     queryKey: ['branch-manager-assignments', effectiveOrgId, user?.id],
     queryFn: () => (api as any).getAllBranchManagerAssignments(),
     enabled: !!effectiveOrgId || isSuperAdmin,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    staleTime: 2 * 60 * 1000,
   })
   // auditor assignments and recent assign logs removed with Unassigned feature
 
@@ -481,7 +466,7 @@ const DashboardAdmin: React.FC = () => {
       const re = new RegExp(`(${escapeRegExp(q)})`, 'ig')
       const parts = text.split(re)
       return parts.map((part, i) => (
-        i % 2 === 1 ? <mark key={i} className="bg-yellow-100 text-gray-900 rounded px-0.5">{part}</mark> : <span key={i}>{part}</span>
+        i % 2 === 1 ? <mark key={i} className="bg-yellow-100 dark:bg-yellow-500/30 text-gray-900 dark:text-white rounded px-0.5">{part}</mark> : <span key={i}>{part}</span>
       ))
     } catch { return text }
   }
@@ -519,6 +504,17 @@ const DashboardAdmin: React.FC = () => {
     )
   }
   
+  if (branchesError || auditsError) {
+    return (
+      <DashboardLayout title="Dashboard">
+        <ErrorState message="Failed to load dashboard data." onRetry={() => {
+          queryClient.invalidateQueries({ queryKey: ['branches'] })
+          queryClient.invalidateQueries({ queryKey: ['audits'] })
+        }} />
+      </DashboardLayout>
+    )
+  }
+
   // If admin has no org, show org creation onboarding
   if (!effectiveOrgId && !isSuperAdmin) {
     return <AdminOrgOnboarding />
@@ -536,24 +532,24 @@ const DashboardAdmin: React.FC = () => {
             <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <span className="text-4xl">🚀</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
               Welcome to {currentOrg?.name || 'Your Organization'}!
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gray-600 dark:text-slate-300">
               Let's get your organization set up. Follow these steps to get started.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             {/* Step 1: Create Branches */}
-            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-white dark:bg-[var(--color-card)] border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-blue-500 transition-colors">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
                 <span className="text-2xl">🏢</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 1. Create Branches
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-slate-300 mb-4">
                 Add your physical locations or branches that will be audited.
               </p>
               <button
@@ -565,14 +561,14 @@ const DashboardAdmin: React.FC = () => {
             </div>
 
             {/* Step 2: Create Survey Templates */}
-            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-green-500 transition-colors">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-white dark:bg-[var(--color-card)] border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-green-500 transition-colors">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-500/20 rounded-lg flex items-center justify-center mb-4">
                 <span className="text-2xl">📋</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 2. Create Survey Templates
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-slate-300 mb-4">
                 Define what gets audited by creating survey templates with questions.
               </p>
               <button
@@ -584,14 +580,14 @@ const DashboardAdmin: React.FC = () => {
             </div>
 
             {/* Step 3: Invite Users */}
-            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-purple-500 transition-colors">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-white dark:bg-[var(--color-card)] border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-purple-500 transition-colors">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-500/20 rounded-lg flex items-center justify-center mb-4">
                 <span className="text-2xl">👥</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 3. Invite Team Members
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-slate-300 mb-4">
                 Add auditors, branch managers, and admins to your organization.
               </p>
               <button
@@ -603,14 +599,14 @@ const DashboardAdmin: React.FC = () => {
             </div>
 
             {/* Step 4: Optional Zones */}
-            <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-yellow-500 transition-colors">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-white dark:bg-[var(--color-card)] border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-yellow-500 transition-colors">
+              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-500/20 rounded-lg flex items-center justify-center mb-4">
                 <span className="text-2xl">🗺️</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 4. Create Zones (Optional)
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-slate-300 mb-4">
                 Group branches into zones for easier management and assignment.
               </p>
               <button
@@ -622,9 +618,9 @@ const DashboardAdmin: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h4 className="font-semibold text-gray-900 mb-2">📘 Need Help?</h4>
-            <p className="text-gray-600 text-sm">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 dark:bg-white/5 dark:border-white/10 dark:backdrop-blur">
+            <h4 className="font-semibold text-gray-900 mb-2 dark:text-white">📘 Need Help?</h4>
+            <p className="text-gray-600 text-sm dark:text-slate-300">
               Check out our documentation or contact support if you need assistance setting up your organization.
             </p>
           </div>
@@ -739,8 +735,8 @@ const DashboardAdmin: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </div>
-                  <p className="text-gray-900 font-medium mb-2">No audits scheduled this week</p>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-gray-900 dark:text-white font-medium mb-2">No audits scheduled this week</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
                     Weekly audits require auditor-to-branch assignments before they can be created.
                   </p>
                   <button
@@ -764,14 +760,14 @@ const DashboardAdmin: React.FC = () => {
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Overdue</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white dark:bg-[var(--color-card)] divide-y divide-gray-200 dark:divide-white/10">
                       {zoneRows.map(r => (
-                        <tr key={r.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.name}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{r.scheduled}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{r.completed}</td>
+                        <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{r.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-white text-right">{r.scheduled}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-white text-right">{r.completed}</td>
                           <td className="px-4 py-3 text-sm text-right">
-                            <span className={r.overdue > 0 ? 'text-red-600 font-medium' : 'text-gray-900'}>
+                            <span className={r.overdue > 0 ? 'text-red-600 font-medium' : 'text-gray-900 dark:text-white'}>
                               {r.overdue}
                             </span>
                           </td>
@@ -866,9 +862,9 @@ const DashboardAdmin: React.FC = () => {
                         <div className="p-4 space-y-2">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-semibold text-gray-900">{item.action}</div>
-                              <div className="text-sm text-gray-600 mt-1">{item.branch}</div>
-                              <div className="text-xs text-gray-500 mt-0.5">{item.audit?.surveyVersion != null ? `v${item.audit.surveyVersion}` : '—'}</div>
+                              <div className="text-sm font-semibold text-gray-900 dark:text-white">{item.action}</div>
+                              <div className="text-sm text-gray-600 dark:text-slate-300 mt-1">{item.branch}</div>
+                              <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{item.audit?.surveyVersion != null ? `v${item.audit.surveyVersion}` : '—'}</div>
                             </div>
                             <div className="text-xs text-gray-500 whitespace-nowrap">
                               {item.timestamp.toLocaleDateString()}
@@ -1008,7 +1004,7 @@ const DashboardAdmin: React.FC = () => {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder="Search audit, branch, auditor..."
-                    className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white transition-all"
+                    className="w-full pl-12 pr-4 py-2.5 border border-gray-300 dark:border-white/15 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white dark:focus:bg-white/10 transition-all"
                   />
                 </div>
                 
@@ -1016,9 +1012,9 @@ const DashboardAdmin: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   {/* Quick Filter Dropdown */}
                   <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter:</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-slate-200 whitespace-nowrap">Filter:</label>
                     <select 
-                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[140px]" 
+                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 dark:border-white/15 rounded-lg bg-white dark:bg-[var(--color-card)] dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[140px]" 
                       value={quickChip} 
                       onChange={(e) => setQuickChip(e.target.value as typeof quickChip)}
                     >
@@ -1036,9 +1032,9 @@ const DashboardAdmin: React.FC = () => {
                   
                   {/* Sort Controls */}
                   <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort:</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-slate-200 whitespace-nowrap">Sort:</label>
                     <select 
-                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[100px]" 
+                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 dark:border-white/15 rounded-lg bg-white dark:bg-[var(--color-card)] dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[100px]" 
                       value={sortField} 
                       onChange={(e) => setSortField(e.target.value as typeof sortField)}
                     >
@@ -1049,7 +1045,7 @@ const DashboardAdmin: React.FC = () => {
                       <option value="auditor">Auditor</option>
                     </select>
                     <button 
-                      className="px-3 py-2 border border-gray-300 bg-white hover:bg-gray-50 rounded-lg transition-colors"
+                      className="px-3 py-2 border border-gray-300 dark:border-white/15 bg-white dark:bg-[var(--color-card)] hover:bg-gray-50 dark:hover:bg-white/5 dark:text-white rounded-lg transition-colors"
                       onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
                       title={`Sort ${sortDirection === 'asc' ? 'Descending' : 'Ascending'}`}
                     >
@@ -1062,18 +1058,18 @@ const DashboardAdmin: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3 flex-wrap">
                     <button 
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-gray-700 dark:text-slate-200 rounded-lg font-medium transition-colors"
                       onClick={() => setShowAdvanced((v) => !v)}
                     >
                       <FunnelIcon className="w-4 h-4" />
                       <span>Advanced Filters</span>
                     </button>
-                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
+                    <div className="text-sm text-gray-500 dark:text-slate-300 bg-gray-100 dark:bg-white/10 px-3 py-1.5 rounded-lg">
                       {filteredAudits.length} results
                     </div>
                   </div>
                   <button 
-                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors px-3 py-2"
+                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white disabled:opacity-50 transition-colors px-3 py-2"
                     onClick={clearAllFilters} 
                     disabled={!hasFilters}
                   >
@@ -1088,9 +1084,9 @@ const DashboardAdmin: React.FC = () => {
               {!showAdvanced && activeBadges.length > 0 && (
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                   {activeBadges.map(b => (
-                    <span key={b.key} className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                    <span key={b.key} className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-white/10">
                       {b.label}
-                      <button className="hover:text-gray-900" onClick={b.onClear} aria-label={`Clear ${b.key}`}>
+                      <button className="hover:text-gray-900 dark:hover:text-white" onClick={b.onClear} aria-label={`Clear ${b.key}`}>
                         <XMarkIcon className="w-3 h-3" />
                       </button>
                     </span>
@@ -1100,7 +1096,7 @@ const DashboardAdmin: React.FC = () => {
               
               {/* Advanced Filters */}
               {showAdvanced && (
-                  <div className="mt-3 p-3 border rounded-md bg-gray-50">
+                  <div className="mt-3 p-3 border dark:border-white/10 rounded-md bg-gray-50 dark:bg-[var(--color-card-muted)]">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <div>
                         <label className="label">Status</label>
@@ -1155,13 +1151,13 @@ const DashboardAdmin: React.FC = () => {
                 keyField={(a: Audit) => a.id}
                 empty={
                   <div className="text-center py-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-white/10 rounded-full mb-4">
                       <span className="text-3xl">📋</span>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                       {viewScope === 'week' ? 'No audits scheduled this week' : 'No audits found'}
                     </h3>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
                       {viewScope === 'week' 
                         ? 'There are no audits scheduled for the current week.'
                         : hasFilters 
@@ -1171,7 +1167,7 @@ const DashboardAdmin: React.FC = () => {
                     {viewScope === 'week' && audits.length > 0 && (
                       <button
                         onClick={() => setViewScope('all')}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-[var(--color-card)] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                       >
                         View All Audits
                       </button>
@@ -1195,7 +1191,7 @@ const DashboardAdmin: React.FC = () => {
                   const canManualArchive = !a.isArchived && pastDue && (a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS || a.status === AuditStatus.SUBMITTED)
                   
                   return (
-                    <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                    <div className="bg-white dark:bg-[var(--color-card)] rounded-lg border border-gray-200 dark:border-white/10 p-5 hover:shadow-md transition-shadow">
                       {/* Card Header */}
                       <div className="mb-4">
                         {/* Title Row */}

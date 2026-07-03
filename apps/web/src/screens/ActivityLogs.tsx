@@ -167,24 +167,18 @@ const ActivityLogs: React.FC = () => {
   return (
     <DashboardLayout title="Activity Logs">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Activity Logs</h1>
-          <p className="text-gray-600 mt-1">{filtered.length} log entr{filtered.length !== 1 ? 'ies' : 'y'}</p>
-        </div>
-
         {/* Search & Export */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 dark:bg-[var(--color-card)] dark:border-white/10">
           <div className="flex flex-col sm:flex-row gap-3">
             <input 
-              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-[rgba(255,255,255,0.06)] dark:border-white/10 dark:text-white dark:placeholder-slate-400" 
               placeholder="Search logs (action, details, user, entity)" 
               value={q} 
               onChange={e => setQ(e.target.value)} 
             />
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button 
-                className="w-full sm:w-auto bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-4 rounded-lg transition-colors"
+                className="w-full sm:w-auto bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-4 rounded-lg transition-colors dark:bg-white/5 dark:text-white dark:border-white/10 dark:hover:bg-white/10"
                 onClick={exportCsv}
               >
                 Export CSV
@@ -199,7 +193,7 @@ const ActivityLogs: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden">
           {isLoading ? (
             <div className="text-center py-8 text-gray-500">Loading activity logs...</div>
           ) : filtered.length === 0 ? (

@@ -119,6 +119,12 @@ const AuditSummary: React.FC = () => {
     enabled: !!effectiveOrgId || isSuperAdmin
   })
 
+  const { data: bmAssignments = [] } = useQuery<any[]>({
+    queryKey: ['bmAssignments', audit?.branchId],
+    queryFn: () => api.getBranchManagerAssignments(audit!.branchId),
+    enabled: !!audit?.branchId && user?.role === UserRole.BRANCH_MANAGER,
+  })
+
   // Organization (for time zone formatting)
   const orgTimeZone = useOrgTimeZone()
 
@@ -145,9 +151,9 @@ const AuditSummary: React.FC = () => {
     if (!audit || !user) return false
     if (user.role !== UserRole.BRANCH_MANAGER) return false
     if (audit.status !== AuditStatus.SUBMITTED) return false
-    if (branch && branch.managerId !== user.id) return false
+    if (!bmAssignments.some((a: any) => a.managerId === user.id)) return false
     return true
-  }, [audit, user, branch])
+  }, [audit, user, bmAssignments])
 
   const approveMutation = useMutation({
     mutationFn: async () => {
@@ -188,6 +194,9 @@ const AuditSummary: React.FC = () => {
           approverName: user.name || user.email,
         })
       }
+    },
+    onError: (error: Error) => {
+      showToast({ message: `Approval failed: ${error.message || 'Unknown error'}`, variant: 'error' })
     },
   })
 

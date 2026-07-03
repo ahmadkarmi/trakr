@@ -44,17 +44,24 @@ const DashboardBranchManager: React.FC = () => {
   const { data: assignedBranches = [], error: branchesError } = useQuery<Branch[]>({
     queryKey: ['branches-for-manager', user?.id, effectiveOrgId],
     queryFn: async () => {
-      if (!user?.id) return []
+      if (!user?.id) {
+        throw new Error('User ID not found. Please log in again.')
+      }
       
-      // Get all branches (org-scoped)
-      const allBranches = await api.getBranches(effectiveOrgId)
-      
-      // Get branch manager assignments for this manager
-      const assignments = await api.getManagerBranchAssignments(user.id)
-      
-      // Return branches that this manager is assigned to
-      const assignedBranchIds = assignments.map((assignment: { branchId: string }) => assignment.branchId)
-      return allBranches.filter(b => assignedBranchIds.includes(b.id))
+      try {
+        // Get all branches (org-scoped)
+        const allBranches = await api.getBranches(effectiveOrgId)
+        
+        // Get branch manager assignments for this manager
+        const assignments = await api.getManagerBranchAssignments(user.id)
+        
+        // Return branches that this manager is assigned to
+        const assignedBranchIds = assignments.map((assignment: { branchId: string }) => assignment.branchId)
+        return allBranches.filter(b => assignedBranchIds.includes(b.id))
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        throw new Error(`Failed to load branch assignments: ${message}`)
+      }
     },
     enabled: !!user?.id && (!!effectiveOrgId || isSuperAdmin),
   })
@@ -104,10 +111,17 @@ const DashboardBranchManager: React.FC = () => {
 
   // Error handling
   if (auditsError || branchesError) {
+    const error = auditsError || branchesError
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : typeof error === 'string' 
+        ? error 
+        : 'Failed to load dashboard data'
+    
     return (
       <DashboardLayout title="Branch Manager Dashboard">
         <ErrorState 
-          message={(auditsError || branchesError)?.toString() || 'Failed to load dashboard data'} 
+          message={errorMessage} 
           retry={() => window.location.reload()}
         />
       </DashboardLayout>
@@ -192,8 +206,8 @@ const DashboardBranchManager: React.FC = () => {
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Pending Approval</h2>
-                <p className="text-sm text-gray-600 mt-1">{pendingApproval.length} audit{pendingApproval.length !== 1 ? 's' : ''} waiting for your review</p>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Pending Approval</h2>
+                <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">{pendingApproval.length} audit{pendingApproval.length !== 1 ? 's' : ''} waiting for your review</p>
               </div>
               {pendingApproval.length > 0 && (
                 <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
@@ -220,9 +234,9 @@ const DashboardBranchManager: React.FC = () => {
                   return (
                     <div key={audit.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="mb-3">
-                        <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
-                        <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
-                        <p className="text-xs text-gray-500">{audit.surveyVersion != null ? `v${audit.surveyVersion}` : '—'}</p>
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                        <p className="text-sm text-gray-600 dark:text-slate-300 truncate">{survey?.title || 'Unknown Survey'}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">{audit.surveyVersion != null ? `v${audit.surveyVersion}` : '—'}</p>
                       </div>
                       
                       <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -235,11 +249,11 @@ const DashboardBranchManager: React.FC = () => {
                       <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                         <div>
                           <p className="text-gray-500 text-xs mb-0.5">Submitted</p>
-                          <p className="font-medium text-gray-900">{audit.submittedAt ? new Date(audit.submittedAt).toLocaleDateString() : 'N/A'}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{audit.submittedAt ? new Date(audit.submittedAt).toLocaleDateString() : 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-gray-500 text-xs mb-0.5">By</p>
-                          <p className="font-medium text-gray-900 truncate">{submittedByUser?.name || 'Unknown'}</p>
+                          <p className="text-gray-500 dark:text-slate-400 text-xs mb-0.5">By</p>
+                          <p className="font-medium text-gray-900 dark:text-white truncate">{submittedByUser?.name || 'Unknown'}</p>
                         </div>
                       </div>
                       
@@ -265,8 +279,8 @@ const DashboardBranchManager: React.FC = () => {
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Audit History</h2>
-                <p className="text-sm text-gray-600 mt-1">{completedAudits.length} completed audit{completedAudits.length !== 1 ? 's' : ''}</p>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Audit History</h2>
+                <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">{completedAudits.length} completed audit{completedAudits.length !== 1 ? 's' : ''}</p>
               </div>
               {totalHistoryPages > 1 && (
                 <span className="hidden sm:inline-flex text-sm text-gray-500">
@@ -364,7 +378,7 @@ const DashboardBranchManager: React.FC = () => {
                       ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200'
                       : a.status === AuditStatus.REJECTED
                       ? 'bg-gradient-to-br from-red-50 to-pink-50 border-red-200'
-                      : 'bg-white border-gray-200'
+                      : 'bg-white dark:bg-[var(--color-card)] border-gray-200 dark:border-white/10'
                     
                     const buttonStyle = a.status === AuditStatus.APPROVED
                       ? 'bg-green-600 hover:bg-green-700'
@@ -375,9 +389,9 @@ const DashboardBranchManager: React.FC = () => {
                     return (
                       <div className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${cardStyle}`}>
                         <div className="mb-3">
-                          <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
-                          <p className="text-sm text-gray-600 truncate">{survey?.title || 'Unknown Survey'}</p>
-                          <p className="text-xs text-gray-500">{a.surveyVersion != null ? `v${a.surveyVersion}` : '—'}</p>
+                          <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
+                          <p className="text-sm text-gray-600 dark:text-slate-300 truncate">{survey?.title || 'Unknown Survey'}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-400">{a.surveyVersion != null ? `v${a.surveyVersion}` : '—'}</p>
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -432,8 +446,8 @@ const DashboardBranchManager: React.FC = () => {
                         Next →
                       </button>
                     </div>
-                    <span className="text-sm text-gray-600">
-                      Page <span className="font-medium text-gray-900">{historyPage}</span> of <span className="font-medium text-gray-900">{totalHistoryPages}</span>
+                    <span className="text-sm text-gray-600 dark:text-slate-300">
+                      Page <span className="font-medium text-gray-900 dark:text-white">{historyPage}</span> of <span className="font-medium text-gray-900 dark:text-white">{totalHistoryPages}</span>
                     </span>
                   </div>
                 )}

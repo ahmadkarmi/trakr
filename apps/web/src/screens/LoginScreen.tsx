@@ -504,10 +504,10 @@ const LoginScreen: React.FC = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50">
+    <div className="h-screen overflow-hidden bg-gray-50 dark:bg-gradient-to-b dark:from-[#040b1d] dark:via-[#0a1d42] dark:to-[#103170]">
       <div className="grid grid-cols-1 lg:grid-cols-2 h-full">
         {/* Left Column - Login Form */}
-        <div className="flex flex-col justify-center items-center px-4 py-12 sm:px-6 lg:px-20 xl:px-24 bg-gray-50 h-full overflow-y-auto">
+        <div className="flex flex-col justify-center items-center px-4 py-12 sm:px-6 lg:px-20 xl:px-24 bg-gradient-to-b from-white via-slate-50 to-blue-50 dark:from-[#040b1d] dark:via-[#0a1d42] dark:to-[#103170] h-full overflow-y-auto">
           <div className="w-full max-w-sm lg:max-w-md">
             {/* Logo */}
             <div className="mb-8">
@@ -517,12 +517,12 @@ const LoginScreen: React.FC = () => {
             </div>
 
             <div>
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
                 {authMode === 'login' && 'Log in to your Account'}
                 {authMode === 'register' && 'Create your Account'}
                 {authMode === 'forgot-password' && 'Reset your Password'}
               </h2>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">
                 {authMode === 'login' && 'Welcome back! Select method to log in:'}
                 {authMode === 'register' && 'Get started with Trakr today'}
                 {authMode === 'forgot-password' && 'Enter your email to receive a reset link'}
@@ -543,7 +543,7 @@ const LoginScreen: React.FC = () => {
                         logger.error('Quick login failed', e, { context: 'LoginScreen' })
                       }
                     }}
-                    className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-white/15 rounded-lg shadow-sm bg-white/90 dark:bg-white/10 backdrop-blur text-sm font-medium text-gray-700 dark:text-white hover:bg-white dark:hover:bg-white/20"
                   >
                     Admin
                   </button>
@@ -557,7 +557,7 @@ const LoginScreen: React.FC = () => {
                         logger.error('Quick login failed', e, { context: 'LoginScreen' })
                       }
                     }}
-                    className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-white/15 rounded-lg shadow-sm bg-white/90 dark:bg-white/10 backdrop-blur text-sm font-medium text-gray-700 dark:text-white hover:bg-white dark:hover:bg-white/20"
                   >
                     Branch Manager
                   </button>
@@ -571,7 +571,7 @@ const LoginScreen: React.FC = () => {
                         logger.error('Quick login failed', e, { context: 'LoginScreen' })
                       }
                     }}
-                    className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-white/15 rounded-lg shadow-sm bg-white/90 dark:bg-white/10 backdrop-blur text-sm font-medium text-gray-700 dark:text-white hover:bg-white dark:hover:bg-white/20"
                   >
                     Auditor
                   </button>
@@ -579,10 +579,10 @@ const LoginScreen: React.FC = () => {
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300" />
+                    <div className="w-full border-t border-gray-300 dark:border-white/20" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">or continue with email</span>
+                    <span className="px-2 text-gray-500 dark:text-slate-300">or continue with email</span>
                   </div>
                 </div>
               </div>
@@ -607,7 +607,7 @@ const LoginScreen: React.FC = () => {
               {/* Full Name - Register only */}
               {authMode === 'register' && (
                 <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
                     Full name
                   </label>
                   <input
@@ -615,7 +615,7 @@ const LoginScreen: React.FC = () => {
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                     placeholder="Jane Smith"
                     autoComplete="name"
                     required
@@ -625,7 +625,7 @@ const LoginScreen: React.FC = () => {
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
                   Email
                 </label>
                 <input
@@ -634,7 +634,7 @@ const LoginScreen: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                   placeholder="you@company.com"
                   autoComplete="email"
                   required
@@ -644,7 +644,7 @@ const LoginScreen: React.FC = () => {
               {/* Password - Login & Register */}
               {authMode !== 'forgot-password' && (
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
                     Password
                   </label>
                   <div className="relative">
@@ -653,7 +653,7 @@ const LoginScreen: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 pr-10 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                       placeholder="••••••••"
                       autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
                       required
@@ -661,7 +661,7 @@ const LoginScreen: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200"
                       tabIndex={-1}
                     >
                       {showPassword ? (
@@ -677,7 +677,7 @@ const LoginScreen: React.FC = () => {
                     </button>
                   </div>
                   {authMode === 'register' && (
-                    <p className="mt-1.5 text-xs text-gray-500">
+                    <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400">
                       Must be 8+ characters with uppercase, lowercase, and numbers
                     </p>
                   )}
@@ -687,7 +687,7 @@ const LoginScreen: React.FC = () => {
               {/* Confirm Password - Register only */}
               {authMode === 'register' && (
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
                     Confirm password
                   </label>
                   <div className="relative">
@@ -696,7 +696,7 @@ const LoginScreen: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 pr-10 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                       placeholder="••••••••"
                       autoComplete="new-password"
                       required
@@ -704,7 +704,7 @@ const LoginScreen: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200"
                       tabIndex={-1}
                     >
                       {showPassword ? (
@@ -724,26 +724,26 @@ const LoginScreen: React.FC = () => {
 
               {/* Error message */}
               {authError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <div className="rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/20 p-4">
                   <div className="flex items-start gap-3">
                     <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-red-900">{authError.title}</p>
-                      <p className="mt-1 text-sm text-red-700">
+                      <p className="text-sm font-medium text-red-900 dark:text-red-200">{authError.title}</p>
+                      <p className="mt-1 text-sm text-red-700 dark:text-red-200">
                         {isLocked && lockoutSecondsRemaining > 0
                           ? `Account locked for ${Math.floor(lockoutSecondsRemaining / 60)}:${String(lockoutSecondsRemaining % 60).padStart(2, '0')}. Please wait or reset your password.`
                           : authError.message}
                       </p>
                       {authError.action && !isLocked && (
-                        <p className="mt-1 text-sm text-red-700">{authError.action}</p>
+                        <p className="mt-1 text-sm text-red-700 dark:text-red-200">{authError.action}</p>
                       )}
                       {isLocked && (
                         <button
                           type="button"
                           onClick={() => switchMode('forgot-password')}
-                          className="mt-2 text-sm font-medium text-red-700 hover:text-red-800 underline"
+                          className="mt-2 text-sm font-medium text-red-700 dark:text-red-200 hover:text-red-800 dark:hover:text-red-100 underline"
                         >
                           Reset password
                         </button>
@@ -755,14 +755,14 @@ const LoginScreen: React.FC = () => {
 
               {/* Success message */}
               {successMessage && (
-                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                <div className="rounded-lg border border-green-200 dark:border-green-500/30 bg-green-50 dark:bg-green-500/20 p-4">
                   <div className="flex items-start gap-3">
                     <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-green-900">{successMessage.title}</p>
-                      <p className="mt-1 text-sm text-green-700">{successMessage.message}</p>
+                      <p className="text-sm font-medium text-green-900 dark:text-green-200">{successMessage.title}</p>
+                      <p className="mt-1 text-sm text-green-700 dark:text-green-200">{successMessage.message}</p>
                     </div>
                   </div>
                 </div>
@@ -771,14 +771,14 @@ const LoginScreen: React.FC = () => {
               {/* Remember me toggle - Login only */}
               {authMode === 'login' && (
                 <div className="flex items-center justify-between py-1">
-                  <span className="text-sm text-gray-700">Remember me for 30 days</span>
+                  <span className="text-sm text-gray-700 dark:text-slate-300">Remember me for 30 days</span>
                   <button
                     type="button"
                     role="switch"
                     aria-checked={rememberMe}
                     onClick={() => setRememberMe(!rememberMe)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                      rememberMe ? 'bg-primary-600' : 'bg-gray-200'
+                      rememberMe ? 'bg-primary-600' : 'bg-gray-200 dark:bg-slate-600'
                     }`}
                   >
                     <span
@@ -823,7 +823,7 @@ const LoginScreen: React.FC = () => {
             <div className="mt-6 text-sm">
               {authMode === 'login' ? (
                 <div className="space-y-3">
-                  <div className="text-gray-600">
+                  <div className="text-gray-600 dark:text-slate-300">
                     Don't have an account?{' '}
                     <button
                       onClick={() => switchMode('register')}
@@ -836,7 +836,7 @@ const LoginScreen: React.FC = () => {
                   <div>
                     <button
                       onClick={() => switchMode('forgot-password')}
-                      className="text-gray-600 hover:text-gray-900 font-medium"
+                      className="text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white font-medium"
                       type="button"
                     >
                       Forgot password?
@@ -844,7 +844,7 @@ const LoginScreen: React.FC = () => {
                   </div>
                 </div>
               ) : authMode === 'register' ? (
-                <div className="text-gray-600">
+                <div className="text-gray-600 dark:text-slate-300">
                   Already have an account?{' '}
                   <button
                     onClick={() => switchMode('login')}
@@ -857,7 +857,7 @@ const LoginScreen: React.FC = () => {
               ) : (
                 <button
                   onClick={() => switchMode('login')}
-                  className="text-gray-600 hover:text-gray-900 font-medium inline-flex items-center gap-1"
+                  className="text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white font-medium inline-flex items-center gap-1"
                   type="button"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -871,7 +871,7 @@ const LoginScreen: React.FC = () => {
         </div>
 
         {/* Right Column - Brand Panel (Hidden on mobile) */}
-        <div className="hidden lg:flex flex-col justify-center items-center relative bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 h-full p-8 lg:p-10 xl:p-12 shadow-2xl">
+        <div className="hidden lg:flex flex-col justify-center items-center relative bg-gradient-to-br from-[#07132d] via-[#0a1f47] to-[#123b7d] dark:from-[#2d0a4a] dark:via-[#1a2f6b] dark:to-[#0a6f92] h-full p-8 lg:p-10 xl:p-12 shadow-2xl">
           <div className="w-full max-w-lg">
             {/* Feature Showcase */}
             <div className="space-y-8">
