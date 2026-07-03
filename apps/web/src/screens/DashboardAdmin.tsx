@@ -507,7 +507,7 @@ const DashboardAdmin: React.FC = () => {
   if (branchesError || auditsError) {
     return (
       <DashboardLayout title="Dashboard">
-        <ErrorState message="Failed to load dashboard data." onRetry={() => {
+        <ErrorState message="Failed to load dashboard data." retry={() => {
           queryClient.invalidateQueries({ queryKey: ['branches'] })
           queryClient.invalidateQueries({ queryKey: ['audits'] })
         }} />

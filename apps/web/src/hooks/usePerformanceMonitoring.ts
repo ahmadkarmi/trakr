@@ -211,19 +211,10 @@ export function usePerformanceMonitoring() {
     }
   }, [metrics, getPerformanceScore])
 
-  const sendMetricsToAnalytics = useCallback(async (customData?: Record<string, any>) => {
+  const sendMetricsToAnalytics = useCallback(async (_customData?: Record<string, any>) => {
     // Only send if we have meaningful metrics
     const hasMetrics = metrics.fcp || metrics.lcp || metrics.fid !== null || metrics.cls !== null
     if (!hasMetrics) return
-
-    const payload = {
-      ...metrics,
-      performanceScore: getPerformanceScore(),
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-      ...customData
-    }
 
     // Disabled in development to reduce console noise
     // if (process.env.NODE_ENV === 'development') {
@@ -240,7 +231,7 @@ export function usePerformanceMonitoring() {
     // } catch (error) {
     //   console.error('Failed to send performance metrics:', error)
     // }
-  }, [metrics, getPerformanceScore])
+  }, [metrics])
 
   const measureCustomMetric = useCallback((name: string, startTime?: number) => {
     const endTime = performance.now()

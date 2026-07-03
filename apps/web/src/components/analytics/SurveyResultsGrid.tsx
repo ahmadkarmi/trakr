@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'
+import type { AgGridReactProps } from 'ag-grid-react'
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
@@ -138,10 +139,12 @@ const SurveyResultsGrid: React.FC<SurveyResultsGridProps> = ({
   return (
     <div className="space-y-4">
       <div className="ag-theme-alpine" style={{ height: 600, width: '100%' }}>
+        {/* Casts below: ag-grid-react 34.2 bundles its own ag-grid-community typings,
+            structurally incompatible with the root ag-grid-community 34.3 */}
         <AgGridReact
           rowData={results}
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
+          columnDefs={columnDefs as unknown as AgGridReactProps['columnDefs']}
+          defaultColDef={defaultColDef as unknown as AgGridReactProps['defaultColDef']}
           theme="legacy"
           pagination={true}
           paginationPageSize={50}

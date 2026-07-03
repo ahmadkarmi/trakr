@@ -12,7 +12,6 @@ import { ErrorToastContainer } from './components/ErrorToast'
 import { OfflineBanner } from './components/OfflineStatus'
 import { usePerformanceMonitoring } from './hooks/usePerformanceMonitoring'
 import { useDashboardPrefetch } from './hooks/useDashboardPrefetch'
-import { testMultipleBranchManagerSystem } from './test-integration'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import { useToast } from './hooks/useToast'
 import { ApiHealthBanner } from './components/ApiHealthBanner'
@@ -141,13 +140,6 @@ function App() {
   
   // Prefetch dashboard data while user is signing in
   useDashboardPrefetch()
-
-  // Make test function available globally for browser console testing
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).testMultipleBranchManagerSystem = testMultipleBranchManagerSystem
-    }
-  }, [])
 
   // Hydrate auth session (Supabase) and subscribe to changes
   useEffect(() => {

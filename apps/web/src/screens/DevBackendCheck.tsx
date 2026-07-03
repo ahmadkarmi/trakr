@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { BranchManagerAssignment } from '@trakr/shared'
 import { api } from '../utils/api'
 import DashboardLayout from '../components/DashboardLayout'
 
@@ -27,7 +28,7 @@ const DevBackendCheck: React.FC = () => {
         sample: branches.slice(0, 3).map(b => ({
           id: b.id.slice(0, 8),
           name: b.name,
-          location: b.location || 'N/A'
+          location: b.address || 'N/A'
         }))
       })
     } catch (error: any) {
@@ -83,7 +84,7 @@ const DevBackendCheck: React.FC = () => {
         type: 'Branch Manager Assignments',
         count: assignments.length,
         time: Math.round(endTime - startTime),
-        sample: assignments.map(a => ({
+        sample: assignments.map((a: BranchManagerAssignment) => ({
           branchId: a.branchId.slice(0, 8),
           managerId: a.managerId.slice(0, 8),
           assignedAt: new Date(a.assignedAt).toLocaleDateString()

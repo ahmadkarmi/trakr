@@ -6,7 +6,6 @@ interface Props {
   action: 'edit' | 'submit' | 'delete' | 'reopen' | 'view'
   children: ReactNode
   fallback?: ReactNode
-  tooltip?: string
 }
 
 /**
@@ -18,12 +17,11 @@ interface Props {
  *   <button onClick={handleSubmit}>Submit Audit</button>
  * </AuditActionGuard>
  */
-export function AuditActionGuard({ 
-  permissions, 
-  action, 
-  children, 
-  fallback = null,
-  tooltip 
+export function AuditActionGuard({
+  permissions,
+  action,
+  children,
+  fallback = null
 }: Props) {
   const canPerform = getPermission(permissions, action)
 

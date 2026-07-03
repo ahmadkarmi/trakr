@@ -6,11 +6,11 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 
-interface OptimisticUpdateOptions<TData, TVariables> {
+interface OptimisticUpdateOptions<TData, TVariables, TResult = TData> {
   queryKey: readonly unknown[]
-  mutationFn: (variables: TVariables) => Promise<TData>
+  mutationFn: (variables: TVariables) => Promise<TResult>
   updateFn: (oldData: TData | undefined, variables: TVariables) => TData
-  onSuccess?: (data: TData, variables: TVariables) => void
+  onSuccess?: (data: TResult, variables: TVariables) => void
   onError?: (error: unknown, variables: TVariables, context: { previousData?: TData }) => void
 }
 
@@ -27,13 +27,13 @@ interface OptimisticUpdateOptions<TData, TVariables> {
  * })
  * ```
  */
-export function useOptimisticUpdate<TData, TVariables>({
+export function useOptimisticUpdate<TData, TVariables, TResult = TData>({
   queryKey,
   mutationFn,
   updateFn,
   onSuccess,
   onError,
-}: OptimisticUpdateOptions<TData, TVariables>) {
+}: OptimisticUpdateOptions<TData, TVariables, TResult>) {
   const queryClient = useQueryClient()
 
   return useCallback(
@@ -80,7 +80,7 @@ export function useOptimisticToggle<TData extends { id: string }>(
   field: keyof TData,
   mutationFn: (id: string) => Promise<void>
 ) {
-  return useOptimisticUpdate<TData[], string>({
+  return useOptimisticUpdate<TData[], string, void>({
     queryKey,
     mutationFn,
     updateFn: (oldData, id) =>
@@ -97,7 +97,7 @@ export function useOptimisticAdd<TData>(
   queryKey: readonly unknown[],
   mutationFn: (item: Partial<TData>) => Promise<TData>
 ) {
-  return useOptimisticUpdate<TData[], Partial<TData>>({
+  return useOptimisticUpdate<TData[], Partial<TData>, TData>({
     queryKey,
     mutationFn,
     updateFn: (oldData, newItem) => [...(oldData || []), newItem as TData],
@@ -111,7 +111,7 @@ export function useOptimisticRemove<TData extends { id: string }>(
   queryKey: readonly unknown[],
   mutationFn: (id: string) => Promise<void>
 ) {
-  return useOptimisticUpdate<TData[], string>({
+  return useOptimisticUpdate<TData[], string, void>({
     queryKey,
     mutationFn,
     updateFn: (oldData, id) => oldData?.filter((item) => item.id !== id) || [],

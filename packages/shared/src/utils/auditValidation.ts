@@ -34,8 +34,6 @@ export function validateAuditCompletion(
 
       const raw = audit.responses?.[question.id]
       const response = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
-      const naReasonRaw = audit.naReasons?.[question.id]
-      const hasNaReason = typeof naReasonRaw === 'string' ? naReasonRaw.trim().length > 0 : !!naReasonRaw
 
       // Validity by type
       const qType = (question.type || QuestionType.YES_NO)
