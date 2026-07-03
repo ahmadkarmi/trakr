@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
 
     const { data: callerData } = await supabase
       .from('users')
-      .select('role, org_id')
+      .select('id, role, org_id')
       .or(`id.eq.${user.id},auth_user_id.eq.${user.id}`)
       .single()
 
@@ -54,13 +54,15 @@ Deno.serve(async (req) => {
       throw new Error('Admins can only resend invitations within their own organization')
     }
 
-    // Rate limit: max RESEND_RATE_LIMIT resends per org per hour
+    // Rate limit: max RESEND_RATE_LIMIT resends per org per hour, counted from
+    // logged resend events (user-row updated_at matched any profile edit)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     const { count: recentCount } = await supabase
-      .from('users')
+      .from('activity_logs')
       .select('*', { count: 'exact', head: true })
       .eq('org_id', targetUser.org_id)
-      .gte('updated_at', oneHourAgo)
+      .eq('action', 'invite_resent')
+      .gte('created_at', oneHourAgo)
 
     if ((recentCount ?? 0) >= RESEND_RATE_LIMIT) {
       return new Response(
@@ -85,9 +87,16 @@ Deno.serve(async (req) => {
 
     if (linkError) throw new Error(`Failed to generate invite link: ${linkError.message}`)
 
-    // If Resend is configured, send branded email; otherwise rely on Supabase default
+    // generateLink does NOT send email — without a configured sender the resend
+    // would silently deliver nothing, so fail loudly instead
     const resendKey = Deno.env.get('RESEND_API_KEY')
-    if (resendKey) {
+    if (!resendKey) {
+      return new Response(
+        JSON.stringify({ error: 'Email delivery is not configured (RESEND_API_KEY missing) — invitation was not sent', success: false }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
+      )
+    }
+    {
       const { Resend } = await import('npm:resend@2.0.0')
       const resend = new Resend(resendKey)
       const fromEmail = Deno.env.get('SMTP_SENDER_EMAIL') || 'noreply@yourdomain.com'
@@ -114,6 +123,15 @@ Deno.serve(async (req) => {
 
       if (emailError) throw new Error(`Failed to send email: ${emailError.message}`)
     }
+
+    await supabase.from('activity_logs').insert({
+      org_id: targetUser.org_id,
+      user_id: callerData.id,
+      action: 'invite_resent',
+      entity_type: 'user',
+      entity_id: userId,
+      details: `Resent invitation to ${targetUser.email}`,
+    })
 
     return new Response(
       JSON.stringify({ success: true, message: `Invitation resent to ${targetUser.email}` }),

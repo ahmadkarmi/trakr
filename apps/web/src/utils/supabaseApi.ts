@@ -64,7 +64,7 @@ const mapBranch = (row: Tables<'branches'>): Branch => ({
   address: row.address || undefined,
   orgId: row.org_id,
   managerId: row.manager_id || undefined,
-  isActive: (row as any).is_active ?? false,
+  isActive: (row as any).is_active !== false, // DB default is true; align with mapUser
   createdAt: new Date(row.created_at),
   updatedAt: new Date(row.updated_at),
 })
