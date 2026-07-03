@@ -70,6 +70,43 @@ export async function ensureSimpleSurvey(orgId: string, titleHint = 'E2E Survey'
   return { id: surveyId, title }
 }
 
+export async function ensureBranchManagerAssigned(managerUserId: string, branchId: string) {
+  const supa = getAdminClient()
+  const { data: exists, error: e1 } = await supa
+    .from('branch_manager_assignments')
+    .select('id')
+    .eq('branch_id', branchId)
+    .eq('manager_id', managerUserId)
+    .maybeSingle()
+  if (e1) throw e1
+  if (exists) return
+  const { error } = await supa
+    .from('branch_manager_assignments')
+    .insert({ branch_id: branchId, manager_id: managerUserId } as any)
+  if (error) throw error
+}
+
+export async function setAuditSubmitted(auditId: string, submittedBy: string) {
+  const supa = getAdminClient()
+  const { error } = await supa
+    .from('audits')
+    .update({
+      status: 'SUBMITTED',
+      submitted_by: submittedBy,
+      submitted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as any)
+    .eq('id', auditId)
+  if (error) throw error
+}
+
+export async function getAuditStatus(auditId: string): Promise<string | null> {
+  const supa = getAdminClient()
+  const { data, error } = await supa.from('audits').select('status').eq('id', auditId).maybeSingle()
+  if (error) throw error
+  return (data as any)?.status ?? null
+}
+
 export async function ensureAuditorAssignedToBranch(auditorUserId: string, branchId: string) {
   const supa = getAdminClient()
   const { error } = await supa.rpc('set_auditor_assignment', { p_user_id: auditorUserId, p_branch_ids: [branchId], p_zone_ids: [] })

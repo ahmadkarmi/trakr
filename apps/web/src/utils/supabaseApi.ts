@@ -1837,11 +1837,11 @@ export const supabaseApi = {
   async inviteUser(email: string, name: string, role: UserRole): Promise<User> {
     const supabase = await getSupabase()
     
-    // Get current user's org
+    // Get current user's org (auth_user_id → id → email tolerant lookup)
     const { data: { user: currentUser } } = await supabase.auth.getUser()
     if (!currentUser) throw new Error('Not authenticated')
-    
-    const { data: userData } = await supabase.from('users').select('org_id').eq('id', currentUser.id).single()
+
+    const userData = await resolveCurrentUserProfile(supabase, currentUser.id, currentUser.email)
     if (!userData) throw new Error('User not found')
 
     // Check if user already exists
