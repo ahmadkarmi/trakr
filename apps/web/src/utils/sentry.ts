@@ -31,9 +31,9 @@ export function initSentry() {
     environment: ENVIRONMENT,
     release: RELEASE,
 
-    // Send default PII data (IP address, user agent) for better debugging
-    // Note: User context (email, ID) is already sent separately
-    sendDefaultPii: true,
+    // Do not send default PII (IP address, user agent) — user context is set
+    // explicitly via setSentryUser() after login, which is sufficient for debugging
+    sendDefaultPii: false,
 
     // Performance Monitoring
     integrations: [
