@@ -1,0 +1,14 @@
+User-agent: *
+Disallow: /dashboard/
+Disallow: /audit/
+Disallow: /manage/
+Disallow: /analytics
+Disallow: /activity/
+Disallow: /notifications
+Disallow: /settings
+Disallow: /profile
+Disallow: /search
+Disallow: /onboarding/
+
+Allow: /
+Allow: /login
