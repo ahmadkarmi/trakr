@@ -46,7 +46,8 @@ const mapUser = (row: Tables<'users'>): User => ({
   name: (row as any).full_name || displayNameFromEmail(row.email),
   email: row.email,
   role: mapUserRole(row.role as Enums<'user_role'>),
-  orgId: row.org_id,
+  // users.org_id is nullable in the DB; '' keeps falsy semantics for org checks
+  orgId: row.org_id ?? '',
   branchId: row.branch_id || undefined,
   signatureUrl: (row as any).signature_url || undefined,
   avatarUrl: (row as any).avatar_url || undefined,
@@ -896,8 +897,8 @@ export const supabaseApi = {
       if (upErr) throw upErr
       const { data: urlData } = supabase.storage.from('audit-photos').getPublicUrl(path)
       publicUrl = urlData.publicUrl
-    } catch {
-      // Fallback: keep original URL if upload fails (dev)
+    } catch (uploadErr) {
+      throw new Error(`Photo upload failed: ${uploadErr instanceof Error ? uploadErr.message : 'Storage error'}`)
     }
     const now = new Date().toISOString()
     const { data, error } = await supabase
@@ -1732,34 +1733,6 @@ export const supabaseApi = {
     if (error) throw error
     return mapUser(data as any)
   },
-  async createUser(payload: {
-    id: string
-    email: string
-    name: string
-    role: string
-    orgId: string | null
-    isActive: boolean
-  }): Promise<User> {
-    const supabase = await getSupabase()
-    const { data, error } = await supabase
-      .from('users')
-      .insert({
-        id: payload.id,
-        email: payload.email,
-        full_name: payload.name,
-        role: payload.role,
-        org_id: payload.orgId,
-        is_active: payload.isActive,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select('*')
-      .single()
-    
-    if (error) throw error
-    return mapUser(data as Tables<'users'>)
-  },
-
   async updateUser(id: string, updates: Partial<{ name: string; email: string; role: UserRole; isActive: boolean; org_id: string; phone: string }>) {
     const supabase = await getSupabase()
 
@@ -1911,22 +1884,11 @@ export const supabaseApi = {
 
   async resendInvitation(userId: string): Promise<void> {
     const supabase = await getSupabase()
-    
-    // Get user details
-    const { data: user } = await supabase.from('users').select('email, full_name').eq('id', userId).single()
-    if (!user) throw new Error('User not found')
-    
-    // Note: Actual email sending requires either:
-    // 1. Supabase Auth Admin API to resend magic link
-    // 2. Custom email service (SendGrid, Resend, etc.)
-    // 3. Edge Function to handle invitation emails
-    
-    // For now, we'll log this action (can be picked up by monitoring)
-    logger.info(`Resend invitation: ${user.email}`, { context: 'SupabaseAPI' })
-    
-    // In production, implement one of:
-    // await supabase.auth.admin.generateLink({ type: 'magiclink', email: user.email })
-    // await sendInvitationEmail(user.email, user.full_name)
+    const { data, error } = await supabase.functions.invoke('invite-user-resend', {
+      body: { userId },
+    })
+    if (error) throw new Error(error.message || 'Failed to resend invitation')
+    if (data?.error) throw new Error(data.error)
   },
 
   // ===================================

@@ -102,14 +102,6 @@ export function useAuditStateMachine(
         permissions.warningType = 'info'
         permissions.nextAction = null
         break
-
-      case AuditStatus.FINALIZED:
-        permissions.canEdit = false
-        permissions.canViewOnly = true
-        permissions.showWarning = 'This audit has been finalized and locked. No changes can be made.'
-        permissions.warningType = 'info'
-        permissions.nextAction = null
-        break
     }
   }
 
@@ -126,7 +118,7 @@ export function useAuditStateMachine(
 
       case AuditStatus.SUBMITTED:
         permissions.canViewOnly = true
-        permissions.canEdit = false // Managers review, don't edit
+        permissions.canEdit = false
         permissions.nextAction = 'Review this audit and approve or reject'
         permissions.warningType = 'info'
         break
@@ -142,30 +134,16 @@ export function useAuditStateMachine(
         permissions.showWarning = 'You approved this audit.'
         permissions.warningType = 'info'
         break
-
-      case AuditStatus.FINALIZED:
-        permissions.canViewOnly = true
-        permissions.showWarning = 'This audit has been finalized.'
-        permissions.warningType = 'info'
-        break
     }
   }
 
   // ADMIN/SUPER_ADMIN permissions - can do anything (but should respect workflow)
   if (userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN) {
-    // Admins can view everything
     permissions.canViewOnly = true
-    
-    // Admins can override in special cases (but UI should make this clear)
+
     if (currentStatus === AuditStatus.DRAFT || currentStatus === AuditStatus.IN_PROGRESS) {
       permissions.canEdit = true
       permissions.canDelete = true
-    }
-    
-    if (currentStatus === AuditStatus.FINALIZED) {
-      permissions.canReopen = true
-      permissions.showWarning = 'This audit is finalized. Only admins can reopen it.'
-      permissions.warningType = 'warning'
     }
   }
 
@@ -183,7 +161,6 @@ function getStatusLabel(status: AuditStatus): string {
     [AuditStatus.SUBMITTED]: 'Submitted for Review',
     [AuditStatus.REJECTED]: 'Rejected - Needs Revision',
     [AuditStatus.APPROVED]: 'Approved',
-    [AuditStatus.FINALIZED]: 'Finalized',
   }
   
   return labels[status] || status

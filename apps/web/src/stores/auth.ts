@@ -45,48 +45,6 @@ interface AuthState {
   isManualSignOut: boolean
 }
 
-// Mock users for different roles
-const mockUsers: Record<UserRole, User> = {
-  [UserRole.AUDITOR]: {
-    id: 'user-1',
-    name: 'John Auditor',
-    email: 'auditor@trakr.com',
-    role: UserRole.AUDITOR,
-    orgId: 'org-1',
-    branchId: 'branch-1',
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-  },
-  [UserRole.BRANCH_MANAGER]: {
-    id: 'user-2',
-    name: 'Jane Manager',
-    email: 'branchmanager@trakr.com',
-    role: UserRole.BRANCH_MANAGER,
-    orgId: 'org-1',
-    branchId: 'branch-1',
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-  },
-  [UserRole.ADMIN]: {
-    id: 'user-3',
-    name: 'Admin User',
-    email: 'admin@trakr.com',
-    role: UserRole.ADMIN,
-    orgId: 'org-1',
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-  },
-  [UserRole.SUPER_ADMIN]: {
-    id: 'user-4',
-    name: 'Super Admin',
-    email: 'superadmin@trakr.com',
-    role: UserRole.SUPER_ADMIN,
-    orgId: 'org-1',
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-  },
-}
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, _get) => ({
@@ -192,18 +150,9 @@ export const useAuthStore = create<AuthState>()(
           
           set({ user, isAuthenticated: true, isLoading: false })
         } catch (e) {
-          // Last-resort fallback to local mock identity (development only)
-          if (import.meta.env.DEV) {
-            const fallback = mockUsers[role]
-            preloadDashboardChunk(fallback.role)
-            set({ user: fallback, isAuthenticated: true, isLoading: false })
-            logger.error('Role-based login failed, using mock fallback (DEV only)', e, { context: 'AuthStore' })
-          } else {
-            // In production, fail loudly instead of masking the issue
-            set({ isLoading: false })
-            logger.error('Role-based login failed in production', e, { context: 'AuthStore' })
-            throw e
-          }
+          set({ isLoading: false })
+          logger.error('Role-based login failed', e, { context: 'AuthStore' })
+          throw e
         }
       },
 
@@ -235,7 +184,7 @@ export const useAuthStore = create<AuthState>()(
               appUser = allUsers.value.find(u => (u.email || '').toLowerCase() === email.toLowerCase()) || null
             }
           } catch (parallelError) {
-            console.warn('[Auth] Parallel lookup failed, trying sequential', parallelError)
+            logger.warn('Parallel user lookup failed, trying sequential', { context: 'auth', data: parallelError })
             // Fallback to sequential lookup
             try {
               appUser = await api.getUserById(authUser.id)
