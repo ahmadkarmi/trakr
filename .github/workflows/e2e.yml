@@ -1,18 +1,13 @@
 name: E2E Tests
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'apps/web/**'
-      - 'packages/shared/**'
-      - '.github/workflows/e2e.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'apps/web/**'
       - 'packages/shared/**'
       - '.github/workflows/e2e.yml'
+  workflow_dispatch:
 
 # The suite seeds and mutates a single shared Supabase database; two runs
 # executing at once corrupt each other's fixtures. Serialize repo-wide.
