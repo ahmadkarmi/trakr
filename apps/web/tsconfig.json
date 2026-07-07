@@ -22,7 +22,6 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Path mapping */
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@trakr/shared": ["../../packages/shared/src"]
