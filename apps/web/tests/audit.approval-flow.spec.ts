@@ -1,6 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
 import {
-  getFirstOrganization,
   getUserByEmail,
   ensureBranchForOrg,
   ensureSimpleSurvey,
@@ -24,15 +23,17 @@ test.describe('Audit approval workflow', () => {
   let managerId: string
 
   test.beforeAll(async () => {
-    const org = await getFirstOrganization()
-    if (!org) throw new Error('No organization seeded')
-    orgId = org.id
-
     const auditor = await getUserByEmail('auditor@trakr.com')
     const manager = await getUserByEmail('branchmanager@trakr.com')
     if (!auditor || !manager) throw new Error('Seed users missing')
+    if (!manager.org_id) throw new Error('branchmanager@trakr.com has no org_id')
     auditorId = auditor.id
     managerId = manager.id
+    // Derive org from the manager's own row, not "oldest org in the table" —
+    // the seed can leave multiple same-named orgs behind across runs, and
+    // getFirstOrganization() has no guarantee of matching whichever org the
+    // fixed dev-login accounts currently belong to.
+    orgId = manager.org_id
 
     const branch = await ensureBranchForOrg(orgId, 'E2E Approval Branch')
     branchId = branch.id
