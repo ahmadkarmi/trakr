@@ -19,6 +19,7 @@ import { useZones } from '@/hooks/data/useZones'
 import { useAudits } from '@/hooks/data/useAudits'
 import { useAssignments } from '@/hooks/data/useAssignments'
 import InfoBadge from '@/components/InfoBadge'
+import ErrorState from '../components/ErrorState'
 import { useOrganization } from '../contexts/OrganizationContext'
 
 const ManageAssignments: React.FC = () => {
@@ -29,11 +30,11 @@ const ManageAssignments: React.FC = () => {
   const assignBranchMut = useAssignBranchToAuditor()
   const clearManualMut = useClearManualAssignment()
   const { effectiveOrgId } = useOrganization()
-  const { data: branches = [] } = useBranches(effectiveOrgId)
-  const { data: zones = [] } = useZones(effectiveOrgId)
-  const { data: users = [] } = useUsers()
-  const { data: assignments = [] } = useAssignments(effectiveOrgId)
-  const { data: audits = [] } = useAudits('assignments')
+  const { data: branches = [], isError: branchesError } = useBranches(effectiveOrgId)
+  const { data: zones = [], isError: zonesError } = useZones(effectiveOrgId)
+  const { data: users = [], isError: usersError } = useUsers()
+  const { data: assignments = [], isError: assignmentsError } = useAssignments(effectiveOrgId)
+  const { data: audits = [], isError: auditsError } = useAudits('assignments')
 
   const auditors = React.useMemo(() => users.filter(u => u.role === UserRole.AUDITOR), [users])
   const auditStatusByBranchId = React.useMemo<Record<string, AuditStatus | undefined>>(() => {
@@ -345,6 +346,20 @@ const ManageAssignments: React.FC = () => {
     branchHasReassignableOpenAudit,
     requestManualConfirm: (branchId, targetUserId, via) => setManualConfirm({ open: true, branchId, targetUserId, via }),
   })
+
+  if (branchesError || zonesError || usersError || assignmentsError || auditsError) {
+    return (
+      <DashboardLayout title="Assign Auditors">
+        <ErrorState message="Failed to load assignment data." retry={() => {
+          qc.invalidateQueries({ queryKey: QK.BRANCHES(effectiveOrgId) })
+          qc.invalidateQueries({ queryKey: QK.ZONES(effectiveOrgId) })
+          qc.invalidateQueries({ queryKey: ['users', effectiveOrgId] })
+          qc.invalidateQueries({ queryKey: QK.ASSIGNMENTS(effectiveOrgId) })
+          qc.invalidateQueries({ queryKey: QK.AUDITS('assignments') })
+        }} />
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout title="Assign Auditors">
