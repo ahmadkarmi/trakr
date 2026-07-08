@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Notification, NotificationType, User, UserRole } from '@trakr/shared'
 import { useAuthStore } from '../stores/auth'
 import { api } from '../utils/api'
@@ -9,9 +9,11 @@ import { BellIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, XCircleI
 import { SkeletonList } from '@/components/Skeleton'
 import { useOrganization } from '../contexts/OrganizationContext'
 import { useNotificationsEngine } from '../notifications/useNotifications'
+import ErrorState from '../components/ErrorState'
 
 const NotificationsScreen: React.FC = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const engine = useNotificationsEngine({ limit: 100, refetchIntervalMs: 30000 })
 
   // Data is provided by the engine
@@ -130,6 +132,20 @@ const NotificationsScreen: React.FC = () => {
   }, [notifications])
 
   const unreadCount = engine.unreadCount
+
+  if (engine.isError) {
+    return (
+      <DashboardLayout title="Notifications">
+        <ErrorState message="Failed to load notifications." retry={() => {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          queryClient.invalidateQueries({ queryKey: ['admin-all-notifications'] })
+          queryClient.invalidateQueries({ queryKey: ['audits'] })
+          queryClient.invalidateQueries({ queryKey: ['branches'] })
+          queryClient.invalidateQueries({ queryKey: ['users'] })
+        }} />
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout title="Notifications">

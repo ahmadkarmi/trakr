@@ -175,66 +175,6 @@ if (!validation.valid) {
 
 ---
 
-## 🎣 useImageUpload Hook
-
-**File:** `src/hooks/useImageUpload.ts`
-
-Handles image uploads with automatic compression:
-
-```tsx
-import { useImageUpload } from '@/hooks/useImageUpload'
-
-function UploadComponent() {
-  const {
-    isUploading,
-    progress,
-    error,
-    compressedFile,
-    compressionResult,
-    processImage,
-    processImages,
-    reset,
-  } = useImageUpload({
-    compression: {
-      maxWidth: 1920,
-      maxHeight: 1080,
-      quality: 0.8,
-    },
-    autoCompress: true,
-    showToast: true,
-  })
-
-  const handleUpload = async (file: File) => {
-    const result = await processImage(file)
-    if (result) {
-      // Upload result.file to server
-    }
-  }
-
-  return (
-    <div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => e.target.files && handleUpload(e.target.files[0])}
-      />
-      {isUploading && <progress value={progress} max={100} />}
-      {error && <p className="text-red-600">{error}</p>}
-    </div>
-  )
-}
-```
-
-### Features
-
-✅ **Auto-compression** - Compresses before upload by default  
-✅ **Progress tracking** - Real-time progress updates  
-✅ **Toast notifications** - Shows compression savings  
-✅ **Error handling** - Automatic validation and error messages  
-✅ **Batch processing** - Handle multiple files efficiently
-
----
-
 ## 📊 Performance Impact
 
 ### Compression Stats
@@ -270,7 +210,7 @@ Original: 5.2 MB → Compressed: 1.1 MB (79% smaller)
 ### Upload with Compression
 
 ```tsx
-import { compressImage } from '../utils/imageCompression'
+import { compressImage, validateImageFile } from '../utils/imageCompression'
 import { LazyImage } from '../components/LazyImage'
 import toast from 'react-hot-toast'
 
@@ -282,6 +222,13 @@ const onFilesSelected = async (e) => {
   let totalSaved = 0
   
   for (const file of Array.from(files)) {
+    // Reject oversized/unsupported files before spending time compressing them
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      toast.error(`Skipped ${file.name}: ${validation.error}`)
+      continue
+    }
+
     // Compress before upload
     const result = await compressImage(file, {
       maxWidth: 1920,
@@ -506,8 +453,7 @@ const imageLoadTime = performance.getEntriesByType('resource')
 
 - [x] LazyImage component created
 - [x] Image compression utility implemented
-- [x] useImageUpload hook created
-- [x] AuditWizard updated with compression
+- [x] AuditWizard updated with compression and validation
 - [x] Photos display with lazy loading
 - [x] Error handling implemented
 - [x] Toast notifications for compression stats

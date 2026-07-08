@@ -32,6 +32,7 @@ export interface NotificationsEngine {
   // helpers
   isUUID: (id: string) => boolean
   loading: boolean
+  isError: boolean
   hasMore: boolean
   loadMore: () => void
   loadingMore: boolean
@@ -440,6 +441,7 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
   const unreadCount = React.useMemo(() => uiNotifications.filter(n => !n.isRead).length, [uiNotifications])
 
   const loading = !!(unreadQuery.isLoading || selfInfQuery.isLoading || (isSuperAdmin || isAdmin ? adminInfQuery.isLoading : false) || auditsQuery.isLoading || branchesQuery.isLoading || usersQuery.isLoading)
+  const isError = !!(unreadQuery.isError || selfInfQuery.isError || (isSuperAdmin || isAdmin ? adminInfQuery.isError : false) || auditsQuery.isError || branchesQuery.isError || usersQuery.isError)
   const hasMore = (isSuperAdmin || isAdmin) ? !!adminInfQuery.hasNextPage : !!selfInfQuery.hasNextPage
   const loadingMore = (isSuperAdmin || isAdmin) ? !!adminInfQuery.isFetchingNextPage : !!selfInfQuery.isFetchingNextPage
   const loadMore = React.useCallback(() => {
@@ -471,6 +473,7 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
     markAllAsRead: () => markAllAsReadMutation.mutate(),
     isUUID,
     loading,
+    isError,
     hasMore,
     loadMore,
     loadingMore,

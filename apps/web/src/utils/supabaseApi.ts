@@ -437,7 +437,9 @@ export const supabaseApi = {
         try {
           const { data: auth } = await supabase.auth.getUser()
           await this.createActivityLog(auth?.user?.id || '', 'AUDITOR_UNASSIGN_BLOCKED_ACTIVE_BRANCH', `Attempted to unassign auditor ${userId} from active branches: ${activeIds.join(', ')}`, 'user', userId)
-        } catch {}
+        } catch (e) {
+          logger.warn('Failed to write activity log', { context: 'setAuditorAssignment', data: e })
+        }
         throw new Error('Cannot remove auditors from an active branch. Deactivate the branch first.')
       }
     }
@@ -623,7 +625,9 @@ export const supabaseApi = {
         try {
           const { data: auth } = await supabase.auth.getUser()
           await this.createActivityLog(auth?.user?.id || '', 'BRANCH_ACTIVATION_BLOCKED_NO_AUDITOR', 'Activation blocked: no assigned auditors (direct or via zone).', 'branch', id)
-        } catch {}
+        } catch (e) {
+          logger.warn('Failed to write activity log', { context: 'updateBranch', data: e })
+        }
         throw new Error('Cannot activate branch without at least one assigned auditor (directly or via zone).')
       }
     }
@@ -1392,7 +1396,9 @@ export const supabaseApi = {
             try {
               const { data: auth } = await supabase.auth.getUser()
               await this.createActivityLog(auth?.user?.id || '', 'ZONE_CHANGE_BLOCKED_ACTIVE_BRANCHES', `Zone update would uncover active branches: ${names}`, 'zone', id)
-            } catch {}
+            } catch (e) {
+              logger.warn('Failed to write activity log', { context: 'updateZone', data: e })
+            }
             throw new Error(`Zone change blocked. These active branches would have no auditors: ${names}. Assign auditors or deactivate them first.`)
           }
         }
@@ -1674,7 +1680,9 @@ export const supabaseApi = {
         orgId || undefined,
         { surveyId: id }
       )
-    } catch {}
+    } catch (e) {
+      logger.warn('Failed to write activity log', { context: 'updateSurvey.publish', data: e })
+    }
   },
   async deleteSurvey(id: string): Promise<void> {
     const supabase = await getSupabase()
@@ -1726,7 +1734,9 @@ export const supabaseApi = {
         try {
           const { data: auth } = await supabase.auth.getUser()
           await this.createActivityLog(auth?.user?.id || '', 'AUDITOR_ROLE_CHANGE_BLOCKED_ACTIVE_BRANCHES', `Blocked role change for auditor; uncovered branches: ${res.names.join(', ')}`, 'user', id)
-        } catch {}
+        } catch (e) {
+          logger.warn('Failed to write activity log', { context: 'updateUser.roleChange', data: e })
+        }
         throw new Error(`Cannot change role; this would leave these active branches without auditors: ${res.names.join(', ')}`)
       }
     }
@@ -1736,7 +1746,9 @@ export const supabaseApi = {
         try {
           const { data: auth } = await supabase.auth.getUser()
           await this.createActivityLog(auth?.user?.id || '', 'AUDITOR_DISABLE_BLOCKED_ACTIVE_BRANCHES', `Blocked disabling auditor; uncovered branches: ${res.names.join(', ')}`, 'user', id)
-        } catch {}
+        } catch (e) {
+          logger.warn('Failed to write activity log', { context: 'updateUser.disable', data: e })
+        }
         throw new Error(`Cannot disable this auditor; this would leave these active branches without auditors: ${res.names.join(', ')}`)
       }
     }
@@ -1846,7 +1858,9 @@ export const supabaseApi = {
         try {
           const { data: auth } = await supabase.auth.getUser()
           await this.createActivityLog(auth?.user?.id || '', 'AUDITOR_DELETE_BLOCKED_ACTIVE_BRANCHES', `Blocked auditor deletion; uncovered branches: ${res.names.join(', ')}`, 'user', userId)
-        } catch {}
+        } catch (e) {
+          logger.warn('Failed to write activity log', { context: 'deleteUser', data: e })
+        }
         throw new Error(`Cannot delete this auditor; this would leave these active branches without auditors: ${res.names.join(', ')}`)
       }
     }
@@ -2009,7 +2023,9 @@ export const supabaseApi = {
           .eq('auth_user_id', currentUid)
           .maybeSingle()
         mappedAppUserId = appUser?.id
-      } catch {}
+      } catch (e) {
+        logger.warn('Failed to resolve mapped app user id', { context: 'getNotifications', data: e })
+      }
     }
 
     let query = supabase
@@ -2098,7 +2114,9 @@ export const supabaseApi = {
           .eq('auth_user_id', currentUid)
           .maybeSingle()
         mappedAppUserId = appUser?.id
-      } catch {}
+      } catch (e) {
+        logger.warn('Failed to resolve mapped app user id', { context: 'getUnreadNotificationCount', data: e })
+      }
     }
     const query = supabase
       .from('notifications')
@@ -2137,7 +2155,9 @@ export const supabaseApi = {
           .eq('auth_user_id', currentUid)
           .maybeSingle()
         mappedAppUserId = appUser?.id
-      } catch {}
+      } catch (e) {
+        logger.warn('Failed to resolve mapped app user id', { context: 'markAllNotificationsAsRead', data: e })
+      }
     }
     const query = supabase
       .from('notifications')
@@ -2191,7 +2211,9 @@ export const supabaseApi = {
       if (appUser && (appUser as any).auth_user_id) {
         targetAuthUserId = (appUser as any).auth_user_id as string
       }
-    } catch {}
+    } catch (e) {
+      logger.warn('Failed to resolve mapped auth user id', { context: 'createNotification', data: e })
+    }
 
     // First try inserting with auth user id (preferred)
     let insert = await supabase

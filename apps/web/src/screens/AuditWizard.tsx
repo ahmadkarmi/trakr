@@ -9,7 +9,7 @@ import { QK } from '../utils/queryKeys'
 import { PhotoIcon, CheckIcon, XMarkIcon, ExclamationTriangleIcon, XCircleIcon, CheckCircleIcon, ChevronLeftIcon, EllipsisHorizontalIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../stores/auth'
 import { useBranches } from '../hooks/data/useBranches'
-import { compressImage } from '../utils/imageCompression'
+import { compressImage, validateImageFile } from '../utils/imageCompression'
 import { LazyImage } from '../components/LazyImage'
 import toast from 'react-hot-toast'
 
@@ -414,6 +414,11 @@ const AuditWizard: React.FC = () => {
     try {
       for (const file of Array.from(files)) {
         try {
+          const validation = validateImageFile(file)
+          if (!validation.valid) {
+            addAlert('error', `Skipped ${file.name}: ${validation.error}`)
+            continue
+          }
           // Compress image before upload
           const result = await compressImage(file, {
             maxWidth: 1920,
