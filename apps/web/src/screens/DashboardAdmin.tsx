@@ -1,5 +1,5 @@
   // (moved helpers inside component)
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useAuthStore } from '../stores/auth'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -199,6 +199,74 @@ const DashboardAdmin: React.FC = () => {
     staleTime: 30_000,
     refetchInterval: 30_000,
   })
+
+  // Recent Activity feed: derive from the 10 most recently updated audits.
+  // Memoized so an unrelated re-render (e.g. typing in a filter) doesn't re-sort
+  // the full audits array and re-run 4 linear .find() calls per row.
+  const activityItems = useMemo(() => {
+    const branchById = new Map(branches.map(b => [b.id, b]))
+    const userById = new Map(users.map(u => [u.id, u]))
+
+    const recentAudits = [...audits]
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 10)
+
+    return recentAudits.map((audit) => {
+      const branch = branchById.get(audit.branchId)
+      const auditor = userById.get(audit.assignedTo)
+
+      let action = ''
+      let actor = ''
+      let timestamp = new Date(audit.updatedAt)
+
+      if (audit.status === AuditStatus.APPROVED && audit.approvedBy) {
+        const approver = userById.get(audit.approvedBy)
+        action = '✅ Approved'
+        actor = approver?.name || 'Unknown Manager'
+        timestamp = audit.approvedAt ? new Date(audit.approvedAt) : timestamp
+      } else if (audit.status === AuditStatus.REJECTED && audit.rejectedBy) {
+        const rejecter = userById.get(audit.rejectedBy)
+        action = '❌ Rejected'
+        actor = rejecter?.name || 'Unknown Manager'
+        timestamp = audit.rejectedAt ? new Date(audit.rejectedAt) : timestamp
+      } else if (audit.status === AuditStatus.SUBMITTED && audit.submittedBy) {
+        const submitter = userById.get(audit.submittedBy)
+        action = '📤 Submitted for Approval'
+        actor = submitter?.name || auditor?.name || 'Unknown'
+        timestamp = audit.submittedAt ? new Date(audit.submittedAt) : timestamp
+      } else if (audit.status === AuditStatus.COMPLETED) {
+        action = '✔️ Completed'
+        const completedByUser = userById.get((audit as any).completedBy)
+        actor = completedByUser?.name || auditor?.name || 'Unknown Auditor'
+      } else if (audit.status === AuditStatus.IN_PROGRESS) {
+        action = '🔄 In Progress'
+        const startedByUser = userById.get((audit as any).startedBy)
+        actor = startedByUser?.name || auditor?.name || 'Unknown Auditor'
+      } else if (audit.status === AuditStatus.DRAFT) {
+        action = '📝 Draft Created'
+        const creator = userById.get((audit as any).createdBy)
+        actor = (audit as any).createdOrigin === 'SYSTEM_SCHEDULED'
+          ? 'System'
+          : (creator?.name || auditor?.name || 'Unassigned')
+      } else {
+        action = '📋 Updated'
+        actor = auditor?.name || 'Unknown'
+      }
+
+      return {
+        id: audit.id,
+        action,
+        actor,
+        branch: branch?.name || 'Unknown Branch',
+        timestamp,
+        audit,
+      }
+    })
+  }, [audits, branches, users])
+
+  // Auditor filter dropdown options: avoid re-filtering the full users list on every
+  // unrelated re-render (e.g. typing in the date filter).
+  const auditorOptions = useMemo(() => users.filter(u => u.role === UserRole.AUDITOR), [users])
 
   // Get all branch manager assignments to identify branches without managers
   // NOTE: RLS policies automatically filter by org, no need to pass orgId
@@ -788,68 +856,10 @@ const DashboardAdmin: React.FC = () => {
             </div>
             <div className="card-body p-0">
               {(() => {
-                // Derive activity from recent audits with detailed information
-                const recentAudits = [...audits]
-                  .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-                  .slice(0, 10)
-                
-                if (recentAudits.length === 0) {
+                if (activityItems.length === 0) {
                   return <p className="text-gray-500 text-center py-8">No recent activity.</p>
                 }
 
-                // Build activity items with detailed info
-                const activityItems = recentAudits.map((audit) => {
-                  const branch = branches.find(b => b.id === audit.branchId)
-                  const auditor = users.find(u => u.id === audit.assignedTo)
-                  
-                  let action = ''
-                  let actor = ''
-                  let timestamp = new Date(audit.updatedAt)
-                  
-                  if (audit.status === AuditStatus.APPROVED && audit.approvedBy) {
-                    const approver = users.find(u => u.id === audit.approvedBy)
-                    action = '✅ Approved'
-                    actor = approver?.name || 'Unknown Manager'
-                    timestamp = audit.approvedAt ? new Date(audit.approvedAt) : timestamp
-                  } else if (audit.status === AuditStatus.REJECTED && audit.rejectedBy) {
-                    const rejecter = users.find(u => u.id === audit.rejectedBy)
-                    action = '❌ Rejected'
-                    actor = rejecter?.name || 'Unknown Manager'
-                    timestamp = audit.rejectedAt ? new Date(audit.rejectedAt) : timestamp
-                  } else if (audit.status === AuditStatus.SUBMITTED && audit.submittedBy) {
-                    const submitter = users.find(u => u.id === audit.submittedBy)
-                    action = '📤 Submitted for Approval'
-                    actor = submitter?.name || auditor?.name || 'Unknown'
-                    timestamp = audit.submittedAt ? new Date(audit.submittedAt) : timestamp
-                  } else if (audit.status === AuditStatus.COMPLETED) {
-                    action = '✔️ Completed'
-                    const completedByUser = users.find(u => u.id === (audit as any).completedBy)
-                    actor = completedByUser?.name || auditor?.name || 'Unknown Auditor'
-                  } else if (audit.status === AuditStatus.IN_PROGRESS) {
-                    action = '🔄 In Progress'
-                    const startedByUser = users.find(u => u.id === (audit as any).startedBy)
-                    actor = startedByUser?.name || auditor?.name || 'Unknown Auditor'
-                  } else if (audit.status === AuditStatus.DRAFT) {
-                    action = '📝 Draft Created'
-                    const creator = users.find(u => u.id === (audit as any).createdBy)
-                    actor = (audit as any).createdOrigin === 'SYSTEM_SCHEDULED'
-                      ? 'System'
-                      : (creator?.name || auditor?.name || 'Unassigned')
-                  } else {
-                    action = '📋 Updated'
-                    actor = auditor?.name || 'Unknown'
-                  }
-                  
-                  return {
-                    id: audit.id,
-                    action,
-                    actor,
-                    branch: branch?.name || 'Unknown Branch',
-                    timestamp,
-                    audit,
-                  }
-                })
-                
                 return (
                   <ResponsiveTable
                     items={activityItems}
@@ -1123,7 +1133,7 @@ const DashboardAdmin: React.FC = () => {
                         <label className="label">Auditor</label>
                         <select className="input h-9" value={auditorFilter} onChange={(e) => setAuditorFilter(e.target.value)}>
                           <option value="all">All</option>
-                          {users.filter(u => u.role === UserRole.AUDITOR).map(u => (
+                          {auditorOptions.map(u => (
                             <option key={u.id} value={u.id}>{u.name}</option>
                           ))}
                         </select>
