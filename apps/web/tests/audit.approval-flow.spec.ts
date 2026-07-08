@@ -9,6 +9,7 @@ import {
   setAuditSubmitted,
   getAuditStatus,
   deleteAudits,
+  getUserClient,
 } from './helpers/e2eSetup'
 
 // Core review workflow: SUBMITTED → APPROVED and SUBMITTED → REJECTED,
@@ -119,5 +120,48 @@ test.describe('Audit approval workflow', () => {
     await expect
       .poll(async () => getAuditStatus(auditId), { timeout: 30_000, intervals: [1_000] })
       .toBe('REJECTED')
+  })
+
+  test('a second approval call on an already-decided audit is rejected, not silently applied', async ({ page }) => {
+    // Regression test for the set_audit_approval race condition: the RPC
+    // used to blindly UPDATE regardless of current status, so a second
+    // concurrent approve/reject call would silently overwrite the first.
+    // Heavier than its siblings (full UI approval + a second authenticated
+    // client + RPC round trip) — give it more room than the describe-level
+    // 120s so a slow run doesn't hit afterAll cleanup mid-flight and race
+    // its own assertions.
+    test.setTimeout(180_000)
+    await loginAsBranchManager(page)
+    const auditId = await openSubmittedAudit(page)
+
+    const approveButton = page.getByRole('button', { name: /Approve/i }).first()
+    await expect(approveButton).toBeVisible({ timeout: 20_000 })
+    await approveButton.click()
+    const modal = page.getByRole('dialog')
+    await expect(modal).toBeVisible({ timeout: 10_000 })
+    await modal.getByPlaceholder(/Jane Manager/i).fill('First Approval')
+    await modal.getByRole('button', { name: /^Approve|Approving/i }).click()
+
+    await expect
+      .poll(async () => getAuditStatus(auditId), { timeout: 30_000, intervals: [1_000] })
+      .toBe('APPROVED')
+
+    // Simulate a second, racing approval call directly against the RPC —
+    // as a real authenticated manager session, exercising the exact same
+    // auth.uid()-gated code path the UI's mutation does.
+    const managerClient = await getUserClient('branchmanager@trakr.com', 'Password@123')
+    const { error } = await managerClient.rpc('set_audit_approval', {
+      p_audit_id: auditId,
+      p_status: 'approved',
+      p_user_id: managerId,
+      p_note: 'Second Approval',
+    })
+
+    expect(error).toBeTruthy()
+    expect(error?.message).toMatch(/no longer awaiting approval/i)
+
+    // The first approval's data must be untouched by the rejected second call.
+    const status = await getAuditStatus(auditId)
+    expect(status).toBe('APPROVED')
   })
 })
