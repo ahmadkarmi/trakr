@@ -7,6 +7,21 @@ function getAdminClient() {
   return createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } })
 }
 
+// A real, non-admin, password-authenticated session — for exercising
+// RLS/RPC auth.uid()-based checks the way an actual logged-in user would,
+// as opposed to getAdminClient()'s service-role client which bypasses RLS
+// entirely. The service key still works as the client's apikey header;
+// auth.uid() is populated from the signed-in user's JWT regardless.
+export async function getUserClient(email: string, password: string) {
+  const url = (process.env.E2E_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim()
+  const key = (process.env.E2E_SUPABASE_SERVICE_KEY || '').trim()
+  if (!url || !key) throw new Error('Missing E2E_SUPABASE_URL or E2E_SUPABASE_SERVICE_KEY')
+  const supa = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  const { error } = await supa.auth.signInWithPassword({ email, password })
+  if (error) throw error
+  return supa
+}
+
 export async function getFirstOrganization(): Promise<{ id: string; name: string } | null> {
   const supa = getAdminClient()
   const { data, error } = await supa.from('organizations').select('id, name').order('created_at', { ascending: true }).limit(1)

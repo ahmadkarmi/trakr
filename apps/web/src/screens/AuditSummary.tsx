@@ -197,6 +197,9 @@ const AuditSummary: React.FC = () => {
     },
     onError: (error: Error) => {
       showToast({ message: `Approval failed: ${error.message || 'Unknown error'}`, variant: 'error' })
+      // Someone else may have already acted on this audit — refresh so the
+      // stale Approve/Reject buttons reflect the real current state.
+      queryClient.invalidateQueries({ queryKey: QK.AUDIT(auditId) })
     },
   })
 
@@ -235,8 +238,9 @@ const AuditSummary: React.FC = () => {
         })
       }
     },
-    onError: () => {
-      showToast({ message: 'Failed to reject audit.', variant: 'error' })
+    onError: (error: Error) => {
+      showToast({ message: `Rejection failed: ${error.message || 'Unknown error'}`, variant: 'error' })
+      queryClient.invalidateQueries({ queryKey: QK.AUDIT(auditId) })
     }
   })
 
