@@ -115,6 +115,88 @@ export async function setAuditSubmitted(auditId: string, submittedBy: string) {
   if (error) throw error
 }
 
+export async function setAuditApproved(auditId: string, approvedBy: string) {
+  const supa = getAdminClient()
+  const { error } = await supa
+    .from('audits')
+    .update({
+      status: 'APPROVED',
+      approved_by: approvedBy,
+      approved_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as any)
+    .eq('id', auditId)
+  if (error) throw error
+}
+
+export async function setAuditRejected(auditId: string, rejectedBy: string, note = 'E2E rejection note') {
+  const supa = getAdminClient()
+  const { error } = await supa
+    .from('audits')
+    .update({
+      status: 'REJECTED',
+      rejected_by: rejectedBy,
+      rejected_at: new Date().toISOString(),
+      rejection_note: note,
+      updated_at: new Date().toISOString(),
+    } as any)
+    .eq('id', auditId)
+  if (error) throw error
+}
+
+export async function getFirstQuestionId(surveyId: string): Promise<string> {
+  const supa = getAdminClient()
+  const { data, error } = await supa
+    .from('survey_questions')
+    .select('id')
+    .eq('survey_id', surveyId)
+    .order('order_num', { ascending: true })
+    .limit(1)
+    .single()
+  if (error) throw error
+  return (data as any).id
+}
+
+// Always creates a fresh branch (unlike ensureBranchForOrg's reuse-by-prefix
+// behavior) so bulk-activation tests get a predictable, isolated eligible set
+// instead of possibly picking up an already-active branch from a prior run.
+export async function createInactiveBranch(orgId: string, nameHint = 'E2E Bulk Branch'): Promise<{ id: string; name: string }> {
+  const supa = getAdminClient()
+  const now = new Date().toISOString()
+  const name = `${nameHint} ${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  const { data, error } = await supa.from('branches').insert({ org_id: orgId, name, address: 'Test Addr', is_active: false, created_at: now, updated_at: now } as any).select('*').single()
+  if (error) throw error
+  return { id: (data as any).id, name }
+}
+
+export async function linkBranchToZone(zoneId: string, branchId: string) {
+  const supa = getAdminClient()
+  const { error } = await supa.from('zone_branches').upsert({ zone_id: zoneId, branch_id: branchId } as any)
+  if (error) throw error
+}
+
+export async function getBranchActive(branchId: string): Promise<boolean | null> {
+  const supa = getAdminClient()
+  const { data, error } = await supa.from('branches').select('is_active').eq('id', branchId).maybeSingle()
+  if (error) throw error
+  return (data as any)?.is_active ?? null
+}
+
+export async function deleteBranches(branchIds: string[]) {
+  if (!branchIds.length) return
+  const supa = getAdminClient()
+  await supa.from('zone_branches').delete().in('branch_id', branchIds)
+  const { error } = await supa.from('branches').delete().in('id', branchIds)
+  if (error) throw error
+}
+
+export async function getAuditorAssignmentBranchIds(auditorId: string): Promise<string[]> {
+  const supa = getAdminClient()
+  const { data, error } = await supa.from('auditor_assignments').select('branch_ids').eq('user_id', auditorId).maybeSingle()
+  if (error) throw error
+  return (data as any)?.branch_ids || []
+}
+
 export async function deleteAudits(auditIds: string[]) {
   if (!auditIds.length) return
   const supa = getAdminClient()
@@ -139,7 +221,21 @@ export async function ensureAuditorAssignedToBranch(auditorUserId: string, branc
   if (error) throw error
 }
 
-export async function ensureAuditFor(auditorUserId: string, orgId: string, branchId: string, surveyId: string): Promise<{ id: string }> {
+// NOTE: set_auditor_assignment (above) writes to auditor_branch_assignments,
+// a period-scoped table used by the assignment-board/scheduling flows. The
+// ManageBranches "eligible to activate" and ZoneBulkAuditorAssignment UI
+// instead read/write the separate auditor_assignments table directly (see
+// supabaseApi.ts's setAuditorAssignment). Use this helper — not the RPC
+// above — when a test needs to match what those specific screens see.
+export async function setAuditorAssignmentDirect(auditorUserId: string, orgId: string, branchIds: string[], zoneIds: string[] = []) {
+  const supa = getAdminClient()
+  const { error } = await supa
+    .from('auditor_assignments')
+    .upsert({ user_id: auditorUserId, org_id: orgId, branch_ids: branchIds, zone_ids: zoneIds, updated_at: new Date().toISOString() } as any, { onConflict: 'user_id' })
+  if (error) throw error
+}
+
+export async function ensureAuditFor(auditorUserId: string, orgId: string, branchId: string, surveyId: string, responses: Record<string, string> = {}): Promise<{ id: string }> {
   const supa = getAdminClient()
   // Fetch survey version
   const { data: s, error: sErr } = await supa.from('surveys').select('id, version, frequency').eq('id', surveyId).maybeSingle()
@@ -154,7 +250,7 @@ export async function ensureAuditFor(auditorUserId: string, orgId: string, branc
     survey_version: (s as any).version ?? 1,
     assigned_to: auditorUserId,
     status: 'DRAFT',
-    responses: {},
+    responses,
     na_reasons: {},
     section_comments: {},
     created_at: now.toISOString(),
