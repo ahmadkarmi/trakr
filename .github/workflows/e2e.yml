@@ -1,4 +1,7 @@
 name: E2E Tests
+# NOTE: path-filtered pull_request triggers mean this required check never
+# reports for PRs outside apps/web|packages/shared|this file, permanently
+# blocking merge for e.g. workflow-only PRs. Tracked for a proper fix.
 
 on:
   pull_request:
