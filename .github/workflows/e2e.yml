@@ -1,15 +1,16 @@
 name: E2E Tests
-# NOTE: path-filtered pull_request triggers mean this required check never
-# reports for PRs outside apps/web|packages/shared|this file, permanently
-# blocking merge for e.g. workflow-only PRs. Tracked for a proper fix.
+# This workflow always triggers (no path filter on `on:`) so the `e2e`
+# required status check always reports for every PR — path-filtering the
+# *trigger* meant PRs outside apps/web|packages/shared|this file never got
+# an e2e run at all, and branch protection then blocks merge forever
+# waiting on a check that will never arrive. Instead we path-filter inside
+# the job: the "Detect relevant changes" step decides whether the real
+# suite needs to run, and every step after it is skipped (not failed) when
+# it doesn't — so irrelevant PRs still get a fast, real "success".
 
 on:
   pull_request:
     branches: [ main ]
-    paths:
-      - 'apps/web/**'
-      - 'packages/shared/**'
-      - '.github/workflows/e2e.yml'
   workflow_dispatch:
 
 # The suite seeds and mutates a single shared Supabase database; two runs
@@ -27,18 +28,38 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect relevant changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -qE '^(apps/web/|packages/shared/|\.github/workflows/e2e\.yml)'; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        if: steps.changes.outputs.relevant == 'true'
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
+        if: steps.changes.outputs.relevant == 'true'
         run: npm ci
 
       - name: Build check
+        if: steps.changes.outputs.relevant == 'true'
         working-directory: apps/web
         env:
           VITE_BACKEND: supabase
@@ -47,10 +68,12 @@ jobs:
         run: npm run build
 
       - name: Install Playwright Browsers
+        if: steps.changes.outputs.relevant == 'true'
         working-directory: apps/web
         run: npx playwright install --with-deps
 
       - name: Start Vite dev server
+        if: steps.changes.outputs.relevant == 'true'
         working-directory: apps/web
         env:
           VITE_BACKEND: supabase
@@ -60,25 +83,30 @@ jobs:
           nohup npm run dev -- --port 3002 > server.log 2>&1 &
 
       - name: Wait for dev server
+        if: steps.changes.outputs.relevant == 'true'
         working-directory: apps/web
         run: npx wait-on@7.0.1 http://localhost:3002
 
       - name: Seed test database
+        if: steps.changes.outputs.relevant == 'true'
         env:
           SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_KEY }}
         run: node scripts/seed-with-credentials.js
 
       - name: Debug BASE_URL and /login HTML
+        if: steps.changes.outputs.relevant == 'true'
         run: |
           echo "BASE_URL=$BASE_URL"
           curl -sS -D - "$BASE_URL/login" | head -n 80
 
       - name: Ensure BASE_URL visible to Playwright
+        if: steps.changes.outputs.relevant == 'true'
         working-directory: apps/web
         run: node -e "console.log('Playwright sees BASE_URL=', process.env.BASE_URL)"
 
       - name: Run E2E tests
+        if: steps.changes.outputs.relevant == 'true'
         working-directory: apps/web
         env:
           E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
