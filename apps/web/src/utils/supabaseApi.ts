@@ -640,24 +640,8 @@ export const supabaseApi = {
     const supabase = await getSupabase()
 
     // Remove branch from any auditor assignments to avoid stale coverage references
-    const { data: assignments, error: assignmentsError } = await supabase
-      .from('auditor_assignments')
-      .select('user_id, branch_ids')
-      .contains('branch_ids', [id])
-
-    if (assignmentsError) throw assignmentsError
-
-    if (assignments?.length) {
-      await Promise.all(
-        assignments.map(async (assignment: any) => {
-          const filtered = (assignment.branch_ids || []).filter((branchId: string) => branchId !== id)
-          await supabase
-            .from('auditor_assignments')
-            .update({ branch_ids: filtered, updated_at: new Date().toISOString() } as any)
-            .eq('user_id', assignment.user_id)
-        }),
-      )
-    }
+    const { error: unassignError } = await supabase.rpc('remove_branch_from_auditor_assignments', { p_branch_id: id })
+    if (unassignError) throw unassignError
 
     await supabase.from('zone_branches').delete().eq('branch_id', id)
 
@@ -697,12 +681,10 @@ export const supabaseApi = {
   },
 
   async reassignOpenAuditsForBranches(branchIds: string[], toUserId: string): Promise<number> {
-    // Batch by calling the single-branch RPC per ID; keeps parity with mock API shape
-    let total = 0
-    for (const bid of branchIds) {
-      total += await this.reassignOpenAuditsForBranch(bid, toUserId)
-    }
-    return total
+    const supabase = await getSupabase()
+    const { data, error } = await supabase.rpc('reassign_open_audits_for_branches', { p_branch_ids: branchIds, p_to_user: toUserId })
+    if (error) throw error
+    return (data as number) || 0
   },
 
   async reassignUnstartedAuditsForBranches(branchIds: string[], toUserId: string): Promise<number> {
@@ -1085,60 +1067,66 @@ export const supabaseApi = {
     }
     return survey as any
   },
-  async getSurveys(orgId?: string) {
+  async getSurveys(orgId?: string): Promise<Survey[]> {
     const supabase = await getSupabase()
     let q = supabase.from('surveys').select('*')
-    
+
     // Filter by org unless Super Admin in global view (orgId = undefined)
     if (orgId) {
       q = q.eq('org_id', orgId)
     }
-    
+
     const { data, error } = await q.order('updated_at', { ascending: false })
     if (error) throw error
-    
-    // Load sections and questions for all surveys
-    const surveys = await Promise.all((data || []).map(async (s: Tables<'surveys'>) => {
-      // Load sections
-      const { data: sections, error: secError } = await supabase
-        .from('survey_sections')
-        .select('*')
-        .eq('survey_id', s.id)
-        .eq('version', (s as any).version ?? 1)
-        .order('order_num', { ascending: true })
-      if (secError) throw secError
-      
-      // Load questions
-      const { data: questions, error: qError } = await supabase
-        .from('survey_questions')
-        .select('*')
-        .eq('survey_id', s.id)
-        .eq('version', (s as any).version ?? 1)
-        .order('order_num', { ascending: true })
-      if (qError) throw qError
-      
-      // Group questions by section
-      const bySection: Record<string, any[]> = {}
-      ;(questions || []).forEach((q: Tables<'survey_questions'>) => {
-        const arr = bySection[q.section_id] || (bySection[q.section_id] = [])
-        arr.push({
-          id: q.id,
-          text: q.question_text,
-          type: mapQuestionTypeVal(q.question_type),
-          required: q.required,
-          order: q.order_num ?? 0,
-          isWeighted: (q as any).is_weighted ?? false,
-          yesWeight: (q as any).yes_weight ?? undefined,
-          noWeight: (q as any).no_weight ?? undefined,
-        })
+
+    const surveyRows = data || []
+    const surveyIds = surveyRows.map((s: Tables<'surveys'>) => s.id)
+
+    // Batch-load sections and questions for all surveys (2 queries instead of 1+2N)
+    let sectionsData: Tables<'survey_sections'>[] = []
+    let questionsData: Tables<'survey_questions'>[] = []
+    if (surveyIds.length) {
+      const [sectionsRes, questionsRes] = await Promise.all([
+        supabase.from('survey_sections').select('*').in('survey_id', surveyIds).order('order_num', { ascending: true }),
+        supabase.from('survey_questions').select('*').in('survey_id', surveyIds).order('order_num', { ascending: true }),
+      ])
+      if (sectionsRes.error) throw sectionsRes.error
+      if (questionsRes.error) throw questionsRes.error
+      sectionsData = sectionsRes.data || []
+      questionsData = questionsRes.data || []
+    }
+
+    // Group questions by section
+    const bySection: Record<string, any[]> = {}
+    ;questionsData.forEach((q: Tables<'survey_questions'>) => {
+      const arr = bySection[q.section_id] || (bySection[q.section_id] = [])
+      arr.push({
+        id: q.id,
+        text: q.question_text,
+        type: mapQuestionTypeVal(q.question_type),
+        required: q.required,
+        order: q.order_num ?? 0,
+        isWeighted: (q as any).is_weighted ?? false,
+        yesWeight: (q as any).yes_weight ?? undefined,
+        noWeight: (q as any).no_weight ?? undefined,
       })
-      
+    })
+
+    // Group sections by the (survey_id, version) each survey actually points at
+    const sectionsBySurveyVersion: Record<string, Tables<'survey_sections'>[]> = {}
+    ;sectionsData.forEach((sec: Tables<'survey_sections'>) => {
+      const key = `${sec.survey_id}:${sec.version}`
+      ;(sectionsBySurveyVersion[key] || (sectionsBySurveyVersion[key] = [])).push(sec)
+    })
+
+    const surveys = surveyRows.map((s: Tables<'surveys'>) => {
+      const sections = sectionsBySurveyVersion[`${s.id}:${(s as any).version ?? 1}`] || []
       return {
         id: s.id,
         title: s.title,
         description: s.description || '',
         version: s.version,
-        sections: (sections || []).map((sec: Tables<'survey_sections'>) => ({
+        sections: sections.map((sec: Tables<'survey_sections'>) => ({
           id: sec.id,
           title: sec.title,
           description: sec.description || undefined,
@@ -1152,8 +1140,8 @@ export const supabaseApi = {
         frequency: (s.frequency?.toLowerCase() as any) ?? 'weekly',
         applicableBranchIds: (s as any).applicable_branch_ids || [],
       }
-    }))
-    
+    })
+
     return surveys
   },
 
@@ -1438,24 +1426,8 @@ export const supabaseApi = {
     const supabase = await getSupabase()
 
     // Remove zone references from auditor assignments before deleting the zone
-    const { data: assignments, error: assignmentsError } = await supabase
-      .from('auditor_assignments')
-      .select('user_id, zone_ids')
-      .contains('zone_ids', [id])
-
-    if (assignmentsError) throw assignmentsError
-
-    if (assignments?.length) {
-      await Promise.all(
-        assignments.map(async (assignment: any) => {
-          const filtered = (assignment.zone_ids || []).filter((zoneId: string) => zoneId !== id)
-          await supabase
-            .from('auditor_assignments')
-            .update({ zone_ids: filtered, updated_at: new Date().toISOString() } as any)
-            .eq('user_id', assignment.user_id)
-        }),
-      )
-    }
+    const { error: unassignError } = await supabase.rpc('remove_zone_from_auditor_assignments', { p_zone_id: id })
+    if (unassignError) throw unassignError
 
     await supabase.from('zone_branches').delete().eq('zone_id', id)
 
