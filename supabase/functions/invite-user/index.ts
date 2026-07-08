@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       throw new Error('Only admins can invite users')
     }
 
-    const { email, name, role, orgId } = await req.json()
+    const { email, name, role, orgId, idempotencyKey } = await req.json()
 
     if (!email || !name || !role || !orgId) {
       throw new Error('Missing required fields: email, name, role, orgId')
@@ -51,6 +51,39 @@ Deno.serve(async (req) => {
     // Admins can only invite into their own org; super admins can invite into any
     if (callerData.role === 'ADMIN' && callerData.org_id !== orgId) {
       throw new Error('Admins can only invite users into their own organization')
+    }
+
+    // Idempotency: the client's retry layer (guardedFetch) re-sends this exact
+    // request on 5xx/timeout, including when the invite actually succeeded
+    // server-side but the response was lost in transit. If this idempotency
+    // key was already processed, return the original result instead of
+    // re-inviting (which would otherwise surface as a confusing "user already
+    // exists" error even though the admin's request succeeded).
+    if (idempotencyKey) {
+      const detailsMarker = `Invited ${email} as ${role} [key:${idempotencyKey}]`
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+      const { data: priorInvite } = await supabase
+        .from('activity_logs')
+        .select('entity_id')
+        .eq('org_id', orgId)
+        .eq('action', 'user_invited')
+        .eq('details', detailsMarker)
+        .gte('created_at', tenMinutesAgo)
+        .maybeSingle()
+
+      if (priorInvite?.entity_id) {
+        const { data: priorUser } = await supabase
+          .from('users')
+          .select()
+          .eq('id', priorInvite.entity_id)
+          .maybeSingle()
+        if (priorUser) {
+          return new Response(
+            JSON.stringify({ success: true, user: priorUser, message: `Invitation already sent to ${email}` }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          )
+        }
+      }
     }
 
     // Rate limit: max INVITE_RATE_LIMIT invites per org per hour, counted from
@@ -105,7 +138,7 @@ Deno.serve(async (req) => {
       action: 'user_invited',
       entity_type: 'user',
       entity_id: newUser.id,
-      details: `Invited ${email} as ${role}`,
+      details: idempotencyKey ? `Invited ${email} as ${role} [key:${idempotencyKey}]` : `Invited ${email} as ${role}`,
     })
 
     return new Response(

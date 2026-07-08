@@ -1832,6 +1832,12 @@ export const supabaseApi = {
     const { data: existingUser } = await supabase.from('users').select('email').eq('email', email).single()
     if (existingUser) throw new Error('User with this email already exists')
 
+    // Idempotency key: guardedFetch (circuitBreaker.ts) retries this request on
+    // 5xx/timeout. The key stays fixed across those internal retries (same
+    // request body reused), letting the edge function recognize a retry of an
+    // already-succeeded invite instead of erroring or re-sending the email.
+    const idempotencyKey = crypto.randomUUID()
+
     // Call Edge Function to send invitation
     // This uses service role key securely on the server side
     const { data, error } = await supabase.functions.invoke('invite-user', {
@@ -1839,7 +1845,8 @@ export const supabaseApi = {
         email,
         name,
         role,
-        orgId: userData.org_id
+        orgId: userData.org_id,
+        idempotencyKey,
       }
     })
 

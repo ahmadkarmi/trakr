@@ -66,7 +66,13 @@ describe('supabaseApi.inviteUser', () => {
     const user = await supabaseApi.inviteUser('new@acme.com', 'New User', UserRole.AUDITOR)
 
     expect(state.invokeSpy).toHaveBeenCalledWith('invite-user', {
-      body: { email: 'new@acme.com', name: 'New User', role: UserRole.AUDITOR, orgId: 'org-1' },
+      body: {
+        email: 'new@acme.com',
+        name: 'New User',
+        role: UserRole.AUDITOR,
+        orgId: 'org-1',
+        idempotencyKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      },
     })
     expect(user.id).toBe('new-user-id')
     expect(user.orgId).toBe('org-1')
