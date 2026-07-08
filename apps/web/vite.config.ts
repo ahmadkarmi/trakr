@@ -65,14 +65,18 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // All node_modules in vendor chunk to avoid circular dependencies
-          if (id.includes('node_modules')) {
-            // Separate out large chart library
-            if (id.includes('recharts')) {
-              return 'charts'
-            }
-            return 'vendor'
-          }
+          if (!id.includes('node_modules')) return undefined
+          // Route-isolated heavy libs get their own chunk so they're only
+          // fetched when a route that actually uses them is visited —
+          // previously everything below was force-merged into one eager
+          // ~8.7MB 'vendor' chunk loaded on every page. Everything else
+          // (react, supabase-js, date-fns, sentry, etc.) falls through to
+          // Rollup's default per-entry-point chunking, return undefined.
+          if (id.includes('ag-grid')) return 'ag-grid'
+          if (id.includes('plotly')) return 'plotly'
+          if (id.includes('jspdf') || id.includes('exceljs')) return 'export-libs'
+          if (id.includes('recharts')) return 'charts'
+          return undefined
         },
         // Ensure consistent asset naming
         assetFileNames: 'assets/[name]-[hash][extname]',
