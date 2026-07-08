@@ -12,6 +12,7 @@ import { ClipboardDocumentListIcon, CheckCircleIcon, FolderIcon } from '@heroico
 import { useToast } from '../hooks/useToast'
 import { useOrganization } from '../contexts/OrganizationContext'
 import { getSupabase, hasSupabaseEnv } from '../utils/supabaseClient'
+import { logger } from '../utils/logger'
 
 const ManageSurveyTemplates: React.FC = () => {
   const navigate = useNavigate()
@@ -103,26 +104,33 @@ const ManageSurveyTemplates: React.FC = () => {
 
   const updateFrequencyMutation = useMutation({
     mutationFn: (payload: { id: string; frequency: AuditFrequency }) => (api as any).updateSurvey(payload.id, { frequency: payload.frequency }, effectiveOrgId),
-    onSuccess: (_result, variables) => {
+    onSuccess: async (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['surveys', effectiveOrgId] })
       const survey = surveys.find(s => s.id === variables.id)
-      showToast({ 
-        message: `Survey "${survey?.title || 'Survey'}" frequency updated!`, 
-        variant: 'success' 
+      showToast({
+        message: `Survey "${survey?.title || 'Survey'}" frequency updated!`,
+        variant: 'success'
       })
       // Invoke the scheduler to reconcile for this survey immediately (best effort)
-      try {
-        if (hasSupabaseEnv()) {
+      if (hasSupabaseEnv()) {
+        try {
           const supabase = getSupabase()
           const anon = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string | undefined
-          void supabase.functions.invoke('schedule-weekly-audits', {
+          const { error } = await supabase.functions.invoke('schedule-weekly-audits', {
             body: { survey_id: variables.id },
             headers: anon ? { Authorization: `Bearer ${anon}` } : undefined,
           })
+          if (error) throw error
           // Refresh audits in dashboards after scheduling
           queryClient.invalidateQueries({ queryKey: QK.AUDITS('admin') })
+        } catch (e) {
+          logger.warn('schedule-weekly-audits invoke failed', { context: 'updateFrequencyMutation', data: e })
+          showToast({
+            message: 'Frequency updated, but the audit schedule may take a bit longer to refresh.',
+            variant: 'warning',
+          })
         }
-      } catch {}
+      }
     },
     onError: (error) => {
       showToast({ 
