@@ -8,6 +8,8 @@
  * - Prevents sensitive data leakage in production
  */
 
+import { captureException, setContext } from './sentry';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogOptions {
@@ -71,23 +73,21 @@ class Logger {
    */
   private sendToSentry(error: Error | unknown, message: string, options?: LogOptions): void {
     try {
-      // Dynamic import to avoid bundling Sentry in development
-      import('./sentry').then(({ captureException, setContext }) => {
-        // Add context if provided
-        if (options?.context || options?.data) {
-          setContext('logger', {
-            context: options?.context,
-            data: options?.data,
-          });
-        }
+      // sentry.ts is already statically imported (and thus bundled) via main.tsx
+      // and stores/auth.ts, so a dynamic import here bought no code-splitting —
+      // it only added an extra microtask hop before every error report.
+      if (options?.context || options?.data) {
+        setContext('logger', {
+          context: options?.context,
+          data: options?.data,
+        });
+      }
 
-        // Capture the exception
-        if (error instanceof Error) {
-          captureException(error, { message });
-        } else {
-          captureException(new Error(message), { originalError: error });
-        }
-      });
+      if (error instanceof Error) {
+        captureException(error, { message });
+      } else {
+        captureException(new Error(message), { originalError: error });
+      }
     } catch (err) {
       // Fail silently - don't break the app if Sentry fails
       console.warn('Failed to send error to Sentry:', err);

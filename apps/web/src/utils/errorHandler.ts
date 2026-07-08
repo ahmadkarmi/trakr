@@ -239,31 +239,36 @@ export class ErrorHandler {
   }
 
   static logError(error: AppError): void {
+    // AppError only stores the flattened message/stack (see createError), not the
+    // original Error instance — reconstruct one so exactly one of the log lines
+    // below can reach Sentry via logger.error's error-arg gate (logger.ts:64).
+    const reconstructed = new Error(error.message)
+    if (typeof error.context?.originalStack === 'string') {
+      reconstructed.stack = error.context.originalStack
+    }
+
     // Log using structured logger
     logger.group(`${error.severity.toUpperCase()} Error: ${error.code}`, () => {
-      logger.error('User Message', undefined, { 
+      logger.error('User Message', undefined, {
         context: 'ErrorHandler',
         data: { userMessage: error.userMessage }
       })
-      logger.error('Technical Message', undefined, { 
+      logger.error('Technical Message', reconstructed, {
         context: 'ErrorHandler',
-        data: { message: error.message }
+        data: { code: error.code, severity: error.severity }
       })
       if (error.context) {
-        logger.error('Error Context', undefined, { 
+        logger.error('Error Context', undefined, {
           context: 'ErrorHandler',
           data: error.context
         })
       }
-      logger.error('Timestamp', undefined, { 
+      logger.error('Timestamp', undefined, {
         context: 'ErrorHandler',
         data: { timestamp: error.timestamp }
       })
     })
-    
-    // In production, you could send to error tracking service
-    // Example: Sentry.captureException(error)
-    
+
     // Store in local storage for debugging (limit to last 50 errors)
     try {
       const stored = safeLocalStorage.getObject<AppError[]>('trakr_errors', []) || []
