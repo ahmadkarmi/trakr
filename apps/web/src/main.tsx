@@ -8,7 +8,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import './index.css'
 import { emitToast } from './utils/toastBus'
 import { apiErrorMessage } from './utils/apiError'
-import { initSentry, captureMessage } from './utils/sentry'
+import { initSentry, captureMessage, captureException } from './utils/sentry'
 import { ensureClientEnv, formatMissingHtml } from '@trakr/shared'
 import { useApiHealthStore, monitoredQueryLabel } from './stores/apiHealth'
 
@@ -62,6 +62,7 @@ const queryClient = new QueryClient({
       if (label) {
         useApiHealthStore.getState().setIssue(label, apiErrorMessage(error, `${label} failed`))
       }
+      captureException(error, { queryKey: query.queryKey, label })
     },
     onSuccess: (_data, query) => {
       const label = monitoredQueryLabel(query.queryKey)
@@ -71,8 +72,9 @@ const queryClient = new QueryClient({
     },
   }),
   mutationCache: new MutationCache({
-    onError: (error) => {
+    onError: (error, _variables, _context, mutation) => {
       emitToast({ message: apiErrorMessage(error, 'Action failed'), variant: 'error' })
+      captureException(error, { mutationKey: mutation.options.mutationKey })
     },
   }),
   defaultOptions: {
