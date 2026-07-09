@@ -37,13 +37,17 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 // silently ignoring that field (as the cleanup steps below used to) means a
 // blocked delete (e.g. an FK constraint from a leftover row) logs a false
 // "cleared" and the script proceeds to insert duplicate orgs/users on top of
-// the undeleted ones. "does not exist" is the one error worth tolerating,
-// since it just means the table isn't there yet on a fresh/partial DB.
+// the undeleted ones. A missing table is the one error worth tolerating,
+// since it just means the table isn't there yet on a fresh/partial DB - but
+// Postgres and PostgREST phrase that differently ("relation ... does not
+// exist" vs. PostgREST's own "Could not find the table ... in the schema
+// cache"), so check for both rather than just the one observed first.
+// Returns true if the delete actually happened, false if benignly skipped.
 function assertCleared(table, error) {
-  if (!error) return
-  if (error.message && error.message.includes('does not exist')) {
+  if (!error) return true
+  if (error.message && (error.message.includes('does not exist') || error.message.includes('Could not find the table'))) {
     console.log(`  ⚠️  ${table} does not exist yet, skipping`)
-    return
+    return false
   }
   throw new Error(`Failed to clear ${table}: ${error.message}`)
 }
@@ -80,7 +84,15 @@ async function seedDatabase() {
   try {
     // Clear existing data more thoroughly
     console.log('🧹 Clearing existing data...')
-    
+
+    // A DB trigger rejects removing an auditor's assignment from any branch
+    // that's currently is_active=true ("Deactivate the branch first") - the
+    // steady-state result of a prior successful seed run is exactly that
+    // (active branches with assigned auditors), so clearing auditor_assignments
+    // below would otherwise always fail on the second and every later run.
+    const { error: deactivateError } = await supabase.from('branches').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000')
+    if (assertCleared('branches.is_active', deactivateError)) console.log('  ✅ Deactivated all branches')
+
     // Clear in order that respects foreign key constraints:
     // 1. Audits and their dependencies
     // 2. Branch managers (set to NULL before deleting users)
@@ -110,35 +122,29 @@ async function seedDatabase() {
 
     for (const table of clearOrder) {
       const { error } = await supabase.from(table).delete().gte('created_at', '1900-01-01')
-      assertCleared(table, error)
-      console.log(`  ✅ Cleared ${table}`)
+      if (assertCleared(table, error)) console.log(`  ✅ Cleared ${table}`)
     }
 
     // Clear FK-constrained tables in correct order
     // 1. Remove branch managers (set to NULL)
     const { error: managerNullError } = await supabase.from('branches').update({ manager_id: null }).neq('id', '00000000-0000-0000-0000-000000000000')
-    assertCleared('branches.manager_id', managerNullError)
-    console.log('  ✅ Nullified branch managers')
+    if (assertCleared('branches.manager_id', managerNullError)) console.log('  ✅ Nullified branch managers')
 
     // 2. Delete users
     const { error: usersError } = await supabase.from('users').delete().gte('created_at', '1900-01-01')
-    assertCleared('users', usersError)
-    console.log('  ✅ Cleared users')
+    if (assertCleared('users', usersError)) console.log('  ✅ Cleared users')
 
     // 3. Delete branches
     const { error: branchesError } = await supabase.from('branches').delete().gte('created_at', '1900-01-01')
-    assertCleared('branches', branchesError)
-    console.log('  ✅ Cleared branches')
+    if (assertCleared('branches', branchesError)) console.log('  ✅ Cleared branches')
 
     // 4. Delete zones
     const { error: zonesError } = await supabase.from('zones').delete().gte('created_at', '1900-01-01')
-    assertCleared('zones', zonesError)
-    console.log('  ✅ Cleared zones')
+    if (assertCleared('zones', zonesError)) console.log('  ✅ Cleared zones')
 
     // 5. Delete organizations
     const { error: orgsError } = await supabase.from('organizations').delete().gte('created_at', '1900-01-01')
-    assertCleared('organizations', orgsError)
-    console.log('  ✅ Cleared organizations')
+    if (assertCleared('organizations', orgsError)) console.log('  ✅ Cleared organizations')
 
     // Seed organizations
     console.log('🏢 Seeding organizations...')
