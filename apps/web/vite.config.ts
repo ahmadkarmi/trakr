@@ -93,5 +93,9 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     css: true,
     exclude: ['tests/**/*.spec.ts'],
+    // The supabase.*.integration suites all mutate the same live DB as the
+    // same signed-in user; parallel suite files race each other (same reason
+    // e2e.yml serializes via the e2e-shared-db concurrency group).
+    fileParallelism: false,
   },
 }))
