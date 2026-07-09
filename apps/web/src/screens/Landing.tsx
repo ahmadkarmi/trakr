@@ -411,7 +411,7 @@ const Landing: React.FC = () => {
                   <div
                     key={s.key}
                     data-index={i}
-                    ref={el => (stepRefs.current[i] = el)}
+                    ref={el => { stepRefs.current[i] = el }}
                     className={`min-h-[72vh] md:min-h-[60vh] flex items-end`}
                   >
                     <div className={`w-full rounded-xl border p-6 transform-gpu will-change-transform motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none ${

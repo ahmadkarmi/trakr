@@ -642,7 +642,7 @@ const AuditWizard: React.FC = () => {
                   {displayQuestions.map((q, idx) => {
                     const answer = responses[q.id]
                     return (
-                      <div key={q.id} ref={el => (questionRefs.current[q.id] = el)} className={`space-y-4 pb-6 sm:pb-8 border-b border-gray-200 last:border-0 ${highlightedQuestionId === q.id ? 'ring-2 ring-primary-400 rounded-lg p-4 -m-4' : ''}`}>
+                      <div key={q.id} ref={el => { questionRefs.current[q.id] = el }} className={`space-y-4 pb-6 sm:pb-8 border-b border-gray-200 last:border-0 ${highlightedQuestionId === q.id ? 'ring-2 ring-primary-400 rounded-lg p-4 -m-4' : ''}`}>
                         <div>
                           <div className="flex items-start justify-between gap-3 mb-4">
                             <p className="font-semibold text-base sm:text-lg text-gray-900 leading-relaxed">Q{idx + 1}. {q.text}</p>
