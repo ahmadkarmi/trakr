@@ -32,7 +32,7 @@ test.describe('Notifications pagination and ownership', () => {
   test('admin notifications page - server-side Load more and stable interactions', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto('/notifications')
-    const notifHeading = page.getByRole('main').getByRole('heading', { name: /Notifications/i }).first()
+    const notifHeading = page.getByRole('banner').getByRole('heading', { name: 'Notifications', level: 1 })
     await expect(notifHeading).toBeVisible({ timeout: 30_000 })
 
     // Wait for initial load to settle
@@ -61,7 +61,7 @@ test.describe('Notifications pagination and ownership', () => {
   test('admin cannot mark other users\' DB notifications as read (UI)', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto('/notifications')
-    const notifHeading = page.getByRole('main').getByRole('heading', { name: /Notifications/i }).first()
+    const notifHeading = page.getByRole('banner').getByRole('heading', { name: 'Notifications', level: 1 })
     await expect(notifHeading).toBeVisible({ timeout: 30_000 })
     await page.waitForTimeout(1000)
 
@@ -88,7 +88,7 @@ test.describe('Notifications pagination and ownership', () => {
     }
 
     await page.goto('/notifications')
-    await expect(page.getByRole('heading', { name: /Notifications/i })).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole('banner').getByRole('heading', { name: 'Notifications', level: 1 })).toBeVisible({ timeout: 30_000 })
     await page.waitForTimeout(1000)
 
     const loadMoreBtn = page.getByRole('button', { name: /^Load more$/i })
