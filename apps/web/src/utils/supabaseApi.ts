@@ -830,7 +830,7 @@ export const supabaseApi = {
     const supabase = await getSupabase()
     const { data: user, error: uErr } = await supabase.from('users').select('id, role').eq('id', adminUserId).maybeSingle()
     if (uErr) throw uErr
-    if (!user || (user as any).role !== 'ADMIN') throw new Error('Permission denied: Only admin can edit approved/submitted audits')
+    if (!user || !['ADMIN', 'SUPER_ADMIN'].includes((user as any).role)) throw new Error('Permission denied: Only admin can edit approved/submitted audits')
     const { data: current, error: cErr } = await supabase.from('audits').select('*').eq('id', auditId).single()
     if (cErr) throw cErr
     const cur = current as Tables<'audits'>
