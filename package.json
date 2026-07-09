@@ -16,6 +16,8 @@
     "clean": "npm run clean --workspaces && rimraf node_modules",
     "install:all": "npm install",
     "seed:db": "node -r dotenv/config scripts/seed-with-credentials.js",
+    "seed:qa": "node -r dotenv/config scripts/seed-qa-org.mjs",
+    "qa:smoke": "node scripts/qa-smoke.mjs",
     "set-passwords": "node -r dotenv/config scripts/set-user-passwords.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

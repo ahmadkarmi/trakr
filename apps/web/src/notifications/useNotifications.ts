@@ -261,30 +261,35 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
     () => ['notifications', 'derivedRead', user?.id || 'anonymous'] as const,
     [user?.id],
   )
-  const derivedReadQuery = useQuery<Set<string>>({
+  // Query data must stay JSON-serializable: main.tsx persists the whole
+  // QueryClient cache to localStorage via PersistQueryClientProvider, and
+  // JSON.stringify(new Set(...)) produces "{}" (Sets have no enumerable own
+  // properties). With staleTime: Infinity this query never refetches to
+  // self-heal, so once a Set got persisted-then-rehydrated as "{}", every
+  // .has() call on it threw for the rest of the session. Store the plain
+  // array here and derive the Set locally, outside the persisted cache.
+  const derivedReadQuery = useQuery<string[]>({
     queryKey: derivedReadKey,
     queryFn: () => {
       const storageKey = `derivedReadNotifications:${user?.id || 'anonymous'}`
       try {
-        return new Set<string>(JSON.parse(localStorage.getItem(storageKey) || '[]'))
+        return JSON.parse(localStorage.getItem(storageKey) || '[]')
       } catch {
-        return new Set<string>()
+        return []
       }
     },
     staleTime: Infinity,
     enabled: true,
   })
-  const derivedReadIds = derivedReadQuery.data || new Set<string>()
+  const derivedReadIds = React.useMemo(() => new Set<string>(derivedReadQuery.data || []), [derivedReadQuery.data])
 
   const markDerivedAsReadLocal = React.useCallback(
     (id: string) => {
       const storageKey = `derivedReadNotifications:${user?.id || 'anonymous'}`
-      queryClient.setQueryData<Set<string>>(derivedReadKey, (prev) => {
-        const base = prev || new Set<string>()
-        const next = new Set(base)
-        next.add(id)
+      queryClient.setQueryData<string[]>(derivedReadKey, (prev) => {
+        const next = Array.from(new Set([...(prev || []), id]))
         try {
-          localStorage.setItem(storageKey, JSON.stringify(Array.from(next)))
+          localStorage.setItem(storageKey, JSON.stringify(next))
         } catch {
           // ignore storage errors
         }
@@ -406,17 +411,17 @@ export function useNotificationsEngine(options: NotificationsEngineOptions = {})
       const prevAdminInf = queryClient.getQueryData<InfiniteData<Notification[]>>(adminInfKey)
       try {
         const storageKey = `derivedReadNotifications:${user?.id || 'anonymous'}`
-        queryClient.setQueryData<Set<string>>(derivedReadKey, (prevSet) => {
-          const base = prevSet || new Set<string>()
-          const next = new Set(base)
+        queryClient.setQueryData<string[]>(derivedReadKey, (prev) => {
+          const next = new Set(prev || [])
           const curr = Array.isArray(uiNotifications) ? uiNotifications : []
           curr.forEach(n => { if (!isUUID(n.id)) next.add(n.id) })
+          const nextArr = Array.from(next)
           try {
-            localStorage.setItem(storageKey, JSON.stringify(Array.from(next)))
+            localStorage.setItem(storageKey, JSON.stringify(nextArr))
           } catch {
             // ignore storage errors
           }
-          return next
+          return nextArr
         })
       } catch {}
       queryClient.setQueryData<Notification[]>(unreadKey, () => [])
