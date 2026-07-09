@@ -31,7 +31,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "prettier": "^3.1.0",
     "rimraf": "^5.0.5",
-    "typescript": "^5.3.0",
+    "typescript": "^7.0.2",
     "vite": "^7.1.7",
     "vite-bundle-analyzer": "^0.7.0"
   },
