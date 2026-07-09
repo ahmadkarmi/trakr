@@ -1,3 +1,4 @@
+import './tests/realmFix' // MUST stay first: swaps jsdom globals for Node natives before app modules load
 import '@testing-library/jest-dom'
 import { beforeAll } from 'vitest'
 import { getSupabase } from './utils/supabaseClient'
