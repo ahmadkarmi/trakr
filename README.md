@@ -20,8 +20,8 @@ Trakr/
 
 ### Prerequisites
 
-- Node.js 20+ (see .nvmrc)
-- npm 9+
+- Node.js 22+ (see .nvmrc)
+- npm 10+
 
 ### Installation
 
