@@ -2,6 +2,15 @@
 
 This directory contains scripts to populate your Supabase database with realistic test data for comprehensive system testing.
 
+## QA Sandbox (manual/visual browser testing)
+
+A persistent, self-contained QA org separate from the e2e seed data. Purely additive — never touches other orgs — and idempotent (re-running confirms "already seeded" and exits).
+
+- `seed-qa-org.mjs` (`npm run seed:qa`) creates org **"Trakr QA Sandbox"**: one user per role (`qa.admin@trakr-test.dev` / `qa.manager@trakr-test.dev` / `qa.auditor@trakr-test.dev`, password `QaTest@12345`), 1 zone, 2 branches, 1 weighted survey, and 10 audits spanning all six statuses. Requires `SUPABASE_URL` (or `VITE_SUPABASE_URL`) and `SUPABASE_SERVICE_KEY` (service role — the script uses auth admin APIs).
+- `qa-smoke.mjs` (`npm run qa:smoke`, dev server must be running; `QA_BASE_URL` overrides `http://localhost:3002`) logs in as each QA account and screenshots their main screens to `test-results/qa-smoke/`. **Inspect the screenshots** — React error-boundary crashes never show up in the reported console/page errors.
+
+Reuse this org for browser QA instead of creating throwaway test data.
+
 ## 🎯 What Gets Seeded
 
 ### Organizations & Structure
