@@ -56,9 +56,5 @@
     "monorepo"
   ],
   "author": "Ahmad Karmi",
-  "license": "MIT",
-  "dependencies": {
-    "@tanstack/react-query-persist-client": "^5.90.2",
-    "lucide-react": "^0.553.0"
-  }
+  "license": "MIT"
 }
