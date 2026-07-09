@@ -31,7 +31,7 @@
     "ag-grid-community": "^34.3.1",
     "ag-grid-react": "^34.2.0",
     "clsx": "^2.0.0",
-    "date-fns": "^3.6.0",
+    "date-fns": "^4.4.0",
     "exceljs": "^4.4.0",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
