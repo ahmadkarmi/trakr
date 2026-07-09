@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test'
+import { Page, expect } from '@playwright/test'
 
 /**
  * Handle onboarding screen if it appears after login.
@@ -106,4 +106,29 @@ export async function loginAsAdmin(page: Page) {
   
   await page.waitForURL(url => url.pathname.includes('/dashboard') || url.pathname.includes('/onboarding'), { timeout: 60_000 })
   await handleOnboardingIfNeeded(page)
+}
+
+/**
+ * Explicitly select an organization via the super-admin org switcher on
+ * /settings (the only place it's actually rendered — the standalone
+ * OrganizationSwitcher.tsx component exists but is never mounted anywhere).
+ * A fresh admin login has no stored org preference, so OrganizationContext
+ * defaults currentOrg to whichever org is oldest by created_at — not
+ * necessarily the org any given fixture was created under (the live dev DB
+ * has stale duplicate-named orgs left over from seeding). Tests that create
+ * fixtures under a specific org must call this after loginAsAdmin() to
+ * guarantee the session is actually viewing that org. The selection is
+ * persisted to localStorage by switchOrganization(), so it survives the
+ * caller's subsequent navigation to whatever page it actually needs.
+ */
+export async function switchToOrganization(page: Page, orgId: string) {
+  await page.goto('/settings', { waitUntil: 'networkidle' })
+  // The org switcher lives under the "Super Admin" settings tab, not
+  // "Organization" (that one is org profile/branding) or the default
+  // "Profile" tab.
+  await page.getByRole('navigation', { name: /Settings tabs/i }).getByRole('button', { name: /^Super Admin$/i }).click()
+  const orgSelect = page.locator('select').filter({ has: page.locator('option', { hasText: 'Select Organization' }) })
+  await expect(orgSelect).toBeVisible({ timeout: 15_000 })
+  await orgSelect.selectOption({ value: orgId })
+  await expect(orgSelect).toHaveValue(orgId, { timeout: 10_000 })
 }

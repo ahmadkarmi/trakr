@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginAsAdmin } from './helpers/auth'
+import { loginAsAdmin, switchToOrganization } from './helpers/auth'
 import {
   getUserByEmail,
   ensureBranchForOrg,
@@ -27,8 +27,16 @@ test.describe('Export paths', () => {
     const admin = await getUserByEmail('admin@trakr.com')
     const auditor = await getUserByEmail('auditor@trakr.com')
     if (!admin || !auditor) throw new Error('Seed users missing')
-    if (!admin.org_id) throw new Error('admin@trakr.com has no org_id')
-    orgId = admin.org_id
+    if (!auditor.org_id) throw new Error('auditor@trakr.com has no org_id')
+    // admin@trakr.com is SUPER_ADMIN, not a regular admin: a fresh login has
+    // no stored org preference, so it defaults to whichever org is oldest by
+    // created_at (OrganizationContext.tsx) — the live dev DB has stale
+    // duplicate-named orgs left over from seeding, so "oldest" isn't
+    // guaranteed to be the org the fixed seed accounts actually belong to.
+    // Derive orgId from the auditor's own row instead, and explicitly switch
+    // the admin session to it via switchToOrganization() below. managerId is
+    // just an FK reference for approved_by, so admin.id itself is still fine.
+    orgId = auditor.org_id
     auditorId = auditor.id
     managerId = admin.id
 
@@ -51,6 +59,7 @@ test.describe('Export paths', () => {
     await setAuditApproved(audit.id, managerId)
 
     await loginAsAdmin(page)
+    await switchToOrganization(page, orgId)
     await page.goto('/analytics', { waitUntil: 'networkidle' })
 
     await page.getByRole('button', { name: /Reports/i }).click()

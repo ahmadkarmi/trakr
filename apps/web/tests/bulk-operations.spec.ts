@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginAsAdmin } from './helpers/auth'
+import { loginAsAdmin, switchToOrganization } from './helpers/auth'
 import {
   getUserByEmail,
   ensureZoneForOrg,
@@ -27,11 +27,19 @@ test.describe('Bulk operations', () => {
   let auditorId: string
 
   test.beforeAll(async () => {
-    const admin = await getUserByEmail('admin@trakr.com')
     const auditor = await getUserByEmail('auditor@trakr.com')
-    if (!admin || !auditor) throw new Error('Seed users missing')
-    if (!admin.org_id) throw new Error('admin@trakr.com has no org_id')
-    orgId = admin.org_id
+    if (!auditor) throw new Error('Seed users missing')
+    if (!auditor.org_id) throw new Error('auditor@trakr.com has no org_id')
+    // admin@trakr.com is SUPER_ADMIN, not a regular admin: a fresh login has
+    // no stored org preference, so it defaults to whichever org is oldest by
+    // created_at (OrganizationContext.tsx) — the live dev DB has stale
+    // duplicate-named orgs left over from seeding, so "oldest" isn't
+    // guaranteed to be the org the fixed seed accounts actually belong to.
+    // Derive orgId from the auditor's own row instead, and explicitly
+    // switch the admin session to it via switchToOrganization() below —
+    // this needs the auditor to actually be a member of the org for the
+    // zone-assignment checklist to list them.
+    orgId = auditor.org_id
     auditorId = auditor.id
   })
 
@@ -42,6 +50,7 @@ test.describe('Bulk operations', () => {
 
     try {
       await loginAsAdmin(page)
+      await switchToOrganization(page, orgId)
       await page.goto('/manage/branches', { waitUntil: 'networkidle' })
 
       await page.getByRole('button', { name: /Bulk Assign by Zone/i }).click()
@@ -93,6 +102,7 @@ test.describe('Bulk operations', () => {
       expect(await getBranchActive(branchB.id)).toBe(false)
 
       await loginAsAdmin(page)
+      await switchToOrganization(page, orgId)
       await page.goto('/manage/branches', { waitUntil: 'networkidle' })
 
       // The button's accessible name comes from an aria-label that differs
@@ -102,7 +112,13 @@ test.describe('Bulk operations', () => {
       await expect(activateButton).toBeEnabled({ timeout: 20_000 })
       await activateButton.click()
 
-      await expect(page.getByText(/Activated \d+ branch/i)).toBeVisible({ timeout: 20_000 })
+      // toast reads "Activated N branch(es). M failed." when some updates
+      // are rejected — /Activated \d+ branch/i alone would still match a
+      // "Activated 0 branches. 2 failed." partial-failure message, so also
+      // assert the failure clause is absent.
+      const toast = page.getByText(/Activated \d+ branch/i)
+      await expect(toast).toBeVisible({ timeout: 20_000 })
+      await expect(toast).not.toContainText(/failed/i)
 
       await expect.poll(async () => getBranchActive(branchA.id), { timeout: 15_000, intervals: [1_000] }).toBe(true)
       await expect.poll(async () => getBranchActive(branchB.id), { timeout: 15_000, intervals: [1_000] }).toBe(true)
