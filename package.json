@@ -26,17 +26,17 @@
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.0",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.4.2",
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "prettier": "^3.1.0",
+    "prettier": "^3.9.4",
     "rimraf": "^5.0.5",
     "typescript": "^7.0.2",
     "vite": "^7.1.7",
     "vite-bundle-analyzer": "^0.7.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.30.0"
+    "@rollup/rollup-linux-x64-gnu": "^4.62.2"
   },
   "engines": {
     "node": ">=20.0.0",
@@ -56,7 +56,7 @@
   "author": "Ahmad Karmi",
   "license": "MIT",
   "dependencies": {
-    "@tanstack/react-query-persist-client": "^5.90.2",
+    "@tanstack/react-query-persist-client": "^5.101.2",
     "lucide-react": "^0.553.0"
   }
 }
