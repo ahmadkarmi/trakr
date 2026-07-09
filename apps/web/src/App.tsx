@@ -178,7 +178,7 @@ function App() {
       <ToastProvider>
         {/** Session error watcher must be inside ToastProvider */}
         <SessionWatcher />
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Router>
           <OrganizationProvider>
             <ErrorBoundary>
           <div className="app-shell">
