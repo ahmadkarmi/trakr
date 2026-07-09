@@ -7,6 +7,8 @@ import {
   ensureBranchManagerAssigned,
   ensureAuditFor,
   setAuditSubmitted,
+  setAuditRejected,
+  getFirstQuestionId,
   getAuditStatus,
   deleteAudits,
   getUserClient,
@@ -20,6 +22,7 @@ test.describe('Audit approval workflow', () => {
   let orgId: string
   let branchId: string
   let surveyId: string
+  let questionId: string
   let auditorId: string
   let managerId: string
 
@@ -40,6 +43,7 @@ test.describe('Audit approval workflow', () => {
     branchId = branch.id
     const survey = await ensureSimpleSurvey(orgId, 'E2E Approval Survey')
     surveyId = survey.id
+    questionId = await getFirstQuestionId(surveyId)
 
     await ensureAuditorAssignedToBranch(auditorId, branchId)
     await ensureBranchManagerAssigned(managerId, branchId)
@@ -69,6 +73,28 @@ test.describe('Audit approval workflow', () => {
       // fall through to credentials
     }
     await page.fill('input[type="email"]', 'branchmanager@trakr.com')
+    await page.fill('input[type="password"]', 'Password@123')
+    await page.getByRole('button', { name: /Sign in|Log in/i }).click()
+    await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
+  }
+
+  async function loginAsAuditor(page: Page) {
+    await page.goto('/login')
+    await page.context().clearCookies()
+    await page.evaluate(() => localStorage.clear())
+    await page.goto('/login', { waitUntil: 'networkidle' })
+
+    try {
+      const roleButton = page.getByRole('button', { name: /^Auditor/i }).first()
+      if (await roleButton.isVisible({ timeout: 5_000 })) {
+        await roleButton.click()
+        await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
+        return
+      }
+    } catch {
+      // fall through to credentials
+    }
+    await page.fill('input[type="email"]', 'auditor@trakr.com')
     await page.fill('input[type="password"]', 'Password@123')
     await page.getByRole('button', { name: /Sign in|Log in/i }).click()
     await page.waitForURL(url => url.pathname.includes('/dashboard'), { timeout: 30_000 })
@@ -163,5 +189,67 @@ test.describe('Audit approval workflow', () => {
     // The first approval's data must be untouched by the rejected second call.
     const status = await getAuditStatus(auditId)
     expect(status).toBe('APPROVED')
+  })
+
+  test('full cycle: auditor edits a rejected audit, resubmits, and manager approves it', async ({ page, browser }) => {
+    // Only SUBMITTED→APPROVED/REJECTED are covered above. This exercises the
+    // other half of the lifecycle: an auditor recovering from a REJECTED
+    // audit by editing their answer in the wizard and resubmitting, then a
+    // manager approving that resubmission — the path a real rejection cycle
+    // actually takes, not just the two terminal transitions in isolation.
+    test.setTimeout(180_000)
+
+    const audit = await ensureAuditFor(auditorId, orgId, branchId, surveyId, { [questionId]: 'yes' })
+    createdAuditIds.push(audit.id)
+    await setAuditRejected(audit.id, managerId, 'Please double-check the fire exit photo.')
+
+    // Auditor edits the flagged answer and resubmits via the wizard.
+    await loginAsAuditor(page)
+    await page.goto(`/audit/${audit.id}/wizard`, { waitUntil: 'networkidle' })
+
+    const noAnswer = page.getByTestId(`answer-${questionId}-no`)
+    await expect(noAnswer).toBeVisible({ timeout: 20_000 })
+    await noAnswer.click()
+
+    // Two "finish-audit" buttons render (mobile-only + desktop-only responsive
+    // variants); at the default desktop viewport only the second is visible.
+    const finishButton = page.getByTestId('finish-audit').last()
+    await expect(finishButton).toBeEnabled({ timeout: 10_000 })
+    await finishButton.click()
+
+    await page.waitForURL(url => url.pathname.includes(`/audit/${audit.id}/summary`) || url.pathname.includes(`/audits/${audit.id}/summary`), { timeout: 30_000 })
+
+    const submitButton = page.getByTestId('submit-for-approval')
+    await expect(submitButton).toBeEnabled({ timeout: 20_000 })
+    await submitButton.click()
+
+    await expect
+      .poll(async () => getAuditStatus(audit.id), { timeout: 30_000, intervals: [1_000] })
+      .toBe('SUBMITTED')
+
+    // Manager approves the resubmission — a fresh browser context, not the
+    // auditor's page, since switching authenticated users mid-test on the
+    // same page raced with in-flight session/redirect state during manual
+    // verification.
+    const managerContext = await browser.newContext()
+    const managerPage = await managerContext.newPage()
+    try {
+      await loginAsBranchManager(managerPage)
+      await managerPage.goto(`/audits/${audit.id}/summary`, { waitUntil: 'networkidle' })
+
+      const approveButton = managerPage.getByRole('button', { name: /Approve/i }).first()
+      await expect(approveButton).toBeVisible({ timeout: 20_000 })
+      await approveButton.click()
+      const modal = managerPage.getByRole('dialog')
+      await expect(modal).toBeVisible({ timeout: 10_000 })
+      await modal.getByPlaceholder(/Jane Manager/i).fill('Approved After Resubmission')
+      await modal.getByRole('button', { name: /^Approve|Approving/i }).click()
+
+      await expect
+        .poll(async () => getAuditStatus(audit.id), { timeout: 30_000, intervals: [1_000] })
+        .toBe('APPROVED')
+    } finally {
+      await managerContext.close()
+    }
   })
 })
