@@ -20,10 +20,17 @@ async function checkLogin() {
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} ${res.statusText}`)
   }
-  if (!body.includes('Log in') && !body.includes('Quick Access')) {
-    throw new Error('Login marker text missing')
+  // The app is a client-rendered SPA: the server response is the shell, so
+  // assert what the server actually delivers - the app title and a built
+  // bundle reference. (The old check grepped for client-rendered login text,
+  // which the shell can never contain, so it failed on every run.)
+  if (!body.includes('<title>Trakr')) {
+    throw new Error('App shell title missing')
   }
-  return `login ok (${res.status})`
+  if (!/src="\/assets\/[^"]+\.js"/.test(body)) {
+    throw new Error('Built bundle script tag missing from shell')
+  }
+  return `login shell ok (${res.status})`
 }
 
 async function checkSupabase() {
