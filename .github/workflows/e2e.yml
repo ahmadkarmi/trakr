@@ -94,6 +94,16 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_KEY }}
         run: node scripts/seed-with-credentials.js
 
+      # NOTE: the vitest supabase.*.integration suites are NOT run here yet.
+      # They hit the live DB and, against the SHARED prod database this
+      # workflow uses, flake under cross-run contention (audit-id bleed
+      # between suites, survey-fixture races) - gating CI on them would make
+      # the required check unreliable. The two Playwright specs added
+      # alongside this (storage.uploads.spec.ts, notifications.delivery.spec.ts)
+      # give reliable CI coverage for the same two bugs (#99, #115). Turning
+      # the vitest integration suites into a CI gate is deferred until the
+      # dedicated e2e Supabase project removes the shared-DB contention.
+
       - name: Debug BASE_URL and /login HTML
         if: steps.changes.outputs.relevant == 'true'
         run: |
@@ -111,6 +121,7 @@ jobs:
         env:
           E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           E2E_SUPABASE_SERVICE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_KEY }}
+          E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
         run: npm run e2e -s
 
       - name: Upload Playwright artifacts (always)
