@@ -2250,7 +2250,10 @@ export const supabaseApi = {
       throw insert.error
     }
     
-    logger.debug('Notification created successfully', { context: 'SupabaseAPI', data: insert.data })
+    logger.debug('Notification created successfully', {
+      context: 'SupabaseAPI',
+      data: { userId: notification.userId, type: notification.type, relatedId: notification.relatedId },
+    })
   },
 
   async completeNotificationAction(relatedId: string, actionType: string): Promise<void> {
