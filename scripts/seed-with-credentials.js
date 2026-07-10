@@ -168,6 +168,39 @@ async function seedDatabase() {
       : await supabase.from('organizations').delete().gte('created_at', '1900-01-01')
     if (assertCleared('organizations', orgsError)) console.log('  ✅ Cleared organizations')
 
+    // Ensure every seeded user has an auth account. On the long-lived shared
+    // project most already exist; on a fresh project (e.g. a dedicated e2e
+    // database) this bootstraps them so the seed is fully self-contained.
+    // MUST run BEFORE the public.users upsert below: handle_new_user() fires
+    // on auth-user creation and inserts a public.users row keyed on the auth
+    // id - if a row with the same email already exists under a different id,
+    // the trigger hits the users email unique constraint and GoTrue returns
+    // an opaque 500. Created first, the trigger's rows simply get their
+    // org/role filled in by the email-conflict upsert. Password matches
+    // scripts/set-user-passwords.js's default so the vitest integration
+    // suites' signInWithPassword works out of the box.
+    console.log('👤 Ensuring auth accounts exist...')
+    const SEED_USER_PASSWORD = process.env.SEED_USER_PASSWORD || 'Password@123'
+    const SEED_AUTH_EMAILS = [
+      'admin@trakr.com', 'branchmanager@trakr.com', 'auditor@trakr.com',
+      'admin@retailchain.com', 'manager.manhattan@retailchain.com',
+      'manager.miami@retailchain.com', 'manager.la@retailchain.com',
+      'auditor1@retailchain.com', 'auditor2@retailchain.com', 'auditor3@retailchain.com',
+    ]
+    const { data: preList, error: preListError } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+    if (preListError) throw preListError
+    const existingAuthEmails = new Set((preList.users || []).map(u => (u.email || '').toLowerCase()))
+    for (const email of SEED_AUTH_EMAILS) {
+      if (existingAuthEmails.has(email.toLowerCase())) continue
+      const { error: createErr } = await supabase.auth.admin.createUser({
+        email,
+        password: SEED_USER_PASSWORD,
+        email_confirm: true,
+      })
+      if (createErr) throw new Error(`Failed to create auth user ${email}: ${createErr.name || ''} ${createErr.status || ''} ${createErr.message}`)
+      console.log(`  ✅ Created auth account for ${email}`)
+    }
+
     // Seed organizations
     console.log('🏢 Seeding organizations...')
     const { data: orgData, error: orgError } = await supabase.from('organizations').insert([
@@ -315,27 +348,6 @@ async function seedDatabase() {
     console.log('  • 8 Branches (Manhattan, Brooklyn, Miami, Atlanta, LA, SF, Dallas, Houston)')
     console.log('  • 7 Users (1 admin, 3 branch managers, 3 auditors)')
     
-    // Ensure every seeded user has an auth account. On the long-lived shared
-    // project these already exist; on a fresh project (e.g. a dedicated e2e
-    // database) this bootstraps them so the seed is fully self-contained.
-    // Password matches scripts/set-user-passwords.js's default so the vitest
-    // integration suites' signInWithPassword works out of the box.
-    console.log('\n👤 Ensuring auth accounts exist...')
-    const SEED_USER_PASSWORD = process.env.SEED_USER_PASSWORD || 'Password@123'
-    const { data: preList, error: preListError } = await supabase.auth.admin.listUsers({ perPage: 1000 })
-    if (preListError) throw preListError
-    const existingAuthEmails = new Set((preList.users || []).map(u => (u.email || '').toLowerCase()))
-    for (const seeded of userData || []) {
-      if (existingAuthEmails.has(seeded.email.toLowerCase())) continue
-      const { error: createErr } = await supabase.auth.admin.createUser({
-        email: seeded.email,
-        password: SEED_USER_PASSWORD,
-        email_confirm: true,
-      })
-      if (createErr) throw new Error(`Failed to create auth user ${seeded.email}: ${createErr.message}`)
-      console.log(`  ✅ Created auth account for ${seeded.email}`)
-    }
-
     // Link freshly seeded public.users rows to their auth accounts. The seed
     // recreates rows with new ids; without auth_user_id the org-scoped RLS
     // policies hide every row from the logged-in user and login fails.
