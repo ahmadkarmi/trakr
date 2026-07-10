@@ -216,7 +216,7 @@ const AdminOnboarding: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl">
         {/* Progress Steps */}
         <div className="mb-8">
@@ -259,7 +259,7 @@ const AdminOnboarding: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
           {/* Step 1: Create Organization */}
           {currentStep === 1 && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-6 animate-fade-in">
               <div className="text-center mb-8">
                 <BuildingOfficeIcon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Trakr!</h2>
@@ -293,7 +293,7 @@ const AdminOnboarding: React.FC = () => {
 
           {/* Step 2: Set Up Structure */}
           {currentStep === 2 && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-6 animate-fade-in">
               <div className="text-center mb-8">
                 <MapIcon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Organize Your Locations</h2>
@@ -352,7 +352,7 @@ const AdminOnboarding: React.FC = () => {
                     type="checkbox"
                     checked={skipStep2}
                     onChange={(e) => setSkipStep2(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-sm"
                   />
                   <label htmlFor="skipStep2" className="ml-2 block text-sm text-gray-700">
                     Skip for now (I'll add locations later)
@@ -380,7 +380,7 @@ const AdminOnboarding: React.FC = () => {
 
           {/* Step 3: Invite Team */}
           {currentStep === 3 && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-6 animate-fade-in">
               <div className="text-center mb-8">
                 <UserGroupIcon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Invite Your Team</h2>
@@ -435,7 +435,7 @@ const AdminOnboarding: React.FC = () => {
                     type="checkbox"
                     checked={skipStep3}
                     onChange={(e) => setSkipStep3(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-sm"
                   />
                   <label htmlFor="skipStep3" className="ml-2 block text-sm text-gray-700">
                     Skip for now (I'll invite my team later)
@@ -463,7 +463,7 @@ const AdminOnboarding: React.FC = () => {
 
           {/* Step 4: Complete */}
           {currentStep === 4 && (
-            <div className="text-center space-y-6 animate-fadeIn">
+            <div className="text-center space-y-6 animate-fade-in">
               <SparklesIcon className="w-20 h-20 text-green-500 mx-auto" />
               <h2 className="text-3xl font-bold text-gray-900">You're All Set!</h2>
               <p className="text-lg text-gray-600">

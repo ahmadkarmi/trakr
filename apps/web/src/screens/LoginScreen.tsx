@@ -504,10 +504,10 @@ const LoginScreen: React.FC = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50 dark:bg-gradient-to-b dark:from-[#040b1d] dark:via-[#0a1d42] dark:to-[#103170]">
+    <div className="h-screen overflow-hidden bg-gray-50 dark:bg-linear-to-b dark:from-[#040b1d] dark:via-[#0a1d42] dark:to-[#103170]">
       <div className="grid grid-cols-1 lg:grid-cols-2 h-full">
         {/* Left Column - Login Form */}
-        <div className="flex flex-col justify-center items-center px-4 py-12 sm:px-6 lg:px-20 xl:px-24 bg-gradient-to-b from-white via-slate-50 to-blue-50 dark:from-[#040b1d] dark:via-[#0a1d42] dark:to-[#103170] h-full overflow-y-auto">
+        <div className="flex flex-col justify-center items-center px-4 py-12 sm:px-6 lg:px-20 xl:px-24 bg-linear-to-b from-white via-slate-50 to-blue-50 dark:from-[#040b1d] dark:via-[#0a1d42] dark:to-[#103170] h-full overflow-y-auto">
           <div className="w-full max-w-sm lg:max-w-md">
             {/* Logo */}
             <div className="mb-8">
@@ -543,7 +543,7 @@ const LoginScreen: React.FC = () => {
                         logger.error('Quick login failed', e, { context: 'LoginScreen' })
                       }
                     }}
-                    className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-white/15 rounded-lg shadow-sm bg-white/90 dark:bg-white/10 backdrop-blur text-sm font-medium text-gray-700 dark:text-white hover:bg-white dark:hover:bg-white/20"
+                    className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-white/15 rounded-lg shadow-xs bg-white/90 dark:bg-white/10 backdrop-blur-sm text-sm font-medium text-gray-700 dark:text-white hover:bg-white dark:hover:bg-white/20"
                   >
                     Admin
                   </button>
@@ -557,7 +557,7 @@ const LoginScreen: React.FC = () => {
                         logger.error('Quick login failed', e, { context: 'LoginScreen' })
                       }
                     }}
-                    className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-white/15 rounded-lg shadow-sm bg-white/90 dark:bg-white/10 backdrop-blur text-sm font-medium text-gray-700 dark:text-white hover:bg-white dark:hover:bg-white/20"
+                    className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-white/15 rounded-lg shadow-xs bg-white/90 dark:bg-white/10 backdrop-blur-sm text-sm font-medium text-gray-700 dark:text-white hover:bg-white dark:hover:bg-white/20"
                   >
                     Branch Manager
                   </button>
@@ -571,7 +571,7 @@ const LoginScreen: React.FC = () => {
                         logger.error('Quick login failed', e, { context: 'LoginScreen' })
                       }
                     }}
-                    className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-white/15 rounded-lg shadow-sm bg-white/90 dark:bg-white/10 backdrop-blur text-sm font-medium text-gray-700 dark:text-white hover:bg-white dark:hover:bg-white/20"
+                    className="flex items-center justify-center px-4 py-2 border border-gray-200 dark:border-white/15 rounded-lg shadow-xs bg-white/90 dark:bg-white/10 backdrop-blur-sm text-sm font-medium text-gray-700 dark:text-white hover:bg-white dark:hover:bg-white/20"
                   >
                     Auditor
                   </button>
@@ -615,7 +615,7 @@ const LoginScreen: React.FC = () => {
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur-sm rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                     placeholder="Jane Smith"
                     autoComplete="name"
                     required
@@ -634,7 +634,7 @@ const LoginScreen: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur-sm rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                   placeholder="you@company.com"
                   autoComplete="email"
                   required
@@ -653,7 +653,7 @@ const LoginScreen: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 pr-10 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 pr-10 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur-sm rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                       placeholder="••••••••"
                       autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
                       required
@@ -696,7 +696,7 @@ const LoginScreen: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-2.5 pr-10 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                      className="w-full px-4 py-2.5 pr-10 border border-gray-200 dark:border-white/15 bg-white/90 dark:bg-white/5 backdrop-blur-sm rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                       placeholder="••••••••"
                       autoComplete="new-password"
                       required
@@ -726,7 +726,7 @@ const LoginScreen: React.FC = () => {
               {authError && (
                 <div className="rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/20 p-4">
                   <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
                     <div className="flex-1">
@@ -757,7 +757,7 @@ const LoginScreen: React.FC = () => {
               {successMessage && (
                 <div className="rounded-lg border border-green-200 dark:border-green-500/30 bg-green-50 dark:bg-green-500/20 p-4">
                   <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-green-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                     <div className="flex-1">
@@ -777,7 +777,7 @@ const LoginScreen: React.FC = () => {
                     role="switch"
                     aria-checked={rememberMe}
                     onClick={() => setRememberMe(!rememberMe)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                       rememberMe ? 'bg-primary-600' : 'bg-gray-200 dark:bg-slate-600'
                     }`}
                   >
@@ -794,7 +794,7 @@ const LoginScreen: React.FC = () => {
               <button
                 type="submit"
                 disabled={authStatus === 'submitting' || isLocked}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-xs"
               >
                 {authStatus === 'submitting' ? (
                   <>
@@ -871,7 +871,7 @@ const LoginScreen: React.FC = () => {
         </div>
 
         {/* Right Column - Brand Panel (Hidden on mobile) */}
-        <div className="hidden lg:flex flex-col justify-center items-center relative bg-gradient-to-br from-[#07132d] via-[#0a1f47] to-[#123b7d] dark:from-[#2d0a4a] dark:via-[#1a2f6b] dark:to-[#0a6f92] h-full p-8 lg:p-10 xl:p-12 shadow-2xl">
+        <div className="hidden lg:flex flex-col justify-center items-center relative bg-linear-to-br from-[#07132d] via-[#0a1f47] to-[#123b7d] dark:from-[#2d0a4a] dark:via-[#1a2f6b] dark:to-[#0a6f92] h-full p-8 lg:p-10 xl:p-12 shadow-2xl">
           <div className="w-full max-w-lg">
             {/* Feature Showcase */}
             <div className="space-y-8">
@@ -887,8 +887,8 @@ const LoginScreen: React.FC = () => {
               {/* How Trakr Works Steps - Condensed */}
               <div className="space-y-4">
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm text-white font-bold text-xs border border-white/40">
+                  <div className="shrink-0">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-xs text-white font-bold text-xs border border-white/40">
                       1
                     </div>
                   </div>
@@ -901,8 +901,8 @@ const LoginScreen: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm text-white font-bold text-xs border border-white/40">
+                  <div className="shrink-0">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-xs text-white font-bold text-xs border border-white/40">
                       2
                     </div>
                   </div>
@@ -915,8 +915,8 @@ const LoginScreen: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm text-white font-bold text-xs border border-white/40">
+                  <div className="shrink-0">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-xs text-white font-bold text-xs border border-white/40">
                       3
                     </div>
                   </div>
@@ -929,8 +929,8 @@ const LoginScreen: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm text-white font-bold text-xs border border-white/40">
+                  <div className="shrink-0">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-xs text-white font-bold text-xs border border-white/40">
                       4
                     </div>
                   </div>
@@ -943,8 +943,8 @@ const LoginScreen: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm text-white font-bold text-xs border border-white/40">
+                  <div className="shrink-0">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-xs text-white font-bold text-xs border border-white/40">
                       5
                     </div>
                   </div>

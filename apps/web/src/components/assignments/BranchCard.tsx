@@ -28,16 +28,16 @@ const BranchCard: React.FC<Props> = ({
   onKeyDown,
 }) => {
   const badgeNode = badge === 'manual'
-    ? <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-700">Manual</span>
+    ? <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] bg-indigo-50 text-indigo-700">Manual</span>
     : badge === 'zone'
-      ? <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-700">Via Zone</span>
-      : <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-700">Unassigned</span>
+      ? <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] bg-gray-100 text-gray-700">Via Zone</span>
+      : <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] bg-gray-100 text-gray-700">Unassigned</span>
 
   const showStatus = typeof auditStatus !== 'undefined'
 
   return (
     <div
-      className={`mb-2 p-2 rounded border bg-white shadow-sm cursor-move select-none ${selected ? 'ring-2 ring-primary-300' : ''}`}
+      className={`mb-2 p-2 rounded-sm border bg-white shadow-xs cursor-move select-none ${selected ? 'ring-2 ring-primary-300' : ''}`}
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}

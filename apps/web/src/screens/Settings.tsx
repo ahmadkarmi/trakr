@@ -395,11 +395,11 @@ const Settings: React.FC = () => {
         <>
         {/* Organization Switcher (Super Admin only) */}
         {isSuperAdmin ? (
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-4 sm:p-5 text-white">
+        <div className="bg-linear-to-r from-blue-500 to-indigo-600 rounded-lg p-4 sm:p-5 text-white">
           {/* Header with badge */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
                 <span className="text-xl sm:text-2xl">⚙️</span>
               </div>
               <h2 className="text-base sm:text-lg font-semibold text-white">Organization Context</h2>
@@ -449,7 +449,7 @@ const Settings: React.FC = () => {
               <input
                 id="toggle-global-view"
                 type="checkbox"
-                className="w-4 h-4 text-white rounded focus:ring-white/50 bg-white/20 border-white/30"
+                className="w-4 h-4 text-white rounded-sm focus:ring-white/50 bg-white/20 border-white/30"
                 checked={globalView}
                 onChange={(e) => setGlobalView(e.target.checked)}
               />
@@ -467,7 +467,7 @@ const Settings: React.FC = () => {
             <div className="mb-4">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <h2 className="heading-section-title">Manage Organizations</h2>
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full whitespace-nowrap flex-shrink-0">
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full whitespace-nowrap shrink-0">
                   {availableOrgs.length} {availableOrgs.length === 1 ? 'Org' : 'Orgs'}
                 </span>
               </div>
@@ -487,7 +487,7 @@ const Settings: React.FC = () => {
                       </p>
                     </div>
                     {currentOrg?.id === org.id && (
-                      <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded">
+                      <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-sm">
                         Active
                       </span>
                     )}
@@ -635,7 +635,7 @@ const Settings: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleRemoveLogo}
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 text-gray-600 shadow hover:text-red-600 hover:bg-white"
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 text-gray-600 shadow-sm hover:text-red-600 hover:bg-white"
                         title="Remove logo"
                       >
                         ✕
@@ -650,7 +650,7 @@ const Settings: React.FC = () => {
                       className="hidden"
                       id="logo-upload"
                     />
-                    <label htmlFor="logo-upload" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-sm hover:shadow-md transition cursor-pointer">
+                    <label htmlFor="logo-upload" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-xs hover:shadow-md transition cursor-pointer">
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v11" />
                       </svg>
@@ -850,7 +850,7 @@ const Settings: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500/10 to-primary-500/5">
+                      <span className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-linear-to-br from-primary-500/10 to-primary-500/5">
                         <Icon className="w-5 h-5 text-primary-600 dark:text-primary-300" />
                       </span>
                       <div>
@@ -864,7 +864,7 @@ const Settings: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <div className={clsx('mt-4 h-24 rounded-xl border overflow-hidden bg-gradient-to-br shadow-inner', option.preview)} />
+                  <div className={clsx('mt-4 h-24 rounded-xl border overflow-hidden bg-linear-to-br shadow-inner', option.preview)} />
                 </button>
               )
             })}
@@ -905,7 +905,7 @@ const Settings: React.FC = () => {
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" defaultChecked className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
@@ -916,7 +916,7 @@ const Settings: React.FC = () => {
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" defaultChecked className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
@@ -927,7 +927,7 @@ const Settings: React.FC = () => {
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" defaultChecked className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
@@ -938,7 +938,7 @@ const Settings: React.FC = () => {
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
@@ -949,7 +949,7 @@ const Settings: React.FC = () => {
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
           </div>

@@ -28,7 +28,7 @@ const StatusBadge: React.FC<Props> = ({ status, className = '' }) => {
   }, [status])
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] ${cfg.cls} ${className}`}
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[10px] ${cfg.cls} ${className}`}
       aria-label={`Audit status: ${cfg.label}`}>
       {cfg.icon}
       <span>{cfg.label}</span>

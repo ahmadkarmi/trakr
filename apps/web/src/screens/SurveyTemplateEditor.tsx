@@ -547,7 +547,7 @@ const SurveyTemplateEditor: React.FC = () => {
                         role="switch"
                         aria-checked={active}
                         onClick={() => setActive(v => !v)}
-                        className={`relative inline-flex h-10 w-16 sm:h-8 sm:w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        className={`relative inline-flex h-10 w-16 sm:h-8 sm:w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                           active ? 'bg-green-500' : 'bg-gray-300'
                         }`}
                       >
@@ -658,7 +658,7 @@ const SurveyTemplateEditor: React.FC = () => {
                       key={sec.id}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         selectedSectionId===sec.id 
-                          ? 'bg-primary-50 border-2 border-primary-600 text-primary-700 shadow-sm' 
+                          ? 'bg-primary-50 border-2 border-primary-600 text-primary-700 shadow-xs' 
                           : 'bg-gray-50 border border-gray-300 text-gray-700 hover:bg-gray-100'
                       }`}
                       onClick={() => setSelectedSectionId(sec.id)}
@@ -840,13 +840,13 @@ const SurveyTemplateEditor: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-4 border rounded-lg bg-gray-50">
                   <div className="md:col-span-2">
                     <label className="label" htmlFor="modal-question-text">Question Text</label>
-                    <input id="modal-question-text" ref={questionTextRef} aria-invalid={!!modalErrors.text} aria-describedby="help-question-text" className="input mt-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.text} onChange={(e) => updateDraftField('text', e.target.value)} />
+                    <input id="modal-question-text" ref={questionTextRef} aria-invalid={!!modalErrors.text} aria-describedby="help-question-text" className="input mt-1 focus:outline-hidden focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.text} onChange={(e) => updateDraftField('text', e.target.value)} />
                     <p id="help-question-text" className="mt-1 text-xs text-gray-500">Write a clear, action‑oriented question. Example: "Are fire extinguishers mounted?"</p>
                     {modalErrors.text && <p className="mt-1 text-xs text-danger-600">{modalErrors.text}</p>}
                   </div>
                   <div>
                     <label className="label" htmlFor="modal-question-type">Type</label>
-                    <select id="modal-question-type" aria-describedby="help-type" className="input mt-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.type} onChange={(e) => onDraftTypeChange(e.target.value as QuestionType)}>
+                    <select id="modal-question-type" aria-describedby="help-type" className="input mt-1 focus:outline-hidden focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.type} onChange={(e) => onDraftTypeChange(e.target.value as QuestionType)}>
                       {Object.values(QuestionType).map(t => (
                         <option key={t} value={t}>{QUESTION_TYPE_LABELS[t]}</option>
                       ))}
@@ -877,7 +877,7 @@ const SurveyTemplateEditor: React.FC = () => {
                             key={opt}
                             type="button"
                             aria-pressed={pressed}
-                            className={`w-full justify-start px-3 py-2 text-sm border rounded-md transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 ${pressed ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`}
+                            className={`w-full justify-start px-3 py-2 text-sm border rounded-md transition-colors duration-150 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-600 ${pressed ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`}
                             onClick={() => setDraftAward(opt)}
                           >
                             {opt.toUpperCase()}
@@ -896,7 +896,7 @@ const SurveyTemplateEditor: React.FC = () => {
                       placeholder="0"
                       aria-invalid={!!modalErrors.points}
                       aria-describedby="help-points"
-                      className="input mt-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1"
+                      className="input mt-1 focus:outline-hidden focus:ring-2 focus:ring-primary-600 focus:ring-offset-1"
                       value={pointsInputValue}
                       onChange={(e) => setDraftPoints(e.target.value)}
                     />
@@ -920,7 +920,7 @@ const SurveyTemplateEditor: React.FC = () => {
                   <ul className="mt-2 space-y-2">
                     {(questionModal.draft!.options || []).map((opt, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <input className="input flex-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={opt} onChange={(e) => updateDraftOption(i, e.target.value)} />
+                        <input className="input flex-1 focus:outline-hidden focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={opt} onChange={(e) => updateDraftOption(i, e.target.value)} />
                         <button className="btn btn-ghost btn-xs" title="Up" onClick={() => moveDraftOption(i, 'up')}><ChevronUpIcon className="w-4 h-4"/></button>
                         <button className="btn btn-ghost btn-xs" title="Down" onClick={() => moveDraftOption(i, 'down')}><ChevronDownIcon className="w-4 h-4"/></button>
                         <button className="btn btn-ghost btn-xs text-danger-600" title="Delete" onClick={() => removeDraftOption(i)}><TrashIcon className="w-4 h-4"/></button>
@@ -928,7 +928,7 @@ const SurveyTemplateEditor: React.FC = () => {
                     ))}
                   </ul>
                   <div className="mt-3 flex gap-2">
-                    <input className="input flex-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" placeholder="Add option" onKeyDown={(e) => { if (e.key === 'Enter') { addDraftOption((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).value=''; } }} />
+                    <input className="input flex-1 focus:outline-hidden focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" placeholder="Add option" onKeyDown={(e) => { if (e.key === 'Enter') { addDraftOption((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).value=''; } }} />
                     <button className="btn btn-primary btn-sm" onClick={(e) => { const inp = (e.currentTarget.previousElementSibling as HTMLInputElement); if (inp?.value) { addDraftOption(inp.value); inp.value=''; } }}>Add</button>
                   </div>
                 </div>
@@ -946,12 +946,12 @@ const SurveyTemplateEditor: React.FC = () => {
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="label">Min</label>
-                      <input type="number" aria-describedby="help-min" className="input mt-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.validation?.min ?? ''} onChange={(e) => setDraftValidation('min', Number(e.target.value))} />
+                      <input type="number" aria-describedby="help-min" className="input mt-1 focus:outline-hidden focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.validation?.min ?? ''} onChange={(e) => setDraftValidation('min', Number(e.target.value))} />
                       <p id="help-min" className="mt-1 text-xs text-gray-500">Leave blank to allow any minimum.</p>
                     </div>
                     <div>
                       <label className="label">Max</label>
-                      <input type="number" aria-describedby="help-max" className="input mt-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.validation?.max ?? ''} onChange={(e) => setDraftValidation('max', Number(e.target.value))} />
+                      <input type="number" aria-describedby="help-max" className="input mt-1 focus:outline-hidden focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.validation?.max ?? ''} onChange={(e) => setDraftValidation('max', Number(e.target.value))} />
                       <p id="help-max" className="mt-1 text-xs text-gray-500">Leave blank to allow any maximum.</p>
                     </div>
                     {modalErrors.range && <div className="md:col-span-2"><p className="mt-1 text-xs text-danger-600">{modalErrors.range}</p></div>}
@@ -971,13 +971,13 @@ const SurveyTemplateEditor: React.FC = () => {
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="label" htmlFor="modal-pattern">Pattern (regex)</label>
-                      <input id="modal-pattern" aria-invalid={!!modalErrors.pattern} aria-describedby="help-pattern" className="input mt-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.validation?.pattern ?? ''} onChange={(e) => setDraftValidation('pattern', e.target.value)} placeholder="^.{1,100}$" />
+                      <input id="modal-pattern" aria-invalid={!!modalErrors.pattern} aria-describedby="help-pattern" className="input mt-1 focus:outline-hidden focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.validation?.pattern ?? ''} onChange={(e) => setDraftValidation('pattern', e.target.value)} placeholder="^.{1,100}$" />
                       <p id="help-pattern" className="mt-1 text-xs text-gray-500">Example: <code>^.{'{'}1,100{'}'}$</code> allows 1–100 characters.</p>
                       {modalErrors.pattern && <p className="mt-1 text-xs text-danger-600">{modalErrors.pattern}</p>}
                     </div>
                     <div>
                       <label className="label">Message</label>
-                      <input className="input mt-1 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.validation?.message ?? ''} onChange={(e) => setDraftValidation('message', e.target.value)} placeholder="Please enter up to 100 chars" />
+                      <input className="input mt-1 focus:outline-hidden focus:ring-2 focus:ring-primary-600 focus:ring-offset-1" value={questionModal.draft!.validation?.message ?? ''} onChange={(e) => setDraftValidation('message', e.target.value)} placeholder="Please enter up to 100 chars" />
                     </div>
                   </div>
                 </details>

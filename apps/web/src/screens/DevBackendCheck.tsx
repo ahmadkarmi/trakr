@@ -105,7 +105,7 @@ const DevBackendCheck: React.FC = () => {
       <div className="max-w-4xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+          <div className="bg-linear-to-r from-blue-600 to-blue-700 p-6 text-white">
             <h1 className="text-3xl font-bold mb-2">🔍 Backend Configuration Check</h1>
             <p className="text-blue-100">Verify that the app is using Supabase instead of mock data</p>
           </div>
@@ -128,7 +128,7 @@ const DevBackendCheck: React.FC = () => {
               </div>
               
               <div className="mt-3 text-sm">
-                <div className="font-mono bg-gray-900 text-green-400 p-3 rounded">
+                <div className="font-mono bg-gray-900 text-green-400 p-3 rounded-sm">
                   Supabase URL: {supabaseUrl}
                 </div>
               </div>
@@ -139,8 +139,8 @@ const DevBackendCheck: React.FC = () => {
                 <div className="font-semibold text-yellow-900 mb-2">⚠️ Action Required</div>
                 <div className="text-sm text-yellow-800">
                   <p>1. Stop the dev server (Ctrl+C)</p>
-                  <p>2. Ensure .env file has: <code className="bg-yellow-100 px-2 py-0.5 rounded">VITE_BACKEND=supabase</code></p>
-                  <p>3. Restart: <code className="bg-yellow-100 px-2 py-0.5 rounded">npm run dev</code></p>
+                  <p>2. Ensure .env file has: <code className="bg-yellow-100 px-2 py-0.5 rounded-sm">VITE_BACKEND=supabase</code></p>
+                  <p>3. Restart: <code className="bg-yellow-100 px-2 py-0.5 rounded-sm">npm run dev</code></p>
                 </div>
               </div>
             )}
@@ -195,13 +195,13 @@ const DevBackendCheck: React.FC = () => {
                     
                     <div className="mt-3">
                       <div className="text-sm font-semibold text-green-900 mb-2">Sample Data:</div>
-                      <pre className="bg-gray-900 text-green-400 p-3 rounded text-xs overflow-x-auto">
+                      <pre className="bg-gray-900 text-green-400 p-3 rounded-sm text-xs overflow-x-auto">
                         {JSON.stringify(testResults.sample, null, 2)}
                       </pre>
                     </div>
 
                     {testResults.time < 10 && (
-                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded">
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded-sm">
                         <div className="text-sm text-yellow-800">
                           ⚠️ Response was very fast ({testResults.time}ms). This might indicate mock data. 
                           Real Supabase calls typically take 50-500ms.
@@ -215,7 +215,7 @@ const DevBackendCheck: React.FC = () => {
                       <div className="text-3xl">❌</div>
                       <div className="font-bold text-lg text-red-900">Error</div>
                     </div>
-                    <pre className="bg-gray-900 text-red-400 p-3 rounded text-sm overflow-x-auto">
+                    <pre className="bg-gray-900 text-red-400 p-3 rounded-sm text-sm overflow-x-auto">
                       {testResults.error}
                     </pre>
                   </>
@@ -230,7 +230,7 @@ const DevBackendCheck: React.FC = () => {
             <div className="space-y-2 text-sm text-gray-700">
               <p><strong>1. Check Environment Status:</strong> Should show "SUCCESS: Using Supabase"</p>
               <p><strong>2. Open DevTools Network Tab:</strong> Press F12 → Network</p>
-              <p><strong>3. Click a Test Button:</strong> You should see network requests to <code className="bg-gray-200 px-1 rounded">*.supabase.co</code></p>
+              <p><strong>3. Click a Test Button:</strong> You should see network requests to <code className="bg-gray-200 px-1 rounded-sm">*.supabase.co</code></p>
               <p><strong>4. Response Time:</strong> Mock data = &lt;10ms, Supabase = 50-500ms</p>
             </div>
           </div>

@@ -183,7 +183,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                     type="checkbox"
                     checked={filters.statuses.includes(status)}
                     onChange={() => handleStatusToggle(status)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700">{status}</span>
                 </label>

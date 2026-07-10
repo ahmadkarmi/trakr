@@ -90,7 +90,7 @@ export default function PWAInstallPrompt() {
       <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <ArrowDownTrayIcon className="h-6 w-6 text-primary-600" />
             </div>
             <div className="ml-3">
@@ -101,7 +101,7 @@ export default function PWAInstallPrompt() {
           </div>
           <button
             onClick={handleDismiss}
-            className="flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600"
+            className="shrink-0 ml-2 text-gray-400 hover:text-gray-600"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -114,13 +114,13 @@ export default function PWAInstallPrompt() {
         <div className="flex space-x-3">
           <button
             onClick={handleInstallClick}
-            className="flex-1 bg-primary-600 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="flex-1 bg-primary-600 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
           >
             Install
           </button>
           <button
             onClick={handleDismiss}
-            className="flex-1 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300 text-sm font-medium py-2 px-4 rounded-md hover:bg-gray-200 dark:hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            className="flex-1 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300 text-sm font-medium py-2 px-4 rounded-md hover:bg-gray-200 dark:hover:bg-white/15 focus:outline-hidden focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
             Not now
           </button>

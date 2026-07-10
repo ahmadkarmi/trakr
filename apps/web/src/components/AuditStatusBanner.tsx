@@ -73,7 +73,7 @@ export function AuditStatusBanner({ permissions, completionPercent = 0, classNam
       {/* Warning message */}
       {showWarning && (
         <div className="flex items-start gap-3 mb-3">
-          <IconComponent className={`w-5 h-5 mt-0.5 flex-shrink-0 ${styles.icon}`} />
+          <IconComponent className={`w-5 h-5 mt-0.5 shrink-0 ${styles.icon}`} />
           <div className="flex-1">
             <p className={`text-sm font-medium ${styles.text}`}>
               {showWarning}
@@ -85,7 +85,7 @@ export function AuditStatusBanner({ permissions, completionPercent = 0, classNam
       {/* Next action guidance */}
       {nextAction && (
         <div className={`flex items-start gap-3 ${showWarning ? 'pt-3 border-t border-current/20' : ''}`}>
-          <IconComponent className={`w-5 h-5 mt-0.5 flex-shrink-0 ${styles.icon}`} />
+          <IconComponent className={`w-5 h-5 mt-0.5 shrink-0 ${styles.icon}`} />
           <div className="flex-1">
             <p className={`text-sm font-semibold ${styles.text}`}>
               Next Step:

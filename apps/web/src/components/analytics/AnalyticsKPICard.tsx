@@ -21,18 +21,18 @@ const AnalyticsKPICard: React.FC<AnalyticsKPICardProps> = ({
   variant = 'default',
   compact = false
 }) => {
-  const darkCardStyles = 'dark:bg-[var(--color-card)] dark:border-white/10 dark:bg-none'
+  const darkCardStyles = 'dark:bg-(--color-card) dark:border-white/10 dark:bg-none'
 
   const getVariantStyles = () => {
     switch (variant) {
       case 'success':
-        return `bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 ${darkCardStyles}`
+        return `bg-linear-to-r from-green-50 to-emerald-50 border-green-200 ${darkCardStyles}`
       case 'warning':
-        return `bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 ${darkCardStyles}`
+        return `bg-linear-to-r from-yellow-50 to-amber-50 border-yellow-200 ${darkCardStyles}`
       case 'danger':
-        return `bg-gradient-to-r from-red-50 to-pink-50 border-red-200 ${darkCardStyles}`
+        return `bg-linear-to-r from-red-50 to-pink-50 border-red-200 ${darkCardStyles}`
       default:
-        return `bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200 ${darkCardStyles}`
+        return `bg-linear-to-r from-gray-50 to-slate-50 border-gray-200 ${darkCardStyles}`
     }
   }
 

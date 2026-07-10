@@ -7,10 +7,10 @@ export const OrganizationSwitcher = () => {
   if (!isSuperAdmin || availableOrgs.length === 0) return null
 
   return (
-    <div className="border-b border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-100 px-4 py-3 shadow-sm">
+    <div className="border-b border-blue-200 bg-linear-to-r from-blue-50 to-indigo-100 px-4 py-3 shadow-xs">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-linear-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-md">
             <span className="text-base">⚙️</span>
             ADMIN MODE
           </span>

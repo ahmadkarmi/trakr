@@ -158,7 +158,7 @@ const UnassignedSurveys: React.FC = () => {
                   <div className="font-medium text-gray-900 truncate">{branchName}</div>
                   <div className="text-sm text-gray-600 truncate">{surveys.length} applicable active surveys</div>
                 </div>
-                <div className="flex items-center gap-2 md:gap-2 flex-nowrap whitespace-nowrap overflow-x-auto flex-shrink-0">
+                <div className="flex items-center gap-2 md:gap-2 flex-nowrap whitespace-nowrap overflow-x-auto shrink-0">
                   <select
                     className="input h-9 text-xs"
                     value={selected[branchId] || ''}

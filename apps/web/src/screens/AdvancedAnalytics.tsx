@@ -111,7 +111,7 @@ const AdvancedAnalytics: React.FC = () => {
         {/* Coming Soon Notice */}
         <div className="card bg-blue-50 border-blue-200 p-4 sm:p-6">
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                   <ChartBarIcon className="w-6 h-6 text-white" />
                 </div>
@@ -147,19 +147,19 @@ const AdvancedAnalytics: React.FC = () => {
                 </div>
                 <ul className="space-y-2 text-blue-900 mb-4">
                   <li className="flex items-start gap-2">
-                    <TableCellsIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <TableCellsIcon className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                     <span><strong>AG Grid:</strong> Excel-like data grid with filtering, sorting, pivoting, and grouping</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <ChartBarIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <ChartBarIcon className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                     <span><strong>Plotly.js:</strong> Interactive data science charts with zoom, pan, and export</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <FunnelIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <FunnelIcon className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                     <span><strong>Advanced Filters:</strong> Date ranges, zones, branches, auditors, and score thresholds</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <ArrowDownTrayIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <ArrowDownTrayIcon className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                     <span><strong>Export:</strong> Excel, PDF, and CSV with one click</span>
                   </li>
                 </ul>

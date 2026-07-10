@@ -92,7 +92,7 @@ export function LazyImage({
       {/* Blur placeholder */}
       {!isLoaded && blurhash && (
         <div
-          className="absolute inset-0 bg-gray-200 blur-sm"
+          className="absolute inset-0 bg-gray-200 blur-xs"
           style={{
             backgroundImage: `url(${blurhash})`,
             backgroundSize: 'cover',
@@ -170,7 +170,7 @@ export function Thumbnail({ src, alt, size = 'md', rounded = false }: ThumbnailP
     <LazyImage
       src={src}
       alt={alt}
-      className={cn(sizes[size], rounded ? 'rounded-full' : '', 'flex-shrink-0')}
+      className={cn(sizes[size], rounded ? 'rounded-full' : '', 'shrink-0')}
       aspectRatio="1/1"
       rootMargin="100px"
     />
@@ -199,7 +199,7 @@ export function PhotoGrid({ photos, columns = 3, onPhotoClick }: PhotoGridProps)
         <button
           key={photo.id}
           onClick={() => onPhotoClick?.(photo.id)}
-          className="group relative overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-transform hover:scale-105"
+          className="group relative overflow-hidden rounded-lg focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-transform hover:scale-105"
         >
           <LazyImage
             src={photo.url}

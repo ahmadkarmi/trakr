@@ -168,7 +168,7 @@ const ActivityLogs: React.FC = () => {
     <DashboardLayout title="Activity Logs">
       <div className="space-y-6">
         {/* Search & Export */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 dark:bg-[var(--color-card)] dark:border-white/10">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 dark:bg-(--color-card) dark:border-white/10">
           <div className="flex flex-col sm:flex-row gap-3">
             <input 
               className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-[rgba(255,255,255,0.06)] dark:border-white/10 dark:text-white dark:placeholder-slate-400" 
@@ -193,7 +193,7 @@ const ActivityLogs: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden">
+        <div className="bg-white dark:bg-(--color-card) border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden">
           {isLoading ? (
             <div className="text-center py-8 text-gray-500">Loading activity logs...</div>
           ) : filtered.length === 0 ? (

@@ -64,7 +64,7 @@ export const Badge: React.FC<BadgeProps> = ({
       {dot && (
         <span className="w-1.5 h-1.5 rounded-full bg-current" />
       )}
-      {showIcon && <span className="flex-shrink-0">{showIcon}</span>}
+      {showIcon && <span className="shrink-0">{showIcon}</span>}
       {children}
     </span>
   )

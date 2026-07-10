@@ -144,7 +144,7 @@ const UserOnboarding: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading invitation...</p>
@@ -155,7 +155,7 @@ const UserOnboarding: React.FC = () => {
 
   if (error || !invitation) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 max-w-md w-full text-center">
           <XCircleIcon className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Invitation</h2>
@@ -172,7 +172,7 @@ const UserOnboarding: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         {/* Progress Steps */}
         <div className="mb-8">
@@ -212,7 +212,7 @@ const UserOnboarding: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
           {/* Step 1: Accept Invitation */}
           {currentStep === 1 && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-6 animate-fade-in">
               <div className="text-center mb-8">
                 <EnvelopeIcon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">You're Invited!</h2>
@@ -272,7 +272,7 @@ const UserOnboarding: React.FC = () => {
 
           {/* Step 2: Complete Profile */}
           {currentStep === 2 && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-6 animate-fade-in">
               <div className="text-center mb-8">
                 <UserCircleIcon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Profile</h2>
@@ -322,7 +322,7 @@ const UserOnboarding: React.FC = () => {
 
           {/* Step 3: Complete */}
           {currentStep === 3 && (
-            <div className="text-center space-y-6 animate-fadeIn">
+            <div className="text-center space-y-6 animate-fade-in">
               <SparklesIcon className="w-20 h-20 text-green-500 mx-auto" />
               <h2 className="text-3xl font-bold text-gray-900">Welcome to the Team!</h2>
               <p className="text-lg text-gray-600">

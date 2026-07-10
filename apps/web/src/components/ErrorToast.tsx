@@ -123,7 +123,7 @@ export function ErrorToast({ error, onClose, autoClose = true, autoCloseDelay = 
         `}
       >
         <div className="flex items-start">
-          <div className={`flex-shrink-0 ${styles.icon}`}>
+          <div className={`shrink-0 ${styles.icon}`}>
             {getSeverityIcon(error.severity)}
           </div>
           <div className="ml-3 flex-1">
@@ -136,12 +136,12 @@ export function ErrorToast({ error, onClose, autoClose = true, autoCloseDelay = 
               </p>
             )}
           </div>
-          <div className="ml-4 flex-shrink-0">
+          <div className="ml-4 shrink-0">
             <button
               onClick={handleClose}
               className={`
                 ${styles.text} hover:opacity-75 transition-opacity
-                inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent
+                inline-flex rounded-md p-1.5 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent
               `}
             >
               <span className="sr-only">Dismiss</span>

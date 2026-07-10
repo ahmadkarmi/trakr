@@ -56,9 +56,9 @@ const AdminOrgOnboarding: React.FC = () => {
   return (
     <DashboardLayout title="Welcome to Trakr">
       <div className="max-w-2xl mx-auto py-12 px-4">
-        <div className="bg-white dark:bg-[var(--color-card)] rounded-lg shadow-lg p-8">
+        <div className="bg-white dark:bg-(--color-card) rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-linear-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
               <BuildingOffice2Icon className="w-10 h-10 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
@@ -71,7 +71,7 @@ const AdminOrgOnboarding: React.FC = () => {
 
           <div className="bg-blue-50 dark:bg-blue-500/20 border-l-4 border-blue-500 p-4 mb-6">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
@@ -534,7 +534,7 @@ const DashboardAdmin: React.FC = () => {
       const re = new RegExp(`(${escapeRegExp(q)})`, 'ig')
       const parts = text.split(re)
       return parts.map((part, i) => (
-        i % 2 === 1 ? <mark key={i} className="bg-yellow-100 dark:bg-yellow-500/30 text-gray-900 dark:text-white rounded px-0.5">{part}</mark> : <span key={i}>{part}</span>
+        i % 2 === 1 ? <mark key={i} className="bg-yellow-100 dark:bg-yellow-500/30 text-gray-900 dark:text-white rounded-sm px-0.5">{part}</mark> : <span key={i}>{part}</span>
       ))
     } catch { return text }
   }
@@ -610,7 +610,7 @@ const DashboardAdmin: React.FC = () => {
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             {/* Step 1: Create Branches */}
-            <div className="bg-white dark:bg-[var(--color-card)] border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-blue-500 transition-colors">
+            <div className="bg-white dark:bg-(--color-card) border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-blue-500 transition-colors">
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
                 <span className="text-2xl">🏢</span>
               </div>
@@ -629,7 +629,7 @@ const DashboardAdmin: React.FC = () => {
             </div>
 
             {/* Step 2: Create Survey Templates */}
-            <div className="bg-white dark:bg-[var(--color-card)] border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-green-500 transition-colors">
+            <div className="bg-white dark:bg-(--color-card) border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-green-500 transition-colors">
               <div className="w-12 h-12 bg-green-100 dark:bg-green-500/20 rounded-lg flex items-center justify-center mb-4">
                 <span className="text-2xl">📋</span>
               </div>
@@ -648,7 +648,7 @@ const DashboardAdmin: React.FC = () => {
             </div>
 
             {/* Step 3: Invite Users */}
-            <div className="bg-white dark:bg-[var(--color-card)] border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-purple-500 transition-colors">
+            <div className="bg-white dark:bg-(--color-card) border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-purple-500 transition-colors">
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-500/20 rounded-lg flex items-center justify-center mb-4">
                 <span className="text-2xl">👥</span>
               </div>
@@ -667,7 +667,7 @@ const DashboardAdmin: React.FC = () => {
             </div>
 
             {/* Step 4: Optional Zones */}
-            <div className="bg-white dark:bg-[var(--color-card)] border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-yellow-500 transition-colors">
+            <div className="bg-white dark:bg-(--color-card) border-2 border-gray-200 dark:border-white/10 rounded-lg p-6 hover:border-yellow-500 transition-colors">
               <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-500/20 rounded-lg flex items-center justify-center mb-4">
                 <span className="text-2xl">🗺️</span>
               </div>
@@ -686,7 +686,7 @@ const DashboardAdmin: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 dark:bg-white/5 dark:border-white/10 dark:backdrop-blur">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 dark:bg-white/5 dark:border-white/10 dark:backdrop-blur-sm">
             <h4 className="font-semibold text-gray-900 mb-2 dark:text-white">📘 Need Help?</h4>
             <p className="text-gray-600 text-sm dark:text-slate-300">
               Check out our documentation or contact support if you need assistance setting up your organization.
@@ -809,7 +809,7 @@ const DashboardAdmin: React.FC = () => {
                   </p>
                   <button
                     onClick={() => navigate('/manage/assignments')}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -828,7 +828,7 @@ const DashboardAdmin: React.FC = () => {
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Overdue</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-[var(--color-card)] divide-y divide-gray-200 dark:divide-white/10">
+                    <tbody className="bg-white dark:bg-(--color-card) divide-y divide-gray-200 dark:divide-white/10">
                       {zoneRows.map(r => (
                         <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                           <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{r.name}</td>
@@ -1024,7 +1024,7 @@ const DashboardAdmin: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-slate-200 whitespace-nowrap">Filter:</label>
                     <select 
-                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 dark:border-white/15 rounded-lg bg-white dark:bg-[var(--color-card)] dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[140px]" 
+                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 dark:border-white/15 rounded-lg bg-white dark:bg-(--color-card) dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[140px]" 
                       value={quickChip} 
                       onChange={(e) => setQuickChip(e.target.value as typeof quickChip)}
                     >
@@ -1044,7 +1044,7 @@ const DashboardAdmin: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-slate-200 whitespace-nowrap">Sort:</label>
                     <select 
-                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 dark:border-white/15 rounded-lg bg-white dark:bg-[var(--color-card)] dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[100px]" 
+                      className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 dark:border-white/15 rounded-lg bg-white dark:bg-(--color-card) dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[100px]" 
                       value={sortField} 
                       onChange={(e) => setSortField(e.target.value as typeof sortField)}
                     >
@@ -1055,7 +1055,7 @@ const DashboardAdmin: React.FC = () => {
                       <option value="auditor">Auditor</option>
                     </select>
                     <button 
-                      className="px-3 py-2 border border-gray-300 dark:border-white/15 bg-white dark:bg-[var(--color-card)] hover:bg-gray-50 dark:hover:bg-white/5 dark:text-white rounded-lg transition-colors"
+                      className="px-3 py-2 border border-gray-300 dark:border-white/15 bg-white dark:bg-(--color-card) hover:bg-gray-50 dark:hover:bg-white/5 dark:text-white rounded-lg transition-colors"
                       onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
                       title={`Sort ${sortDirection === 'asc' ? 'Descending' : 'Ascending'}`}
                     >
@@ -1106,7 +1106,7 @@ const DashboardAdmin: React.FC = () => {
               
               {/* Advanced Filters */}
               {showAdvanced && (
-                  <div className="mt-3 p-3 border dark:border-white/10 rounded-md bg-gray-50 dark:bg-[var(--color-card-muted)]">
+                  <div className="mt-3 p-3 border dark:border-white/10 rounded-md bg-gray-50 dark:bg-(--color-card-muted)">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <div>
                         <label className="label">Status</label>
@@ -1177,7 +1177,7 @@ const DashboardAdmin: React.FC = () => {
                     {viewScope === 'week' && audits.length > 0 && (
                       <button
                         onClick={() => setViewScope('all')}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-[var(--color-card)] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 bg-white dark:bg-(--color-card) hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                       >
                         View All Audits
                       </button>
@@ -1201,12 +1201,12 @@ const DashboardAdmin: React.FC = () => {
                   const canManualArchive = !a.isArchived && pastDue && (a.status === AuditStatus.DRAFT || a.status === AuditStatus.IN_PROGRESS || a.status === AuditStatus.SUBMITTED)
                   
                   return (
-                    <div className="bg-white dark:bg-[var(--color-card)] rounded-lg border border-gray-200 dark:border-white/10 p-5 hover:shadow-md transition-shadow">
+                    <div className="bg-white dark:bg-(--color-card) rounded-lg border border-gray-200 dark:border-white/10 p-5 hover:shadow-md transition-shadow">
                       {/* Card Header */}
                       <div className="mb-4">
                         {/* Title Row */}
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center shrink-0">
                             <span className="text-base font-bold text-primary-600">
                               {a.id.slice(-2)}
                             </span>

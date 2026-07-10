@@ -1,6 +1,406 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
+  --color-success-950: #052e16;
+
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+  --color-warning-950: #451a03;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+  --color-danger-950: #450a0a;
+
+  --font-sans: Inter, system-ui, sans-serif;
+
+  --animate-slide-up: slide-up 0.3s ease-out;
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-shimmer: shimmer 2s linear infinite;
+  --animate-pulse-subtle: pulse-subtle 2s ease-in-out infinite;
+  --animate-scale-in: scale-in 0.3s ease-out;
+
+  @keyframes slide-up {
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  @keyframes pulse-subtle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+  @keyframes scale-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility mobile-container {
+  /* Responsive page container and vertical spacing */
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+@utility breathing-room {
+  @apply py-6 sm:py-8 lg:py-10;
+}
+
+@utility app-shell {
+  @apply min-h-screen flex flex-col;
+  background-color: var(--color-page);
+  color: var(--color-text);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+@utility card {
+  /* Cards */
+  @apply border rounded-2xl shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] transition-all duration-300 overflow-hidden;
+  background-color: var(--color-card);
+  border-color: var(--color-border);
+  color: var(--color-text);
+  .dark & {
+    background-color: var(--color-card) !important;
+    border-color: var(--color-border) !important;
+    background-image: none !important;
+  }
+}
+
+@utility card-compact {
+  @apply rounded-2xl p-4 shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] transition-all duration-300 border;
+  background-color: var(--color-card);
+  border-color: var(--color-border);
+
+  .dark & {
+    background-color: var(--color-card) !important;
+    border-color: var(--color-border) !important;
+    background-image: none !important;
+  }
+}
+
+@utility dark {
+  & .card {
+    background-color: var(--color-card) !important;
+    border-color: var(--color-border) !important;
+    background-image: none !important;
+  }
+  & .card-compact {
+    background-color: var(--color-card) !important;
+    border-color: var(--color-border) !important;
+    background-image: none !important;
+  }
+}
+
+@utility card-body {
+  @apply px-6 py-5 space-y-4;
+}
+
+@utility card-title {
+  @apply heading-card-title;
+}
+
+@utility card-subtitle {
+  @apply heading-subtitle;
+}
+
+@utility card-section {
+  @apply border rounded-xl p-4;
+  background-color: var(--color-card-muted);
+  border-color: var(--color-border);
+}
+
+@utility btn {
+  /* Buttons */
+  @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-target px-3 active:scale-95;
+
+  /* Enlarge icons inside buttons on mobile; revert on >=sm */
+  & > svg {
+    @apply w-6 h-6;
+  }
+  & .icon {
+    @apply w-6 h-6;
+  }
+  @media (width >= theme(--breakpoint-sm)) {
+    & > svg {
+      @apply w-5 h-5;
+    }
+    & .icon {
+      @apply w-5 h-5;
+    }
+  }
+}
+
+@utility btn-primary {
+  color: #fff;
+  background-image: linear-gradient(
+    135deg,
+    var(--color-btn-primary-start),
+    var(--color-btn-primary-end)
+  );
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.35);
+  }
+}
+
+@utility btn-outline {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  &:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 10px 24px var(--color-accent-soft);
+  }
+}
+
+@utility btn-danger {
+  @apply bg-linear-to-r from-danger-600 to-danger-700 text-white hover:from-danger-700 hover:to-danger-800 hover:shadow-lg hover:shadow-danger-500/30 hover:-translate-y-0.5 focus:ring-danger-600;
+}
+
+@utility btn-ghost {
+  color: var(--color-text-muted);
+  &:hover {
+    background-color: var(--color-nav-hover);
+    color: var(--color-text);
+    box-shadow: 0 4px 12px rgba(15, 15, 35, 0.15);
+  }
+}
+
+@utility btn-link {
+  color: var(--color-accent);
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@utility btn-muted {
+  background-color: var(--color-card-muted);
+  color: var(--color-text);
+}
+
+@utility btn-sm {
+  /* Slightly larger buttons on mobile for better touch targets; revert to previous sizes on >=sm */
+  @apply h-9 px-3.5 text-sm sm:h-8 sm:px-3 sm:text-sm;
+}
+
+@utility btn-md {
+  @apply h-11 px-5 text-base sm:h-10 sm:px-4 sm:text-sm;
+}
+
+@utility btn-lg {
+  @apply h-12 px-6 text-lg sm:h-11 sm:px-5 sm:text-base;
+}
+
+@utility icon {
+  .btn & {
+    @apply w-6 h-6;
+  }
+  @media (width >= theme(--breakpoint-sm)) {
+    .btn & {
+      @apply w-5 h-5;
+    }
+  }
+}
+
+@utility input {
+  /* Inputs and labels */
+  @apply w-full px-3 py-2.5 rounded-lg transition-all duration-300 focus:outline-hidden focus:ring-2 focus:ring-offset-2 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)];
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+  &:hover {
+    border-color: var(--color-accent);
+  }
+  &:focus {
+    border-color: var(--color-accent);
+  }
+}
+
+@utility input-error {
+  @apply border-danger-300 focus:ring-danger-600 focus:border-danger-600;
+}
+
+@utility input-success {
+  @apply border-success-300 focus:ring-success-600 focus:border-success-600;
+}
+
+@utility label {
+  @apply block text-sm font-medium mb-1.5;
+  color: var(--color-text-muted);
+}
+
+@utility label-required {
+  &::after {
+    @apply content-['*'] text-danger-500 ml-1;
+  }
+}
+
+@utility section {
+  /* Simple section wrapper */
+  @apply card p-4 sm:p-6;
+}
+
+@utility section-header {
+  @apply flex items-center justify-between gap-3 px-6 py-4 border-b;
+  border-color: var(--color-border);
+}
+
+@utility heading-page-title {
+  /* Heading utility classes */
+  @apply text-3xl font-semibold tracking-tight;
+  color: var(--color-text);
+}
+
+@utility heading-section-title {
+  @apply text-2xl font-semibold;
+  color: var(--color-text);
+}
+
+@utility heading-card-title {
+  @apply text-lg font-semibold;
+  color: var(--color-text);
+}
+
+@utility heading-subtitle {
+  @apply text-sm;
+  color: var(--color-text-muted);
+}
+
+@utility heading-micro {
+  @apply text-xs font-semibold uppercase tracking-wide;
+  color: var(--color-text-muted);
+}
+
+@utility theme-option {
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  border-radius: 1rem;
+  padding: 1rem;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease,
+    background-color 0.25s ease;
+  &:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+  }
+}
+
+@utility theme-option--active {
+  border-color: var(--color-accent);
+  box-shadow: 0 12px 30px var(--color-accent-soft);
+}
+
+@utility center-flex {
+  @apply flex items-center justify-center;
+}
+
+@utility text-subtle {
+  color: var(--color-text-muted);
+}
+
+@utility grid-gap {
+  @apply gap-4 sm:gap-6 lg:gap-8;
+}
+
+@utility touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
 
 /* Design tokens and UI primitives */
 @layer base {
@@ -158,126 +558,4 @@
   .dark .text-gray-700, .dark .text-gray-600, .dark .text-gray-500 { color: var(--color-text-muted) !important; }
   .dark .bg-primary-50 { background-color: rgba(255, 255, 255, 0.08) !important; }
   .dark .text-primary-700 { color: var(--color-primary-strong) !important; }
-}
-
-@layer components {
-  /* Responsive page container and vertical spacing */
-  .mobile-container { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
-  .breathing-room { @apply py-6 sm:py-8 lg:py-10; }
-
-  .app-shell {@apply min-h-screen flex flex-col; background-color: var(--color-page); color: var(--color-text); transition: background-color 0.3s ease, color 0.3s ease; }
-
-  /* Cards */
-  .card {
-    @apply border rounded-2xl shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] transition-all duration-300 overflow-hidden;
-    background-color: var(--color-card);
-    border-color: var(--color-border);
-    color: var(--color-text);
-  }
-  .card-compact {
-    @apply rounded-2xl p-4 shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] transition-all duration-300 border;
-    background-color: var(--color-card);
-    border-color: var(--color-border);
-  }
-  .dark .card,
-  .dark .card-compact {
-    background-color: var(--color-card) !important;
-    border-color: var(--color-border) !important;
-    background-image: none !important;
-  }
-
-  .card-body { @apply px-6 py-5 space-y-4; }
-  .card-title { @apply heading-card-title; }
-  .card-subtitle { @apply heading-subtitle; }
-  .card-section {
-    @apply border rounded-xl p-4;
-    background-color: var(--color-card-muted);
-    border-color: var(--color-border);
-  }
-
-  /* Buttons */
-  .btn {
-    @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-target px-3 active:scale-95;
-  }
-  .btn-primary {
-    color: #fff;
-    background-image: linear-gradient(135deg, var(--color-btn-primary-start), var(--color-btn-primary-end));
-    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
-  }
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.35);
-  }
-  .btn-outline {
-    background-color: var(--color-card);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-  }
-  .btn-outline:hover {
-    border-color: var(--color-accent);
-    box-shadow: 0 10px 24px var(--color-accent-soft);
-  }
-  .btn-danger { @apply bg-gradient-to-r from-danger-600 to-danger-700 text-white hover:from-danger-700 hover:to-danger-800 hover:shadow-lg hover:shadow-danger-500/30 hover:-translate-y-0.5 focus:ring-danger-600; }
-  .btn-ghost { color: var(--color-text-muted); }
-  .btn-ghost:hover { background-color: var(--color-nav-hover); color: var(--color-text); box-shadow: 0 4px 12px rgba(15, 15, 35, 0.15); }
-  .btn-link { color: var(--color-accent); }
-  .btn-link:hover { text-decoration: underline; }
-  .btn-muted { background-color: var(--color-card-muted); color: var(--color-text); }
-  /* Slightly larger buttons on mobile for better touch targets; revert to previous sizes on >=sm */
-  .btn-sm { @apply h-9 px-3.5 text-sm sm:h-8 sm:px-3 sm:text-sm; }
-  .btn-md { @apply h-11 px-5 text-base sm:h-10 sm:px-4 sm:text-sm; }
-  .btn-lg { @apply h-12 px-6 text-lg sm:h-11 sm:px-5 sm:text-base; }
-
-  /* Enlarge icons inside buttons on mobile; revert on >=sm */
-  .btn > svg, .btn .icon { @apply w-6 h-6; }
-  @screen sm { .btn > svg, .btn .icon { @apply w-5 h-5; } }
-
-  /* Inputs and labels */
-  .input {
-    @apply w-full px-3 py-2.5 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)];
-    background-color: var(--color-card);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-  }
-  .input::placeholder { color: var(--color-text-muted); }
-  .input:hover { border-color: var(--color-accent); }
-  .input:focus { border-color: var(--color-accent); }
-  .input-error { @apply border-danger-300 focus:ring-danger-600 focus:border-danger-600; }
-  .input-success { @apply border-success-300 focus:ring-success-600 focus:border-success-600; }
-  .label { @apply block text-sm font-medium mb-1.5; color: var(--color-text-muted); }
-  .label-required::after { @apply content-['*'] text-danger-500 ml-1; }
-
-  /* Simple section wrapper */
-  .section { @apply card p-4 sm:p-6; }
-  .section-header { @apply flex items-center justify-between gap-3 px-6 py-4 border-b; border-color: var(--color-border); }
-
-  /* Heading utility classes */
-  .heading-page-title { @apply text-3xl font-semibold tracking-tight; color: var(--color-text); }
-  .heading-section-title { @apply text-2xl font-semibold; color: var(--color-text); }
-  .heading-card-title { @apply text-lg font-semibold; color: var(--color-text); }
-  .heading-subtitle { @apply text-sm; color: var(--color-text-muted); }
-  .heading-micro { @apply text-xs font-semibold uppercase tracking-wide; color: var(--color-text-muted); }
-
-  .theme-option {
-    border: 1px solid var(--color-border);
-    background-color: var(--color-card);
-    border-radius: 1rem;
-    padding: 1rem;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, background-color 0.25s ease;
-  }
-  .theme-option:hover {
-    border-color: var(--color-accent);
-    transform: translateY(-2px);
-  }
-  .theme-option--active {
-    border-color: var(--color-accent);
-    box-shadow: 0 12px 30px var(--color-accent-soft);
-  }
-}
-
-@layer utilities {
-  .center-flex { @apply flex items-center justify-center; }
-  .text-subtle { color: var(--color-text-muted); }
-  .grid-gap { @apply gap-4 sm:gap-6 lg:gap-8; }
-  .touch-target { min-height: 44px; min-width: 44px; }
 }

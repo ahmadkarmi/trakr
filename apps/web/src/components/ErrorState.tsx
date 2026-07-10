@@ -22,7 +22,7 @@ const ErrorState: React.FC<ErrorStateProps> = ({
       {retry && (
         <button
           onClick={retry}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-white/10 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-slate-200 bg-white dark:bg-[var(--color-card)] hover:bg-gray-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-white/10 shadow-xs text-sm font-medium rounded-md text-gray-700 dark:text-slate-200 bg-white dark:bg-(--color-card) hover:bg-gray-50 dark:hover:bg-white/5 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           Try Again
         </button>

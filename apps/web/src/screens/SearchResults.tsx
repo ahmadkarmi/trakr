@@ -197,12 +197,12 @@ const SearchResults: React.FC = () => {
     <DashboardLayout title="Search Results">
       <div className="space-y-6">
         {/* Search Header */}
-        <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-6 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-6 shadow-xs">
           <div className="flex items-center gap-3">
-            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 shrink-0" />
             <input
               type="text"
-              className="flex-1 outline-none text-sm text-gray-900 placeholder-gray-400"
+              className="flex-1 outline-hidden text-sm text-gray-900 placeholder-gray-400"
               placeholder={isAdmin ? "Search audits, branches, users..." : "Search audits..."}
               value={query}
               onChange={(e) => setSearchParams({ q: e.target.value })}
@@ -236,7 +236,7 @@ const SearchResults: React.FC = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-white hover:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               >
                 <option value="relevance">Sort: Relevance</option>
                 <option value="recent">Sort: Recent</option>
@@ -361,7 +361,7 @@ const SearchResults: React.FC = () => {
 
         {!query && (
           <div className="text-center py-24">
-            <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-primary-100 to-primary-50 rounded-full flex items-center justify-center">
+            <div className="w-24 h-24 mx-auto mb-8 bg-linear-to-br from-primary-100 to-primary-50 rounded-full flex items-center justify-center">
               <MagnifyingGlassIcon className="w-12 h-12 text-primary-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">

@@ -87,14 +87,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return (
             <div 
               key={t.id} 
-              className={`${bgColor} rounded-xl sm:rounded-lg shadow-xl backdrop-blur-sm text-white animate-slide-up pointer-events-auto`}
+              className={`${bgColor} rounded-xl sm:rounded-lg shadow-xl backdrop-blur-xs text-white animate-slide-up pointer-events-auto`}
               style={{
                 animation: 'slideUp 0.3s ease-out'
               }}
             >
               <div className="flex items-start gap-3 p-4">
                 {/* Icon */}
-                <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-bold ${
+                <div className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-bold ${
                   t.variant === 'success'
                     ? 'bg-green-700'
                     : t.variant === 'error'
@@ -113,7 +113,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 
                 {/* Close Button */}
                 <button 
-                  className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors touch-target"
+                  className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors touch-target"
                   onClick={() => dismissToast(t.id)}
                   aria-label="Close"
                 >

@@ -136,7 +136,7 @@ const InvitationManager: React.FC = () => {
 
       {/* Invite Form */}
       {showInviteForm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 animate-fadeIn">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 animate-fade-in">
           <form onSubmit={handleSendInvite} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
