@@ -91,7 +91,7 @@ const SessionExpiryBanner = () => {
           </button>
           <button
             onClick={() => acknowledge()}
-            className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors"
+            className="shrink-0 p-1 hover:bg-red-100 rounded-sm transition-colors"
             aria-label="Close"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,7 +194,7 @@ function App() {
                   <p className="text-sm text-blue-800">A new version is available!</p>
                   <button
                     onClick={updateApp}
-                    className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                    className="text-sm bg-blue-600 text-white px-3 py-1 rounded-sm hover:bg-blue-700"
                   >
                     Update
                   </button>

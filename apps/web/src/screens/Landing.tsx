@@ -270,16 +270,16 @@ const Landing: React.FC = () => {
 
   return (
     <div ref={containerRef} className="min-h-screen" style={{ backgroundColor: 'var(--color-page)' }}>
-      <header className="sticky top-0 z-30 border-b bg-white dark:bg-[var(--color-card)] shadow-lg transition-colors">
+      <header className="sticky top-0 z-30 border-b bg-white dark:bg-(--color-card) shadow-lg transition-colors">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BrandLogo className="h-10 sm:h-11" />
           </div>
           <nav className="hidden sm:flex items-center gap-2">
-            <a href="#about" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded">About</a>
-            <a href="#how-it-works" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded">How Trakr Works</a>
-            <a href="#features" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded">Features</a>
-            <a href="#industries" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded">Industries</a>
+            <a href="#about" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-sm">About</a>
+            <a href="#how-it-works" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-sm">How Trakr Works</a>
+            <a href="#features" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-sm">Features</a>
+            <a href="#industries" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-sm">Industries</a>
             <a href="#beta" aria-label="Request Access to Trakr Private Beta" data-analytics="cta:header_request_access" className="text-sm text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-md font-semibold shadow-[0_8px_20px_rgba(37,99,235,0.25)]">Request Access</a>
             <button
               type="button"
@@ -302,7 +302,7 @@ const Landing: React.FC = () => {
       </header>
 
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-100/70 via-cyan-50/60 to-white dark:from-[#131834] dark:via-[#101223] dark:to-[var(--color-page)]" aria-hidden />
+        <div className="absolute inset-0 bg-linear-to-b from-blue-100/70 via-cyan-50/60 to-white dark:from-[#131834] dark:via-[#101223] dark:to-(--color-page)" aria-hidden />
         <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-400/30 dark:bg-blue-500/20 blur-3xl" style={{ transform: `translate(${mouse.x}px, ${mouse.y}px)` }} />
         <div className="pointer-events-none absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-cyan-400/30 dark:bg-violet-500/20 blur-3xl" style={{ transform: `translate(${-mouse.x}px, ${-mouse.y}px)` }} />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
@@ -323,14 +323,14 @@ const Landing: React.FC = () => {
                   href="#beta"
                   aria-label="Request Access to Trakr Private Beta"
                   data-analytics="cta:hero_request_access"
-                  className="inline-flex items-center justify-center rounded-md bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                  className="inline-flex items-center justify-center rounded-md bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 hover:bg-primary-700 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                 >
                   Request Access
                 </a>
                 <a
                   href="#demo"
                   data-analytics="cta:hero_see_demo"
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-white dark:bg-[var(--color-card)] px-5 py-3 text-sm font-semibold text-gray-900 dark:text-white ring-1 ring-inset ring-gray-300 dark:ring-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-white dark:bg-(--color-card) px-5 py-3 text-sm font-semibold text-gray-900 dark:text-white ring-1 ring-inset ring-gray-300 dark:ring-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
                 >
                   <PlayCircleIcon className="w-5 h-5 text-primary-600" />
                   <span>Demo Reel</span>
@@ -361,10 +361,10 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-primary-200/60 to-transparent" aria-hidden />
+      <div className="h-px w-full bg-linear-to-r from-transparent via-primary-200/60 to-transparent" aria-hidden />
 
       {demoVideo && (
-        <section id="demo" className="relative py-12 sm:py-16 bg-white dark:bg-[var(--color-card)] border-t border-gray-100 dark:border-white/10">
+        <section id="demo" className="relative py-12 sm:py-16 bg-white dark:bg-(--color-card) border-t border-gray-100 dark:border-white/10">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8" data-animate>
             <div className="relative w-full rounded-2xl overflow-hidden bg-gray-900 dark:bg-black">
               <div className="pt-[56.25%]"></div>
@@ -377,7 +377,7 @@ const Landing: React.FC = () => {
               />
             </div>
           </div>
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-b from-transparent to-black/10"></div>
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-linear-to-b from-transparent to-black/10"></div>
         </section>
       )}
 
@@ -385,7 +385,7 @@ const Landing: React.FC = () => {
 
       
 
-      <section id="about" className="relative py-14 sm:py-20 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-[var(--color-card)]">
+      <section id="about" className="relative py-14 sm:py-20 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-(--color-card)">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
             <div className="lg:col-span-1" data-animate>
@@ -393,15 +393,15 @@ const Landing: React.FC = () => {
               <p className="mt-3 text-gray-600 dark:text-slate-300">Trakr standardizes audits, captures section level proof, scores compliance, and turns findings into tracked actions across every location.</p>
             </div>
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6" data-animate>
-              <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/50 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><ClipboardDocumentCheckIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Audit</h3><p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Use consistent checklists by location type.</p></div>
-              <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/50 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CameraIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Evidence</h3><p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Attach photos and notes at the right section.</p></div>
-              <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/50 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CheckCircleIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Actions</h3><p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Assign owners and due dates that drive closure.</p></div>
+              <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/50 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><ClipboardDocumentCheckIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Audit</h3><p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Use consistent checklists by location type.</p></div>
+              <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/50 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CameraIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Evidence</h3><p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Attach photos and notes at the right section.</p></div>
+              <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/50 transform-gpu hover:-translate-y-0.5"><div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CheckCircleIcon className="w-5 h-5" /></div><h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Actions</h3><p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Assign owners and due dates that drive closure.</p></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="how-it-works" ref={howRef} className="relative py-14 sm:py-20 bg-gradient-to-b from-blue-100/60 via-cyan-50/50 to-white dark:from-[#101223] dark:via-[#141733] dark:to-[var(--color-page)] border-t border-gray-100 dark:border-white/5">
+      <section id="how-it-works" ref={howRef} className="relative py-14 sm:py-20 bg-linear-to-b from-blue-100/60 via-cyan-50/50 to-white dark:from-[#101223] dark:via-[#141733] dark:to-(--color-page) border-t border-gray-100 dark:border-white/5">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white" data-animate><span className="mr-2" aria-hidden>⚙️</span>How Trakr Works</h2>
           <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -415,7 +415,7 @@ const Landing: React.FC = () => {
                     className={`min-h-[72vh] md:min-h-[60vh] flex items-end`}
                   >
                     <div className={`w-full rounded-xl border p-6 transform-gpu will-change-transform motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none ${
-                      activeStep === i ? 'bg-white dark:bg-[var(--color-card)] border-primary-200 dark:border-primary-300/60 shadow-xl scale-[1.01]' : 'bg-white/70 dark:bg-white/5 border-gray-200 dark:border-white/10 scale-100'
+                      activeStep === i ? 'bg-white dark:bg-(--color-card) border-primary-200 dark:border-primary-300/60 shadow-xl scale-[1.01]' : 'bg-white/70 dark:bg-white/5 border-gray-200 dark:border-white/10 scale-100'
                     }`}>
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{i + 1}. {s.title}</h3>
@@ -431,7 +431,7 @@ const Landing: React.FC = () => {
             <div className="order-1 lg:order-2 lg:col-span-7">
               <div className="sticky top-20" ref={stickyRef}>
                 <div className="relative w-full">
-                  <div className="absolute -top-[6px] -right-2 lg:-right-6 z-0 pointer-events-none select-none">
+                  <div className="absolute top-[-6px] -right-2 lg:-right-6 z-0 pointer-events-none select-none">
                     <span
                       key={`step-num-${activeStep}`}
                       className={`inline-block font-extrabold leading-none text-primary-600 text-[52vw] md:text-[30vw] lg:text-[22vw] xl:text-[18vw] transform-gpu will-change-transform will-change-opacity motion-safe:transition-all motion-safe:duration-500 ease-out ${showNumber ? 'opacity-50 translate-y-0 scale-100' : 'opacity-0 translate-y-3 scale-95'}`}
@@ -492,31 +492,31 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <section id="features" className="relative py-14 sm:py-20 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-[var(--color-card)]">
+      <section id="features" className="relative py-14 sm:py-20 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-(--color-card)">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white" data-animate><span className="mr-2" aria-hidden>🛡️</span>Strengthen Compliance With Trakr</h2>
           <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><ClipboardDocumentListIcon className="w-5 h-5" /></div>
               <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Standardized Audits and Checklists</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Versioned templates with role guidance for consistent execution.</p>
             </div>
-            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CameraIcon className="w-5 h-5" /></div>
               <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Section Level Evidence and Photos</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Attach photos and justifications where they matter.</p>
             </div>
-            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><ChartBarIcon className="w-5 h-5" /></div>
               <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Weighted Scoring and Metrics</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Accurate section and overall scores with trend views.</p>
             </div>
-            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><CheckCircleIcon className="w-5 h-5" /></div>
               <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Corrective Actions and Follow Ups</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Owners, due dates, and approvals that unblock locations.</p>
             </div>
-            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="group rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <div className="h-10 w-10 rounded-md bg-primary-600 text-white grid place-items-center ring-1 ring-primary-500/10 group-hover:ring-primary-300 transition-transform duration-200 group-hover:scale-105"><GlobeAltIcon className="w-5 h-5" /></div>
               <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">Multi Site Rollups and Benchmarking</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Compare sites, regions, and periods at a glance.</p>
@@ -525,12 +525,12 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <section id="industries" className="relative py-14 sm:py-20 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-[var(--color-card)]">
+      <section id="industries" className="relative py-14 sm:py-20 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-(--color-card)">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white" data-animate><span className="mr-2" aria-hidden>🏭</span>Who Uses Trakr?</h2>
           <p className="mt-2 text-gray-600 dark:text-slate-300">Built for multi site teams in regulated or brand critical operations.</p>
           <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <h3 className="font-semibold text-gray-900 dark:text-white">Retail and QSR</h3>
               <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">Brand standards, food safety, and daily ops.</p>
               <ul className="mt-3 text-sm text-gray-600 dark:text-slate-300 list-disc pl-5 space-y-1">
@@ -539,7 +539,7 @@ const Landing: React.FC = () => {
                 <li>Faster fixes</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <h3 className="font-semibold text-gray-900 dark:text-white">Facilities and Field Ops</h3>
               <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">Safety walks, inspections, and PM programs.</p>
               <ul className="mt-3 text-sm text-gray-600 dark:text-slate-300 list-disc pl-5 space-y-1">
@@ -548,7 +548,7 @@ const Landing: React.FC = () => {
                 <li>Clear thresholds</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5" data-animate>
               <h3 className="font-semibold text-gray-900 dark:text-white">Financial Services and Banking</h3>
               <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">Branch audits, KYC and AML, operational risk.</p>
               <ul className="mt-3 text-sm text-gray-600 dark:text-slate-300 list-disc pl-5 space-y-1">
@@ -561,30 +561,30 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <section id="beta" className="relative py-16 sm:py-20 bg-gradient-to-br from-blue-600 to-cyan-500 dark:from-[#262d67] dark:to-[#2d678b]">
+      <section id="beta" className="relative py-16 sm:py-20 bg-linear-to-br from-blue-600 to-cyan-500 dark:from-[#262d67] dark:to-[#2d678b]">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-white">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight" data-animate><span className="mr-2" aria-hidden>✉️</span>Request Access To The Private Beta</h2>
           <p className="mt-2 text-white/90" data-animate>Tell us about your team and use case. We will reach out with next steps.</p>
-          <form onSubmit={onSubmit} className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white/10 backdrop-blur rounded-xl p-6 ring-1 ring-white/20" data-animate>
+          <form onSubmit={onSubmit} className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-6 ring-1 ring-white/20" data-animate>
             <div className="sm:col-span-1">
               <label className="block text-sm mb-2">Full name</label>
-              <input value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/60" placeholder="Alex Johnson" />
+              <input value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-hidden focus:ring-2 focus:ring-white/60" placeholder="Alex Johnson" />
             </div>
             <div className="sm:col-span-1">
               <label className="block text-sm mb-2">Work email</label>
-              <input type="email" value={workEmail} onChange={(e) => setWorkEmail(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/60" placeholder="alex@company.com" />
+              <input type="email" value={workEmail} onChange={(e) => setWorkEmail(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-hidden focus:ring-2 focus:ring-white/60" placeholder="alex@company.com" />
             </div>
             <div className="sm:col-span-1">
               <label className="block text-sm mb-2">Company</label>
-              <input value={company} onChange={(e) => setCompany(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/60" placeholder="Acme Inc." />
+              <input value={company} onChange={(e) => setCompany(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-hidden focus:ring-2 focus:ring-white/60" placeholder="Acme Inc." />
             </div>
             <div className="sm:col-span-1">
               <label className="block text-sm mb-2">Role</label>
-              <input value={role} onChange={(e) => setRole(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/60" placeholder="Head of Operations" />
+              <input value={role} onChange={(e) => setRole(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-hidden focus:ring-2 focus:ring-white/60" placeholder="Head of Operations" />
             </div>
             <div className="sm:col-span-1">
               <label className="block text-sm mb-2">Team size</label>
-              <select value={teamSize} onChange={(e) => setTeamSize(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/60">
+              <select value={teamSize} onChange={(e) => setTeamSize(e.target.value)} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-hidden focus:ring-2 focus:ring-white/60">
                 <option>1-10</option>
                 <option>11-50</option>
                 <option>51-200</option>
@@ -594,10 +594,10 @@ const Landing: React.FC = () => {
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm mb-2">How would you use Trakr?</label>
-              <textarea value={useCase} onChange={(e) => setUseCase(e.target.value)} rows={4} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/60" placeholder="Briefly describe your primary workflows and goals" />
+              <textarea value={useCase} onChange={(e) => setUseCase(e.target.value)} rows={4} className="w-full rounded-md px-3 py-2 text-gray-900 bg-white/90 focus:outline-hidden focus:ring-2 focus:ring-white/60" placeholder="Briefly describe your primary workflows and goals" />
             </div>
             <div className="sm:col-span-2 flex items-center justify-between gap-3 flex-wrap">
-              <button type="submit" className="inline-flex items-center justify-center rounded-md bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-50">Send request</button>
+              <button type="submit" className="inline-flex items-center justify-center rounded-md bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-xs hover:bg-blue-50">Send request</button>
               <span className="text-xs text-white/80">No spam. We reply within 1 to 2 business days.</span>
               {submitted && (
                 <span role="status" aria-live="polite" className="text-sm text-white/90">Thanks. If your email client did not open, email us at <a className="underline" href={`mailto:${emailTo}`}>{emailTo}</a>.</span>
@@ -607,19 +607,19 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <section id="contact" className="relative py-12 sm:py-16 bg-white dark:bg-[var(--color-card)] border-t border-gray-100 dark:border-white/10">
+      <section id="contact" className="relative py-12 sm:py-16 bg-white dark:bg-(--color-card) border-t border-gray-100 dark:border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6" data-animate>
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5">
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5">
               <h3 className="font-semibold text-gray-900 dark:text-white">Contact</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Email us at</p>
               <a className="mt-1 inline-block text-blue-700 dark:text-primary-200 hover:underline" href={`mailto:${emailTo}`}>{emailTo}</a>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5">
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5">
               <h3 className="font-semibold text-gray-900 dark:text-white">Availability</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Private beta with rolling invites each week.</p>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-[var(--color-card)] shadow-sm transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5">
+            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-6 bg-white dark:bg-(--color-card) shadow-xs transition duration-200 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-300/60 transform-gpu hover:-translate-y-0.5">
               <h3 className="font-semibold text-gray-900 dark:text-white">Follow</h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Product updates are coming soon.</p>
             </div>

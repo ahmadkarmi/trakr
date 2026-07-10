@@ -382,7 +382,7 @@ const DashboardAuditor: React.FC = () => {
 
         {/* Resume Audit Card */}
         {latestEditable && (
-          <div className="bg-gradient-to-r from-blue-500 to-primary-600 rounded-lg p-5 text-white">
+          <div className="bg-linear-to-r from-blue-500 to-primary-600 rounded-lg p-5 text-white">
             <h3 className="text-lg font-semibold mb-2">Continue Your Audit</h3>
             <p className="text-sm opacity-90 mb-4">
               {(() => {
@@ -401,7 +401,7 @@ const DashboardAuditor: React.FC = () => {
               </div>
             </div>
             <button
-              className="bg-white dark:bg-[var(--color-card)] text-primary-600 hover:bg-gray-100 dark:hover:bg-white/10 font-medium py-2.5 px-4 rounded-lg transition-colors"
+              className="bg-white dark:bg-(--color-card) text-primary-600 hover:bg-gray-100 dark:hover:bg-white/10 font-medium py-2.5 px-4 rounded-lg transition-colors"
               onClick={() => navigate(`/audit/${latestEditable.id}/wizard`)}
             >
               Resume Audit
@@ -462,16 +462,16 @@ const DashboardAuditor: React.FC = () => {
           {/* Cycle Tab Sub-tabs */}
           {mainTab === 'cycle' && (
             <>
-              <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--color-card-muted)]">
-                <div className="inline-flex items-center bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-1">
+              <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-(--color-card-muted)">
+                <div className="inline-flex items-center bg-white dark:bg-(--color-card) border border-gray-200 dark:border-white/10 rounded-lg p-1">
                   <button
-                    className={`${cycleTab === 'open' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/5'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
+                    className={`${cycleTab === 'open' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/5'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
                     onClick={() => setCycleTab('open')}
                   >
                     Open ({openCycleAudits.length})
                   </button>
                   <button
-                    className={`${cycleTab === 'completed' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/5'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
+                    className={`${cycleTab === 'completed' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/5'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
                     onClick={() => setCycleTab('completed')}
                   >
                     Completed ({completedCycleAudits.length})
@@ -502,7 +502,7 @@ const DashboardAuditor: React.FC = () => {
             {/* This Cycle Content */}
             {mainTab === 'cycle' && (cycleTab === 'open' ? (
               openCycleAudits.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 dark:bg-[var(--color-card-muted)] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
+                <div className="text-center py-8 bg-gray-50 dark:bg-(--color-card-muted) rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
                   <div className="text-4xl mb-2">📋</div>
                   <p className="text-gray-600 dark:text-slate-300 font-medium">No open audits</p>
                   <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">All audits for this cycle are completed</p>
@@ -527,7 +527,7 @@ const DashboardAuditor: React.FC = () => {
                     const btnConfig = getButtonConfig()
                     
                     return (
-                      <div key={a.id} className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div key={a.id} className="bg-white dark:bg-(--color-card) border border-gray-200 dark:border-white/10 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-base font-semibold text-gray-900 truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
@@ -574,7 +574,7 @@ const DashboardAuditor: React.FC = () => {
               )
             ) : (
               completedCycleAudits.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 dark:bg-[var(--color-card-muted)] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
+                <div className="text-center py-8 bg-gray-50 dark:bg-(--color-card-muted) rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
                   <div className="text-4xl mb-2">✅</div>
                   <p className="text-gray-600 dark:text-slate-300 font-medium">No completed audits yet</p>
                   <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Complete audits will appear here</p>
@@ -587,7 +587,7 @@ const DashboardAuditor: React.FC = () => {
                     const completedAt = new Date(a.updatedAt)
                     
                     return (
-                      <div key={a.id} className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div key={a.id} className="bg-linear-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
@@ -622,7 +622,7 @@ const DashboardAuditor: React.FC = () => {
             {/* Rejected Audits Content */}
             {mainTab === 'rejected' && (
               rejectedAudits.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50 dark:bg-[var(--color-card-muted)] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
+                <div className="text-center py-12 bg-gray-50 dark:bg-(--color-card-muted) rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
                   <div className="text-4xl mb-2">✅</div>
                   <p className="text-gray-600 dark:text-slate-300 font-medium">No rejected audits</p>
                   <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">All your audits have been approved!</p>
@@ -689,7 +689,7 @@ const DashboardAuditor: React.FC = () => {
                     const rejectedAt = a.rejectedAt ? new Date(a.rejectedAt) : new Date(a.updatedAt)
                     
                     return (
-                      <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="bg-linear-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="mb-3">
                           <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
                           <p className="text-sm text-gray-600 dark:text-slate-300 truncate">{survey?.title || 'Unknown Survey'}</p>
@@ -866,7 +866,7 @@ const DashboardAuditor: React.FC = () => {
         {availableSurveys.length > 0 && (
           <div ref={startNewAuditRef} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             {/* Header */}
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-blue-50">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-linear-to-r from-primary-50 to-blue-50">
               <div className="flex items-center justify-between gap-4">
                 <h3 className="text-xl font-semibold text-gray-900">Start New Audit</h3>
                 <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
@@ -950,7 +950,7 @@ const DashboardAuditor: React.FC = () => {
                 <label className="inline-flex items-center gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 accent-primary-600 rounded"
+                    className="h-4 w-4 accent-primary-600 rounded-sm"
                     checked={showAvailableOnly}
                     onChange={(e) => setShowAvailableOnly(e.target.checked)}
                   />
@@ -973,7 +973,7 @@ const DashboardAuditor: React.FC = () => {
                     key={branch.id} 
                     className={`flex items-center justify-between p-4 rounded-xl transition-all border-2 ${
                       isAllowed 
-                        ? 'bg-white border-gray-200 hover:border-primary-300 hover:shadow-sm' 
+                        ? 'bg-white border-gray-200 hover:border-primary-300 hover:shadow-xs' 
                         : 'bg-gray-50 border-gray-200 opacity-60'
                     }`}
                   >
@@ -999,7 +999,7 @@ const DashboardAuditor: React.FC = () => {
                     <button
                       className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
                         isAllowed && user?.orgId && user?.id
-                          ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow' 
+                          ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-xs hover:shadow-sm' 
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
                       disabled={!isAllowed || createAudit.isPending || !selectedSurvey || !user?.orgId || !user?.id}
@@ -1024,7 +1024,7 @@ const DashboardAuditor: React.FC = () => {
         )}
 
         {availableSurveys.length === 0 && (
-          <div className="card-spacious border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+          <div className="card-spacious border border-amber-200 bg-linear-to-r from-amber-50 to-orange-50">
             <div className="text-center px-4 sm:px-6 py-4">
               <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <CalendarDaysIcon className="w-10 h-10 text-amber-500" />
@@ -1059,9 +1059,9 @@ const DashboardAuditor: React.FC = () => {
 
         {/* Actionable Stats Grid */}
         <div className="hidden">
-          <div className="card-compact card-interactive bg-gradient-to-br from-primary-50 to-blue-50 border-primary-200">
+          <div className="card-compact card-interactive bg-linear-to-br from-primary-50 to-blue-50 border-primary-200">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center shadow-sm">
+              <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center shadow-xs">
                 <ClipboardDocumentCheckIcon className="w-7 h-7 text-primary-600" />
               </div>
               <div className="flex-1">
@@ -1072,9 +1072,9 @@ const DashboardAuditor: React.FC = () => {
             </div>
           </div>
           
-          <div className="card-compact card-interactive bg-gradient-to-br from-warning-50 to-orange-50 border-warning-200">
+          <div className="card-compact card-interactive bg-linear-to-br from-warning-50 to-orange-50 border-warning-200">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-warning-100 rounded-2xl flex items-center justify-center shadow-sm">
+              <div className="w-14 h-14 bg-warning-100 rounded-2xl flex items-center justify-center shadow-xs">
                 <ClockIcon className="w-7 h-7 text-warning-600" />
               </div>
               <div className="flex-1">
@@ -1085,9 +1085,9 @@ const DashboardAuditor: React.FC = () => {
             </div>
           </div>
           
-          <div className="card-compact card-interactive bg-gradient-to-br from-success-50 to-green-50 border-success-200">
+          <div className="card-compact card-interactive bg-linear-to-br from-success-50 to-green-50 border-success-200">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-success-100 rounded-2xl flex items-center justify-center shadow-sm">
+              <div className="w-14 h-14 bg-success-100 rounded-2xl flex items-center justify-center shadow-xs">
                 <CheckCircleIcon className="w-7 h-7 text-success-600" />
               </div>
               <div className="flex-1">
@@ -1314,7 +1314,7 @@ const DashboardAuditor: React.FC = () => {
                           </div>
                           
                           {/* Progress Circle */}
-                          <div className="flex-shrink-0">
+                          <div className="shrink-0">
                             <div className="relative w-16 h-16">
                               <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
                                 <path
@@ -1349,7 +1349,7 @@ const DashboardAuditor: React.FC = () => {
                           </div>
                           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                             <div 
-                              className="h-2 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out" 
+                              className="h-2 bg-linear-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out" 
                               style={{ width: `${comp}%` }} 
                             />
                           </div>
@@ -1409,8 +1409,8 @@ const DashboardAuditor: React.FC = () => {
                           <td className="px-3 py-1.5"><StatusBadge status={a.status} /></td>
                           <td className="px-3 py-1.5">
                             <div className="w-40 lg:w-48 xl:w-56 2xl:w-64">
-                              <div className="h-2 bg-gray-200 rounded">
-                                <div className="h-2 bg-primary-500 rounded" style={{ width: `${comp}%` }} />
+                              <div className="h-2 bg-gray-200 rounded-sm">
+                                <div className="h-2 bg-primary-500 rounded-sm" style={{ width: `${comp}%` }} />
                               </div>
                               <div className="text-xs text-gray-500 mt-1">{comp}%</div>
                             </div>
@@ -1466,7 +1466,7 @@ const DashboardAuditor: React.FC = () => {
                               </h4>
                               <p className="text-sm text-gray-600">{frequencyLabel[freq]} frequency</p>
                             </div>
-                            <div className="flex-shrink-0">
+                            <div className="shrink-0">
                               {canStart ? (
                                 <InfoBadge label="Available" tone="success" />
                               ) : (

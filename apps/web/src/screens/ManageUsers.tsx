@@ -203,7 +203,7 @@ const ManageUsers: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4">
+          <div className="bg-white dark:bg-(--color-card) border border-gray-200 dark:border-white/10 rounded-lg p-4">
             <div className="w-8 h-8 bg-primary-100 dark:bg-primary-500/20 rounded-lg flex items-center justify-center mb-2">
               <UserGroupIcon className="w-5 h-5 text-primary-600" />
             </div>
@@ -211,7 +211,7 @@ const ManageUsers: React.FC = () => {
             <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mt-1">Total Users</p>
           </div>
           {/* Header invite modal intentionally removed; InvitationManager provides invites */}
-          <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4">
+          <div className="bg-white dark:bg-(--color-card) border border-gray-200 dark:border-white/10 rounded-lg p-4">
             <div className="w-8 h-8 bg-green-100 dark:bg-green-500/20 rounded-lg flex items-center justify-center mb-2">
               <CheckCircleIcon className="w-5 h-5 text-green-600" />
             </div>
@@ -219,7 +219,7 @@ const ManageUsers: React.FC = () => {
             <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mt-1">Active</p>
           </div>
           
-          <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4">
+          <div className="bg-white dark:bg-(--color-card) border border-gray-200 dark:border-white/10 rounded-lg p-4">
             <div className="w-8 h-8 bg-orange-100 dark:bg-orange-500/20 rounded-lg flex items-center justify-center mb-2">
               <EnvelopeIcon className="w-5 h-5 text-orange-600" />
             </div>
@@ -227,7 +227,7 @@ const ManageUsers: React.FC = () => {
             <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mt-1">Pending</p>
           </div>
           
-          <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg p-4">
+          <div className="bg-white dark:bg-(--color-card) border border-gray-200 dark:border-white/10 rounded-lg p-4">
             <div className="w-8 h-8 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center mb-2">
               <ShieldCheckIcon className="w-5 h-5 text-gray-600" />
             </div>
@@ -240,7 +240,7 @@ const ManageUsers: React.FC = () => {
         <InvitationManager />
 
         {/* Users table */}
-        <div className="bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden">
+        <div className="bg-white dark:bg-(--color-card) border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">Team Members</h3>
             <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">Manage user roles, permissions, and account status.</p>
@@ -251,7 +251,7 @@ const ManageUsers: React.FC = () => {
             keyField={(user: User) => user.id}
             empty={<p className="text-gray-500 py-8">No users found.</p>}
             mobileItem={(user: User) => (
-              <div className="card-compact bg-white dark:bg-[var(--color-card)] border border-gray-200 dark:border-white/10">
+              <div className="card-compact bg-white dark:bg-(--color-card) border border-gray-200 dark:border-white/10">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     {user.avatarUrl ? (
@@ -428,7 +428,7 @@ const ManageUsers: React.FC = () => {
       {coverageBlock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setCoverageBlock(null)} />
-          <div className="relative bg-white dark:bg-[var(--color-card)] rounded-xl shadow-xl border border-transparent dark:border-white/10 w-[92vw] max-w-lg mx-auto p-6" role="dialog" aria-modal="true">
+          <div className="relative bg-white dark:bg-(--color-card) rounded-xl shadow-xl border border-transparent dark:border-white/10 w-[92vw] max-w-lg mx-auto p-6" role="dialog" aria-modal="true">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{coverageBlock.title}</h3>
             <p className="text-sm text-gray-600 dark:text-slate-300 mt-2 whitespace-pre-wrap">{coverageBlock.message}</p>
             {coverageBlock.branchNames && coverageBlock.branchNames.length > 0 && (
@@ -495,7 +495,7 @@ const ManageUsers: React.FC = () => {
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setEditingUser(null)} />
-          <div className="relative bg-white dark:bg-[var(--color-card)] rounded-xl shadow-xl border border-transparent dark:border-white/10 w-[92vw] max-w-md mx-auto" role="dialog" aria-modal="true">
+          <div className="relative bg-white dark:bg-(--color-card) rounded-xl shadow-xl border border-transparent dark:border-white/10 w-[92vw] max-w-md mx-auto" role="dialog" aria-modal="true">
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-white/10">
               <h3 className="text-lg font-semibold">Edit User</h3>
               <button 

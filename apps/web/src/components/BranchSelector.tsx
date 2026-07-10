@@ -145,7 +145,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
         <button
           type="button"
           onClick={() => handleModeChange('all')}
-          className={`w-full sm:flex-1 px-4 py-3 rounded-xl border-2 transition-all shadow-sm ${
+          className={`w-full sm:flex-1 px-4 py-3 rounded-xl border-2 transition-all shadow-xs ${
             selectionMode === 'all'
               ? 'border-blue-500 bg-blue-50 text-blue-700'
               : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
@@ -163,7 +163,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
         <button
           type="button"
           onClick={() => handleModeChange('specific')}
-          className={`w-full sm:flex-1 px-4 py-3 rounded-xl border-2 transition-all shadow-sm ${
+          className={`w-full sm:flex-1 px-4 py-3 rounded-xl border-2 transition-all shadow-xs ${
             selectionMode === 'specific'
               ? 'border-blue-500 bg-blue-50 text-blue-700'
               : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
@@ -181,7 +181,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
 
       {/* Specific Branch Selection */}
       {selectionMode === 'specific' && (
-        <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+        <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xs">
           {/* Search and Actions */}
           <div className="p-4 bg-gray-50 border-b border-gray-200">
             <div className="flex items-center gap-3 mb-3">
@@ -299,7 +299,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleBranchToggle(branch.id)}
-                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-600 border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -314,7 +314,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
                         )}
                       </div>
                       {isSelected && (
-                        <CheckCircleIcon className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                        <CheckCircleIcon className="w-5 h-5 text-blue-600 shrink-0" />
                       )}
                     </label>
                   )

@@ -68,7 +68,7 @@ export function AuditFormSkeleton() {
           <div className="space-y-2">
             {Array.from({ length: 3 }, (_, i) => (
               <div key={i} className="flex items-center space-x-3">
-                <SkeletonBase className="h-4 w-4 rounded" />
+                <SkeletonBase className="h-4 w-4 rounded-sm" />
                 <SkeletonBase className="h-4 w-32" />
               </div>
             ))}
@@ -196,7 +196,7 @@ export function DashboardSkeleton() {
             {Array.from({ length: 5 }, (_, i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <SkeletonBase className="h-4 w-4 rounded" />
+                  <SkeletonBase className="h-4 w-4 rounded-sm" />
                   <SkeletonBase className="h-4 w-32" />
                 </div>
                 <SkeletonBase className="h-6 w-16 rounded-full" />

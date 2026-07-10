@@ -39,7 +39,7 @@ export function OfflineBanner() {
         </div>
         <button
           onClick={() => setIsDismissed(true)}
-          className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-100 text-yellow-900 text-xs font-semibold border border-yellow-300 hover:bg-yellow-200 hover:border-yellow-400 transition-colors"
+          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-100 text-yellow-900 text-xs font-semibold border border-yellow-300 hover:bg-yellow-200 hover:border-yellow-400 transition-colors"
           aria-label="Dismiss offline warning"
         >
           <span>Dismiss</span>

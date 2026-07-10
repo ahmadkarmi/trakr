@@ -298,7 +298,7 @@ const AdminAnalytics: React.FC = () => {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+          <div className="card-compact bg-linear-to-r from-gray-50 to-slate-50 border-gray-200">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
                 <span className="text-xl">📊</span>
@@ -311,7 +311,7 @@ const AdminAnalytics: React.FC = () => {
             </div>
           </div>
           
-          <div className="card-compact bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <div className="card-compact bg-linear-to-r from-green-50 to-emerald-50 border-green-200">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
                 <span className="text-xl">✅</span>
@@ -324,7 +324,7 @@ const AdminAnalytics: React.FC = () => {
             </div>
           </div>
           
-          <div className="card-compact bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <div className="card-compact bg-linear-to-r from-blue-50 to-indigo-50 border-blue-200">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
                 <span className="text-xl">⭐</span>
@@ -337,7 +337,7 @@ const AdminAnalytics: React.FC = () => {
             </div>
           </div>
           
-          <div className={`card-compact ${pendingApprovalAudits > 0 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
+          <div className={`card-compact ${pendingApprovalAudits > 0 ? 'bg-linear-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-linear-to-r from-gray-50 to-slate-50 border-gray-200'}`}>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/50 rounded-lg flex items-center justify-center">
                 <span className="text-xl">⏳</span>
@@ -358,7 +358,7 @@ const AdminAnalytics: React.FC = () => {
 
         {/* Secondary KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200 dark:bg-[var(--color-card)] dark:border-white/10 dark:bg-none">
+          <div className="card-compact bg-linear-to-r from-gray-50 to-slate-50 border-gray-200 dark:bg-(--color-card) dark:border-white/10 dark:bg-none">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center dark:bg-white/10">
                 <span className="text-lg">🏢</span>
@@ -371,7 +371,7 @@ const AdminAnalytics: React.FC = () => {
             </div>
           </div>
           
-          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200 dark:bg-[var(--color-card)] dark:border-white/10 dark:bg-none">
+          <div className="card-compact bg-linear-to-r from-gray-50 to-slate-50 border-gray-200 dark:bg-(--color-card) dark:border-white/10 dark:bg-none">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center dark:bg-white/10">
                 <span className="text-lg">👥</span>
@@ -384,7 +384,7 @@ const AdminAnalytics: React.FC = () => {
             </div>
           </div>
           
-          <div className="card-compact bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200 dark:bg-[var(--color-card)] dark:border-white/10 dark:bg-none">
+          <div className="card-compact bg-linear-to-r from-gray-50 to-slate-50 border-gray-200 dark:bg-(--color-card) dark:border-white/10 dark:bg-none">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center dark:bg-white/10">
                 <span className="text-lg">🗺️</span>
@@ -645,8 +645,8 @@ const AdminAnalytics: React.FC = () => {
         {/* Reports Tab - Advanced Analytics */}
         <div>
           <div className="md:hidden">
-            <div className="mx-auto max-w-md rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 to-blue-50 p-2">
-              <div className="rounded-xl bg-white/70 backdrop-blur-sm">
+            <div className="mx-auto max-w-md rounded-2xl border border-primary-100 bg-linear-to-br from-primary-50 to-blue-50 p-2">
+              <div className="rounded-xl bg-white/70 backdrop-blur-xs">
                 <EmptyState
                   icon={(
                     <div className="w-16 h-16 rounded-2xl bg-primary-100 text-primary-600 flex items-center justify-center">

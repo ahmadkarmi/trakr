@@ -13,7 +13,7 @@ export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'animate-pulse rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%]',
+        'animate-pulse rounded-md bg-linear-to-r from-gray-200 via-gray-100 to-gray-200 bg-size-[200%_100%]',
         className
       )}
       style={{
@@ -128,15 +128,15 @@ export function SkeletonAuditCard({ className }: SkeletonProps) {
       
       <div className="space-y-3 mb-4">
         <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-4 rounded" />
+          <Skeleton className="h-4 w-4 rounded-sm" />
           <Skeleton className="h-4 w-24" />
         </div>
         <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-4 rounded" />
+          <Skeleton className="h-4 w-4 rounded-sm" />
           <Skeleton className="h-4 w-32" />
         </div>
         <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-4 rounded" />
+          <Skeleton className="h-4 w-4 rounded-sm" />
           <Skeleton className="h-4 w-28" />
         </div>
       </div>
@@ -154,7 +154,7 @@ export function SkeletonList({ items = 5, className }: SkeletonProps & { items?:
     <div className={cn('space-y-3', className)}>
       {Array.from({ length: items }).map((_, i) => (
         <div key={i} className="card p-4 flex items-center gap-4">
-          <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+          <Skeleton className="h-12 w-12 rounded-full shrink-0" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-3 w-1/2" />
@@ -196,7 +196,7 @@ export function SkeletonDetailPage({ className }: SkeletonProps) {
     <div className={cn('space-y-6', className)}>
       {/* Header with back button */}
       <div className="flex items-center gap-4">
-        <Skeleton className="h-8 w-8 rounded" />
+        <Skeleton className="h-8 w-8 rounded-sm" />
         <Skeleton className="h-8 w-64" />
       </div>
       

@@ -19,9 +19,9 @@ const BrandLogo: React.FC<BrandLogoProps> = ({ compact, onDark, className }) => 
       alt="Trakr"
       className={clsx(
         // Default: slightly smaller (10% reduction) responsive sizing
-        'h-[2.25rem] sm:h-[2.475rem] w-auto',
+        'h-9 sm:h-[2.475rem] w-auto',
         // Compact sidebar: proportionally reduced variant
-        compact && 'h-[2.025rem] sm:h-[2.25rem]',
+        compact && 'h-[2.025rem] sm:h-9',
         // Allow callers to override size
         className,
       )}

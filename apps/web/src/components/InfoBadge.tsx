@@ -20,8 +20,8 @@ const toneClasses: Record<Tone, string> = {
 }
 
 const sizeClasses: Record<Size, string> = {
-  xs: 'gap-1 px-1.5 py-0.5 rounded text-[10px]',
-  sm: 'gap-1.5 px-2 py-0.5 rounded text-xs',
+  xs: 'gap-1 px-1.5 py-0.5 rounded-sm text-[10px]',
+  sm: 'gap-1.5 px-2 py-0.5 rounded-sm text-xs',
 }
 
 const InfoBadge: React.FC<Props> = ({ label, tone = 'gray', size = 'sm', className = '', icon }) => {

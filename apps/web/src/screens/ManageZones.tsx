@@ -140,12 +140,12 @@ const ManageZones: React.FC = () => {
                         <label className="text-xs font-medium text-gray-500 dark:text-slate-400">Branches:</label>
                         <div className="mt-1 flex flex-wrap gap-1">
                           {z.branchIds.slice(0, 3).map(bid => (
-                            <span key={bid} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300">
+                            <span key={bid} className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-300">
                               {branchName[bid] || bid}
                             </span>
                           ))}
                           {z.branchIds.length > 3 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-slate-400">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-slate-400">
                               +{z.branchIds.length - 3} more
                             </span>
                           )}
@@ -317,7 +317,7 @@ const ManageZones: React.FC = () => {
               </div>
               
               {branches.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 dark:bg-[var(--color-card-muted)] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
+                <div className="text-center py-8 bg-gray-50 dark:bg-(--color-card-muted) rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
                   <p className="text-sm text-gray-600 dark:text-slate-300">No branches available</p>
                   <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Create branches first to assign them to zones</p>
                 </div>
@@ -329,14 +329,14 @@ const ManageZones: React.FC = () => {
                       className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                         form.branchIds.includes(b.id)
                           ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                          : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 bg-white dark:bg-[var(--color-card)]'
+                          : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 bg-white dark:bg-(--color-card)'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={form.branchIds.includes(b.id)}
                         onChange={() => toggleFormBranch(b.id)}
-                        className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                        className="w-4 h-4 text-primary-600 rounded-sm focus:ring-primary-500"
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-gray-900 dark:text-white truncate">{b.name}</p>
@@ -395,7 +395,7 @@ const ManageZones: React.FC = () => {
           }
           
           return (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center sm:justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center sm:justify-center animate-in fade-in duration-200">
               <div 
                 className="absolute inset-0" 
                 onClick={() => setEditingZoneId(null)}
@@ -408,14 +408,14 @@ const ManageZones: React.FC = () => {
                 </div>
                 
                 {/* Header */}
-                <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+                <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-gray-900 truncate">Manage Branches</h3>
                     <p className="text-sm text-gray-500 mt-0.5">{zone.name}</p>
                   </div>
                   <button
                     onClick={() => setEditingZoneId(null)}
-                    className="ml-4 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
+                    className="ml-4 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg shrink-0"
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
@@ -440,7 +440,7 @@ const ManageZones: React.FC = () => {
                             className="flex items-center justify-between p-3 bg-primary-50 border border-primary-200 rounded-lg"
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                              <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center shrink-0">
                                 <MapIcon className="w-4 h-4 text-white" />
                               </div>
                               <div className="min-w-0">
@@ -450,7 +450,7 @@ const ManageZones: React.FC = () => {
                             </div>
                             <button
                               onClick={() => handleRemoveBranch(branch.id)}
-                              className="text-red-600 hover:text-red-700 p-1 flex-shrink-0"
+                              className="text-red-600 hover:text-red-700 p-1 shrink-0"
                               title="Remove branch"
                             >
                               <XMarkIcon className="w-4 h-4" />
@@ -472,14 +472,14 @@ const ManageZones: React.FC = () => {
                             onClick={() => handleAddBranches([branch.id])}
                             className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-all text-left"
                           >
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
                               <MapIcon className="w-4 h-4 text-gray-600" />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="font-medium text-gray-900 truncate">{branch.name}</p>
                               <p className="text-xs text-gray-600 truncate">{branch.address || 'No address'}</p>
                             </div>
-                            <span className="text-xs text-primary-600 font-medium flex-shrink-0">Add +</span>
+                            <span className="text-xs text-primary-600 font-medium shrink-0">Add +</span>
                           </button>
                         ))}
                       </div>
@@ -488,7 +488,7 @@ const ManageZones: React.FC = () => {
                 </div>
                 
                 {/* Footer */}
-                <div className="flex-shrink-0 border-t border-gray-200 bg-gray-50 px-4 sm:px-6 py-4">
+                <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-4 sm:px-6 py-4">
                   <button
                     onClick={() => setEditingZoneId(null)}
                     className="w-full btn btn-outline btn-md font-semibold"

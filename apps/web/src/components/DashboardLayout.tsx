@@ -132,7 +132,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
           className={`fixed inset-0 z-40 bg-black/30 transition-opacity ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => setMobileOpen(false)}
         />
-        <aside className={`sidebar-panel fixed inset-y-0 left-0 z-50 w-80 border-r border-gray-200 text-gray-900 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col max-h-screen overflow-hidden bg-white dark:bg-[var(--color-sidebar)] dark:border-white/5`}>
+        <aside className={`sidebar-panel fixed inset-y-0 left-0 z-50 w-80 border-r border-gray-200 text-gray-900 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col max-h-screen overflow-hidden bg-white dark:bg-(--color-sidebar) dark:border-white/5`}>
           {/* Enhanced mobile header */}
           <div className="h-20 px-6 flex items-center justify-between border-b border-gray-200">
             <div className="flex items-center gap-3">
@@ -151,7 +151,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
                 <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
                 <input 
                   placeholder="Search" 
-                  className="ml-2 bg-transparent placeholder-gray-400 text-gray-700 text-base outline-none flex-1"
+                  className="ml-2 bg-transparent placeholder-gray-400 text-gray-700 text-base outline-hidden flex-1"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       const query = e.currentTarget.value.trim()
@@ -204,7 +204,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
           </div>
 
           {/* Enhanced user section - Fixed at bottom */}
-          <div className="flex-shrink-0 p-6 pb-8 border-t border-primary-100/80 space-y-4 bg-gradient-to-br from-white via-primary-50/80 to-white dark:border-white/10 dark:bg-gradient-to-br dark:from-[#0b1126] dark:via-[#141d3a] dark:to-[#1c2850]">
+          <div className="shrink-0 p-6 pb-8 border-t border-primary-100/80 space-y-4 bg-linear-to-br from-white via-primary-50/80 to-white dark:border-white/10 dark:bg-linear-to-br dark:from-[#0b1126] dark:via-[#141d3a] dark:to-[#1c2850]">
             <div className="flex items-center gap-4">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
@@ -254,7 +254,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               </button>
             </div>
             <div className="pt-3">
-              <div className="rounded-xl border border-primary-200/70 bg-gradient-to-br from-primary-50 to-white px-4 py-2 text-center shadow-sm dark:border-white/10 dark:bg-gradient-to-br dark:from-white/5 dark:via-white/0 dark:to-white/5">
+              <div className="rounded-xl border border-primary-200/70 bg-linear-to-br from-primary-50 to-white px-4 py-2 text-center shadow-xs dark:border-white/10 dark:bg-linear-to-br dark:from-white/5 dark:via-white/0 dark:to-white/5">
                 <p className="text-xs font-semibold text-primary-700 tracking-wide dark:text-white">Trakr</p>
                 <p className="text-[11px] text-primary-600/80 dark:text-slate-300"> {currentYear} · v{APP_VERSION}</p>
               </div>
@@ -263,7 +263,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
         </aside>
       </div>
       {/* Sidebar */}
-      <aside className={`sidebar-panel hidden md:flex ${compact ? 'md:w-16' : 'md:w-64 lg:w-72'} flex-col border-r border-gray-200 text-gray-900 pb-9 overflow-y-auto transition-all duration-200 md:relative md:z-20 md:shadow-lg bg-white dark:bg-[var(--color-sidebar)] dark:border-white/5`}>
+      <aside className={`sidebar-panel hidden md:flex ${compact ? 'md:w-16' : 'md:w-64 lg:w-72'} flex-col border-r border-gray-200 text-gray-900 pb-9 overflow-y-auto transition-all duration-200 md:relative md:z-20 md:shadow-lg bg-white dark:bg-(--color-sidebar) dark:border-white/5`}>
         <div className="h-18 px-5 flex items-center justify-between">
           <Link to={isAdmin ? '/dashboard/admin' : '/'} className="flex items-center gap-3">
             <BrandLogo compact={compact} />
@@ -275,7 +275,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
               <input 
                 placeholder="Search" 
-                className="ml-2 bg-transparent placeholder-gray-400 text-gray-700 text-sm outline-none flex-1"
+                className="ml-2 bg-transparent placeholder-gray-400 text-gray-700 text-sm outline-hidden flex-1"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const query = e.currentTarget.value.trim()
@@ -333,7 +333,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
         </nav>
         <div className="mt-auto px-3 pt-3 border-t border-gray-200 dark:border-white/5 space-y-2">
           <button
-            className="w-full inline-flex items-center justify-center gap-2 text-xs text-gray-600 hover:text-gray-800 bg-white border border-gray-200 rounded-md px-2 py-2 hover:shadow-sm transition dark:bg-white/10 dark:text-white dark:border-white/10 dark:hover:bg-white/15"
+            className="w-full inline-flex items-center justify-center gap-2 text-xs text-gray-600 hover:text-gray-800 bg-white border border-gray-200 rounded-md px-2 py-2 hover:shadow-xs transition dark:bg-white/10 dark:text-white dark:border-white/10 dark:hover:bg-white/15"
             onClick={() => setCompact(v => !v)}
             aria-label="Toggle compact sidebar"
             title={compact ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -342,7 +342,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
             {!compact && <span>Compact mode</span>}
           </button>
           {!compact ? (
-            <div className="rounded-xl border border-primary-200/70 bg-gradient-to-br from-primary-50 to-white px-3 py-2 text-[11px] text-primary-600/80 shadow-sm dark:border-white/8 dark:bg-[var(--color-card)] dark:bg-none">
+            <div className="rounded-xl border border-primary-200/70 bg-linear-to-br from-primary-50 to-white px-3 py-2 text-[11px] text-primary-600/80 shadow-xs dark:border-white/8 dark:bg-(--color-card) dark:bg-none">
               <p className="font-semibold text-primary-700 dark:text-white">Trakr</p>
               <p className="mt-0.5 text-primary-600/80 dark:text-slate-300">© {currentYear} · v{APP_VERSION}</p>
             </div>
@@ -383,7 +383,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
               <div className="relative w-full">
                 <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all" 
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all" 
                   placeholder="Search..." 
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -449,7 +449,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
                   {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user.name} className="w-9 h-9 rounded-full object-cover ring-2 ring-gray-200" />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-sm font-semibold ring-2 ring-gray-200">
+                    <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-sm font-semibold ring-2 ring-gray-200">
                       {user?.name?.charAt(0) || '?'}
                     </div>
                   )}
@@ -463,14 +463,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
                 </button>
                 
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 dark:border-white/10 dark:bg-[var(--color-card)]" role="menu">
+                  <div className="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 dark:border-white/10 dark:bg-(--color-card)" role="menu">
                     {/* User Info */}
-                    <div className="px-4 py-3 bg-gradient-to-br from-gray-50 to-gray-100 border-b border-gray-200 dark:bg-gradient-to-br dark:from-white/5 dark:via-white/0 dark:to-white/5 dark:border-white/5">
+                    <div className="px-4 py-3 bg-linear-to-br from-gray-50 to-gray-100 border-b border-gray-200 dark:bg-linear-to-br dark:from-white/5 dark:via-white/0 dark:to-white/5 dark:border-white/5">
                       <div className="flex items-center gap-3">
                         {user?.avatarUrl ? (
                           <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-base font-semibold ring-2 ring-white/80">
+                          <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-base font-semibold ring-2 ring-white/80">
                             {user?.name?.charAt(0) || '?'}
                           </div>
                         )}

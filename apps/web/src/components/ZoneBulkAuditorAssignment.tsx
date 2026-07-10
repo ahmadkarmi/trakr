@@ -225,9 +225,9 @@ export function ZoneBulkAuditorAssignment({ orgId, onClose }: ZoneBulkAuditorAss
                         type="checkbox"
                         checked={selectedAuditorIds.includes(auditor.id)}
                         onChange={() => toggleAuditorSelection(auditor.id)}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 rounded-sm focus:ring-blue-500"
                       />
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
                         <UserIcon className="w-4 h-4 text-blue-600" />
                       </div>
                       <div className="flex-1 min-w-0">

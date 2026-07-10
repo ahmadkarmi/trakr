@@ -7,7 +7,7 @@ interface SkeletonBaseProps {
 }
 
 export function SkeletonBase({ className = '', animate = true, children }: SkeletonBaseProps) {
-  const baseClasses = `bg-gray-200 rounded ${animate ? 'animate-pulse' : ''}`
+  const baseClasses = `bg-gray-200 rounded-sm ${animate ? 'animate-pulse' : ''}`
   
   return (
     <div className={`${baseClasses} ${className}`}>

@@ -197,7 +197,7 @@ const AuditorAnalytics: React.FC = () => {
           <div className="space-y-4">
             {myCompletionRate >= teamCompletionRate && (
               <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                   <span className="text-green-600 text-sm">🏆</span>
                 </div>
                 <div>
@@ -208,7 +208,7 @@ const AuditorAnalytics: React.FC = () => {
             )}
             
             <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                 <span className="text-blue-600 text-sm">📈</span>
               </div>
               <div>
@@ -218,7 +218,7 @@ const AuditorAnalytics: React.FC = () => {
             </div>
 
             <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                 <span className="text-purple-600 text-sm">🎯</span>
               </div>
               <div>
@@ -229,7 +229,7 @@ const AuditorAnalytics: React.FC = () => {
 
             {overdueMyAudits > 0 && (
               <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
-                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                   <span className="text-red-600 text-sm">⚠️</span>
                 </div>
                 <div>

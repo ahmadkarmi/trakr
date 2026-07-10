@@ -128,7 +128,7 @@ export function BranchAuditorAssignments({ branchId, branchName, isBranchActive 
                 className="flex items-center justify-between p-3 bg-primary-50 border border-primary-200 rounded-lg"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center shrink-0">
                     <UserIcon className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0">
@@ -141,7 +141,7 @@ export function BranchAuditorAssignments({ branchId, branchName, isBranchActive 
                   disabled={unassignMutation.isPending || !!isBranchActive}
                   aria-disabled={unassignMutation.isPending || !!isBranchActive}
                   aria-label={isBranchActive ? 'Remove auditor is disabled while branch is active' : 'Remove auditor'}
-                  className={`p-1 flex-shrink-0 ${isBranchActive ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-700'}`}
+                  className={`p-1 shrink-0 ${isBranchActive ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-700'}`}
                   title={isBranchActive ? 'Deactivate branch to remove auditors' : 'Remove auditor'}
                 >
                   <XMarkIcon className="w-4 h-4" />
@@ -192,7 +192,7 @@ export function BranchAuditorAssignments({ branchId, branchName, isBranchActive 
                         type="checkbox"
                         checked={selectedAuditorIds.includes(auditor.id)}
                         onChange={() => toggleAuditorSelection(auditor.id)}
-                        className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                        className="w-4 h-4 text-primary-600 rounded-sm focus:ring-primary-500"
                       />
                       <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                         <UserIcon className="w-4 h-4 text-primary-600" />

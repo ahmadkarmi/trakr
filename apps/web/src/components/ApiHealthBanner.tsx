@@ -23,7 +23,7 @@ export function ApiHealthBanner() {
         </div>
         <button
           onClick={clearAll}
-          className="flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-500 text-white text-xs font-semibold shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300"
+          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-500 text-white text-xs font-semibold shadow-xs hover:bg-amber-600 focus:outline-hidden focus:ring-2 focus:ring-amber-300"
           aria-label="Dismiss API health warnings"
         >
           <span>Dismiss</span>

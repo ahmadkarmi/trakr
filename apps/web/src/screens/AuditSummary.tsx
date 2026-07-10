@@ -436,7 +436,7 @@ const AuditSummary: React.FC = () => {
             />
             <button
               onClick={() => navigate('/dashboard')}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700"
             >
               Back to Dashboard
             </button>
@@ -469,7 +469,7 @@ const AuditSummary: React.FC = () => {
           />
           <button
             onClick={() => navigate('/dashboard')}
-            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-blue-600 hover:bg-blue-700"
           >
             Back to Dashboard
           </button>
@@ -598,7 +598,7 @@ const AuditSummary: React.FC = () => {
                   {user?.role === UserRole.BRANCH_MANAGER && canManagerApprove && (
                     <>
                       <button 
-                        className="btn-primary whitespace-nowrap px-4 py-2.5 text-sm sm:text-base font-medium rounded-lg shadow-sm hover:shadow transition-shadow"
+                        className="btn-primary whitespace-nowrap px-4 py-2.5 text-sm sm:text-base font-medium rounded-lg shadow-xs hover:shadow-sm transition-shadow"
                         onClick={() => setApproveOpen(true)}
                       >
                         <span className="flex items-center gap-1.5">
@@ -690,7 +690,7 @@ const AuditSummary: React.FC = () => {
               <div className="mt-1">
                 {user?.signatureUrl ? (
                   <div>
-                    <img src={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded p-2 bg-gray-50" />
+                    <img src={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded-sm p-2 bg-gray-50" />
                     <p className="text-xs text-gray-500 mt-1">Using saved signature image</p>
                   </div>
                 ) : (
@@ -708,12 +708,12 @@ const AuditSummary: React.FC = () => {
             {approveMode === 'drawn' && (
               <div>
                 <label className="label">Draw signature</label>
-                <div className="mt-1 border rounded p-2 bg-gray-50">
+                <div className="mt-1 border rounded-sm p-2 bg-gray-50">
                   <canvas
                     ref={canvasRef}
                     width={400}
                     height={120}
-                    className="border rounded bg-white cursor-crosshair w-full"
+                    className="border rounded-sm bg-white cursor-crosshair w-full"
                     style={{ touchAction: 'none' }}
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
@@ -758,7 +758,7 @@ const AuditSummary: React.FC = () => {
         {/* Main Content with Audit Details */}
         <div className="card p-6">
           {submitIssues.length > 0 && (
-            <div className="mb-4 p-4 border border-danger-300 bg-danger-50 rounded">
+            <div className="mb-4 p-4 border border-danger-300 bg-danger-50 rounded-sm">
               <h4 className="font-medium text-danger-800">Required questions remaining</h4>
               <p className="text-sm text-danger-700 mt-1">Please answer the following before submitting for approval.</p>
               <ul className="mt-2 list-disc pl-6 text-sm text-danger-800 space-y-1">
@@ -861,9 +861,9 @@ const AuditSummary: React.FC = () => {
                         </div>
                         <div className="card-body space-y-4">
                           <div className="text-sm text-gray-600">This block will appear in PDF printouts.</div>
-                          <div className="p-3 border rounded">
+                          <div className="p-3 border rounded-sm">
                             <div className="text-sm text-gray-700">Branch Manager Signature</div>
-                            <div className="h-16 bg-gray-50 border rounded mt-2 flex items-center justify-center">
+                            <div className="h-16 bg-gray-50 border rounded-sm mt-2 flex items-center justify-center">
                               {audit.status === AuditStatus.APPROVED ? (
                                 audit.approvalSignatureType === 'typed' && audit.approvalName ? (
                                   <span className="text-2xl italic text-gray-900">{audit.approvalName}</span>
@@ -916,7 +916,7 @@ const AuditSummary: React.FC = () => {
                                   <div className="text-sm text-gray-600 mb-1">Section photos</div>
                                   <div className="flex flex-wrap gap-2">
                                     {secPhotos.map(photo => (
-                                      <img key={photo.id} src={photo.url} alt={photo.filename} className="w-20 h-20 rounded object-cover border border-gray-200" />
+                                      <img key={photo.id} src={photo.url} alt={photo.filename} className="w-20 h-20 rounded-sm object-cover border border-gray-200" />
                                     ))}
                                   </div>
                                 </div>
@@ -938,11 +938,11 @@ const AuditSummary: React.FC = () => {
                                       const ans = (audit.responses || {})[q.id]
                                       const na = (audit.naReasons || {})[q.id]
                                       const answerCell = (() => {
-                                        if (!ans) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">—</span>
+                                        if (!ans) return <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-gray-100 text-gray-700">—</span>
                                         if (q.type === QuestionType.YES_NO) {
-                                          if (ans === 'yes') return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">Yes</span>
-                                          if (ans === 'no') return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-100 text-red-800">No</span>
-                                          if (ans === 'na') return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-200 text-gray-800">N/A</span>
+                                          if (ans === 'yes') return <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-green-100 text-green-800">Yes</span>
+                                          if (ans === 'no') return <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-red-100 text-red-800">No</span>
+                                          if (ans === 'na') return <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-gray-200 text-gray-800">N/A</span>
                                           return <span className="text-sm text-gray-900 font-medium">{String(ans)}</span>
                                         }
                                         if (q.type === QuestionType.DATE) {
@@ -954,7 +954,7 @@ const AuditSummary: React.FC = () => {
                                           try {
                                             const arr = JSON.parse(String(ans) || '[]')
                                             if (Array.isArray(arr) && arr.length > 0) return <span className="text-sm text-gray-900 font-medium">{arr.join(', ')}</span>
-                                            return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">—</span>
+                                            return <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-gray-100 text-gray-700">—</span>
                                           } catch {
                                             return <span className="text-sm text-gray-900 font-medium">{String(ans)}</span>
                                           }
@@ -1045,7 +1045,7 @@ const AuditSummary: React.FC = () => {
                                       </p>
                                     )}
                                     {log.details && (
-                                      <p className="mt-1 text-sm text-gray-600 bg-gray-50 rounded p-2">
+                                      <p className="mt-1 text-sm text-gray-600 bg-gray-50 rounded-sm p-2">
                                         {log.details}
                                       </p>
                                     )}

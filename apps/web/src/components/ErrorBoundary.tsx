@@ -91,7 +91,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
             {/* Error ID for support */}
             {this.state.errorId && (
-              <div className="bg-gray-100 rounded p-3 mb-6">
+              <div className="bg-gray-100 rounded-sm p-3 mb-6">
                 <p className="text-xs text-gray-500 mb-1">Error ID (for support):</p>
                 <code className="text-xs font-mono text-gray-700">{this.state.errorId}</code>
               </div>
@@ -119,7 +119,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
                   Show Error Details (Development)
                 </summary>
-                <pre className="mt-2 text-xs bg-gray-100 p-3 rounded overflow-auto max-h-32">
+                <pre className="mt-2 text-xs bg-gray-100 p-3 rounded-sm overflow-auto max-h-32">
                   {this.state.error.stack}
                 </pre>
               </details>

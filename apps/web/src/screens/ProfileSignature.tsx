@@ -148,7 +148,7 @@ const ProfileSignature: React.FC = () => {
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
             <div className="md:col-span-2">
-              <div className="border rounded p-3 bg-gray-50 flex items-center justify-center h-28">
+              <div className="border rounded-sm p-3 bg-gray-50 flex items-center justify-center h-28">
                 {user.signatureUrl ? (
                   <img src={user.signatureUrl} alt="Saved signature" className="max-h-24 object-contain" />
                 ) : (
@@ -168,12 +168,12 @@ const ProfileSignature: React.FC = () => {
           <div className="mt-6">
             <h3 className="text-base font-medium text-gray-900">Draw a Signature</h3>
             <p className="text-xs text-gray-500">Use mouse or touch to sign. Click Save to store it as your signature image.</p>
-            <div className="mt-2 border rounded p-2 bg-gray-50">
+            <div className="mt-2 border rounded-sm p-2 bg-gray-50">
               <canvas
                 ref={canvasRef}
                 width={800}
                 height={180}
-                className="w-full h-44 bg-white rounded border"
+                className="w-full h-44 bg-white rounded-sm border"
                 style={{ touchAction: 'none' }}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}

@@ -309,7 +309,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
     >
       <div className="flex items-start gap-4">
         {/* Icon */}
-        <div className="flex-shrink-0">{getIcon(notification.type)}</div>
+        <div className="shrink-0">{getIcon(notification.type)}</div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">

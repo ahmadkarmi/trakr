@@ -45,7 +45,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, icon, varia
           {subtitle && <p className="text-mobile-body text-gray-600 mt-2 leading-relaxed">{subtitle}</p>}
         </div>
         {icon && (
-          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${v.bg} shadow-sm`}>
+          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${v.bg} shadow-xs`}>
             <div className="w-6 h-6 sm:w-7 sm:h-7">
               {icon}
             </div>

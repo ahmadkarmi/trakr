@@ -115,7 +115,7 @@ const MobileAuditCard: React.FC<Props> = ({ audit: a, branchName, surveys, mode 
 
           {/* Progress Circle (only for recent) */}
           {mode === 'recent' && (
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <div className="relative w-16 h-16">
                 <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
                   <path
@@ -152,7 +152,7 @@ const MobileAuditCard: React.FC<Props> = ({ audit: a, branchName, surveys, mode 
             </div>
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className="h-2 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out"
+                className="h-2 bg-linear-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${comp}%` }}
               />
             </div>
@@ -162,7 +162,7 @@ const MobileAuditCard: React.FC<Props> = ({ audit: a, branchName, surveys, mode 
         {/* Status-Based Action Button */}
         <div>
           <button
-            className={`w-full flex items-center justify-center gap-2 ${buttonConfig.color} text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 touch-target shadow-sm hover:shadow-md`}
+            className={`w-full flex items-center justify-center gap-2 ${buttonConfig.color} text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 touch-target shadow-xs hover:shadow-md`}
             onClick={buttonConfig.action}
             aria-label={`${buttonConfig.label} audit`}
           >

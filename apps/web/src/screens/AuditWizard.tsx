@@ -515,12 +515,12 @@ const AuditWizard: React.FC = () => {
               
               {/* Mobile sticky progress + section selector (full width, offset under header) */}
               <div
-                className="sm:hidden sticky z-20 -mx-4 px-4 pt-2 pb-2 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-gray-200"
+                className="sm:hidden sticky z-20 -mx-4 px-4 pt-2 pb-2 bg-white/95 backdrop-blur-sm supports-backdrop-filter:bg-white/80 border-b border-gray-200"
                 style={{ top: 'var(--app-header-height)' }}
               >
                 <div className="flex">
                   <button
-                    className="w-full rounded-xl border border-gray-200 bg-white shadow-sm px-3 py-2 flex items-center gap-3 active:shadow-md"
+                    className="w-full rounded-xl border border-gray-200 bg-white shadow-xs px-3 py-2 flex items-center gap-3 active:shadow-md"
                     onClick={() => setShowSectionPicker(true)}
                     aria-label="Choose section"
                   >
@@ -544,7 +544,7 @@ const AuditWizard: React.FC = () => {
               {/* Global alerts and connection status */}
               {offline && (
                 <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-                  <ExclamationTriangleIcon className="w-6 h-6 text-amber-600 flex-shrink-0" />
+                  <ExclamationTriangleIcon className="w-6 h-6 text-amber-600 shrink-0" />
                   <div className="text-mobile-body text-amber-800">You are offline. Some actions may fail until connection is restored.</div>
                 </div>
               )}
@@ -552,9 +552,9 @@ const AuditWizard: React.FC = () => {
                 <div className="mb-4 space-y-3" role="status" aria-live="polite">
                   {alerts.map(a => (
                     <div key={a.id} className={`rounded-xl border p-4 flex items-start gap-3 ${a.type === 'error' ? 'bg-danger-50 border-danger-200' : a.type === 'warning' ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
-                      {a.type === 'error' && <XCircleIcon className="w-6 h-6 text-danger-600 flex-shrink-0" />}
-                      {a.type === 'warning' && <ExclamationTriangleIcon className="w-6 h-6 text-amber-600 flex-shrink-0" />}
-                      {a.type === 'success' && <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0" />}
+                      {a.type === 'error' && <XCircleIcon className="w-6 h-6 text-danger-600 shrink-0" />}
+                      {a.type === 'warning' && <ExclamationTriangleIcon className="w-6 h-6 text-amber-600 shrink-0" />}
+                      {a.type === 'success' && <CheckCircleIcon className="w-6 h-6 text-green-600 shrink-0" />}
                       <div className={`text-mobile-body flex-1 ${a.type === 'error' ? 'text-danger-800' : a.type === 'warning' ? 'text-amber-800' : 'text-green-800'}`}>{a.text}</div>
                       <button className="touch-target p-1 hover:bg-black/5 rounded-lg" onClick={() => dismissAlert(a.id)}>
                         <XMarkIcon className="w-5 h-5 text-gray-400" />
@@ -665,11 +665,11 @@ const AuditWizard: React.FC = () => {
                                     type="button"
                                     data-testid={`answer-${q.id}-${k}`}
                                     aria-pressed={answer === k}
-                                    className={`btn touch-target inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border-2 rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 ${
+                                    className={`btn touch-target inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium border-2 rounded-xl transition-all duration-200 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-600 ${
                                       answer === k 
-                                        ? (color === 'success' ? 'bg-green-50 border-green-600 text-green-700 shadow-sm' 
-                                          : color === 'danger' ? 'bg-red-50 border-red-600 text-red-700 shadow-sm' 
-                                          : 'bg-gray-100 border-gray-500 text-gray-700 shadow-sm')
+                                        ? (color === 'success' ? 'bg-green-50 border-green-600 text-green-700 shadow-xs' 
+                                          : color === 'danger' ? 'bg-red-50 border-red-600 text-red-700 shadow-xs' 
+                                          : 'bg-gray-100 border-gray-500 text-gray-700 shadow-xs')
                                         : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-gray-400'
                                     }`}
                                     onClick={() => setAnswer(q.id, k as 'yes' | 'no' | 'na')}
@@ -785,7 +785,7 @@ const AuditWizard: React.FC = () => {
                             <LazyImage 
                               src={p.url} 
                               alt={p.filename || 'Section photo'}
-                              className="w-20 h-20 rounded border border-gray-200" 
+                              className="w-20 h-20 rounded-sm border border-gray-200" 
                               aspectRatio="1/1"
                             />
                             <button className="btn btn-outline btn-sm mt-1" onClick={() => removePhoto(p.id)}>Remove</button>

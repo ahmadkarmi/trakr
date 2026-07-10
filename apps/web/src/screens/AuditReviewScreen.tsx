@@ -406,7 +406,7 @@ export default function AuditReviewScreen() {
                                 </p>
                               )}
                               {log.details && (
-                                <p className="mt-1 text-sm text-gray-600 bg-gray-50 rounded p-2">{log.details}</p>
+                                <p className="mt-1 text-sm text-gray-600 bg-gray-50 rounded-sm p-2">{log.details}</p>
                               )}
                             </div>
                             <div className="whitespace-nowrap text-right text-sm text-gray-500">
@@ -556,7 +556,7 @@ export default function AuditReviewScreen() {
                               })()}
                             </div>
                             {question.type === QuestionType.YES_NO && answer === 'na' && naReason && (
-                              <div className="mt-2 p-2 bg-gray-100 rounded text-sm text-gray-700">
+                              <div className="mt-2 p-2 bg-gray-100 rounded-sm text-sm text-gray-700">
                                 <span className="font-medium">N/A Reason:</span> {naReason}
                               </div>
                             )}
@@ -655,7 +655,7 @@ export default function AuditReviewScreen() {
             <div>
               {user?.signatureUrl ? (
                 <div>
-                  <img src={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded p-2 bg-gray-50" />
+                  <img src={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded-sm p-2 bg-gray-50" />
                   <p className="text-xs text-gray-500 mt-1">Using saved signature image</p>
                 </div>
               ) : (
@@ -679,12 +679,12 @@ export default function AuditReviewScreen() {
           {approveMode === 'drawn' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Draw signature</label>
-              <div className="border rounded p-2 bg-gray-50">
+              <div className="border rounded-sm p-2 bg-gray-50">
                 <canvas
                   ref={canvasRef}
                   width={400}
                   height={120}
-                  className="border rounded bg-white cursor-crosshair w-full"
+                  className="border rounded-sm bg-white cursor-crosshair w-full"
                   style={{ touchAction: 'none' }}
                   onPointerDown={handlePointerDown}
                   onPointerMove={handlePointerMove}

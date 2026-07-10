@@ -232,7 +232,7 @@ const DashboardBranchManager: React.FC = () => {
                   const survey = surveys.find(s => s.id === audit.surveyId)
                   
                   return (
-                    <div key={audit.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div key={audit.id} className="bg-linear-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="mb-3">
                         <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate mb-1">{branch?.name || 'Unknown Branch'}</h3>
                         <p className="text-sm text-gray-600 dark:text-slate-300 truncate">{survey?.title || 'Unknown Survey'}</p>
@@ -375,10 +375,10 @@ const DashboardBranchManager: React.FC = () => {
                     
                     // Color based on status
                     const cardStyle = a.status === AuditStatus.APPROVED 
-                      ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200'
+                      ? 'bg-linear-to-br from-green-50 to-emerald-50 border-green-200'
                       : a.status === AuditStatus.REJECTED
-                      ? 'bg-gradient-to-br from-red-50 to-pink-50 border-red-200'
-                      : 'bg-white dark:bg-[var(--color-card)] border-gray-200 dark:border-white/10'
+                      ? 'bg-linear-to-br from-red-50 to-pink-50 border-red-200'
+                      : 'bg-white dark:bg-(--color-card) border-gray-200 dark:border-white/10'
                     
                     const buttonStyle = a.status === AuditStatus.APPROVED
                       ? 'bg-green-600 hover:bg-green-700'

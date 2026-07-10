@@ -46,7 +46,7 @@ function ResponsiveTable<T>({ items, keyField, columns, mobileItem, empty }: Res
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-[var(--color-card)] divide-y divide-gray-200 dark:divide-white/10">
+          <tbody className="bg-white dark:bg-(--color-card) divide-y divide-gray-200 dark:divide-white/10">
             {items.map((row) => (
               <tr key={keyField(row)} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                 {columns.map((c) => (

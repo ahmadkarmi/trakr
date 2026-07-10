@@ -196,7 +196,7 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card-compact bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <div className="card-compact bg-linear-to-r from-blue-50 to-indigo-50 border-blue-200">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
@@ -206,7 +206,7 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
           </div>
         </div>
         
-        <div className="card-compact bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+        <div className="card-compact bg-linear-to-r from-green-50 to-emerald-50 border-green-200">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-2xl font-bold text-gray-900">{stats.completed}</div>
@@ -216,7 +216,7 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ roleFilter = 'admin', branc
           </div>
         </div>
         
-        <div className="card-compact bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+        <div className="card-compact bg-linear-to-r from-purple-50 to-pink-50 border-purple-200">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-2xl font-bold text-gray-900">{stats.avgScore}%</div>

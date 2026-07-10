@@ -147,7 +147,7 @@ const NotificationDropdown: React.FC = () => {
           type="button"
           aria-label="Notifications"
           onClick={() => setIsOpen(v => !v)}
-          className="relative inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="relative inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 focus:outline-hidden focus:ring-2 focus:ring-primary-500"
         >
           <BellIcon className="w-6 h-6 text-gray-700 dark:text-slate-300" />
           {badgeCount > 0 && (
@@ -159,8 +159,8 @@ const NotificationDropdown: React.FC = () => {
 
         {/* Desktop Dropdown */}
         {isOpen && !isMobile && (
-          <div className="absolute right-0 mt-2 w-[380px] max-h-[80vh] z-[101]">
-            <div className="bg-white dark:bg-[var(--color-card)] rounded-xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden">
+          <div className="absolute right-0 mt-2 w-[380px] max-h-[80vh] z-101">
+            <div className="bg-white dark:bg-(--color-card) rounded-xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden">
               {/* Header */}
               <div className="px-4 py-3 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
                 <h3 className="text-base font-bold text-gray-900 dark:text-white">Notifications</h3>
@@ -204,7 +204,7 @@ const NotificationDropdown: React.FC = () => {
                         >
                           <div className="flex items-start gap-3">
                             {/* Icon */}
-                            <div className="flex-shrink-0 mt-0.5 w-6 h-6 flex justify-center items-center rounded-full bg-gray-100 dark:bg-white/10">
+                            <div className="shrink-0 mt-0.5 w-6 h-6 flex justify-center items-center rounded-full bg-gray-100 dark:bg-white/10">
                               {getNotificationIcon(notification.type)}
                             </div>
                             {/* Content */}
@@ -238,7 +238,7 @@ const NotificationDropdown: React.FC = () => {
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-2 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--color-card-muted)]">
+              <div className="px-4 py-2 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-(--color-card-muted)">
                 {dropdownNotifications.length > 0 ? (
                   <div className="flex items-center justify-between">
                     <button onClick={() => { navigate('/notifications'); setIsOpen(false) }} className="text-sm text-primary-600 hover:text-primary-700 font-medium">View all</button>
@@ -259,11 +259,11 @@ const NotificationDropdown: React.FC = () => {
       {isOpen && isMobile && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[100] md:hidden" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-100 md:hidden" onClick={() => setIsOpen(false)} />
 
           {/* Bottom Sheet */}
-          <div className="fixed inset-x-0 bottom-0 z-[101] md:hidden animate-slide-up">
-            <div className="bg-white dark:bg-[var(--color-card)] rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
+          <div className="fixed inset-x-0 bottom-0 z-101 md:hidden animate-slide-up">
+            <div className="bg-white dark:bg-(--color-card) rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
               {/* Handle Bar & Header - Swipeable Area */}
               <div className="touch-none select-none" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
                 {/* Handle Bar */}
@@ -301,7 +301,7 @@ const NotificationDropdown: React.FC = () => {
                         <div key={notification.id} className={`px-4 py-4 active:bg-gray-100 dark:active:bg-white/10 transition-colors ${!notification.isRead ? 'bg-blue-50/30 dark:bg-primary-500/10' : ''}`} onClick={() => handleNotificationClick(notification)}>
                           <div className="flex items-start gap-3">
                             {/* Icon */}
-                            <div className="flex-shrink-0 mt-0.5 w-6 h-6 flex justify-center items-center rounded-full bg-gray-100 dark:bg-white/10">{getNotificationIcon(notification.type)}</div>
+                            <div className="shrink-0 mt-0.5 w-6 h-6 flex justify-center items-center rounded-full bg-gray-100 dark:bg-white/10">{getNotificationIcon(notification.type)}</div>
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -324,7 +324,7 @@ const NotificationDropdown: React.FC = () => {
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-3 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--color-card-muted)]">
+              <div className="px-4 py-3 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-(--color-card-muted)">
                 {dropdownNotifications.length > 0 ? (
                   <div className="space-y-2">
                     <button onClick={() => { navigate('/notifications'); setIsOpen(false) }} className="w-full py-2.5 text-sm text-primary-600 hover:text-primary-700 font-semibold">View all notifications</button>
