@@ -3,7 +3,6 @@ import {
   getUserByEmail,
   ensureBranchForOrg,
   ensureSimpleSurvey,
-  ensureAuditorAssignedToBranch,
   ensureBranchManagerAssigned,
   ensureAuditFor,
   setAuditSubmitted,
@@ -13,6 +12,12 @@ import {
   deleteNotificationProbes,
   deleteAudits,
 } from './helpers/e2eSetup'
+// NOTE: deliberately does NOT assign auditor@trakr.com to this branch. That
+// auditor's assignment row is a single shared record (assignAuditor REPLACES
+// its branch_ids), so touching it here races branch.activation-guard.spec,
+// which relies on that auditor's coverage for its own branch. This spec
+// doesn't need it: the audit is inserted directly with assigned_to, and the
+// approval is gated on the MANAGER's assignment, not the auditor's.
 
 // Regression coverage for the cross-user notification bug (PR #115):
 // createNotification chained .select() onto the insert, and INSERT ...
@@ -44,7 +49,6 @@ test.describe('Cross-user notification delivery', () => {
     const survey = await ensureSimpleSurvey(orgId, 'E2E Notify Survey')
     surveyId = survey.id
     await getFirstQuestionId(surveyId)
-    await ensureAuditorAssignedToBranch(auditorId, branchId)
     await ensureBranchManagerAssigned(managerId, branchId)
   })
 
