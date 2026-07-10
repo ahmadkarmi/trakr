@@ -94,6 +94,31 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_KEY }}
         run: node scripts/seed-with-credentials.js
 
+      # The vitest supabase.*.integration suites hit the live DB and skip
+      # themselves when VITE_SUPABASE_* is unset - which it is on ci.yml's
+      # unit-test step, so they've never run in CI. Run them here, right after
+      # the seed, where the DB and secrets exist. A .env file is written
+      # because import.meta.env.VITE_* is populated from Vite's env files, not
+      # the process env. This runs before the Playwright suite (both mutate
+      # the shared DB); the whole workflow is serialized by the concurrency
+      # group, and vitest's fileParallelism:false serializes the suites.
+      - name: Run integration tests (vitest, live DB)
+        if: steps.changes.outputs.relevant == 'true'
+        working-directory: apps/web
+        env:
+          E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+        run: |
+          {
+            echo "VITE_BACKEND=supabase"
+            echo "VITE_SUPABASE_URL=$E2E_SUPABASE_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$E2E_SUPABASE_ANON_KEY"
+            echo "VITE_TEST_EMAIL=admin@trakr.com"
+            echo "VITE_TEST_PASSWORD=Password@123"
+          } > .env
+          npm run test:run
+          rm -f .env
+
       - name: Debug BASE_URL and /login HTML
         if: steps.changes.outputs.relevant == 'true'
         run: |
@@ -111,6 +136,7 @@ jobs:
         env:
           E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           E2E_SUPABASE_SERVICE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_KEY }}
+          E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
         run: npm run e2e -s
 
       - name: Upload Playwright artifacts (always)

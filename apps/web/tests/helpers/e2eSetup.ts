@@ -22,6 +22,19 @@ export async function getUserClient(email: string, password: string) {
   return supa
 }
 
+// A genuinely unauthenticated client, keyed with the ANON key (not the
+// service key). getUserClient/getAdminClient both hold the service key as
+// their apikey, so signing out of those reverts to service-role and bypasses
+// RLS - useless for asserting what an anonymous caller can/can't do. Returns
+// null when the anon key isn't provided so a spec can skip rather than
+// misfire. (The service key is never a valid anon stand-in here.)
+export function getAnonClient() {
+  const url = (process.env.E2E_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim()
+  const anon = (process.env.E2E_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
+  if (!url || !anon) return null
+  return createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } })
+}
+
 export async function getFirstOrganization(): Promise<{ id: string; name: string } | null> {
   const supa = getAdminClient()
   const { data, error } = await supa.from('organizations').select('id, name').order('created_at', { ascending: true }).limit(1)
@@ -213,6 +226,51 @@ export async function getAuditStatus(auditId: string): Promise<string | null> {
   const { data, error } = await supa.from('audits').select('status').eq('id', auditId).maybeSingle()
   if (error) throw error
   return (data as any)?.status ?? null
+}
+
+// Notifications for a recipient, optionally scoped to one audit. Admin client
+// (service role) so the read isn't itself gated by the notifications SELECT
+// policy — the point is to assert the row EXISTS, independent of who can see it.
+export async function getNotificationsFor(
+  userId: string,
+  relatedId?: string,
+): Promise<Array<{ id: string; type: string; user_id: string; related_id: string | null }>> {
+  const supa = getAdminClient()
+  let query = supa.from('notifications').select('id, type, user_id, related_id').eq('user_id', userId)
+  if (relatedId) query = query.eq('related_id', relatedId)
+  const { data, error } = await query
+  if (error) throw error
+  return (data as any) ?? []
+}
+
+// Authenticated cross-user notification insert, exactly as the app does it
+// (no RETURNING). Returns the PostgREST error (or null) so a spec can assert
+// the send is permitted by the INSERT policy without a service-role bypass.
+const PROBE_TITLE = 'E2E delivery probe'
+export async function insertNotificationAs(
+  senderEmail: string,
+  senderPassword: string,
+  recipientUserId: string,
+): Promise<{ code: string; message: string } | null> {
+  const supa = await getUserClient(senderEmail, senderPassword)
+  const { error } = await supa.from('notifications').insert({
+    user_id: recipientUserId,
+    type: 'audit_submitted',
+    title: PROBE_TITLE,
+    message: 'cross-user insert regression guard',
+    requires_action: false,
+    is_read: false,
+    created_at: new Date().toISOString(),
+  })
+  return error ? { code: (error as any).code, message: error.message } : null
+}
+
+// Remove the title-tagged probe rows insertNotificationAs leaves behind
+// (they carry no related_id, so deleteAudits can't reach them).
+export async function deleteNotificationProbes() {
+  const supa = getAdminClient()
+  const { error } = await supa.from('notifications').delete().eq('title', PROBE_TITLE)
+  if (error) throw error
 }
 
 export async function ensureAuditorAssignedToBranch(auditorUserId: string, branchId: string) {

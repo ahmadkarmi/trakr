@@ -212,18 +212,6 @@ async function ensureSurvey(orgId: string, userId: string, branchId: string, sup
     throw fetchError
   }
 
-  if (existing?.id) {
-    const branchIds = Array.isArray((existing as any).applicable_branch_ids)
-      ? ((existing as any).applicable_branch_ids as (string | null | undefined)[]).filter((id): id is string => typeof id === 'string')
-      : []
-    if (!branchIds.includes(branchId)) {
-      await api.updateSurvey(existing.id, { applicableBranchIds: [...branchIds, branchId] }, orgId)
-    }
-    cachedSurveyId = existing.id
-    cachedOrgId = orgId
-    return existing.id
-  }
-
   const sections = [
     {
       title: 'Page 1',
@@ -232,6 +220,28 @@ async function ensureSurvey(orgId: string, userId: string, branchId: string, sup
       questions: [],
     },
   ]
+
+  if (existing?.id) {
+    const branchIds = Array.isArray((existing as any).applicable_branch_ids)
+      ? ((existing as any).applicable_branch_ids as (string | null | undefined)[]).filter((id): id is string => typeof id === 'string')
+      : []
+    if (!branchIds.includes(branchId)) {
+      await api.updateSurvey(existing.id, { applicableBranchIds: [...branchIds, branchId] }, orgId)
+    }
+    // Self-heal: a survey reused by title may have lost its sections across
+    // prior partial runs (the editor tests assert a "Page 1" section tab
+    // exists). Restore it rather than trusting the reused row's shape.
+    const { count: sectionCount } = await supabase
+      .from('survey_sections')
+      .select('id', { count: 'exact', head: true })
+      .eq('survey_id', existing.id)
+    if (!sectionCount) {
+      await api.updateSurvey(existing.id, { sections }, orgId)
+    }
+    cachedSurveyId = existing.id
+    cachedOrgId = orgId
+    return existing.id
+  }
 
   const created = await api.createSurvey({
     title: TEST_SURVEY_TITLE,
