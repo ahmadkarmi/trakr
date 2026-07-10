@@ -35,9 +35,21 @@ export function getAnonClient() {
   return createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } })
 }
 
+// Names the seeder preserves (see scripts/seed-with-credentials.js). Because
+// they're never re-inserted, they're OLDER than the freshly-seeded standard
+// orgs - so "oldest org" must skip them, or specs that expect the standard
+// seeded org (and whose seeded users live there) operate on the wrong,
+// cross-org sandbox and fail (e.g. auditor coverage rejected).
+const PRESERVED_ORG_NAMES = ['Trakr QA Sandbox']
+
 export async function getFirstOrganization(): Promise<{ id: string; name: string } | null> {
   const supa = getAdminClient()
-  const { data, error } = await supa.from('organizations').select('id, name').order('created_at', { ascending: true }).limit(1)
+  const { data, error } = await supa
+    .from('organizations')
+    .select('id, name')
+    .not('name', 'in', `(${PRESERVED_ORG_NAMES.map((n) => `"${n}"`).join(',')})`)
+    .order('created_at', { ascending: true })
+    .limit(1)
   if (error) throw error
   if (!data || !data.length) return null
   return { id: (data[0] as any).id, name: (data[0] as any).name }
