@@ -2207,26 +2207,22 @@ export const supabaseApi = {
     })
     
     const supabase = await getSupabase()
-    // Ensure we use auth user's UUID for notifications.user_id
-    let targetAuthUserId: string = notification.userId
-    try {
-      const { data: appUser } = await supabase
-        .from('users')
-        .select('id, auth_user_id')
-        .eq('id', notification.userId)
-        .maybeSingle()
-      if (appUser && (appUser as any).auth_user_id) {
-        targetAuthUserId = (appUser as any).auth_user_id as string
-      }
-    } catch (e) {
-      logger.warn('Failed to resolve mapped auth user id', { context: 'createNotification', data: e })
-    }
-
-    // First try inserting with auth user id (preferred)
-    let insert = await supabase
+    // notifications.user_id's FK references public.users(id), so callers'
+    // app user id is the only value that can ever satisfy it. (This used to
+    // probe with the mapped auth user id first and rely on the FK rejecting
+    // it before retrying - one guaranteed ERROR-level FK/RLS violation in
+    // the DB logs per cross-user notification.)
+    //
+    // No .select() here, deliberately: INSERT ... RETURNING requires the new
+    // row to also satisfy the SELECT policy (user_id = current_user_id()),
+    // which a cross-user notification never can for its sender - the
+    // RETURNING made every cross-user notification fail with RLS 42501 even
+    // though the INSERT policy allows same-org sends. Nothing consumed the
+    // returned row anyway.
+    const insert = await supabase
       .from('notifications')
       .insert({
-        user_id: targetAuthUserId,
+        user_id: notification.userId,
         type: notification.type,
         title: notification.title,
         message: notification.message,
@@ -2237,27 +2233,6 @@ export const supabaseApi = {
         is_read: false,
         created_at: new Date().toISOString(),
       })
-      .select()
-
-    if (insert.error && insert.error.code === '23503') {
-      // Foreign key references public.users in this environment; retry with app user id
-      logger.warn('FK violation on auth user id; retrying with app user id', { context: 'SupabaseAPI' })
-      insert = await supabase
-        .from('notifications')
-        .insert({
-          user_id: notification.userId,
-          type: notification.type,
-          title: notification.title,
-          message: notification.message,
-          link: notification.link,
-          related_id: notification.relatedId,
-          requires_action: notification.requiresAction || false,
-          action_type: notification.actionType,
-          is_read: false,
-          created_at: new Date().toISOString(),
-        })
-        .select()
-    }
 
     if (insert.error) {
       if ((insert.error as any).code === '23505') {
