@@ -45,12 +45,20 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 // Returns true if the delete actually happened, false if benignly skipped.
 function assertCleared(table, error) {
   if (!error) return true
-  if (error.message && (error.message.includes('does not exist') || error.message.includes('Could not find the table'))) {
+  // Match only MISSING-TABLE wordings. A bare includes('does not exist')
+  // used to also swallow "column X does not exist" - which is how the old
+  // created_at-filtered deletes on zone_branches/audit_photos silently
+  // no-opped on every run while logging ERRORs in Postgres.
+  if (error.message && (/relation .* does not exist/.test(error.message) || error.message.includes('Could not find the table'))) {
     console.log(`  ⚠️  ${table} does not exist yet, skipping`)
     return false
   }
   throw new Error(`Failed to clear ${table}: ${error.message}`)
 }
+
+// Orgs the e2e reseed must never touch: the persistent browser-QA sandbox
+// (see scripts/seed-qa-org.mjs). Everything else is fair game.
+const PRESERVED_ORG_NAMES = ['Trakr QA Sandbox']
 
 async function seedDatabase() {
   // Test connection and check schema
@@ -85,66 +93,113 @@ async function seedDatabase() {
     // Clear existing data more thoroughly
     console.log('🧹 Clearing existing data...')
 
+    // Resolve orgs the reseed must preserve (the persistent QA sandbox).
+    // All clears below exclude these org ids, so browser-QA data survives
+    // every CI e2e run instead of needing seed:qa after each one.
+    const { data: preservedOrgs, error: preservedErr } = await supabase
+      .from('organizations').select('id, name').in('name', PRESERVED_ORG_NAMES)
+    if (preservedErr && !/relation .* does not exist/.test(preservedErr.message || '')) throw preservedErr
+    const preservedOrgIds = (preservedOrgs || []).map(o => o.id)
+    if (preservedOrgIds.length) {
+      console.log(`  🛡️  Preserving org(s): ${(preservedOrgs || []).map(o => o.name).join(', ')}`)
+    }
+
+    // Filter helper: delete/update everything EXCEPT preserved orgs' rows.
+    // NULL org_id rows must still match (PostgREST neq drops NULLs), hence
+    // the or(). With nothing to preserve, match all rows via a tautology
+    // that works on every table regardless of its columns.
+    const exceptPreserved = (query, col = 'org_id') =>
+      preservedOrgIds.length
+        ? query.or(`${col}.is.null,${col}.not.in.(${preservedOrgIds.join(',')})`)
+        : query.or(`${col}.is.null,${col}.not.is.null`)
+
     // A DB trigger rejects removing an auditor's assignment from any branch
     // that's currently is_active=true ("Deactivate the branch first") - the
     // steady-state result of a prior successful seed run is exactly that
     // (active branches with assigned auditors), so clearing auditor_assignments
     // below would otherwise always fail on the second and every later run.
-    const { error: deactivateError } = await supabase.from('branches').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000')
-    if (assertCleared('branches.is_active', deactivateError)) console.log('  ✅ Deactivated all branches')
+    const { error: deactivateError } = await exceptPreserved(supabase.from('branches').update({ is_active: false }))
+    if (assertCleared('branches.is_active', deactivateError)) console.log('  ✅ Deactivated branches (non-preserved)')
 
-    // Clear in order that respects foreign key constraints:
-    // 1. Audits and their dependencies
-    // 2. Branch managers (set to NULL before deleting users)
-    // 3. Users
-    // 4. Branches and zones
-    // 5. Organizations
+    // Clear in order that respects foreign key constraints. Tables whose
+    // rows die via ON DELETE CASCADE are deliberately absent:
+    //   audit_photos  -> cascades from audits
+    //   zone_branches -> cascades from zones/branches
+    //   notifications -> cascades from users
+    // (audit_comments has no table in the live schema at all.)
+    // activity_logs/data_access_audit/auditor_branch_assignments/
+    // zone_assignments hold NO ACTION FKs on org_id/user_id/created_by and
+    // must be cleared explicitly before users/organizations.
     const clearOrder = [
-      'audit_photos',
-      'audit_comments',
-      // users are recreated with new ids below; notifications and activity
-      // logs would otherwise survive with dangling user references and leak
-      // into tests as stale rows visible to super-admin sessions
-      'notifications',
       'activity_logs',
       'data_access_audit',
       'audits',
       'auditor_assignments',
-      // auditor_branch_assignments and zone_assignments hold org_id/created_by
-      // FKs with delete_rule NO ACTION - left uncleared, either blocks the
-      // organizations delete below outright, or (before this fix) let that
-      // failure pass silently and duplicate orgs got inserted on top of it.
       'auditor_branch_assignments',
       'zone_assignments',
       'surveys',
-      'zone_branches'
     ]
 
     for (const table of clearOrder) {
-      const { error } = await supabase.from(table).delete().gte('created_at', '1900-01-01')
+      const { error } = await exceptPreserved(supabase.from(table).delete())
       if (assertCleared(table, error)) console.log(`  ✅ Cleared ${table}`)
     }
 
     // Clear FK-constrained tables in correct order
     // 1. Remove branch managers (set to NULL)
-    const { error: managerNullError } = await supabase.from('branches').update({ manager_id: null }).neq('id', '00000000-0000-0000-0000-000000000000')
+    const { error: managerNullError } = await exceptPreserved(supabase.from('branches').update({ manager_id: null }))
     if (assertCleared('branches.manager_id', managerNullError)) console.log('  ✅ Nullified branch managers')
 
     // 2. Delete users
-    const { error: usersError } = await supabase.from('users').delete().gte('created_at', '1900-01-01')
+    const { error: usersError } = await exceptPreserved(supabase.from('users').delete())
     if (assertCleared('users', usersError)) console.log('  ✅ Cleared users')
 
     // 3. Delete branches
-    const { error: branchesError } = await supabase.from('branches').delete().gte('created_at', '1900-01-01')
+    const { error: branchesError } = await exceptPreserved(supabase.from('branches').delete())
     if (assertCleared('branches', branchesError)) console.log('  ✅ Cleared branches')
 
     // 4. Delete zones
-    const { error: zonesError } = await supabase.from('zones').delete().gte('created_at', '1900-01-01')
+    const { error: zonesError } = await exceptPreserved(supabase.from('zones').delete())
     if (assertCleared('zones', zonesError)) console.log('  ✅ Cleared zones')
 
     // 5. Delete organizations
-    const { error: orgsError } = await supabase.from('organizations').delete().gte('created_at', '1900-01-01')
+    const { error: orgsError } = preservedOrgIds.length
+      ? await supabase.from('organizations').delete().not('id', 'in', `(${preservedOrgIds.join(',')})`)
+      : await supabase.from('organizations').delete().gte('created_at', '1900-01-01')
     if (assertCleared('organizations', orgsError)) console.log('  ✅ Cleared organizations')
+
+    // Ensure every seeded user has an auth account. On the long-lived shared
+    // project most already exist; on a fresh project (e.g. a dedicated e2e
+    // database) this bootstraps them so the seed is fully self-contained.
+    // MUST run BEFORE the public.users upsert below: handle_new_user() fires
+    // on auth-user creation and inserts a public.users row keyed on the auth
+    // id - if a row with the same email already exists under a different id,
+    // the trigger hits the users email unique constraint and GoTrue returns
+    // an opaque 500. Created first, the trigger's rows simply get their
+    // org/role filled in by the email-conflict upsert. Password matches
+    // scripts/set-user-passwords.js's default so the vitest integration
+    // suites' signInWithPassword works out of the box.
+    console.log('👤 Ensuring auth accounts exist...')
+    const SEED_USER_PASSWORD = process.env.SEED_USER_PASSWORD || 'Password@123'
+    const SEED_AUTH_EMAILS = [
+      'admin@trakr.com', 'branchmanager@trakr.com', 'auditor@trakr.com',
+      'admin@retailchain.com', 'manager.manhattan@retailchain.com',
+      'manager.miami@retailchain.com', 'manager.la@retailchain.com',
+      'auditor1@retailchain.com', 'auditor2@retailchain.com', 'auditor3@retailchain.com',
+    ]
+    const { data: preList, error: preListError } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+    if (preListError) throw preListError
+    const existingAuthEmails = new Set((preList.users || []).map(u => (u.email || '').toLowerCase()))
+    for (const email of SEED_AUTH_EMAILS) {
+      if (existingAuthEmails.has(email.toLowerCase())) continue
+      const { error: createErr } = await supabase.auth.admin.createUser({
+        email,
+        password: SEED_USER_PASSWORD,
+        email_confirm: true,
+      })
+      if (createErr) throw new Error(`Failed to create auth user ${email}: ${createErr.name || ''} ${createErr.status || ''} ${createErr.message}`)
+      console.log(`  ✅ Created auth account for ${email}`)
+    }
 
     // Seed organizations
     console.log('🏢 Seeding organizations...')
