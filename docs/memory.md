@@ -2,6 +2,10 @@
 
 Running log of engineering decisions (newest first). One entry per decision: date, what, why.
 
+## 2026-07-22 — Invariants block + hardening plan complete (Phase 6)
+- Added a **Trakr Domain Invariants** section to `CLAUDE.md §6` codifying the six load-bearing rules this plan established (dev_mode false in prod; weighted-only scoring; section-level evidence; status transitions only via `submit_audit`/`set_audit_approval`; private storage + signed URLs; SECURITY DEFINER org-check + search_path + service_role allowance + anon revoke). Each names its enforcement point so a fresh session verifies before changing.
+- **Plan complete.** 9 PRs merged (#124 Phase 0, #125 1b, #126 1c, #127 Phase 2, #128 1a-1, #129 1a-2, #130 Phase 3, #131 Phase 4, #132 Phase 5). Both pilot-ending CRITICALs (audit self-approval, public storage) + the HIGH cross-org RPC vector closed and proven against the live DB. Deferred by choice: the offline photo-capture outbox (new feature); enabling Auth leaked-password protection (dashboard-only).
+
 ## 2026-07-22 — dev_mode production guardrail + config hygiene (Phase 5)
 - **Guardrail**: `is_dev_mode()` now returns false whenever `app_config.environment='production'`, regardless of the `dev_mode` flag; a prod migration sets `environment='production'` on the live DB. This is defense-in-depth — dev_mode is currently **latent** (no live policy references `is_dev_mode()`), but if a future policy re-introduces `is_dev_mode() OR …` it can no longer disable RLS in production. Proven via rollback-tx (prod+dev_mode=true → false; non-prod+dev_mode=true → true) and a live e2e assertion.
 - **Hygiene**: revoked anon EXECUTE on `is_dev_mode()` (no client caller); restricted `app_config` direct writes to `is_super_admin()` (org-scoped keys still flow through the super-admin `set_org_config` definer RPC, which bypasses the policy); added `org_id = current_user_org_id()` to `data_access_audit`'s INSERT WITH CHECK; and hardened `log_data_access` so a non-super caller can only log their own org (was trusting a caller-supplied `p_org_id`).
