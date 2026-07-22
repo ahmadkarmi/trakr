@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-function getAdminClient() {
+export function getAdminClient() {
   const url = (process.env.E2E_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim()
   const service = (process.env.E2E_SUPABASE_SERVICE_KEY || '').trim()
   if (!url || !service) throw new Error('Missing E2E_SUPABASE_URL or E2E_SUPABASE_SERVICE_KEY')
