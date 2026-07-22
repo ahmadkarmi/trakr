@@ -165,6 +165,12 @@ async function resolveCurrentUserProfile(
   return null
 }
 
+// A stored value is a private-bucket object path (worth cleaning up in storage),
+// as opposed to a legacy absolute URL or an inline data:/blob: value.
+function isStorageObjectPath(v?: string | null): v is string {
+  return !!v && !/^(https?:|data:|blob:)/i.test(v)
+}
+
 // Upload a data URL to the private profile-media bucket and return the object PATH.
 // The <prefix>/<userId>/... layout makes userId a clean folder segment the storage
 // policy authorizes on (own-write / same-org-read); the app signs the path on read
@@ -861,6 +867,12 @@ export const supabaseApi = {
 
   async deleteAudit(auditId: string): Promise<void> {
     const supabase = await getSupabase()
+    // Remove storage objects BEFORE the audit row: the audit-photos DELETE policy
+    // authorizes on storage_audit_in_my_org(auditId), which is false once the audit
+    // is gone — so deleting the audit first would orphan every object.
+    const { data: photos } = await supabase.from('audit_photos').select('url').eq('audit_id', auditId)
+    const paths = (photos || []).map((p: any) => p.url as string).filter(isStorageObjectPath)
+    if (paths.length) await supabase.storage.from('audit-photos').remove(paths).catch(() => {})
     await supabase.from('audit_photos').delete().eq('audit_id', auditId)
     const { error } = await supabase.from('audits').delete().eq('id', auditId)
     if (error) throw error
@@ -896,7 +908,11 @@ export const supabaseApi = {
       .insert({ audit_id: auditId, section_id: sectionId, filename: payload.filename, url: storedPath, uploaded_by: payload.uploadedBy, uploaded_at: now } as any)
       .select('*')
       .single()
-    if (error) throw error
+    if (error) {
+      // Compensate: the object uploaded but the row failed — don't orphan it.
+      if (isStorageObjectPath(storedPath)) await supabase.storage.from('audit-photos').remove([storedPath]).catch(() => {})
+      throw error
+    }
     return {
       id: (data as Tables<'audit_photos'>).id,
       sectionId,
@@ -908,8 +924,15 @@ export const supabaseApi = {
   },
   async removeSectionPhoto(_auditId: string, photoId: string): Promise<void> {
     const supabase = await getSupabase()
+    // Read the object path before deleting the row (and before the audit could be
+    // removed) so the storage object is cleaned up rather than orphaned.
+    const { data: row } = await supabase.from('audit_photos').select('url').eq('id', photoId).maybeSingle()
     const { error } = await supabase.from('audit_photos').delete().eq('id', photoId)
     if (error) throw error
+    const path = (row as any)?.url as string | undefined
+    if (path && isStorageObjectPath(path)) {
+      await supabase.storage.from('audit-photos').remove([path]).catch(() => {})
+    }
   },
 
   // Surveys

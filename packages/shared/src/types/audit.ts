@@ -20,11 +20,7 @@ export interface Audit {
   score?: number; // calculated score (0-100) based on responses
   // Optional, per-section notes and photos captured by auditors
   sectionComments?: Record<string, string>; // sectionId -> comment
-  sectionPhotos?: AuditPhoto[]; // section photos
-  /**
-   * @deprecated Per-question/comment photos are no longer used. Use `sectionPhotos` instead (per-page evidence).
-   */
-  photos?: AuditPhoto[]; // DEPRECATED: question/comment photos
+  sectionPhotos?: AuditPhoto[]; // section-level evidence (the only photo model)
   // Admin overrides for N/A on weighted questions (points are 0..maxPoints for the question)
   overrideScores?: Record<string, number>; // questionId -> override points
   overrideNotes?: Record<string, string>; // questionId -> note
@@ -73,11 +69,7 @@ export interface AuditComment {
 export interface AuditPhoto {
   id: string;
   auditId: string;
-  sectionId?: string; // preferred: section-level photo (per-page)
-  /** @deprecated Question-level photos are deprecated in favor of section-level photos. */
-  questionId?: string;
-  /** @deprecated Comment-level photos are deprecated in favor of section-level photos. */
-  commentId?: string;
+  sectionId?: string; // section-level photo (per-page evidence)
   filename: string;
   url: string;
   uploadedBy: string;
