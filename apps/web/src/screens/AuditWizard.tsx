@@ -10,7 +10,7 @@ import { PhotoIcon, CheckIcon, XMarkIcon, ExclamationTriangleIcon, XCircleIcon, 
 import { useAuthStore } from '../stores/auth'
 import { useBranches } from '../hooks/data/useBranches'
 import { compressImage, validateImageFile } from '../utils/imageCompression'
-import { LazyImage } from '../components/LazyImage'
+import { SignedImage } from '../components/SignedImage'
 import toast from 'react-hot-toast'
 
 const AuditWizard: React.FC = () => {
@@ -782,10 +782,12 @@ const AuditWizard: React.FC = () => {
                       <div className="flex flex-wrap gap-3 mb-2">
                         {audit.sectionPhotos?.filter(p => p.sectionId === currentSection?.id).map((p) => (
                           <div key={p.id} className="flex flex-col items-center">
-                            <LazyImage 
-                              src={p.url} 
+                            <SignedImage
+                              bucket="audit-photos"
+                              path={p.url}
+                              lazy
                               alt={p.filename || 'Section photo'}
-                              className="w-20 h-20 rounded-sm border border-gray-200" 
+                              className="w-20 h-20 rounded-sm border border-gray-200"
                               aspectRatio="1/1"
                             />
                             <button className="btn btn-outline btn-sm mt-1" onClick={() => removePhoto(p.id)}>Remove</button>

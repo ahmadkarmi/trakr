@@ -871,7 +871,10 @@ export const supabaseApi = {
     payload: { filename: string; url: string; uploadedBy: string },
   ): Promise<{ id: string; sectionId: string; filename: string; url: string; uploadedBy: string; uploadedAt: Date }> {
     const supabase = await getSupabase()
-    let publicUrl = payload.url
+    // The audit-photos bucket is private (org-scoped RLS). Store the object PATH,
+    // not a public URL — the app mints a signed URL on read (see utils/signedUrls).
+    // The audits/<auditId>/... prefix is what the storage policy authorizes on.
+    let storedPath = payload.url
     try {
       // Try to fetch the provided URL (supports blob:, data:, http(s):)
       const resp = await fetch(payload.url)
@@ -881,15 +884,14 @@ export const supabaseApi = {
       const path = `audits/${auditId}/${Date.now()}-${Math.random().toString(36).slice(2,6)}.${ext}`
       const { error: upErr } = await supabase.storage.from('audit-photos').upload(path, blob, { contentType, upsert: true })
       if (upErr) throw upErr
-      const { data: urlData } = supabase.storage.from('audit-photos').getPublicUrl(path)
-      publicUrl = urlData.publicUrl
+      storedPath = path
     } catch (uploadErr) {
       throw new Error(`Photo upload failed: ${uploadErr instanceof Error ? uploadErr.message : 'Storage error'}`)
     }
     const now = new Date().toISOString()
     const { data, error } = await supabase
       .from('audit_photos')
-      .insert({ audit_id: auditId, section_id: sectionId, filename: payload.filename, url: publicUrl, uploaded_by: payload.uploadedBy, uploaded_at: now } as any)
+      .insert({ audit_id: auditId, section_id: sectionId, filename: payload.filename, url: storedPath, uploaded_by: payload.uploadedBy, uploaded_at: now } as any)
       .select('*')
       .single()
     if (error) throw error
@@ -897,7 +899,7 @@ export const supabaseApi = {
       id: (data as Tables<'audit_photos'>).id,
       sectionId,
       filename: payload.filename,
-      url: publicUrl,
+      url: storedPath,
       uploadedBy: payload.uploadedBy,
       uploadedAt: new Date(now),
     }
