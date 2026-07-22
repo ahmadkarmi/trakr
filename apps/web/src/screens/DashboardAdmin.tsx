@@ -1,6 +1,7 @@
   // (moved helpers inside component)
 import React, { useMemo } from 'react'
 import { useAuthStore } from '../stores/auth'
+import { SignedImage } from '../components/SignedImage'
 import DashboardLayout from '../components/DashboardLayout'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Audit, Branch, AuditStatus, UserRole, Zone, User } from '@trakr/shared'
@@ -882,7 +883,7 @@ const DashboardAdmin: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             {user?.avatarUrl ? (
-                              <img src={user.avatarUrl} alt={item.actor} className="w-6 h-6 rounded-full object-cover" />
+                              <SignedImage bucket="profile-media" path={user.avatarUrl} alt={item.actor} className="w-6 h-6 rounded-full object-cover" />
                             ) : (
                               <div className="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-medium">
                                 {initials}
@@ -931,7 +932,7 @@ const DashboardAdmin: React.FC = () => {
                           return (
                             <div className="flex items-center gap-2">
                               {user?.avatarUrl ? (
-                                <img src={user.avatarUrl} alt={item.actor} className="w-7 h-7 rounded-full object-cover" />
+                                <SignedImage bucket="profile-media" path={user.avatarUrl} alt={item.actor} className="w-7 h-7 rounded-full object-cover" />
                               ) : (
                                 <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-medium">
                                   {initials}

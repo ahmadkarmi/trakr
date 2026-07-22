@@ -1,5 +1,6 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { SignedImage } from './SignedImage'
 //
 
 import { useAuthStore } from '../stores/auth'
@@ -207,7 +208,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
           <div className="shrink-0 p-6 pb-8 border-t border-primary-100/80 space-y-4 bg-linear-to-br from-white via-primary-50/80 to-white dark:border-white/10 dark:bg-linear-to-br dark:from-[#0b1126] dark:via-[#141d3a] dark:to-[#1c2850]">
             <div className="flex items-center gap-4">
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
+                <SignedImage bucket="profile-media" path={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-lg font-medium border-2 border-gray-200 dark:bg-white/10 dark:text-white dark:border-white/15">
                   {user?.name?.charAt(0) || '?'}
@@ -447,7 +448,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
                   aria-label="User menu"
                 >
                   {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.name} className="w-9 h-9 rounded-full object-cover ring-2 ring-gray-200" />
+                    <SignedImage bucket="profile-media" path={user.avatarUrl} alt={user.name} className="w-9 h-9 rounded-full object-cover ring-2 ring-gray-200" />
                   ) : (
                     <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-sm font-semibold ring-2 ring-gray-200">
                       {user?.name?.charAt(0) || '?'}
@@ -468,7 +469,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ title, subtitle, chil
                     <div className="px-4 py-3 bg-linear-to-br from-gray-50 to-gray-100 border-b border-gray-200 dark:bg-linear-to-br dark:from-white/5 dark:via-white/0 dark:to-white/5 dark:border-white/5">
                       <div className="flex items-center gap-3">
                         {user?.avatarUrl ? (
-                          <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white" />
+                          <SignedImage bucket="profile-media" path={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-white" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center text-base font-semibold ring-2 ring-white/80">
                             {user?.name?.charAt(0) || '?'}

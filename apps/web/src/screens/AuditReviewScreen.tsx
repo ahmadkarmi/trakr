@@ -656,7 +656,7 @@ export default function AuditReviewScreen() {
             <div>
               {user?.signatureUrl ? (
                 <div>
-                  <img src={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded-sm p-2 bg-gray-50" />
+                  <SignedImage bucket="profile-media" path={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded-sm p-2 bg-gray-50" />
                   <p className="text-xs text-gray-500 mt-1">Using saved signature image</p>
                 </div>
               ) : (

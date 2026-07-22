@@ -165,21 +165,23 @@ async function resolveCurrentUserProfile(
   return null
 }
 
-// Upload a data URL to Supabase Storage and return its public URL
+// Upload a data URL to the private profile-media bucket and return the object PATH.
+// The <prefix>/<userId>/... layout makes userId a clean folder segment the storage
+// policy authorizes on (own-write / same-org-read); the app signs the path on read
+// (see utils/signedUrls).
 async function uploadProfileDataUrl(prefix: 'avatars' | 'signatures', userId: string, dataUrl: string): Promise<string> {
   const supabase = await getSupabase()
   // Parse mime from data URL: data:image/png;base64,....
   const mimeMatch = /^data:([^;]+);base64,/.exec(dataUrl)
   const mime = mimeMatch?.[1] || 'image/png'
   const ext = mime.includes('jpeg') ? 'jpg' : (mime.split('/')[1] || 'png')
-  const path = `${prefix}/${userId}-${Date.now()}.${ext}`
+  const path = `${prefix}/${userId}/${Date.now()}.${ext}`
   // Convert to blob via fetch for simplicity in browser env
   const resp = await fetch(dataUrl)
   const blob = await resp.blob()
   const { error: upErr } = await supabase.storage.from('profile-media').upload(path, blob, { contentType: mime, upsert: true })
   if (upErr) throw upErr
-  const { data } = supabase.storage.from('profile-media').getPublicUrl(path)
-  return data.publicUrl
+  return path
 }
 
 export const supabaseApi = {

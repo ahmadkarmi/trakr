@@ -1,5 +1,6 @@
 import React from 'react'
 import { User, Audit, AuditStatus } from '@trakr/shared'
+import { SignedImage } from '../SignedImage'
 
 interface AuditorRankingTableProps {
   users: User[]
@@ -102,10 +103,11 @@ const AuditorRankingTable: React.FC<AuditorRankingTableProps> = ({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {auditor.avatarUrl ? (
-                        <img 
-                          src={auditor.avatarUrl} 
-                          alt={auditor.name} 
-                          className="w-8 h-8 rounded-full mr-3" 
+                        <SignedImage
+                          bucket="profile-media"
+                          path={auditor.avatarUrl}
+                          alt={auditor.name}
+                          className="w-8 h-8 rounded-full mr-3"
                         />
                       ) : (
                         <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">

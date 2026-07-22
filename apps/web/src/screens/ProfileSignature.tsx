@@ -1,5 +1,6 @@
 import React from 'react'
 import DashboardLayout from '../components/DashboardLayout'
+import { SignedImage } from '../components/SignedImage'
 import { useAuthStore } from '../stores/auth'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { User } from '@trakr/shared'
@@ -150,7 +151,7 @@ const ProfileSignature: React.FC = () => {
             <div className="md:col-span-2">
               <div className="border rounded-sm p-3 bg-gray-50 flex items-center justify-center h-28">
                 {user.signatureUrl ? (
-                  <img src={user.signatureUrl} alt="Saved signature" className="max-h-24 object-contain" />
+                  <SignedImage bucket="profile-media" path={user.signatureUrl} alt="Saved signature" className="max-h-24 object-contain" />
                 ) : (
                   <span className="text-sm text-gray-400">No signature uploaded</span>
                 )}

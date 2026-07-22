@@ -18,7 +18,8 @@ import {
 //   - an in-org auditor can upload under their own audit's path and read it back
 //     via a signed URL (the display/PDF path);
 //   - an upload under an audit id that isn't in the caller's org is denied;
-//   - profile-media still works (it stays public until the 1a-2 follow-up);
+//   - profile-media (now private too, 1a-2): a user can write their own
+//     avatar/signature path but not another user's;
 //   - anon can enumerate neither bucket.
 //
 // 1x1 transparent PNG.
@@ -37,6 +38,7 @@ test.describe('Authenticated storage uploads (RLS)', () => {
   let branchId: string
   let surveyId: string
   let auditId: string
+  let auditorUserId: string
   const uploaded: Array<{ bucket: string; path: string }> = []
   const createdAuditIds: string[] = []
 
@@ -45,6 +47,7 @@ test.describe('Authenticated storage uploads (RLS)', () => {
     if (!auditor) throw new Error('Seed user auditor@trakr.com missing')
     if (!auditor.org_id) throw new Error('auditor@trakr.com has no org_id')
     orgId = auditor.org_id
+    auditorUserId = auditor.id
     const branch = await ensureBranchForOrg(orgId, 'E2E Storage Branch')
     branchId = branch.id
     const survey = await ensureSimpleSurvey(orgId, 'E2E Storage Survey')
@@ -65,14 +68,25 @@ test.describe('Authenticated storage uploads (RLS)', () => {
     await deleteAudits(createdAuditIds)
   })
 
-  test('authenticated user can upload to profile-media (avatar path)', async () => {
+  test('user can upload their own avatar to profile-media (own path)', async () => {
     const supa = await getUserClient('auditor@trakr.com', 'Password@123')
-    const path = `avatars/e2e-${Date.now()}.png`
+    const path = `avatars/${auditorUserId}/e2e-${Date.now()}.png`
     const { error } = await supa.storage
       .from('profile-media')
       .upload(path, pngBlob(), { contentType: 'image/png', upsert: true })
     expect(error, error?.message).toBeNull()
     uploaded.push({ bucket: 'profile-media', path })
+  })
+
+  test('user CANNOT upload profile media under another user\'s path (own-only RLS)', async () => {
+    const supa = await getUserClient('auditor@trakr.com', 'Password@123')
+    const otherUserId = '00000000-0000-0000-0000-000000000000'
+    const path = `avatars/${otherUserId}/e2e-${Date.now()}.png`
+    const { data, error } = await supa.storage
+      .from('profile-media')
+      .upload(path, pngBlob(), { contentType: 'image/png', upsert: true })
+    expect(error, 'upload under another user\'s profile path must be denied by RLS').toBeTruthy()
+    if (!error && data) uploaded.push({ bucket: 'profile-media', path })
   })
 
   test('auditor can upload an audit photo under their own audit path', async () => {

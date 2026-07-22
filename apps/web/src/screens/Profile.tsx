@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import DashboardLayout from '@/components/DashboardLayout'
+import { SignedImage } from '@/components/SignedImage'
 import { useAuthStore } from '@/stores/auth'
 import { api } from '../utils/api'
 
@@ -61,7 +62,7 @@ const Profile: React.FC = () => {
         <div className="grid gap-4 sm:gap-6 md:grid-cols-[280px_1fr]">
           <div className="card p-5 sm:p-6 flex flex-col items-center">
             {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name} className="w-32 h-32 rounded-full object-cover border-2 border-gray-200" />
+              <SignedImage bucket="profile-media" path={user.avatarUrl} alt={user.name} className="w-32 h-32 rounded-full object-cover border-2 border-gray-200" />
             ) : (
               <div className="w-32 h-32 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-4xl font-medium border-2 border-gray-200">
                 {user.name?.charAt(0) || '?'}
