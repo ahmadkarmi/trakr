@@ -1,5 +1,6 @@
 import React from 'react'
 import { User, Audit, AuditStatus, Survey, calculateWeightedAuditScore } from '@trakr/shared'
+import { SignedImage } from '../SignedImage'
 
 interface TeamPerformanceTableProps {
   teamMembers: User[]
@@ -94,10 +95,11 @@ const TeamPerformanceTable: React.FC<TeamPerformanceTableProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {member.avatarUrl ? (
-                          <img 
-                            src={member.avatarUrl} 
-                            alt={member.name} 
-                            className="w-8 h-8 rounded-full mr-3" 
+                          <SignedImage
+                            bucket="profile-media"
+                            path={member.avatarUrl}
+                            alt={member.name}
+                            className="w-8 h-8 rounded-full mr-3"
                           />
                         ) : (
                           <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">

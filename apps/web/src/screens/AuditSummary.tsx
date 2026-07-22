@@ -691,7 +691,7 @@ const AuditSummary: React.FC = () => {
               <div className="mt-1">
                 {user?.signatureUrl ? (
                   <div>
-                    <img src={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded-sm p-2 bg-gray-50" />
+                    <SignedImage bucket="profile-media" path={user.signatureUrl} alt="Saved signature" className="h-16 object-contain border rounded-sm p-2 bg-gray-50" />
                     <p className="text-xs text-gray-500 mt-1">Using saved signature image</p>
                   </div>
                 ) : (
@@ -839,7 +839,7 @@ const AuditSummary: React.FC = () => {
                                 {audit.approvalSignatureType === 'typed' && audit.approvalName ? (
                                   <span className="text-2xl italic text-gray-900">{audit.approvalName}</span>
                                 ) : audit.approvalSignatureUrl ? (
-                                  <img src={audit.approvalSignatureUrl} alt="Manager signature" className="h-12 object-contain" />
+                                  <SignedImage bucket="profile-media" path={audit.approvalSignatureUrl} alt="Manager signature" className="h-12 object-contain" />
                                 ) : null}
                                 {audit.approvalSignatureType && (
                                   <div className="text-xs text-gray-500">Signature {audit.approvalSignatureType === 'typed' ? `(typed${audit.approvalName ? `: ${audit.approvalName}` : ''})` : audit.approvalSignatureType === 'drawn' ? '(drawn)' : '(image)'}</div>
@@ -869,7 +869,7 @@ const AuditSummary: React.FC = () => {
                                 audit.approvalSignatureType === 'typed' && audit.approvalName ? (
                                   <span className="text-2xl italic text-gray-900">{audit.approvalName}</span>
                                 ) : audit.approvalSignatureUrl ? (
-                                  <img src={audit.approvalSignatureUrl} alt="Signature" className="h-14 object-contain" />
+                                  <SignedImage bucket="profile-media" path={audit.approvalSignatureUrl} alt="Signature" className="h-14 object-contain" />
                                 ) : (
                                   <span className="text-xs text-gray-400">Approved</span>
                                 )

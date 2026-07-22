@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import DashboardLayout from '../components/DashboardLayout'
+import { SignedImage } from '../components/SignedImage'
 import { useQuery } from '@tanstack/react-query'
 import { LogEntry, Audit, AuditStatus, User, Branch } from '@trakr/shared'
 import ResponsiveTable from '../components/ResponsiveTable'
@@ -244,7 +245,7 @@ const ActivityLogs: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {user?.avatarUrl ? (
-                        <img src={user.avatarUrl} alt={userName} className="w-6 h-6 rounded-full object-cover" />
+                        <SignedImage bucket="profile-media" path={user.avatarUrl} alt={userName} className="w-6 h-6 rounded-full object-cover" />
                       ) : (
                         <div className="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-medium">
                           {initials}
@@ -306,7 +307,7 @@ const ActivityLogs: React.FC = () => {
                     return (
                       <div className="flex items-center gap-2">
                         {user?.avatarUrl ? (
-                          <img src={user.avatarUrl} alt={userName} className="w-7 h-7 rounded-full object-cover" />
+                          <SignedImage bucket="profile-media" path={user.avatarUrl} alt={userName} className="w-7 h-7 rounded-full object-cover" />
                         ) : (
                           <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-medium">
                             {initials}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { SignedImage } from '../components/SignedImage'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import DashboardLayout from '../components/DashboardLayout'
 import ResponsiveTable from '../components/ResponsiveTable'
@@ -255,7 +256,7 @@ const ManageUsers: React.FC = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover border" />
+                      <SignedImage bucket="profile-media" path={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover border" />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-sm font-medium border">
                         {user.name?.charAt(0) || '?'}
@@ -324,7 +325,7 @@ const ManageUsers: React.FC = () => {
                 render: (user: User) => (
                   <div className="flex items-center gap-3">
                     {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover border" />
+                      <SignedImage bucket="profile-media" path={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover border" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-sm font-medium border">
                         {user.name?.charAt(0) || '?'}
