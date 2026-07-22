@@ -10,6 +10,7 @@ import { useAuditStateMachine } from '../hooks/useAuditStateMachine'
 import { useAuditProgress } from '../hooks/useAuditProgress'
 import { AuditStatusBanner } from '../components/AuditStatusBanner'
 import DashboardLayout from '../components/DashboardLayout'
+import { SignedImage } from '../components/SignedImage'
 import Modal from '../components/Modal'
 import { formatInTimeZone } from '../utils/datetime'
 import { useOrgTimeZone } from '../hooks/useOrg'
@@ -499,7 +500,7 @@ export default function AuditReviewScreen() {
                     <p className="text-sm font-medium text-gray-700 mb-2">Section Photos:</p>
                     <div className="flex flex-wrap gap-2">
                       {sectionPhotos.map(photo => (
-                        <img key={photo.id} src={photo.url} alt={photo.filename} className="w-24 h-24 rounded-lg object-cover border border-gray-200" />
+                        <SignedImage key={photo.id} bucket="audit-photos" path={photo.url} alt={photo.filename} className="w-24 h-24 rounded-lg object-cover border border-gray-200" />
                       ))}
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
+import { SignedImage } from '../components/SignedImage'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Audit, Survey, calculateAuditScore, calculateWeightedAuditScore, AuditStatus, UserRole, Branch, LogEntry, User, validateAuditCompletion, getValidationErrorMessage, groupMissingResponsesBySection, QuestionType } from '@trakr/shared'
 
@@ -916,7 +917,7 @@ const AuditSummary: React.FC = () => {
                                   <div className="text-sm text-gray-600 mb-1">Section photos</div>
                                   <div className="flex flex-wrap gap-2">
                                     {secPhotos.map(photo => (
-                                      <img key={photo.id} src={photo.url} alt={photo.filename} className="w-20 h-20 rounded-sm object-cover border border-gray-200" />
+                                      <SignedImage key={photo.id} bucket="audit-photos" path={photo.url} alt={photo.filename} className="w-20 h-20 rounded-sm object-cover border border-gray-200" />
                                     ))}
                                   </div>
                                 </div>

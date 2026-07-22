@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import { logger } from './logger'
+import { resolveSignedUrl } from './signedUrls'
 import type { Audit, Branch, User, Survey } from '@trakr/shared'
 import { calculateAuditScore, calculateWeightedAuditScore } from '@trakr/shared'
 
@@ -361,7 +362,9 @@ export async function generateAuditPDF(options: PDFExportOptions): Promise<void>
         }
         
         try {
-          const imageData = await loadImageAsBase64(photo.url)
+          // audit-photos is private: resolve the stored object path to a signed URL first.
+          const signedUrl = await resolveSignedUrl('audit-photos', photo.url)
+          const imageData = signedUrl ? await loadImageAsBase64(signedUrl) : ''
           if (imageData) {
             pdf.addImage(imageData, 'JPEG', xOffset, yPosition, photoWidth, photoHeight)
           }
