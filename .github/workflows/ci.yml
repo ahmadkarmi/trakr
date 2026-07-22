@@ -34,8 +34,13 @@ jobs:
       - name: Type check
         run: npm run type-check --workspace @trakr/shared && npm run type-check --workspace @trakr/web
 
-      - name: Unit tests
+      - name: Unit tests (web)
         run: npm run test:run --workspace @trakr/web
+
+      # packages/shared holds the compliance-scoring logic and had no CI test
+      # coverage before this step (the web unit step never reaches it). Gating.
+      - name: Unit tests (shared)
+        run: npm run test:run --workspace @trakr/shared
 
       - name: Build
         run: npm run build --workspace @trakr/web
