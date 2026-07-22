@@ -878,11 +878,16 @@ export const supabaseApi = {
     if (error) throw error
   },
 
-  // Section photos (upload to storage and track in audit_photos)
+  // Section photos (upload to storage and track in audit_photos).
+  // clientId (optional): the offline-outbox record id. When present, replay is
+  // EXACTLY-ONCE — the object path is deterministic (outbox-<clientId>) and a row
+  // with that path is returned as-is if it already exists, so a double-flush or a
+  // crash between the server insert and the local status write can't duplicate.
   async addSectionPhoto(
     auditId: string,
     sectionId: string,
     payload: { filename: string; url: string; uploadedBy: string },
+    clientId?: string,
   ): Promise<{ id: string; sectionId: string; filename: string; url: string; uploadedBy: string; uploadedAt: Date }> {
     const supabase = await getSupabase()
     // The audit-photos bucket is private (org-scoped RLS). Store the object PATH,
@@ -895,10 +900,23 @@ export const supabaseApi = {
       const blob = await resp.blob()
       const contentType = blob.type || 'image/jpeg'
       const ext = payload.filename.includes('.') ? payload.filename.split('.').pop()! : (contentType.split('/')[1] || 'jpg')
-      const path = `audits/${auditId}/${Date.now()}-${Math.random().toString(36).slice(2,6)}.${ext}`
-      const { error: upErr } = await supabase.storage.from('audit-photos').upload(path, blob, { contentType, upsert: true })
-      if (upErr) throw upErr
-      storedPath = path
+      if (clientId) {
+        const detPath = `audits/${auditId}/outbox-${clientId}.${ext}`
+        // Already replayed? Return the existing row (natural dedup on the url column).
+        const { data: existing } = await supabase.from('audit_photos').select('*').eq('url', detPath).maybeSingle()
+        if (existing) {
+          const r = existing as Tables<'audit_photos'>
+          return { id: r.id, sectionId: r.section_id || sectionId, filename: r.filename, url: r.url, uploadedBy: r.uploaded_by, uploadedAt: new Date(r.uploaded_at) }
+        }
+        const { error: upErr } = await supabase.storage.from('audit-photos').upload(detPath, blob, { contentType, upsert: true })
+        if (upErr) throw upErr
+        storedPath = detPath
+      } else {
+        const path = `audits/${auditId}/${Date.now()}-${Math.random().toString(36).slice(2,6)}.${ext}`
+        const { error: upErr } = await supabase.storage.from('audit-photos').upload(path, blob, { contentType, upsert: true })
+        if (upErr) throw upErr
+        storedPath = path
+      }
     } catch (uploadErr) {
       throw new Error(`Photo upload failed: ${uploadErr instanceof Error ? uploadErr.message : 'Storage error'}`)
     }
@@ -909,8 +927,19 @@ export const supabaseApi = {
       .select('*')
       .single()
     if (error) {
-      // Compensate: the object uploaded but the row failed — don't orphan it.
-      if (isStorageObjectPath(storedPath)) await supabase.storage.from('audit-photos').remove([storedPath]).catch(() => {})
+      // Lost a concurrent replay race: another writer already inserted this exact
+      // object path (unique audit_photos.url). Return the winning row — the shared
+      // deterministic object legitimately belongs to it, so do NOT compensate-delete.
+      if ((error as { code?: string }).code === '23505') {
+        const { data: winner } = await supabase.from('audit_photos').select('*').eq('url', storedPath).maybeSingle()
+        if (winner) {
+          const r = winner as Tables<'audit_photos'>
+          return { id: r.id, sectionId: r.section_id || sectionId, filename: r.filename, url: r.url, uploadedBy: r.uploaded_by, uploadedAt: new Date(r.uploaded_at) }
+        }
+      }
+      // Compensate only a uniquely-owned random-path object; the deterministic
+      // outbox object may belong to a concurrent winner or a future retry.
+      if (!clientId && isStorageObjectPath(storedPath)) await supabase.storage.from('audit-photos').remove([storedPath]).catch(() => {})
       throw error
     }
     return {

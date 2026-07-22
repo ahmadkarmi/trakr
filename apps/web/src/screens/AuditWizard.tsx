@@ -11,6 +11,8 @@ import { useAuthStore } from '../stores/auth'
 import { useBranches } from '../hooks/data/useBranches'
 import { compressImage, validateImageFile } from '../utils/imageCompression'
 import { SignedImage } from '../components/SignedImage'
+import { usePhotoOutbox } from '../hooks/usePhotoOutbox'
+import { enqueuePhoto, flushOutbox, getObjectUrl, removeOutboxPhoto, retryPhoto, purgeConfirmed, filterRenderablePending, type FlushDeps } from '../utils/photoOutbox'
 import toast from 'react-hot-toast'
 
 const AuditWizard: React.FC = () => {
@@ -196,6 +198,16 @@ const AuditWizard: React.FC = () => {
     })
   }, [audit])
 
+  // Offline photo outbox: capture persists to IndexedDB immediately and is
+  // replayed to storage when the device is online (see utils/photoOutbox).
+  const pending = usePhotoOutbox(audit?.id, currentSection?.id)
+  const onFlushed = useCallback((aid: string) => {
+    queryClient.invalidateQueries({ queryKey: QK.AUDIT(aid) })
+    queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
+  }, [queryClient])
+  const flushDeps = useMemo<FlushDeps>(() => ({ addSectionPhoto: api.addSectionPhoto, onFlushed }), [onFlushed])
+  const flush = useCallback(() => { void flushOutbox(flushDeps) }, [flushDeps])
+
   // Offline/online detection
   React.useEffect(() => {
     const onOnline = () => setOffline(false)
@@ -207,6 +219,28 @@ const AuditWizard: React.FC = () => {
       window.removeEventListener('offline', onOffline)
     }
   }, [])
+
+  // Flush the offline photo outbox: on load, on reconnect, and when the tab is
+  // shown again (covers a phone waking mid-audit). flushOutbox is single-flight.
+  React.useEffect(() => {
+    if (!auditId) return
+    flush()
+    const onOnline = () => flush()
+    const onVisible = () => { if (document.visibilityState === 'visible') flush() }
+    window.addEventListener('online', onOnline)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [auditId, flush])
+
+  // Once the refetched audit shows a photo's server row, drop the outbox record
+  // (and revoke its blob URL) — a flicker-free swap from the offline tile.
+  React.useEffect(() => {
+    if (!audit?.id) return
+    void purgeConfirmed(audit.id, new Set((audit.sectionPhotos || []).map(p => p.id)))
+  }, [audit?.id, audit?.sectionPhotos])
 
   // Warn on page unload if there are unsaved changes
   React.useEffect(() => {
@@ -402,15 +436,16 @@ const AuditWizard: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const onPickPhotosClick = () => fileInputRef.current?.click()
+
   const onFilesSelected: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
     if (!audit || !currentSection) return
     const files = e.target.files
     if (!files || files.length === 0) return
     setUploadingPhotos(true)
-    
-    let successCount = 0
+
+    let savedCount = 0
     let totalSaved = 0
-    
+
     try {
       for (const file of Array.from(files)) {
         try {
@@ -419,44 +454,46 @@ const AuditWizard: React.FC = () => {
             addAlert('error', `Skipped ${file.name}: ${validation.error}`)
             continue
           }
-          // Compress image before upload
+          // Compress before persisting
           const result = await compressImage(file, {
             maxWidth: 1920,
             maxHeight: 1080,
             quality: 0.8,
             maxSizeMB: 2,
           })
-          
+
           totalSaved += (result.originalSize - result.compressedSize)
-          
-          const url = URL.createObjectURL(result.file)
-          await api.addSectionPhoto(audit.id, currentSection.id, {
+
+          // Persist to the durable outbox BEFORE any network call — an offline
+          // capture is never lost; the upload is only ever a replay.
+          await enqueuePhoto({
+            auditId: audit.id,
+            sectionId: currentSection.id,
             filename: result.file.name,
-            url,
+            contentType: result.file.type || 'image/jpeg',
+            blob: result.file,
             uploadedBy: user?.id || audit.assignedTo,
           })
-          successCount++
+          savedCount++
         } catch (err: unknown) {
+          // The only hard failure now is durable storage being full/blocked.
           const message = err instanceof Error ? err.message : String(err)
-          addAlert('error', `Failed to add photo ${file.name}: ${message}`)
+          addAlert('error', `Couldn't save ${file.name}: ${message}. Free device storage and retry.`)
         }
       }
-      
-      // Show success message with compression stats
-      if (successCount > 0) {
-        const savedMB = (totalSaved / (1024 * 1024)).toFixed(1)
-        if (parseFloat(savedMB) > 0.1) {
-          toast.success(`${successCount} photo(s) uploaded (saved ${savedMB}MB through compression)`)
+
+      if (savedCount > 0) {
+        if (navigator.onLine) {
+          const savedMB = (totalSaved / (1024 * 1024)).toFixed(1)
+          toast.success(parseFloat(savedMB) > 0.1
+            ? `${savedCount} photo(s) saved, uploading… (saved ${savedMB}MB)`
+            : `${savedCount} photo(s) saved, uploading…`)
         } else {
-          toast.success(`${successCount} photo(s) uploaded successfully`)
+          toast.success(`${savedCount} photo(s) saved offline — will upload when reconnected`)
         }
-      }
-      
-      if (auditId) {
-        queryClient.invalidateQueries({ queryKey: QK.AUDIT(auditId) })
-        queryClient.invalidateQueries({ queryKey: QK.AUDITS() })
       }
       if (fileInputRef.current) fileInputRef.current.value = ''
+      flush() // fire-and-forget replay (no-op while offline)
     } finally {
       setUploadingPhotos(false)
     }
@@ -791,6 +828,32 @@ const AuditWizard: React.FC = () => {
                               aspectRatio="1/1"
                             />
                             <button className="btn btn-outline btn-sm mt-1" onClick={() => removePhoto(p.id)}>Remove</button>
+                          </div>
+                        ))}
+                        {/* Pending offline captures (not yet uploaded) */}
+                        {filterRenderablePending(pending, new Set((audit.sectionPhotos || []).map(p => p.id))).map((r) => (
+                          <div key={r.id} className="flex flex-col items-center">
+                            <div className="relative w-20 h-20">
+                              <SignedImage
+                                bucket="audit-photos"
+                                path={getObjectUrl(r)}
+                                lazy
+                                alt={r.filename}
+                                className="w-20 h-20 rounded-sm border border-gray-200"
+                                aspectRatio="1/1"
+                              />
+                              <span className={`absolute bottom-0 inset-x-0 text-[10px] leading-4 text-center text-white rounded-b-sm ${r.status === 'failed' ? 'bg-red-600/80' : 'bg-black/60'}`}>
+                                {r.status === 'failed' ? 'Failed' : r.status === 'uploading' ? 'Uploading…' : 'Saved offline'}
+                              </span>
+                            </div>
+                            {r.status === 'failed' ? (
+                              <div className="flex gap-1 mt-1">
+                                <button className="btn btn-outline btn-sm" onClick={() => retryPhoto(r.id, flushDeps)}>Retry</button>
+                                <button className="btn btn-outline btn-sm" onClick={() => removeOutboxPhoto(r.id)}>Discard</button>
+                              </div>
+                            ) : (
+                              <button className="btn btn-outline btn-sm mt-1 disabled:opacity-60" onClick={() => removeOutboxPhoto(r.id)} disabled={r.status === 'uploading'}>Remove</button>
+                            )}
                           </div>
                         ))}
                       </div>
