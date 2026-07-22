@@ -39,5 +39,16 @@ Whenever you execute a task, you inherently embody these three standards:
 - **No Silent Choices:** If uncertain about an approach, flag the options and trade-offs rather than making a silent choice.
 - **Zero Filler:** Output strictly code, terminal commands, and terse technical explanations. Do not apologize or use conversational filler.
 
+## 6. Trakr Domain Invariants (do not violate; verify before changing)
+
+These are load-bearing security/correctness rules a fresh session cannot infer from the code alone. Each names where it's enforced — check that enforcement still exists before you touch the area. Rationale and history are in `docs/memory.md`; the state machine and storage models are in `ARCHITECTURE.md` §5/§7.
+
+1. **`dev_mode` is false in production.** `is_dev_mode()` returns false whenever `app_config.environment='production'`, regardless of the flag. Never add `is_dev_mode() OR …` to an RLS policy expecting it to relax access in prod — it won't, by design.
+2. **Compliance scoring is weighted-only.** `calculateWeightedAuditScore()` in `@trakr/shared` is the canonical metric. N/A is excluded from the denominator; unanswered questions are excluded (completion is a separate metric). The unweighted/section-blended siblings are legacy — don't route new UI through them. Suspected-wrong semantics are flagged (see `scoring.test.ts` FLAGGED block), not silently changed.
+3. **Audit evidence is section-level only.** Never re-introduce per-question/comment photos (`Audit.photos`, `AuditPhoto.questionId`/`commentId` were removed). A CI grep-guard enforces this.
+4. **Audit status transitions go only through `submit_audit` / `set_audit_approval`.** Raw client `status` writes are constrained by the `enforce_audit_status_transition` trigger (auditor → {DRAFT,IN_PROGRESS,COMPLETED} only; decisions require the RPCs). Don't add a client path that writes `status` directly.
+5. **Storage buckets are private.** `audit-photos` and `profile-media` are private + org-path-scoped. Store the object **path**, never a public URL; render via `<SignedImage>` / `useSignedUrl` (signed at display time — the persisted query cache would stale a fetch-time signed URL). Never set a bucket public.
+6. **Every `SECURITY DEFINER` function org-checks the caller and pins `search_path`.** Mirror `create_audit_with_cycle_guard` / the `storage_*_in_my_org` helpers: `SET search_path TO 'public'`, authorize on org membership, allow the trusted backend via `auth.role()='service_role'` (never `is_admin_or_super()` alone — that's false for the service key), and `REVOKE EXECUTE … FROM PUBLIC, anon` on new public functions (Supabase default-grants anon explicitly).
+
 
 
