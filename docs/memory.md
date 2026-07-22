@@ -2,6 +2,12 @@
 
 Running log of engineering decisions (newest first). One entry per decision: date, what, why.
 
+## 2026-07-22 — dev_mode production guardrail + config hygiene (Phase 5)
+- **Guardrail**: `is_dev_mode()` now returns false whenever `app_config.environment='production'`, regardless of the `dev_mode` flag; a prod migration sets `environment='production'` on the live DB. This is defense-in-depth — dev_mode is currently **latent** (no live policy references `is_dev_mode()`), but if a future policy re-introduces `is_dev_mode() OR …` it can no longer disable RLS in production. Proven via rollback-tx (prod+dev_mode=true → false; non-prod+dev_mode=true → true) and a live e2e assertion.
+- **Hygiene**: revoked anon EXECUTE on `is_dev_mode()` (no client caller); restricted `app_config` direct writes to `is_super_admin()` (org-scoped keys still flow through the super-admin `set_org_config` definer RPC, which bypasses the policy); added `org_id = current_user_org_id()` to `data_access_audit`'s INSERT WITH CHECK; and hardened `log_data_access` so a non-super caller can only log their own org (was trusting a caller-supplied `p_org_id`).
+- **OrgConfigPanel "Developer Mode" toggle**: it writes `org:<id>:dev_mode`, which `is_dev_mode()` never reads and which **nothing else in the client consumes** — a no-op. Relabeled honestly ("org UI flag … does not affect data access or RLS") rather than removing the toggle (a product decision).
+- **Deliberately skipped**: the client boot Sentry/banner alert (the DB guardrail is strictly stronger — dev_mode is force-false in prod, and `is_dev_mode()` has no client caller, so a boot check would always see false); the seed dev_mode default (superseded by the environment guardrail). **Action item for the user**: enable Auth "leaked password protection" in the Supabase dashboard (advisor `auth_leaked_password_protection`; dashboard-only, not migratable).
+
 ## 2026-07-22 — Photo durability: rollback + orphan cleanup + deprecated removal (Phase 4, safe parts)
 - **Scope decision**: did the hardening parts of Phase 4; the **offline capture outbox** (IndexedDB queue) was deferred — it's a new feature/abstraction (CLAUDE.md §4) and the lowest-priority, highest-effort item. So a photo captured while offline is still lost today; revisit if the pilot needs offline capture.
 - **Upload rollback**: `addSectionPhoto` now compensates a failed `audit_photos` insert with a best-effort `storage.remove` of the just-uploaded object, so a row failure no longer orphans the object.
