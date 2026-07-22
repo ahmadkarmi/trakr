@@ -42,6 +42,21 @@ jobs:
       - name: Unit tests (shared)
         run: npm run test:run --workspace @trakr/shared
 
+      # Invariant guard: audit evidence is section-level only. The deprecated
+      # per-question/comment photo model (Audit.photos, AuditPhoto.questionId/
+      # commentId) was removed and must not return.
+      - name: Guard section-level evidence invariant
+        run: |
+          set -e
+          f=packages/shared/src/types/audit.ts
+          if grep -nE '\bphotos\?:[[:space:]]*AuditPhoto' "$f"; then
+            echo "::error::Deprecated Audit.photos reintroduced — evidence is section-level only (use sectionPhotos)"; exit 1
+          fi
+          if awk '/interface AuditPhoto/{f=1} f{print} f&&/^}/{exit}' "$f" | grep -nE 'questionId|commentId'; then
+            echo "::error::Deprecated questionId/commentId on AuditPhoto reintroduced — evidence is section-level only"; exit 1
+          fi
+          echo "OK: no deprecated per-question/comment photo fields"
+
       - name: Build
         run: npm run build --workspace @trakr/web
         env:
