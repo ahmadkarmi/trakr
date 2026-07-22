@@ -101,11 +101,22 @@ DRAFT → IN_PROGRESS → COMPLETED → SUBMITTED → APPROVED
                                    REJECTED
 ```
 
-- No `FINALIZED` state — removed as dead code.
-- Client single source of truth: `apps/web/src/hooks/useAuditStateMachine.ts` maps (status, role, completion%) → permissions (canEdit/canSubmit/canDelete/canReopen + user guidance).
-- Auditor: edits DRAFT/IN_PROGRESS/COMPLETED/REJECTED; submit requires 100% completion; SUBMITTED/APPROVED are read-only.
-- Branch manager: review-only; approve/reject SUBMITTED (DB-side role guard `enforce_approval_role_guard`, `set_audit_approval` function; rejection data preserved on later approval).
-- DB guards: `create_audit_guard`, `submit_audit` RPC (returns audit), scheduled-audit auditor enforcement.
+Enum: `DRAFT, IN_PROGRESS, COMPLETED, SUBMITTED, APPROVED, REJECTED`. No `FINALIZED` (removed as dead code).
+
+**Transition table (from → to · who · sanctioned path · enforcement).** The DB is the source of truth; the client hook mirrors it for UX.
+
+| From | To | Who | Sanctioned path | DB enforcement |
+|---|---|---|---|---|
+| DRAFT | IN_PROGRESS | assigned auditor | `saveAuditProgress` (raw UPDATE) | `enforce_audit_status_transition` trigger allows AUDITOR → {DRAFT,IN_PROGRESS,COMPLETED} |
+| IN_PROGRESS | COMPLETED | assigned auditor | `setAuditStatus` (raw UPDATE, filtered from DRAFT/IN_PROGRESS) | same trigger |
+| DRAFT/IN_PROGRESS/COMPLETED | SUBMITTED | assigned auditor or admin | `submit_audit` RPC (SECURITY DEFINER) | RPC: org + assignee/admin check; `submitted_by` from `auth.uid()`. Raw client `→SUBMITTED` is **blocked** by the trigger |
+| SUBMITTED | APPROVED | assigned branch manager or admin (never the auditor) | `set_audit_approval('approved')` RPC | RPC: org + assigned-BM/admin, own-auditor block, `WHERE status='SUBMITTED'` (race guard). Raw client status write **blocked** by the trigger |
+| SUBMITTED | REJECTED | assigned branch manager or admin | `set_audit_approval('rejected')` RPC | same RPC guards |
+| REJECTED | IN_PROGRESS | assigned auditor | `saveAuditProgress` (resubmit edit) | trigger allows AUDITOR → editable states |
+
+- **The only sanctioned status-transition paths are `submit_audit` and `set_audit_approval`.** Raw client `status` writes are constrained by the `enforce_audit_status_transition` trigger (SECURITY INVOKER, migration `20260722094148`): an AUDITOR may reach only {DRAFT,IN_PROGRESS,COMPLETED}; ADMIN/SUPER_ADMIN pass; the SECURITY DEFINER RPCs and service_role pass (they run as `postgres`). This closes the auditor-self-approve and BM-raw-rewrite vectors (a raw `WITH CHECK` can't see `OLD.status`).
+- Client single source of truth: `apps/web/src/hooks/useAuditStateMachine.ts` maps (status, role, completion%) → permissions (canEdit/canSubmit/canDelete/canReopen + guidance). Auditor submit requires 100% completion; SUBMITTED/APPROVED are read-only client-side. Rejection data is preserved on later approval.
+- Negative regression net: `apps/web/tests/audit.illegal-transitions.spec.ts` (auditor self-approve/self-submit blocked, BM raw rewrite of APPROVED blocked, non-BM RPC approval denied) and `audit.rpc-authorization.spec.ts` (RPC org/assignee authz); the happy path is `audit.approval-flow.spec.ts` (incl. the double-approval race guard).
 
 ## 6. Data Model Highlights
 
@@ -125,8 +136,10 @@ Scoring: weighted-only compliance via `calculateWeightedAuditScore()` in `@trakr
 
 ## 7. Storage
 
-- Buckets: `audit-photos`, `profile-media` — public buckets, reads via public URLs.
-- Writes: authenticated-only (post-hardening), 10MB object limit, image MIME allowlist.
+- Buckets: `audit-photos`, `profile-media` — **private** (org-partitioned), 10MB object limit. A public bucket is internet-readable regardless of RLS, so both were privatized (migrations `20260722110610`, `20260722123651`).
+- Paths encode the owning entity so `storage.objects` policies can org-scope: `audit-photos` → `audits/<auditId>/…`; `profile-media` → `<avatars|signatures>/<userId>/…`.
+- Access: `audit_photos_*` policies gate on `storage_audit_in_my_org()` (org membership); `profile_media_*` gate on same-org **read** / own-only **write** (`current_user_id()`). Both helpers are SECURITY DEFINER (bypass row-RLS to check org), search_path-pinned, anon EXECUTE revoked.
+- Reads: the app stores the object **path** and mints a short-lived **signed URL** on read via `utils/signedUrls.ts` + `useSignedUrl` + `<SignedImage>` (signed at display time, not fetch time — the persisted React Query cache would otherwise store expired URLs). `data:`/`blob:`/`http` values pass through untouched. The PDF signs inline before embedding.
 
 ## 8. Edge Functions (`supabase/functions/`)
 

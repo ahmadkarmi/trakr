@@ -6,6 +6,8 @@ import {
   ensureAuditorAssignedToBranch,
   ensureBranchManagerAssigned,
   ensureAuditFor,
+  setAuditSubmitted,
+  setAuditApproved,
   getAuditStatus,
   deleteAudits,
   getUserClient,
@@ -73,5 +75,37 @@ test.describe('Audit illegal status transitions are blocked', () => {
     const { error } = await supa.from('audits').update({ status: 'COMPLETED' }).eq('id', audit.id)
     expect(error, 'auditor DRAFT->COMPLETED must remain allowed').toBeFalsy()
     expect(await getAuditStatus(audit.id)).toBe('COMPLETED')
+  })
+
+  test('a branch manager CANNOT raw-rewrite the status of an APPROVED audit', async () => {
+    // A finalized (APPROVED) audit must not be un-approved or re-decided by a raw
+    // client UPDATE; decisions flow only through set_audit_approval. The trigger
+    // blocks any BRANCH_MANAGER raw status change.
+    const audit = await ensureAuditFor(auditorId, orgId, branchId, surveyId)
+    createdAuditIds.push(audit.id)
+    await setAuditSubmitted(audit.id, auditorId)
+    await setAuditApproved(audit.id, managerId)
+    expect(await getAuditStatus(audit.id)).toBe('APPROVED')
+
+    const supa = await getUserClient('branchmanager@trakr.com', 'Password@123')
+    const { error } = await supa.from('audits').update({ status: 'REJECTED' }).eq('id', audit.id)
+    expect(error, 'trigger must block a BM raw status rewrite of an APPROVED audit').toBeTruthy()
+    expect(await getAuditStatus(audit.id)).toBe('APPROVED')
+  })
+
+  test('a non-BM, non-admin user CANNOT approve via set_audit_approval', async () => {
+    // set_audit_approval only lets the assigned branch manager (or an admin)
+    // decide. The assigned auditor is neither, so their RPC call is rejected and
+    // the audit stays SUBMITTED.
+    const audit = await ensureAuditFor(auditorId, orgId, branchId, surveyId)
+    createdAuditIds.push(audit.id)
+    await setAuditSubmitted(audit.id, auditorId)
+
+    const supa = await getUserClient('auditor@trakr.com', 'Password@123')
+    const { error } = await supa.rpc('set_audit_approval', {
+      p_audit_id: audit.id, p_status: 'approved', p_user_id: auditorId,
+    })
+    expect(error, 'set_audit_approval must reject a non-BM non-admin approver').toBeTruthy()
+    expect(await getAuditStatus(audit.id)).toBe('SUBMITTED')
   })
 })
