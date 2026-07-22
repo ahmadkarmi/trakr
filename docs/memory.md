@@ -2,6 +2,11 @@
 
 Running log of engineering decisions (newest first). One entry per decision: date, what, why.
 
+## 2026-07-22 — Audit state machine: negative net + transition table (Phase 3)
+- The **enforcement** already shipped (1b trigger + 1c RPC guards); Phase 3 completes the **regression net** and the **documentation**. The canonical transition table (from→to · who · sanctioned path · DB enforcement) now lives in `ARCHITECTURE.md §5` — the single sanctioned status-transition paths are `submit_audit` and `set_audit_approval`; all raw client `status` writes are constrained by the `enforce_audit_status_transition` trigger.
+- Extended `audit.illegal-transitions.spec.ts` with the two remaining illegal moves: a **BM cannot raw-rewrite an APPROVED audit's status** (trigger blocks any BRANCH_MANAGER raw status change) and a **non-BM/non-admin cannot approve via `set_audit_approval`** (the assigned auditor is neither the assigned BM nor an admin). Both green (5/5). The double-approval race guard was already covered by `audit.approval-flow.spec.ts`, so it was not duplicated.
+- Also brought `ARCHITECTURE.md §7 (Storage)` current with the 1a privatization (was still describing public buckets).
+
 ## 2026-07-22 — Storage isolation, part 2: privatize profile-media (Phase 1a-2)
 - Privatized the `profile-media` bucket (avatars + signatures) and org-scoped it, reusing the 1a-1 signing infra (`<SignedImage>` + `useSignedUrl`) across **17 display sites** (7 avatar components, 3 signature sites, the approval-signature panel). Both media buckets are now private and org-partitioned; no bucket-only storage policy remains.
 - **Path scheme changed** to `<prefix>/<userId>/...` (clean folder segment) — safe because there was zero stored profile-media data. Writes are **own-only** (`folder[2] = current_user_id()`); reads are **same-org** (via `storage_user_in_my_org()` SECURITY DEFINER, mirroring `storage_audit_in_my_org`). All `setUserAvatar`/`setUserSignature` callers pass `user.id` (self), so own-only writes break nothing. Approval signatures render through the same resolver — drawn ones are inline `data:` URLs (pass-through), image-mode ones are profile-media paths (signed).
