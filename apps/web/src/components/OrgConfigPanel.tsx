@@ -75,8 +75,8 @@ export const OrgConfigPanel: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-4">
           <div className="card-section flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900">Developer Mode</p>
-              <p className="text-sm text-gray-500">Allow debug helpers and relaxed validations for this org.</p>
+              <p className="font-medium text-gray-900">Developer Mode (org UI flag)</p>
+              <p className="text-sm text-gray-500">Org-level flag for debug helpers. Does not affect data access or RLS — the production database enforces dev-mode off regardless (see is_dev_mode guardrail).</p>
             </div>
             <Toggle checked={Boolean(config?.devMode)} onChange={(value) => toggleSetting('devMode', value)} disabled={mutation.isPending} />
           </div>
