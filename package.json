@@ -24,7 +24,7 @@
     "postinstall": "node -e \"if (process.platform === 'linux' && process.arch === 'x64') { try { require('@rollup/rollup-linux-x64-gnu'); } catch { require('child_process').execSync('npm install --no-save --force @rollup/rollup-linux-x64-gnu', { stdio: 'inherit' }); } }\""
   },
   "devDependencies": {
-    "@types/node": "^24.5.2",
+    "@types/node": "^26.1.2",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^6.0.4",
